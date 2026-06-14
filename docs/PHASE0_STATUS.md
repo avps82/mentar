@@ -57,8 +57,8 @@ exactly, so this doc is a thin overlay — never duplicate text from PHASE0.md, 
 |----|--------|------------------|
 | W3.1 template→graph schema | ✅ | `curriculum/_template.md` + validator at `src/mentar/tools/validate_template.py` |
 | W3.2 pilot concept graph | ✅ | `curriculum/templates/_pilot/fractions.md` (8 nodes, DAG verified) |
-| W3.3 BKT cold-start + hinted-win | ✅ | `src/mentar/engine/bkt.py` (deterministic recurrence) + `docs/design/W3.3_bkt.md`. Hinted-win = elevated-guess class; cold-start priors hand-set by node class; pyBKT scoped OUT of hot path → offline fit only. 7 invariants verified numerically. SPEC §11 updated. **Remaining (Sonnet):** formal `tests/engine/test_bkt.py` (T3.3) + caller wiring in FSM `bkt_update`. |
-| W3.4 false-confidence classifier | ✅ | `src/mentar/engine/probe_classify.py` (decision table, 7 cases smoke-verified) + SPEC §14.4 (definition + table). Forgetting checked before false_confidence; false_confidence only when both-fail ∧ mastery≥threshold ∧ no-Help. Remaining (Sonnet): formal T5.x tests + caller wiring of stale-mastery window from `skill_state.updated_at`. |
+| W3.3 BKT cold-start + hinted-win | ✅ | `src/mentar/engine/bkt.py` (deterministic recurrence) + `docs/design/W3.3_bkt.md`. Hinted-win = elevated-guess class; cold-start priors hand-set by node class; pyBKT scoped OUT of hot path → offline fit only. 7 invariants verified numerically. SPEC §11 updated. `tests/engine/test_bkt.py` (T3.3) landed ✅. **Remaining (Sonnet):** caller wiring in FSM `bkt_update`. |
+| W3.4 false-confidence classifier | ✅ | `src/mentar/engine/probe_classify.py` (decision table, 7 cases smoke-verified) + SPEC §14.4 (definition + table). Forgetting checked before false_confidence; false_confidence only when both-fail ∧ mastery≥threshold ∧ no-Help. `tests/engine/test_probe_classify.py` landed ✅. Remaining (Sonnet): caller wiring of stale-mastery window from `skill_state.updated_at`. |
 | W3.5 Open TutorAI build-vs-adopt | 🟡 | **Verdict: REFERENCE-ONLY** (don't fork) — `docs/design/W3.5_build_vs_adopt.md` + SPEC §19.2. Desk assessment (no sandbox web); §5 lists a hands-on spike to confirm. Unblocked W6.3. |
 | W3.6 learner data model | ✅ | `src/mentar/db/schema.sql` (202 lines) + `store.py`; triggers verified |
 
@@ -102,7 +102,7 @@ exactly, so this doc is a thin overlay — never duplicate text from PHASE0.md, 
 | ID | Status | Artifact / Note |
 |----|--------|------------------|
 | W6.1 session state machine | ✅ | `docs/SESSION_FSM.md` (188 lines, Mermaid + transition tables) |
-| W6.2 prompt template registry | ✅ | `prompts/` — 10 versioned templates (3 patterns + 5 Help modalities + transfer-gen + system prompt) + `PROMPTS.md` registry. Hashing convention documented; **T4.6-equivalent check PASSES** (10/10 body hashes match registry + headers). Remaining (Sonnet): formal `tests/test_prompt_registry.py` (T4.6) + controller load-wiring. |
+| W6.2 prompt template registry | ✅ | `prompts/` — 10 versioned templates (3 patterns + 5 Help modalities + transfer-gen + system prompt) + `PROMPTS.md` registry. Hashing convention documented; **T4.6-equivalent check PASSES** (10/10 body hashes match registry + headers). `tests/test_prompt_registry.py` (T4.6 + T7.3 literal scan) landed ✅. Remaining (Sonnet): controller load-wiring. |
 | W6.3 pilot interface decision | ✅ | **Decided: minimal local web app** (Flask/FastAPI localhost, 4 views). `docs/design/W6.3_pilot_interface.md` + SPEC §23. Fork ruled out by W3.5; TUI rejected. |
 | W6.4 repo architecture sketch | ✅ | `docs/ARCHITECTURE.md` (149 lines, src-layout) |
 
@@ -133,10 +133,12 @@ of the validator/fringe; full pytest runs need `pip install -e ".[dev]"` from a 
 | `tests/db/test_datamodel.py` | 391 | schema load + trigger E2E ✅ pass |
 | `tests/engine/test_fringe.py` | 200 | 5 T3.2 cases ✅ pass |
 | `tests/safety/test_escalation.py` | 689 | 20+20 T2.1 fixtures + flow ✅ pass (re-verified) |
+| `tests/engine/test_bkt.py` | — | 7 T3.3 invariants ✅ pass |
+| `tests/engine/test_probe_classify.py` | — | 7 decision-table cases ✅ pass |
+| `tests/test_prompt_registry.py` | — | 6 T4.6/T7.3 checks ✅ pass (incl. src literal scan) |
 
-**Verified inline but no formal test file yet** (pending Sonnet): `src/mentar/engine/bkt.py`
-(7 invariants verified numerically, T3.3) and `src/mentar/engine/probe_classify.py`
-(7 decision-table cases verified, T5.x).
+All test files carry an inline `python3`-runnable smoke runner **and** pytest-style
+functions; full `pytest` run still pending `pip install -e ".[dev]"`.
 
 ---
 
@@ -152,10 +154,10 @@ of the validator/fringe; full pytest runs need `pip install -e ".[dev]"` from a 
 2. **Dialogue controller** — wire the W6.2 prompts + FSM + engine modules into the turn loop (the dialogue framework T4/T5 assume).
 3. **Pilot web app** (W6.3 build) — Flask/FastAPI + the 4 views.
 
-**Test/wiring follow-ups (not G0-blocking, Sonnet):** formal `tests/engine/test_bkt.py`
-(T3.3), `tests/engine/test_probe_classify.py` (T5.x), `tests/test_prompt_registry.py` (T4.6);
-FSM caller wiring for `bkt.py`, `escalation.py` (handle_trigger), `probe_classify.py`
-(stale-mastery window from `skill_state.updated_at`); full `pytest` once `pip install -e ".[dev]"`.
+**Wiring follow-ups (not G0-blocking, Sonnet):** FSM caller wiring for `bkt.py`,
+`escalation.py` (handle_trigger), `probe_classify.py` (stale-mastery window from
+`skill_state.updated_at`), and the controller loading `prompts/` templates; full `pytest`
+once `pip install -e ".[dev]"`. (Test files for bkt/probe/registry now landed ✅.)
 
 **Test/wiring follow-ups (not G0-blocking, Sonnet):** formal `tests/engine/test_bkt.py`
 (T3.3) and `tests/engine/test_probe_classify.py` (T5.x); FSM caller wiring for `bkt.py`,
@@ -182,3 +184,4 @@ FSM caller wiring for `bkt.py`, `escalation.py` (handle_trigger), `probe_classif
 | 2026-06-14 (overnight) | W6.3 ✅ (Opus) — pilot interface = minimal local web app (4 views); `docs/design/W6.3_pilot_interface.md` + SPEC §23. |
 | 2026-06-14 (overnight) | W5.6 🟡 (Opus) — kill criteria + scope-cut order drafted in SPEC §25.1–25.2; awaits Pradeep's distress/runway thresholds. |
 | 2026-06-14 (overnight) | Docs hygiene — rewrote stale `README.md` to match real src-layout; created `compliance/README.md` (coverage-status map per SPEC §17.5). |
+| 2026-06-14 (overnight) | Test files landed (Opus) — `tests/engine/test_bkt.py` (T3.3, 7), `tests/engine/test_probe_classify.py` (7), `tests/test_prompt_registry.py` (T4.6+T7.3, 6). All pass via inline smoke; pytest-compatible. |
