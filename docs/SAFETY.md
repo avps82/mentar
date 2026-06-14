@@ -101,7 +101,7 @@ Mentar grounds its responses in retrieved passages (Kiwix ZIM content, vetted so
 
 **v0 mitigations are intentionally minimal and will be strengthened post-Bucket F research (SPEC §17.5).**
 
-1. **Instruction/data separation.** Grounding passages are wrapped as clearly delimited quoted data in the prompt — never as top-level instructions. The system prompt framing establishes that anything in the `[GROUNDING]` block is source material to cite, not instructions to follow. Template: see `prompts/system_prompt.txt` (W6.2).
+1. **Instruction/data separation.** Grounding passages are wrapped as clearly delimited quoted data in the prompt — never as top-level instructions. The system prompt framing establishes that anything in the `[GROUNDING]` block is source material to cite, not instructions to follow. Template: see `prompts/system_prompt.md` (W6.2).
 
 2. **Strip/flag imperative-to-AI lines.** A pre-processing step scans retrieved passages and parent-uploaded content for imperative constructions directed at an AI agent (e.g., lines beginning with "ignore", "disregard", "your new instructions are", "you are now", "pretend you are"). Flagged lines are: (a) stripped from the grounding passage before it reaches the LLM, and (b) logged with the source reference for parent review.
 
@@ -696,7 +696,7 @@ This table provides the reviewer audit trail — every requirement in SPEC §16.
 | `safety/age-modes.md` | Prior draft; content folded into Layer 5 §5.2. Original file retained pending formal retirement |
 | `safety/guardrails.md` | Prior draft; content folded into Layers 1 and 2. Original file retained pending formal retirement |
 | `docs/SESSION_FSM.md` | Escalation freeze state must be defined in the session state machine (W6.1) |
-| `prompts/system_prompt.txt` | Instruction/data separation framing referenced in Layer 1 §1.5.2 (W6.2) |
+| `prompts/system_prompt.md` | Instruction/data separation framing referenced in Layer 1 §1.5.2 (W6.2) |
 
 ---
 

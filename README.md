@@ -29,22 +29,31 @@ A paid hosted-inference tier (for non-technical parents) is a planned future bri
 
 ## Architecture
 
+The codebase uses a Python **src-layout** (`src/mentar/`); specs and the safety spec live
+under `docs/` (not in a top-level `safety/`). See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+for the authoritative layout.
+
 ```
 mentar/
-├── curriculum/          # Markdown templates per country + year level
-│   ├── templates/
-│   │   ├── au/          # Australia
-│   │   ├── in/          # India
-│   │   ├── uk/          # UK
-│   │   └── us/          # US
-│   └── _template.md     # Starter template for new curricula
-├── safety/              # Safety spec, guardrails, age modes
-├── compliance/          # Legal framework summaries (OSS local edition)
-├── docs/                # Architecture, LLM compatibility, hardware requirements
-└── src/
-    ├── core/            # Template engine + dialogue framework
-    ├── safety/          # Safety layer implementation
-    └── inference/       # LLM abstraction layer (swappable backends)
+├── curriculum/              # Markdown curriculum templates (concept graphs)
+│   ├── _template.md         # Authoring format for new curricula
+│   └── templates/
+│       └── _pilot/          # Phase-0 fractions pilot graph (more to follow)
+├── prompts/                 # Versioned prompt templates + PROMPTS.md registry (W6.2)
+├── src/mentar/              # Python package (src-layout)
+│   ├── engine/              # Concept graph (KST), BKT mastery, fringe, probe classifier
+│   ├── dialogue/            # Turn-loop controller (session state machine)
+│   ├── safety/              # Safety-layer implementation (escalation, filters)
+│   ├── inference/           # LLM abstraction layer (swappable backends)
+│   ├── eval/                # Deterministic verifiers + model-eval harness
+│   ├── db/                  # Local SQLite store (schema + access)
+│   ├── tools/               # Template validator, etc.
+│   └── cli/                 # Command-line entry points
+├── tests/                   # Mirrors the src/ layout
+├── docs/                    # SPEC, PHASE0(+_STATUS), SAFETY, SESSION_FSM, ARCHITECTURE,
+│                            #   TESTS, CONTENT_LICENSES, PILOT_CONSENT, design/, research/
+├── compliance/              # Compliance coverage-status map (points back to docs/)
+└── eval/                    # Eval datasets/outputs (data is gitignored)
 ```
 
 ---
@@ -59,7 +68,7 @@ Anyone can add a new country or year-level template. See `curriculum/_template.m
 
 ## Safety
 
-Kid-safe content blocks and age-appropriate responses are non-negotiable and built in from the start. See `safety/` for the full spec.
+Kid-safe content blocks and age-appropriate responses are non-negotiable and built in from the start. See [`docs/SAFETY.md`](docs/SAFETY.md) for the full 6-layer spec (implementation lives in `src/mentar/safety/`).
 
 Key commitments:
 - No dark patterns, no compulsive gamification mechanics (legal line under EU AI Act Article 5)
@@ -90,8 +99,8 @@ Hardware requirements: see `docs/hardware-requirements.md`.
 
 ## Contributing
 
-- Add or improve a curriculum template in `curriculum/templates/<country>/`
-- Improve the safety spec in `safety/`
+- Add or improve a curriculum template under `curriculum/templates/` (see `curriculum/_template.md` for the format)
+- Improve the safety spec in `docs/SAFETY.md`
 - Fill compliance gaps flagged in `compliance/README.md`
 - Test and document model compatibility in `docs/llm-compatibility.md`
 
@@ -99,4 +108,8 @@ Hardware requirements: see `docs/hardware-requirements.md`.
 
 ## Status
 
-Early-stage. The architecture and safety decisions are established. Implementation is ongoing.
+Early-stage, in active **Phase 0** (a single-subject fractions pilot). The architecture,
+safety spec, session state machine, learner data model, and core engine pieces (concept
+graph, BKT mastery, verifiers, escalation, prompt registry) are in place; the end-to-end
+dialogue loop and the local model evaluation are the next milestones. Live status tracker:
+[`docs/PHASE0_STATUS.md`](docs/PHASE0_STATUS.md).
