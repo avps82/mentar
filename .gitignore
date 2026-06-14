@@ -1,0 +1,44 @@
+# Runtime output (per TESTS.md §0 — never commit)
+reports/
+*.db
+*.sqlite
+*.sqlite3
+~/.mentar/
+
+# Eval data (large; pinned via dataset version hash, not committed wholesale)
+eval/responses/
+eval/dataset_*.jsonl
+eval/scores_*.csv
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.python-version
+
+# Test / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Tooling
+.ruff_cache/
+.mypy_cache/
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*~
+.vendor/
+
+# Claude (user-scoped; symlink to ~/.claude/.../memory/ — never committed)
+.claude-memory
+.claude/
