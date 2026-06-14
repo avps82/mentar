@@ -476,6 +476,7 @@ OSS is **borrowed plumbing, not the spine**. It covers ~40% (structured space, m
 - **BKT (mastery):** `pyBKT` (Python, UC Berkeley CAHL).
 - **Reference ITS:** OATutor (UC Berkeley CAHL, MIT, React, static/offline). Use as architectural reference for mastery→content wiring; **do not** adopt its authored OpenStax content model.
 - **LLM-native (watch, research-stage):** Open TutorAI (modular, learner/educator/parent interfaces — closest to vision), CLASS (Rice/OpenStax), OATutor-GPT.
+- **W3.5 verdict (2026-06-14): Open TutorAI = REFERENCE-ONLY** (do not fork) — borrow its learner/educator/parent module split as a reference, build our own surface. Desk assessment (confirm with a hands-on spike); full rationale in `docs/design/W3.5_build_vs_adopt.md`.
 
 ### 19.3 Safety Tooling *(memory)*
 - **Guardrails AI**, **NVIDIA NeMo Guardrails**, **Stanford educational-guardrail work** — exist independently; candidates to integrate into Mentar's safety layer (16) rather than build from scratch.
@@ -581,6 +582,8 @@ Whole-number division
 
 **Pilot goals:** prove adaptive traversal; prove the Help loop closes (transfer-tested, hinted-win discounted); stress-test the pedagogical guardrail; measure proactive-probe effectiveness and baseline false-confidence rate. Run with the safety layer active even in pilot — "active" is defined as the controls specified in **[SAFETY.md](SAFETY.md) v0.1** (W2.1), including the Layer 3 escalation path (W2.2). This resolves the apparent §24 "safety spec pending" gap: SAFETY.md v0.1 *is* the pilot's operative safety definition; the open Bucket-D items there are post-pilot refinements, not pilot blockers (note the §3.5 rollout guard bounds the pilot to a single supervised family).
 
+**Pilot interface (W6.3, decided 2026-06-14):** minimal **local web app** (Flask/FastAPI bound to localhost), 4 plain views — learner question screen, Help pop-up, probe interrupt, parent log view (with escalation alert + acknowledge-to-resume). TUI rejected (weak for a child); fork rejected (W3.5 = reference-only). Full rationale: `docs/design/W6.3_pilot_interface.md`.
+
 **Out of scope (v0):** humanities/open-ended reasoning; multi-subject graphs; full parent UI; LLM-as-judge; hosted tier; multiple learners.
 
 ---
@@ -617,6 +620,29 @@ Whole-number division
 2. **Phase 1 — OSS Local Edition:** template engine + dialogue framework + safety layer; a few curriculum templates; local LLM with the low-hallucination model from TODO #2; **US / parental-consent-first** rollout (lighter than EU per 17).
 3. **Phase 2 — Conceptual/open-ended:** add LLM-as-judge for non-checkable domains; expand interaction patterns; broaden curriculum templates with community.
 4. **Phase 3 — Paid Hosted Tier:** managed inference for non-technical parents; full compliance machinery (COPPA/GDPR-K/AI-Act); EU entry only after the high-risk question (17.1) is resolved.
+
+### 25.1 Kill Criteria (pre-committed)
+*Source: W5.6 (review 2026-06-12). Pre-commit these now, while judgement is unclouded.*
+
+| # | If this… | …then |
+|---|----------|-------|
+| (a) | No candidate model passes the T1.6 quality gates | Raise the size ceiling **once**; if still 0 pass → **pause** the project and revisit the local-first bar (SPEC §20). |
+| (b) | EU AI Act verification (§24 #1) concludes high-risk applies **even to the OSS local edition** | **Halt EU framing**; US / parental-consent-first only; reassess at Phase 3. |
+| (c) | The pilot learner disengages or shows distress past a defined threshold | **Stop sessions**; redesign before resuming. *Threshold (recommended default, ⏳ Pradeep to confirm): stop if the child shows reluctance/distress in **2 consecutive sessions**, or asks to stop and means it once.* |
+| (d) | Phase-0 actuals exceed the W5.5 estimate by **>2×** | Invoke the scope-cut order (§25.2). |
+| (e) | *(optional personal-runway line — ⏳ Pradeep to set)* solo time/€ budget exceeds **___** with G0 not reached | Invoke scope-cut order; if still blocked → pause. |
+
+### 25.2 Scope-Cut Order (drop first → last)
+When (d) triggers, cut in this order:
+1. W1.6 hardware-horizon watch
+2. W3.5 build-vs-adopt spike (verdict already reference-only — `docs/design/W3.5_build_vs_adopt.md`)
+3. Multi-learner namespacing polish
+4. Vetted variant bank (serve live-generation + post-session review only)
+5. Probe-classifier granularity (keep the binary false-confidence classifier)
+
+**NEVER cut (the differentiator bar, SPEC §4.1):** the safety layer · the transfer re-check
+in the Help loop · the deterministic verifier. Cutting any of these fails the reason-to-exist
+test and is itself a kill condition.
 
 ---
 
