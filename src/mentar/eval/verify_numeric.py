@@ -1,0 +1,619 @@
+"""
+verify_numeric.py — Deterministic fraction/integer verifier for Mentar.
+
+SAFETY-CRITICAL: per SPEC §15 Layer 2, every numeric/worked step the LLM generates
+must be computationally verified BEFORE display.  A wrong-but-confident verification
+is a safety failure.  Err on safe-reject over false-pass.
+
+Supports T1.3 (eval-time scoring) and T3.5 (runtime serve-time gate).
+Stdlib only — fractions.Fraction + re.  No third-party deps.
+
+Design decisions documented inline:
+- Decimals (e.g. "0.5"): SAFE_REJECT.  Not in pilot scope (SPEC §23, fractions.md
+  "Out of scope: decimal/fraction conversion").  Accepting decimals silently could
+  produce a false-pass if the LLM gives "0.5" when the expected form is "1/2".
+- Unicode vulgar fractions (½ ¼ ¾ etc.): mapped to their a/b equivalents before
+  parsing — cheap via a small lookup table and avoids SAFE_REJECT on copy-paste input.
+- Mixed numbers ("1 1/2"): parsed as whole + fraction; ambiguous forms with more than
+  one space-separated token that look like independent fractions → SAFE_REJECT.
+- Negative denominators: Fraction normalises these natively (e.g. 3/-6 → -1/2).
+- Zero denominator: SAFE_REJECT (never crash, never accept).
+- Multiple plausible candidates of equal precedence at the same position → SAFE_REJECT.
+"""
+
+from __future__ import annotations
+
+import re
+from dataclasses import dataclass
+from enum import Enum
+from fractions import Fraction
+
+
+# ---------------------------------------------------------------------------
+# Public types
+# ---------------------------------------------------------------------------
+
+class CheckResult(Enum):
+    PASS = "pass"
+    FAIL = "fail"
+    EXTRACT_FAIL = "extract_fail"   # could not locate a candidate answer
+    SAFE_REJECT = "safe_reject"     # input malformed / ambiguous — refuse to verify
+
+
+@dataclass
+class CheckOutcome:
+    result: CheckResult
+    extracted: str | None           # what the verifier pulled out as the candidate
+    canonical: str | None           # normalised form (e.g. "1/2") if extracted
+    detail: str                     # human-readable explanation
+
+
+# ---------------------------------------------------------------------------
+# Unicode vulgar-fraction table (optional bonus — cheap lookup)
+# ---------------------------------------------------------------------------
+
+_UNICODE_FRACTIONS: dict[str, str] = {
+    "½": "1/2",
+    "⅓": "1/3",
+    "⅔": "2/3",
+    "¼": "1/4",
+    "¾": "3/4",
+    "⅕": "1/5",
+    "⅖": "2/5",
+    "⅗": "3/5",
+    "⅘": "4/5",
+    "⅙": "1/6",
+    "⅚": "5/6",
+    "⅛": "1/8",
+    "⅜": "3/8",
+    "⅝": "5/8",
+    "⅞": "7/8",
+    "⅐": "1/7",
+    "⅑": "1/9",
+    "⅒": "1/10",
+}
+
+_UNICODE_FRAC_RE = re.compile("|".join(re.escape(c) for c in _UNICODE_FRACTIONS))
+
+
+def _expand_unicode_fractions(text: str) -> str:
+    """Replace Unicode vulgar-fraction characters with their a/b form."""
+    return _UNICODE_FRAC_RE.sub(lambda m: _UNICODE_FRACTIONS[m.group()], text)
+
+
+# ---------------------------------------------------------------------------
+# Regex patterns
+# ---------------------------------------------------------------------------
+
+# Fraction pattern: optional leading sign, optional whole number, then a/b
+# We deliberately do NOT allow spaces inside the numerator/denominator tokens.
+# Matches: "1/2", "-3/5", "2/4", "10/3"
+_FRAC_PAT = r"-?\d+\s*/\s*-?\d+"
+
+# Mixed-number pattern: whole SP fraction (e.g. "1 1/2", "-2 3/4")
+# Requires exactly one space between whole and fraction.
+_MIXED_PAT = r"-?\d+\s+\d+\s*/\s*\d+"
+
+# Pure integer (no slash)
+_INT_PAT = r"-?\d+"
+
+# <answer> tag extraction
+_ANSWER_TAG_RE = re.compile(r"<answer>\s*(.*?)\s*</answer>", re.IGNORECASE | re.DOTALL)
+
+# Multiple-choice letter (A-D) or digit (1-4), possibly in parentheses or quoted
+_MC_LETTER_RE = re.compile(r"\b([A-Da-d])\b")
+_MC_DIGIT_RE = re.compile(r"\b([1-4])\b")
+
+# Full patterns compiled
+_MIXED_RE = re.compile(_MIXED_PAT)
+_FRAC_RE = re.compile(_FRAC_PAT)
+_INT_RE = re.compile(_INT_PAT)
+
+# Decimal detection — reject these explicitly
+_DECIMAL_RE = re.compile(r"\b\d+\.\d+\b")
+
+
+# ---------------------------------------------------------------------------
+# normalise_fraction
+# ---------------------------------------------------------------------------
+
+def normalise_fraction(s: str) -> Fraction | None:
+    """
+    Parse a fraction string and return a normalised Fraction, or None on failure.
+
+    Accepted forms:
+      - "1/2", "2/4", "-3/5"       → proper/improper fraction
+      - "3"                          → integer (whole number)
+      - "1 1/2", "2 3/4"            → mixed number (whole + fraction)
+      - Unicode vulgar fractions via _expand_unicode_fractions pre-pass
+
+    SAFE_REJECT (returns None) for:
+      - Zero denominator ("1/0", "5/0")
+      - Non-integer components ("a/b", "1.5/2")
+      - Empty string
+      - Anything that doesn't match the above forms
+    """
+    if not s or not s.strip():
+        return None
+
+    s = _expand_unicode_fractions(s.strip())
+
+    # Decimal in the token → reject (not in pilot scope)
+    if _DECIMAL_RE.search(s):
+        return None
+
+    # Try mixed number first ("1 1/2")
+    mixed_m = re.fullmatch(r"\s*(-?\d+)\s+(\d+)\s*/\s*(\d+)\s*", s)
+    if mixed_m:
+        whole = int(mixed_m.group(1))
+        num = int(mixed_m.group(2))
+        den = int(mixed_m.group(3))
+        if den == 0:
+            return None  # SAFE_REJECT
+        # mixed number sign: whole carries it; fraction part is always non-negative
+        try:
+            if whole < 0:
+                return Fraction(whole * den - num, den)
+            else:
+                return Fraction(whole * den + num, den)
+        except (ValueError, ZeroDivisionError):
+            return None
+
+    # Try plain fraction ("a/b")
+    frac_m = re.fullmatch(r"\s*(-?\d+)\s*/\s*(-?\d+)\s*", s)
+    if frac_m:
+        num = int(frac_m.group(1))
+        den = int(frac_m.group(2))
+        if den == 0:
+            return None  # SAFE_REJECT — zero denominator
+        try:
+            return Fraction(num, den)
+        except (ValueError, ZeroDivisionError):
+            return None
+
+    # Try plain integer
+    int_m = re.fullmatch(r"\s*(-?\d+)\s*", s)
+    if int_m:
+        return Fraction(int(int_m.group(1)))
+
+    return None
+
+
+# ---------------------------------------------------------------------------
+# extract_answer
+# ---------------------------------------------------------------------------
+
+def extract_answer(text: str, answer_type: str) -> str | None:
+    """
+    Pull the candidate answer string from free-form LLM output.
+
+    Returns None if no candidate can be unambiguously extracted.
+
+    Strategy by answer_type:
+      - "fraction" / "int":
+          1. Last <answer>…</answer> tag content if present.
+          2. Else last mixed-number pattern (e.g. "1 1/2").
+          3. Else last fraction pattern (e.g. "2/4").
+          4. Else last integer.
+          Ambiguity rule: if two candidates of EQUAL precedence appear at the same
+          'last position' (e.g. "1/2 or 3/4"), return None (SAFE_REJECT upstream).
+      - "mc4":
+          Last single letter A-D or digit 1-4 (case-insensitive), possibly in parens.
+      - Other: None.
+
+    Trailing punctuation (.!?,;:) and whitespace stripped before return.
+    """
+    if not text or not text.strip():
+        return None
+
+    # Expand unicode fractions first
+    text_expanded = _expand_unicode_fractions(text)
+
+    if answer_type == "mc4":
+        return _extract_mc(text_expanded)
+
+    if answer_type in ("fraction", "int"):
+        return _extract_numeric(text_expanded, answer_type)
+
+    return None
+
+
+def _strip_punct(s: str) -> str:
+    """Strip trailing punctuation and whitespace."""
+    return s.rstrip(".!?,;: \t\n")
+
+
+def _extract_mc(text: str) -> str | None:
+    """Extract last MC choice (A-D or 1-4) from text."""
+    # Find all letter matches and digit matches
+    letter_matches = list(_MC_LETTER_RE.finditer(text))
+    digit_matches = list(_MC_DIGIT_RE.finditer(text))
+
+    # Pick whichever type has its last match further right
+    last_letter = letter_matches[-1] if letter_matches else None
+    last_digit = digit_matches[-1] if digit_matches else None
+
+    if last_letter and last_digit:
+        if last_letter.start() > last_digit.start():
+            return last_letter.group(1).upper()
+        elif last_digit.start() > last_letter.start():
+            return last_digit.group(1)
+        else:
+            # Same position — ambiguous; return letter (letters take priority for MC)
+            return last_letter.group(1).upper()
+    elif last_letter:
+        return last_letter.group(1).upper()
+    elif last_digit:
+        return last_digit.group(1)
+    return None
+
+
+def _extract_numeric(text: str, answer_type: str) -> str | None:
+    """
+    Extract a numeric candidate from text.
+
+    Priority:
+    1. <answer> tag
+    2. Last mixed number
+    3. Last fraction
+    4. Last integer (for answer_type="int" or as fallback for "fraction")
+
+    Ambiguity: if the last position contains two distinct fraction candidates
+    within 5 characters of each other (e.g. "1/2 or 3/4"), return None.
+    """
+    # 1. Try <answer> tag — use raw text (not expanded) to check for tag presence
+    tag_match = _ANSWER_TAG_RE.search(text)
+    if tag_match:
+        content = _strip_punct(tag_match.group(1).strip())
+        return content if content else None
+
+    # 2. Check for decimal — if present, the extraction will surface it; we reject
+    #    decimals in normalise_fraction, so we don't block extraction here.
+
+    # 3. Find all mixed-number matches
+    mixed_matches = list(_MIXED_RE.finditer(text))
+
+    # 4. Find all fraction matches (exclude those that are part of a mixed number)
+    frac_matches = list(_FRAC_RE.finditer(text))
+    # Filter out fractions that are the trailing part of a mixed-number match
+    mixed_spans = {(m.start(), m.end()) for m in mixed_matches}
+    frac_matches_standalone = [
+        m for m in frac_matches
+        if not any(ms <= m.start() and m.end() <= me for ms, me in mixed_spans)
+    ]
+
+    # 5. Find all integer matches (exclude those inside fractions or mixed numbers)
+    int_matches = list(_INT_RE.finditer(text))
+    # Exclude integers that are substrings of fraction/mixed patterns
+    all_numeric_spans = {(m.start(), m.end()) for m in mixed_matches} | \
+                        {(m.start(), m.end()) for m in frac_matches}
+    int_matches_standalone = [
+        m for m in int_matches
+        if not any(ms <= m.start() and m.end() <= me for ms, me in all_numeric_spans)
+    ]
+
+    # Select by precedence (mixed > fraction > int), using 'last' occurrence
+    if mixed_matches:
+        last_mixed = mixed_matches[-1]
+        # Check for ambiguity: is there another fraction-level candidate within
+        # 10 chars after the mixed match that isn't part of it?
+        if frac_matches_standalone:
+            last_frac = frac_matches_standalone[-1]
+            # If both are within 10 chars of each other at the end, ambiguous
+            if abs(last_frac.start() - last_mixed.start()) < 10:
+                # Could be "1 1/2 or 3/4" — check if there's a connecting word
+                between = text[min(last_mixed.end(), last_frac.end()):
+                               max(last_mixed.start(), last_frac.start())]
+                if re.search(r'\bor\b', between, re.IGNORECASE):
+                    return None  # Ambiguous
+        return _strip_punct(last_mixed.group())
+
+    if frac_matches_standalone:
+        last_frac = frac_matches_standalone[-1]
+        # Ambiguity check: two fractions close together at the end
+        if len(frac_matches_standalone) >= 2:
+            second_last = frac_matches_standalone[-2]
+            gap = text[second_last.end():last_frac.start()]
+            if re.search(r'\bor\b', gap, re.IGNORECASE):
+                return None  # "1/2 or 3/4" → ambiguous
+            # Also check if they are very close without connective word
+            if last_frac.start() - second_last.end() <= 5:
+                return None  # Two fractions with no separator → ambiguous
+        return _strip_punct(last_frac.group())
+
+    if int_matches_standalone:
+        last_int = int_matches_standalone[-1]
+        return _strip_punct(last_int.group())
+
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Canonical string representation
+# ---------------------------------------------------------------------------
+
+def _canonical_str(f: Fraction) -> str:
+    """Return the simplest string form of a normalised Fraction."""
+    if f.denominator == 1:
+        return str(f.numerator)
+    return f"{f.numerator}/{f.denominator}"
+
+
+# ---------------------------------------------------------------------------
+# check — main entry point
+# ---------------------------------------------------------------------------
+
+def check(
+    answer_type: str,
+    checker: str,
+    llm_output: str,
+    ground_truth: str,
+) -> CheckOutcome:
+    """
+    Verify an LLM-generated answer against ground truth.
+
+    Parameters
+    ----------
+    answer_type : str
+        One of "int", "fraction", "mc4", "free_text" (matches fractions.md verifier.answer_type).
+    checker : str
+        One of "int_exact", "fraction_equiv", "mc_choice", "none".
+    llm_output : str
+        The raw LLM-generated text containing (or purportedly containing) the answer.
+    ground_truth : str
+        The correct answer as a plain string (e.g. "3", "1/2", "A").
+
+    Returns
+    -------
+    CheckOutcome
+        result is PASS / FAIL / EXTRACT_FAIL / SAFE_REJECT.
+        Never raises — all errors surface as SAFE_REJECT.
+    """
+    # Guard: empty input
+    if not llm_output or not llm_output.strip():
+        return CheckOutcome(
+            result=CheckResult.EXTRACT_FAIL,
+            extracted=None,
+            canonical=None,
+            detail="Empty llm_output — nothing to verify.",
+        )
+
+    # Dispatch
+    try:
+        if checker == "none":
+            return _check_none()
+        elif checker == "int_exact":
+            return _check_int_exact(llm_output, ground_truth)
+        elif checker == "fraction_equiv":
+            return _check_fraction_equiv(llm_output, ground_truth)
+        elif checker == "mc_choice":
+            return _check_mc_choice(llm_output, ground_truth)
+        else:
+            return CheckOutcome(
+                result=CheckResult.SAFE_REJECT,
+                extracted=None,
+                canonical=None,
+                detail=f"Unknown checker '{checker}' — safe-reject to avoid false-pass.",
+            )
+    except Exception as exc:  # noqa: BLE001
+        # Belt-and-suspenders: any unhandled exception → SAFE_REJECT, not crash
+        return CheckOutcome(
+            result=CheckResult.SAFE_REJECT,
+            extracted=None,
+            canonical=None,
+            detail=f"Unexpected error during verification: {exc!r} — safe-reject.",
+        )
+
+
+# ---------------------------------------------------------------------------
+# Individual checker implementations
+# ---------------------------------------------------------------------------
+
+def _check_none() -> CheckOutcome:
+    """Checker 'none' — always PASS (non-checkable free_text answers)."""
+    return CheckOutcome(
+        result=CheckResult.PASS,
+        extracted=None,
+        canonical=None,
+        detail="Checker 'none': concept is non-checkable; auto-pass.",
+    )
+
+
+def _check_int_exact(llm_output: str, ground_truth: str) -> CheckOutcome:
+    """
+    Extract the last integer from llm_output and compare to int(ground_truth).
+    Malformed ground_truth → SAFE_REJECT.
+    """
+    # Validate ground_truth
+    try:
+        gt_val = int(ground_truth.strip())
+    except (ValueError, AttributeError):
+        return CheckOutcome(
+            result=CheckResult.SAFE_REJECT,
+            extracted=None,
+            canonical=None,
+            detail=f"ground_truth '{ground_truth}' is not a valid integer — safe-reject.",
+        )
+
+    # Pre-extraction decimal guard: an LLM answer of "0.5" must not silently
+    # fall through to the integer extraction (which would grab "5" or "0").
+    # Pilot-domain integer answers are whole-number division results.
+    if _DECIMAL_RE.search(llm_output):
+        return CheckOutcome(
+            result=CheckResult.SAFE_REJECT,
+            extracted=None,
+            canonical=None,
+            detail="llm_output contains a decimal — pilot expects integer answers; safe-reject.",
+        )
+
+    # Extract candidate
+    candidate = extract_answer(llm_output, "int")
+    if candidate is None:
+        return CheckOutcome(
+            result=CheckResult.EXTRACT_FAIL,
+            extracted=None,
+            canonical=None,
+            detail="Could not extract an integer candidate from llm_output.",
+        )
+
+    # Parse candidate as integer (it might look like a fraction — that's a fail not a reject)
+    try:
+        cand_val = int(candidate.strip())
+    except ValueError:
+        # Candidate extracted but not parseable as int (e.g. "3/4") — that's FAIL not SAFE_REJECT
+        return CheckOutcome(
+            result=CheckResult.FAIL,
+            extracted=candidate,
+            canonical=None,
+            detail=f"Extracted '{candidate}' but could not parse as integer (expected {gt_val}).",
+        )
+
+    canonical = str(cand_val)
+    result = CheckResult.PASS if cand_val == gt_val else CheckResult.FAIL
+    detail = (
+        f"Extracted {cand_val!r}, expected {gt_val!r}: {'match' if result == CheckResult.PASS else 'mismatch'}."
+    )
+    return CheckOutcome(result=result, extracted=candidate, canonical=canonical, detail=detail)
+
+
+def _check_fraction_equiv(llm_output: str, ground_truth: str) -> CheckOutcome:
+    """
+    Extract a fraction/integer from llm_output, normalise both to Fraction,
+    and compare for equivalence.
+
+    Decimals in llm_output or ground_truth → SAFE_REJECT.
+    Zero denominator → SAFE_REJECT.
+    Unparseable → SAFE_REJECT (ground_truth) or EXTRACT_FAIL (candidate).
+    """
+    # Check for decimal in ground_truth → SAFE_REJECT (config error)
+    if _DECIMAL_RE.search(ground_truth):
+        return CheckOutcome(
+            result=CheckResult.SAFE_REJECT,
+            extracted=None,
+            canonical=None,
+            detail=f"ground_truth '{ground_truth}' contains a decimal — not in pilot scope; safe-reject.",
+        )
+
+    # Check for decimal in llm_output BEFORE extraction. Without this, "0.5" falls
+    # through to the trailing-integer fallback in _extract_numeric and produces a
+    # confident-wrong FAIL ("5" extracted, compared to "1/2"). Decimals are out of
+    # pilot scope (SPEC §23) — safe-reject any decimal-shaped LLM output.
+    if _DECIMAL_RE.search(llm_output):
+        return CheckOutcome(
+            result=CheckResult.SAFE_REJECT,
+            extracted=None,
+            canonical=None,
+            detail="llm_output contains a decimal — not in pilot scope; safe-reject.",
+        )
+
+    # Parse ground_truth
+    gt_frac = normalise_fraction(ground_truth.strip())
+    if gt_frac is None:
+        return CheckOutcome(
+            result=CheckResult.SAFE_REJECT,
+            extracted=None,
+            canonical=None,
+            detail=f"ground_truth '{ground_truth}' could not be normalised to a fraction — safe-reject.",
+        )
+
+    # Extract candidate from LLM output
+    candidate = extract_answer(llm_output, "fraction")
+
+    if candidate is None:
+        # Check if extraction returned None due to ambiguity (two fractions with 'or')
+        # vs. genuinely no fraction found — both are EXTRACT_FAIL at this level
+        # (the ambiguity check inside extract_answer returns None for both)
+        # We need to distinguish: if there ARE fraction-like tokens but we couldn't
+        # choose, that's SAFE_REJECT; if there are none, that's EXTRACT_FAIL.
+        # Heuristic: if there's a fraction pattern anywhere in the text, it's ambiguous.
+        expanded = _expand_unicode_fractions(llm_output)
+        has_frac = bool(_FRAC_RE.search(expanded)) or bool(_MIXED_RE.search(expanded))
+        if has_frac:
+            return CheckOutcome(
+                result=CheckResult.SAFE_REJECT,
+                extracted=None,
+                canonical=None,
+                detail="Multiple fraction candidates found but could not unambiguously select one — safe-reject.",
+            )
+        return CheckOutcome(
+            result=CheckResult.EXTRACT_FAIL,
+            extracted=None,
+            canonical=None,
+            detail="No fraction or integer candidate found in llm_output.",
+        )
+
+    # Detect decimal in extracted candidate
+    if _DECIMAL_RE.search(candidate):
+        return CheckOutcome(
+            result=CheckResult.SAFE_REJECT,
+            extracted=candidate,
+            canonical=None,
+            detail=f"Extracted candidate '{candidate}' contains a decimal — not in pilot scope; safe-reject.",
+        )
+
+    # Normalise candidate
+    cand_frac = normalise_fraction(candidate)
+    if cand_frac is None:
+        # Includes zero-denominator case
+        if re.search(r"/\s*0\b", candidate):
+            return CheckOutcome(
+                result=CheckResult.SAFE_REJECT,
+                extracted=candidate,
+                canonical=None,
+                detail=f"Extracted '{candidate}' has zero denominator — safe-reject.",
+            )
+        return CheckOutcome(
+            result=CheckResult.SAFE_REJECT,
+            extracted=candidate,
+            canonical=None,
+            detail=f"Extracted '{candidate}' could not be normalised — safe-reject.",
+        )
+
+    canonical = _canonical_str(cand_frac)
+    gt_canonical = _canonical_str(gt_frac)
+    result = CheckResult.PASS if cand_frac == gt_frac else CheckResult.FAIL
+    detail = (
+        f"Extracted '{candidate}' → {canonical}; "
+        f"expected '{ground_truth}' → {gt_canonical}: "
+        f"{'equivalent' if result == CheckResult.PASS else 'not equivalent'}."
+    )
+    return CheckOutcome(result=result, extracted=candidate, canonical=canonical, detail=detail)
+
+
+def _check_mc_choice(llm_output: str, ground_truth: str) -> CheckOutcome:
+    """
+    Extract the last MC choice (A-D or 1-4) from llm_output and compare
+    case-insensitively to ground_truth.
+
+    Malformed ground_truth → SAFE_REJECT.
+    """
+    # Validate ground_truth: must be A-D or 1-4
+    gt = ground_truth.strip()
+    if not re.fullmatch(r"[A-Da-d1-4]", gt):
+        return CheckOutcome(
+            result=CheckResult.SAFE_REJECT,
+            extracted=None,
+            canonical=None,
+            detail=f"ground_truth '{gt}' is not a valid MC choice (A-D or 1-4) — safe-reject.",
+        )
+
+    candidate = extract_answer(llm_output, "mc4")
+    if candidate is None:
+        return CheckOutcome(
+            result=CheckResult.EXTRACT_FAIL,
+            extracted=None,
+            canonical=None,
+            detail="Could not extract an MC choice from llm_output.",
+        )
+
+    # Normalise: letters → uppercase, digits stay as-is
+    cand_norm = candidate.upper() if candidate.isalpha() else candidate
+    gt_norm = gt.upper() if gt.isalpha() else gt
+
+    result = CheckResult.PASS if cand_norm == gt_norm else CheckResult.FAIL
+    detail = (
+        f"Extracted '{candidate}' (normalised '{cand_norm}'), "
+        f"expected '{gt}' (normalised '{gt_norm}'): "
+        f"{'match' if result == CheckResult.PASS else 'mismatch'}."
+    )
+    return CheckOutcome(result=result, extracted=candidate, canonical=cand_norm, detail=detail)

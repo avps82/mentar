@@ -1,0 +1,66 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mentar"
+version = "0.1.0.dev0"
+description = "OSS-first, local-first AI tutor for children — supplements school, never replaces it."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "TBD" }
+authors = [{ name = "Pradeep" }]
+keywords = ["tutor", "education", "kids", "oss", "local-llm", "kst", "bkt"]
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Intended Audience :: Education",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Education",
+]
+
+dependencies = [
+  "pyyaml>=6.0",
+  "pyBKT>=1.4",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+  "pytest-cov>=4.1",
+  "hypothesis>=6.100",
+  "ruff>=0.5",
+]
+inference-ollama = [
+  "ollama>=0.3",
+]
+
+[project.scripts]
+mentar = "mentar.cli.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["mentar*"]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = [
+  "-ra",
+  "--strict-markers",
+  "--strict-config",
+]
+markers = [
+  "llm: tests that require a live LLM backend (skipped on CT 114; run on eval host)",
+  "slow: tests that take >5s",
+  "human_gated: tests that require a human action (consent, review, child session)",
+]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = ["E501"]
