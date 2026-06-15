@@ -9,7 +9,7 @@ description = "OSS-first, local-first AI tutor for children — supplements scho
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "TBD" }
-authors = [{ name = "Pradeep" }]
+authors = [{ name = "Mentar maintainers" }]
 keywords = ["tutor", "education", "kids", "oss", "local-llm", "kst", "bkt"]
 classifiers = [
   "Development Status :: 2 - Pre-Alpha",

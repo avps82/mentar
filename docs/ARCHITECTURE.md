@@ -142,7 +142,7 @@ TESTS.md (§0 and throughout) uses flat paths that predate the src-layout decisi
 
 ## 7b. Dependency philosophy (build vs import)
 
-*Added 2026-06-15 (Pradeep).* Default to **importing well-maintained open-source libraries
+*Added 2026-06-15 (the maintainer).* Default to **importing well-maintained open-source libraries
 to reduce maintenance** — don't hand-roll what a focused, healthy lib already does well. We
 **own only**: (1) the thin *glue* wiring libs together, and (2) the **safety-critical and
 differentiating** logic (curriculum/pedagogy engine, safety layer, the scope/data-wrapping

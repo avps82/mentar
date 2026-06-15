@@ -9,7 +9,7 @@ sources: "github.com/0nspaceshipearth/Hermit-AI (AGPL-3.0); SPEC §15 (pedagogic
 
 # Grounding / ZIM-Reader — Reference Scan: Hermit-AI
 
-Pradeep flagged **Hermit-AI** as an *idea jump-board* for Mentar's ZIM-reader / grounding
+The maintainer flagged **Hermit-AI** as an *idea jump-board* for Mentar's ZIM-reader / grounding
 component (the layer that reads vetted offline sources — Vikidia, Simple English Wikipedia —
 as RAG grounding for tutoring; SAFETY §1.5, SPEC §15). I cloned and inspected it hands-on.
 
@@ -61,7 +61,7 @@ broad-hardware** posture (pairs naturally with the llama.cpp default).
 
 ## ZIM reading: BUILD a thin owned reader (reuse OpenZIM MCP's MIT code, skip its server)
 
-Pradeep flagged the **ZIM MCP** option (mcpmarket.com/server/zim-1) = **OpenZIM MCP**
+The maintainer flagged the **ZIM MCP** option (mcpmarket.com/server/zim-1) = **OpenZIM MCP**
 (`github.com/cameronrye/openzim-mcp`). Verified via GitHub API: **MIT licence**, Python,
 **actively maintained** (pushed 2026-06-14), libzim-based, fully **offline** (<50MB RAM),
 sub-second full-text search, 8 clean tools (`zim_search`, `zim_query`, `zim_get`,
