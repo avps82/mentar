@@ -31,7 +31,7 @@ reproduce every hash below or the test FAILS (stale registry).
 | `pattern_problem_first.md` | `pattern_problem_first` | Interaction pattern — pose a problem first, then probe the child's reasoning. Best for … | `99be00694e8e` |
 | `pattern_read_then_question.md` | `pattern_read_then_question` | Interaction pattern — present a short grounded passage, then ask a checking question. B… | `5d924c54d035` |
 | `pattern_state_and_challenge.md` | `pattern_state_and_challenge` | Interaction pattern — child states what they learned, system gently challenges an assum… | `7b3bbf3285c3` |
-| `system_prompt.md` | `system_prompt` | Global system prompt — safety framing, grounding-as-data wrapper, AI transparency, scop… | `7a7bcc98c4ce` |
+| `system_prompt.md` | `system_prompt` | Global system prompt — safety framing, grounding-as-data wrapper, AI transparency, scop… | `8fcf78000fcb` |
 | `transfer_question_gen.md` | `transfer_question_gen` | Generate a NEW-surface transfer question (with answer + answer_type) from a concept and… | `d1ea720661c9` |
 
 ## Coverage (W6.2 acceptance)

@@ -227,7 +227,7 @@ def _materialize_smb(location: str, cfg: dict) -> Optional[Path]:
         from smbclient import open_file
     except ImportError:
         logger.warning(
-            "materialize_zim: SMB location %r requested but 'smbprotocol' is not installed. "
+            "materialize_zim: SMB location %r requested but 'smbprotocol' is not installed. "  # t7.3-exempt: operator log message, not a prompt
             "Install it with: pip install 'mentar[nas]'  (or mount the share and point "
             "grounding.zim_dir at the mount). Returning None.",
             location,
