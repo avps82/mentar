@@ -92,8 +92,8 @@ exactly, so this doc is a thin overlay — never duplicate text from PHASE0.md, 
 | W5.3 pilot defaults from placeholders | ✅ | SPEC §21 TBDs promoted to **pilot default (v0)**: pattern mix 40/30/30, Help retry cap 3, mastery threshold 0.85 (matches `engine/fringe.py`), + new Probe-cadence row (every 5 items OR mastery≥0.85 ∧ Help-rate<1/10). All revisable post-pilot. |
 | W5.4 COPPA post-April-2026 check | ⏳ | G2 blocker, not G0 — verify |
 | W5.5 phase effort estimates | ⏳ | After G0 tasks scoped |
-| W5.6 kill criteria + scope-cut order | 🟡 | **Drafted in SPEC §25.1–25.2** (criteria a–e + ordered cut list + never-cut bar). ⏳ Needs Pradeep: (c) distress threshold (default proposed) + (e) optional personal time/€ runway line. Otherwise complete. |
-| W5.7 data flywheel posture | ⏳ | G2 decision (24 #16) |
+| W5.6 kill criteria + scope-cut order | 🟡 | **Drafted in SPEC §25.1–25.2** (criteria a–e + ordered cut list + never-cut bar). (c) now safeguarding-informed: stop on ANY distress / assent-withdrawal (no tolerance count); guides cited (UNICEF ERIC, IRB child-assent, NSPCC/Bucket D). ⏳ Needs Pradeep: ratify (c) + set (e) optional personal runway line. |
+| W5.7 data flywheel posture | ✅ | **DECIDED (Pradeep, 2026-06-15): (c) per-child / per-household** — no shared flywheel in the OSS local edition; aggregate features = hosted-tier-only if ever. SPEC §24 #16 updated; §10/§15 caveats resolved. |
 
 ---
 
@@ -185,3 +185,5 @@ once `pip install -e ".[dev]"`. (Test files for bkt/probe/registry now landed �
 | 2026-06-14 (overnight) | W5.6 🟡 (Opus) — kill criteria + scope-cut order drafted in SPEC §25.1–25.2; awaits Pradeep's distress/runway thresholds. |
 | 2026-06-14 (overnight) | Docs hygiene — rewrote stale `README.md` to match real src-layout; created `compliance/README.md` (coverage-status map per SPEC §17.5). |
 | 2026-06-14 (overnight) | Test files landed (Opus) — `tests/engine/test_bkt.py` (T3.3, 7), `tests/engine/test_probe_classify.py` (7), `tests/test_prompt_registry.py` (T4.6+T7.3, 6). All pass via inline smoke; pytest-compatible. |
+| 2026-06-15 | Secret safeguard added — `.gitignore` secret rules + `config/inference.example.yaml` + `config/README.md` + `scripts/git-hooks/pre-commit` (blocks secret filenames + inline secrets; activate via `core.hooksPath`). Tested: blocks, clean commits pass. |
+| 2026-06-15 | Decisions (Pradeep) — **W5.7 = (c) per-child** (§24 #16); EU AI Act high-risk clarified **not local/G0-blocking** (§24 #1, §17.2); W5.6 (c) revised to safeguarding-informed assent-based threshold w/ external guides. |
