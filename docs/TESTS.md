@@ -254,11 +254,11 @@
 
 ### T4.6 Prompt-template registry & versioning test (new 2026-06-12, feeds W6.2)
 - **GOAL:** Verify all prompts are versioned files the controller loads — never hardcoded — and that changes are detectable.
-- **CONTEXT:** W6.2: `prompts/` holds one file per interaction pattern (×3), Help modality (×5), transfer-question generation, and the system prompt (incl. W2.3 grounding-as-data wrapper). `PROMPTS.md` registry lists file, purpose, version hash. T7.3 regression triggers on any prompt change — this test provides the hash mechanism that makes that trigger enforceable.
+- **CONTEXT:** W6.2: `prompts/` holds one file per interaction pattern (×3), Help modality (×5), transfer-question generation, and the system prompt (incl. W2.3 grounding-as-data wrapper). `prompts/README.md` registry lists file, purpose, version hash. T7.3 regression triggers on any prompt change — this test provides the hash mechanism that makes that trigger enforceable.
 - **PRE:** W6.2 done; controller runnable with mocked `generate()`.
 - **STEPS:** 1. Assert `prompts/` contains ≥10 files and every registry row's hash matches the file's current content hash (stale registry = FAIL). 2. Grep-class scan of source tree: no prompt-like string literals >200 chars outside `prompts/` (denylist heuristic, documented exceptions allowed via marker comment). 3. Controller test: request each modality/pattern → assert the rendered prompt is byte-traceable to the corresponding template file (template id + hash logged per generation). 4. Mutate one template → assert combined prompt-set hash changes (the T7.3 trigger signal).
 - **PASS:** All 4 steps green; every generation logs its template id + hash.
-- **OUT:** `tests/test_prompt_registry.py`, `prompts/PROMPTS.md`, `reports/T4.6/result.json`.
+- **OUT:** `tests/test_prompt_registry.py`, `prompts/README.md`, `reports/T4.6/result.json`.
 - **REFS:** W6.2, 12, 13.2, T7.3, W2.3.
 
 ---

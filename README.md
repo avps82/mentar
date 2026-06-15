@@ -63,7 +63,7 @@ mentar/
 │   ├── _template.md         # Authoring format for new curricula
 │   └── templates/
 │       └── _pilot/          # Phase-0 fractions pilot graph (more to follow)
-├── prompts/                 # Versioned prompt templates + PROMPTS.md registry (W6.2)
+├── prompts/                 # Versioned prompt templates + prompts/README.md registry (W6.2)
 ├── src/mentar/              # Python package (src-layout)
 │   ├── engine/              # Concept graph (KST), BKT mastery, fringe, probe classifier
 │   ├── dialogue/            # Turn-loop controller (session state machine)

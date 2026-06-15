@@ -9,7 +9,7 @@ authority: This document + SPEC.md §8 + PHASE0.md W6.4
 
 ## 1. Purpose
 
-This document defines the source-layout and module responsibilities for the Mentar repository so that Week 1 code does not become the de facto architecture by default (PHASE0.md W6.4). It is a navigational sketch, not a reference manual — detailed behavioural specs live in SPEC.md, SESSION_FSM.md, PROMPTS.md, and SAFETY.md. The layout is Python src-layout (`src/mentar/`) to keep the installable package separate from top-level data directories.
+This document defines the source-layout and module responsibilities for the Mentar repository so that Week 1 code does not become the de facto architecture by default (PHASE0.md W6.4). It is a navigational sketch, not a reference manual — detailed behavioural specs live in SPEC.md, SESSION_FSM.md, prompts/README.md, and SAFETY.md. The layout is Python src-layout (`src/mentar/`) to keep the installable package separate from top-level data directories.
 
 ---
 
@@ -64,9 +64,9 @@ No network call crosses the data path in the default (local Ollama) backend. All
 | `src/mentar/tools/` | CLI utilities: `validate_template.py` (DAG/schema validator), helper scripts | W3.1; T3.1 |
 | `src/mentar/cli/` | `mentar` CLI entry point; subcommands: `serve`, `eval`, `validate-template` | PHASE0.md W6.4 |
 | `curriculum/` | Markdown + YAML curriculum templates (country/grade); community contribution surface; NOT under `src/` (data, not code) | SPEC §9; W3.1–W3.2 |
-| `prompts/` | Versioned prompt template files (≥10 files) + `PROMPTS.md` registry with per-file hash; NOT under `src/` (data, version-controlled) | SPEC §12, §13.2; W6.2; T4.6 |
+| `prompts/` | Versioned prompt template files (≥10 files) + `prompts/README.md` registry with per-file hash; NOT under `src/` (data, version-controlled) | SPEC §12, §13.2; W6.2; T4.6 |
 | `eval/` | Eval DATA directory: `dataset_v1.jsonl`, `schema.json`, `models.yaml`, `responses/`, `scores_*.csv`, `rubric.md`; code lives at `src/mentar/eval/` | W1.2; T1.1–T1.5 |
-| `docs/` | SPEC.md, PHASE0.md, TESTS.md, SAFETY.md, SESSION_FSM.md, ARCHITECTURE.md, PROMPTS.md (W6.2 registry), MODEL.md (post-W1.3), HARDWARE.md (W1.6), `research/` | All workstreams |
+| `docs/` | SPEC.md, PHASE0.md, TESTS.md, SAFETY.md, SESSION_FSM.md, ARCHITECTURE.md, prompts/README.md (W6.2 registry), MODEL.md (post-W1.3), HARDWARE.md (W1.6), `research/` | All workstreams |
 | `tests/` | pytest suite; mirrors `src/mentar/` layout (e.g. `tests/test_escalation.py`, `tests/test_session_fsm.py`) | TESTS.md §0; T2–T5 suites |
 | `reports/` | Gitignored runtime output; `reports/<test-id>/result.json` per test; `reports/pilot/` for T6 protocols | TESTS.md §0 |
 | `pyproject.toml` | Package metadata, dependencies, entry-point declarations | — |
@@ -165,7 +165,7 @@ example: **depend on `libzim`, own the safety wrapper, skip the server.**
 ## 8. Out of Scope for This Document
 
 - **Session FSM details** — state/transition table, absorbing states, persistence contract → `docs/SESSION_FSM.md` (W6.1)
-- **Prompt template registry** — file list, version hashes, per-template purpose → `prompts/PROMPTS.md` (W6.2)
+- **Prompt template registry** — file list, version hashes, per-template purpose → `prompts/README.md` (W6.2)
 - **Pilot interface** — chosen surface (TUI vs minimal web), view list, HTML structure → recorded in SPEC.md §23 (W6.3)
 - **Model selection and hardware tiers** → `docs/MODEL.md` (W1.3) and `docs/HARDWARE.md` (W1.6)
 - **Safety layer full spec** → `docs/SAFETY.md` (W2.1)
