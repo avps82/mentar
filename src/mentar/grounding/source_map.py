@@ -39,24 +39,30 @@ class ScopeError(ValueError):
 def get_zim_path(source: str, cfg: dict) -> str | None:
     """Return the configured ZIM *location* for ``source``, or ``None`` if unconfigured.
 
-    The location may be a local path, a mounted-NAS path, or an SMB URL/UNC,
-    depending on ``zim_dir`` — :func:`mentar.grounding.sources.materialize_zim`
-    turns it into a local path the reader can open.
+    The ``sources`` entry may be a **structured spec** (``{project, lang,
+    selection?, flavour?, pin?}`` — the newest matching file in ``zim_dir`` is
+    chosen automatically, latest ``YYYY-MM`` wins) or a plain **filename string**
+    (used as-is). The resulting location may be a local path, a mounted-NAS path,
+    or an SMB URL/UNC depending on ``zim_dir`` —
+    :func:`mentar.grounding.sources.materialize_zim` turns it into a local path.
 
     Args:
         source: Source enum string from the curriculum node (e.g. ``"vikidia"``).
         cfg:    The ``grounding:`` config block (``zim_dir``, ``sources`` sub-dict).
 
     Returns:
-        The joined location string if the source is configured, else ``None``.
+        The joined location string if the source resolves to a file, else ``None``.
     """
-    from mentar.grounding.sources import join_location
+    from mentar.grounding.sources import join_location, resolve_filename
 
     zim_dir = cfg.get("zim_dir", "") or "."
-    sources_map: dict = cfg.get("sources", {})
-    filename = sources_map.get(source)
-    if not filename:
+    spec = (cfg.get("sources") or {}).get(source)
+    if not spec:
         logger.debug("get_zim_path: source %r not in config.grounding.sources", source)
+        return None
+    filename = resolve_filename(spec, zim_dir, cfg)
+    if not filename:
+        logger.warning("get_zim_path: no ZIM file resolved for source %r in %r", source, zim_dir)
         return None
     return join_location(zim_dir, filename)
 

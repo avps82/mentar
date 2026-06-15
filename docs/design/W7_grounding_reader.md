@@ -71,7 +71,7 @@ primary path, deps).
 | `reader.py` | Thin owned `libzim` reader: `open(zim_path)`, `get_by_url(anchor)` (anchor URL → ZIM entry), `get_section(entry, hint)` → article text. ~100–200 lines over `libzim`. No server/JSON-RPC. Adapt OpenZIM MCP MIT search code as reference, reimplement minimally. |
 | `resolve.py` | Pilot path: node `grounding` block → `reader.get_by_url` → extract passage via `passage_hint` (lead section / heading match; deterministic) → length-bound. |
 | `source_map.py` | `source` enum → configured ZIM **location** (local / mounted-NAS / SMB); anchor-host↔source **scope guard**. |
-| `sources.py` | Turn a ZIM *location* into a local path libzim can open: local/mounted paths pass through unchanged; `smb://`/UNC locations are copied once to `zim_cache_dir` via `smbclient` (optional `[nas]` extra). `is_smb_location`, `smb_url_to_unc`, `join_location`, `materialize_zim`. Never raises → `None` on failure. |
+| `sources.py` | (1) **Filename resolution** — `build_filename_regex` + `pick_latest` + `list_zim_dir` + `resolve_filename` pick the newest `<project>_<lang>_<selection>_<flavour>_<YYYY-MM>.zim` in `zim_dir` from a structured source spec (latest wins; `pin` overrides; a string spec = exact filename). (2) **Materialization** — local/mounted paths pass through; `smb://`/UNC copied once to `zim_cache_dir` via `smbclient` (optional `[nas]` extra). `is_smb_location`, `smb_url_to_unc`, `join_location`, `materialize_zim`. Never raises → `None` on failure. Shared with `scripts/fetch_zim.py`. |
 | `wrapper.py` | Return inner passage text for `{{grounding_passage}}` (no double-wrap). SAFETY §1.5 contract in docstring. |
 | `cache.py` | Memoize by `anchor` (in-memory + optional on-disk). |
 | `__init__.py` | Public `resolve_grounding(...)`; degradation contract documented. |
@@ -84,9 +84,13 @@ Committed example, env-var style (mirror existing conventions; real paths only i
 ```yaml
 grounding:
   zim_dir: "${MENTAR_ZIM_DIR}"          # local path | mounted-NAS path | smb:// URL / UNC
+  # Sources declared by filename parts: <project>_<lang>_<selection>_<flavour>_<YYYY-MM>.zim
+  # The NEWEST matching file in zim_dir is used automatically (latest YYYY-MM wins);
+  # `pin` forces a build date or an exact filename. A plain string = exact filename.
   sources:
-    vikidia:          "vikidia_en_all_nopic.zim"
-    wikipedia_simple: "wikipedia_en_simple_all.zim"
+    vikidia:          { project: vikidia,   lang: en, selection: all,        flavour: nopic }
+    wikipedia_simple: { project: wikipedia, lang: en, selection: simple_all, flavour: nopic }
+    # astronomy:      { project: wikipedia, lang: en, selection: astronomy,  flavour: maxi, pin: "2026-02" }
   max_passage_chars: 1200                # length bound for small-model context
   cache: { enabled: true, dir: "${MENTAR_GROUNDING_CACHE:-.cache/grounding}" }   # resolved-passage cache
   zim_cache_dir: "${MENTAR_ZIM_CACHE:-.cache/zim}"   # local copies of smb:// ZIMs (not for mounted NAS)
