@@ -39,3 +39,16 @@ gemini:
 claude:
   api_key: "${ANTHROPIC_API_KEY}"
   model: "REPLACE_ME"
+
+# ── Grounding / ZIM-reader (W7) ───────────────────────────────────────────────
+# SPEC §15 (layer-1 RAG): fills {{grounding_passage}} in prompts/system_prompt.md.
+# ZIM files are large binaries — NEVER commit them (*.zim is gitignored).
+# Download with:  bash scripts/fetch_pilot_zims.sh
+# See:            docs/design/W7_grounding_reader.md
+grounding:
+  zim_dir: "${MENTAR_ZIM_DIR}"          # dir holding the pilot .zim files
+  sources:
+    vikidia:          "vikidia_en_all_nopic.zim"
+    wikipedia_simple: "wikipedia_en_simple_all.zim"
+  max_passage_chars: 1200                # length bound for small-model context
+  cache: { enabled: true, dir: "${MENTAR_GROUNDING_CACHE:-.cache/grounding}" }
