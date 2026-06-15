@@ -43,12 +43,28 @@ claude:
 # ── Grounding / ZIM-reader (W7) ───────────────────────────────────────────────
 # SPEC §15 (layer-1 RAG): fills {{grounding_passage}} in prompts/system_prompt.md.
 # ZIM files are large binaries — NEVER commit them (*.zim is gitignored).
-# Download with:  bash scripts/fetch_pilot_zims.sh
+# Download with:  python3 scripts/fetch_pilot_zims.py   (supports local / NAS / smb:// dest)
 # See:            docs/design/W7_grounding_reader.md
 grounding:
-  zim_dir: "${MENTAR_ZIM_DIR}"          # dir holding the pilot .zim files
+  # zim_dir = where the .zim files live. Three forms are accepted:
+  #   - local path           : "/data/zims"
+  #   - mounted NAS / share   : "/mnt/nas/zims"  or  "Z:\\zims"  (mount it in the OS;
+  #                             libzim reads it like any local file — no SMB config needed)
+  #   - SMB URL / UNC         : "smb://nas/share/zims" or "\\\\nas\\share\\zims"
+  #                             (needs the [nas] extra: pip install 'mentar[nas]'; the ZIM is
+  #                             copied once to zim_cache_dir because libzim needs a local file)
+  zim_dir: "${MENTAR_ZIM_DIR}"
   sources:
     vikidia:          "vikidia_en_all_nopic.zim"
     wikipedia_simple: "wikipedia_en_simple_all.zim"
   max_passage_chars: 1200                # length bound for small-model context
-  cache: { enabled: true, dir: "${MENTAR_GROUNDING_CACHE:-.cache/grounding}" }
+  cache: { enabled: true, dir: "${MENTAR_GROUNDING_CACHE:-.cache/grounding}" }   # resolved-passage cache
+  zim_cache_dir: "${MENTAR_ZIM_CACHE:-.cache/zim}"   # local copies of smb:// ZIMs (NOT used for mounted NAS)
+  # SMB/Samba credentials — only needed when zim_dir is an smb:// URL or UNC path.
+  # For an already-mounted share, leave this disabled. Keep real secrets in env / the
+  # gitignored config/inference.yaml, never in this example file.
+  smb:
+    enabled: false
+    username: "${MENTAR_SMB_USER}"
+    password: "${MENTAR_SMB_PASSWORD}"
+    domain:   "${MENTAR_SMB_DOMAIN:-}"

@@ -25,6 +25,7 @@ import logging
 from mentar.grounding import cache as grounding_cache
 from mentar.grounding.reader import ZimReader
 from mentar.grounding.source_map import resolve_zim
+from mentar.grounding.sources import materialize_zim
 
 logger = logging.getLogger(__name__)
 
@@ -83,35 +84,42 @@ def resolve_grounding_inner(node_grounding: dict, cfg: dict) -> str:
         )
         return ""
 
-    # ── 1. Scope guard + ZIM path resolution ──────────────────────────────────
-    zim_path = resolve_zim(source, anchor, cfg)
-    if zim_path is None:
+    # ── 1. Scope guard + ZIM location resolution ──────────────────────────────
+    zim_location = resolve_zim(source, anchor, cfg)
+    if zim_location is None:
         # Logged inside resolve_zim (scope error or unconfigured source)
         return ""
 
     # ── 2. Cache lookup ───────────────────────────────────────────────────────
+    # Before materialization, so a cache hit never triggers an SMB copy.
     cached = grounding_cache.get(anchor, cfg)
     if cached is not None:
         logger.debug("resolve: cache hit for anchor=%r", anchor)
         return cached
 
-    # ── 3. Open ZIM reader ────────────────────────────────────────────────────
+    # ── 3. Materialize the ZIM to a local path (copies from SMB if needed) ─────
+    zim_path = materialize_zim(zim_location, cfg)
+    if zim_path is None:
+        # Logged inside materialize_zim (missing file / SMB failure / no smbprotocol)
+        return ""
+
+    # ── 4. Open ZIM reader ────────────────────────────────────────────────────
     reader = _get_reader(zim_path)
     if reader is None:
         return ""
 
-    # ── 4. Fetch article HTML ─────────────────────────────────────────────────
+    # ── 5. Fetch article HTML ─────────────────────────────────────────────────
     html_bytes = reader.get_by_url(anchor)
     if html_bytes is None:
         # Logged inside get_by_url
         return ""
 
-    # ── 5. Extract passage ────────────────────────────────────────────────────
+    # ── 6. Extract passage ────────────────────────────────────────────────────
     passage = reader.get_section(html_bytes, passage_hint)
     if not passage or not passage.strip():
         logger.warning("resolve: empty passage for anchor=%r passage_hint=%r", anchor, passage_hint)
         return ""
 
-    # ── 6. Cache and return ───────────────────────────────────────────────────
+    # ── 7. Cache and return ───────────────────────────────────────────────────
     grounding_cache.put(anchor, passage, cfg)
     return passage
