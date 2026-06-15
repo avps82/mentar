@@ -1,0 +1,17 @@
+# Model roster for T1.2 (response generation). See docs/MODEL.md for roles + the eval host.
+# Served via the OpenAI-compatible eval proxy; endpoint+key come from env
+# (MENTAR_VLLM_BASE_URL / MENTAR_VLLM_API_KEY) — never written here.
+#
+# role: candidate (local OSS, under test) | ceiling (quality upper bound, NOT a pilot pick)
+#       | judge (grades outputs)          | dev (Claude Code agent, not a tutor candidate)
+# quant: "unknown" until confirmed on the host (W1.3 reproducibility).
+models:
+  - {name: "phi4-mini",         source: ollama,    params: "~3.8B", quant: unknown, role: candidate, tier: low-end}
+  - {name: "qwen3.5:2b",        source: ollama,    params: "~2B",   quant: unknown, role: candidate, tier: low-end}
+  - {name: "llama3.1:8b",       source: ollama,    params: "8B",    quant: unknown, role: candidate, tier: mid}
+  - {name: "gemma2:9b",         source: ollama,    params: "9B",    quant: unknown, role: candidate, tier: mid}
+  - {name: "qwen3.5:9b",        source: ollama,    params: "~9B",   quant: unknown, role: candidate, tier: mid}
+  - {name: "qwen3:14b",         source: ollama,    params: "14B",   quant: unknown, role: candidate, tier: capable-gpu}
+  - {name: "mistral-small3.1",  source: ollama,    params: "~24B",  quant: unknown, role: ceiling,   tier: ceiling}
+  - {name: "claude-sonnet-4-6", source: anthropic, params: "n/a",   quant: "n/a",  role: judge,     tier: cloud}
+  - {name: "claude-haiku-4-5",  source: anthropic, params: "n/a",   quant: "n/a",  role: dev,       tier: cloud}

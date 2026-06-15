@@ -57,11 +57,17 @@ Model quality directly gates pedagogical quality (SPEC §15). Score every candid
 
 ## What needs to happen (run plan)
 
-- [ ] **T1.1 dataset** — build the 50 + 30 + 20 prompt set (model-agnostic; buildable now, no host needed).
+- [x] **T1.1 dataset** — BUILT 2026-06-16: 101 items (50 reexplain / 31 transfer / 20 adversarial).
+      Source = `eval/build_dataset.py` (deterministic); the `.jsonl` is gitignored (regenerate with
+      `python3 eval/build_dataset.py`) and **pinned** by `eval/dataset_v1.sha256`
+      (`ba653976…eb7d069`). `eval/schema.json` + `eval/validate_dataset.py` (PASS) + `eval/models.yaml`
+      + `eval/run_candidates.py`; `tests/eval/test_dataset_v1.py` green (regenerates if absent).
 - [ ] **Env** — export `MENTAR_VLLM_BASE_URL` + `MENTAR_VLLM_API_KEY` (above).
+- [ ] **Generate responses (T1.2)** — `python3 eval/run_candidates.py` → `eval/responses/{model}.jsonl`
+      (101 prompts × 6 candidates; latency recorded). Runner built + dry-run verified.
 - [ ] **NIAH pass** — run retrieval-faithfulness per candidate against the proxy (`eval/niah/`).
-- [ ] **T1 harness** — run hallucination/correctness/safety per candidate; **Sonnet as judge/oracle** for
-      grading (no human-in-loop for every output).
+- [ ] **T1 harness** — score correctness via `src/mentar/eval/verify_numeric.py` (transfer suite);
+      hallucination/safety per candidate; **Sonnet as judge/oracle** (no human-in-loop for every output).
 - [ ] **Latency** — record tok/s per candidate (note CPU-offload for `mistral-small3.1`, big Qwen).
 - [ ] **Score + pick (W1.3)** — fill the Decision section; map sizes → hardware tiers (W1.4).
 - [ ] *(2nd pass, optional)* confirm Qwen `:9b`/`:2b` exact base+quant for reproducibility.
