@@ -82,22 +82,25 @@ Model quality directly gates pedagogical quality (SPEC §15). Score every candid
 hallucination, safety, and instruction-following are still pending). Latency = median seconds
 per item over all 101 prompts, as served by the eval-host proxy (includes model-load/queue).
 
+All 6 candidates complete (transfer suite). Latency = median seconds/item over the prompts run.
+
 | Model | transfer pass | rate | median latency |
 |-------|---------------|------|----------------|
 | `gemma2:9b` | 31/31 | **1.00** | 7.5s |
+| `qwen3:14b` | 20/31 | 0.65 | **31.4s** |
 | `qwen3.5:2b` | 19/31 | 0.61 | 2.6s |
 | `qwen3.5:9b` | 19/31 | 0.61 | 13.7s |
 | `llama3.1:8b` | 18/31 | 0.58 | 1.1s |
 | `phi4-mini` | 15/31 | 0.48 | 1.0s |
-| `qwen3:14b` | _(run still completing)_ | — | ~31s/item (partial) |
 
 Observations (preliminary):
-- Only **`gemma2:9b`** clears the T1.6 numeric gate (≥95%) — perfect on transfer, but ~7.5s/item.
-- The others fail on **correctness alone** (≤0.61), before any other dimension.
-- Latency spread is wide: `qwen3.5:9b` (13.7s) and `qwen3:14b` (~31s) look too slow for the
+- Only **`gemma2:9b`** clears the T1.6 numeric gate (≥95%) — perfect on transfer, ~7.5s/item.
+- Everyone else fails on **correctness alone** (≤0.65), before any other dimension.
+- **`qwen3:14b` looks like a bad trade** — 0.65 correctness at 31s/item (slowest by far); its
+  extra size buys neither accuracy nor speed here. Consistent with the "ceiling, not pilot" logic.
+- Latency spread is wide: `qwen3.5:9b` (13.7s) and `qwen3:14b` (31s) are too slow for the
   broad-hardware envelope; `phi4-mini`/`llama3.1:8b` are sub-1.5s but weaker on correctness.
-- `qwen3:14b` is slow enough that its run is still finishing; it had not reached the transfer
-  items when scored. Re-score on completion.
+- Headline so far: **gemma2:9b leads correctness; llama3.1:8b is the fast-but-mid option.**
 
 Raw: `eval/responses/*.jsonl`; scores: `reports/T1.3/scores.csv`.
 
