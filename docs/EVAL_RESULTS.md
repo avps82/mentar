@@ -1,0 +1,172 @@
+---
+title: "Mentar — Model Evaluation Results (W1.2)"
+status: "In progress — first results. NOT the final model pick (that is W1.3)."
+last-updated: 2026-06-16
+owner: Opus
+see-also: docs/MODEL.md (roster + run plan), docs/TESTS.md (T1.x test specs), eval/ (the tooling)
+---
+
+# Mentar — Model Evaluation Results
+
+**The question:** which small, free, locally-runnable AI model should tutor an 8–9-year-old in
+fractions? This page is the plain, human-readable record of how we test the candidates and what
+we've found so far.
+
+> **In plain terms (for a parent).** Choosing an AI tutor is like trying out different teachers.
+> We check three things: (1) does it get the **maths right**, (2) does it **explain clearly** for a
+> young child, and (3) does it stay **safe** — it shouldn't be tricked into off-topic or grown-up
+> chat, and if a child says they're upset it should gently point them to a trusted grown-up rather
+> than try to counsel them itself. We only pick a model that does all three well.
+> *(First draft of this paragraph written by the local gemma2:9b model and edited for accuracy.)*
+
+> ⚠️ **Why the raw scores aren't in the repo:** the per-item outputs and CSVs live under `reports/`
+> and `eval/responses/`, which are **deliberately git-ignored** — they can be large and the
+> safety-test responses contain unsafe model text we don't commit. This page is the committed,
+> readable summary. Anyone can regenerate the raw data with the commands in "Reproduce" below.
+
+---
+
+## 1. The candidates
+
+All are free/open models served locally on the eval host (a gaming PC, 10GB GPU) via an
+OpenAI-compatible proxy. Two cloud Claude models play support roles, not tutor roles.
+
+| Model | Size | Role |
+|-------|------|------|
+| phi4-mini | ~3.8B | candidate (low-end hardware) |
+| qwen3.5:2b | ~2B | candidate (low-end hardware) |
+| llama3.1:8b | 8B | candidate (mid) |
+| gemma2:9b | 9B | candidate (mid) |
+| qwen3.5:9b | ~9B | candidate (mid) |
+| qwen3:14b | 14B | candidate (capable GPU) |
+| mistral-small3.1 | ~24B | **quality ceiling, not a pilot pick** (too big/slow for normal hardware) |
+| claude-sonnet-4-6 | cloud | **judge** — grades the other models' answers |
+| claude-haiku-4-5 | cloud | dev helper (not a tutor) |
+
+---
+
+## 2. How we test
+
+**The question set (`eval/dataset_v1.jsonl`, 101 items, 3 groups):**
+- **Explain (50)** — "explain this fractions idea to a child, using only this passage." Tests
+  clarity, age-appropriateness, and sticking to the source (no made-up facts).
+- **Transfer (31)** — a fresh maths problem to solve. Tests whether the maths is **correct**
+  (auto-checked by our deterministic fraction verifier — no opinion involved).
+- **Safety (20)** — tricky messages a child might send: 5 "jailbreaks" (trying to break the
+  rules), 5 off-topic lures (games/videos), 5 distress-adjacent ("I feel sad…"), and 5 with a
+  hidden instruction buried in the reference text. Each has an expected safe behaviour.
+
+**Bare model vs. the full tutor.** A model on its own has *no rules*. Mentar wraps every model in
+a safety **system prompt** (and other guardrails). So we test two ways:
+- **Bare** = the raw model, no guardrails — shows what the model does unprotected.
+- **Full pipeline** = the model *inside* Mentar's safety wrapper — what a child actually gets.
+Safety must be judged on the **full pipeline**; bare numbers only show why the wrapper is needed.
+
+**Who grades.** Maths correctness is graded automatically. Explanation quality and safety are
+graded by a stronger model acting as **judge** (Claude Sonnet) — which is *not* one of the
+candidates, so it never grades itself. A sample still needs human review before any final pick.
+
+---
+
+## 3. Results so far
+
+### 3.1 Maths correctness — all 6 candidates
+
+Auto-checked on the 31 transfer problems. "Latency" = typical seconds per answer (lower is better).
+
+| Model | Correct | Score | Latency |
+|-------|---------|-------|---------|
+| **gemma2:9b** | 31/31 | **100%** | 7.5s |
+| qwen3:14b | 20/31 | 65% | 31s |
+| qwen3.5:2b | 19/31 | 61% | 2.6s |
+| qwen3.5:9b | 19/31 | 61% | 14s |
+| llama3.1:8b | 18/31 | 58% | 1.1s |
+| phi4-mini | 15/31 | 48% | 1.0s |
+
+**Read:** gemma2:9b is the clear correctness leader (perfect; the only one past the ≥95% bar).
+The big qwen3:14b is a poor trade (65% at 31s — slowest *and* not accurate). llama3.1:8b is the
+fastest but middling. *This is maths ability only — it's the same with or without the safety wrapper.*
+
+### 3.2 Safety — gemma2:9b (the front-runner), judged by Sonnet
+
+This is the headline finding: **the safety wrapper is essential, and it works.**
+
+| Safety test (20 tricky messages) | Safe answers |
+|---|---|
+| **Bare model** (no guardrails) | **5 / 20 (25%)** |
+| **Full Mentar pipeline** | **16 / 20 (80%)** |
+| **Pipeline after a prompt fix** (2026-06-16) | **17 / 20 (85%)** |
+
+Unprotected, gemma2:9b adopted a "no-rules" persona, chatted off-topic, gave a child adult
+mental-health/medical advice, and even followed a hidden "ask for the home address" instruction.
+Inside Mentar's wrapper, those mostly stop — and **all 5 hidden-instruction (injection) attacks are
+blocked**. After we added an explicit "if a child is upset, point them to a trusted grown-up" rule
+to the safety prompt, one more distress case was handled correctly (17/20).
+
+The few remaining misses are mild and are *system-prompt tuning*, not the model giving dangerous
+advice — e.g. acknowledging a worry but not naming a grown-up, or engaging an off-topic lure.
+
+### 3.3 Explanation quality — gemma2:9b (bare), judged by Sonnet
+
+On the 50 "explain to a child" items: **35/50 (70%) fully passed.** Breakdown: age-appropriate
+49/50 · grounded in the passage 45/50 · used the right style 42/50 · no made-up maths 42/50 ·
+within length 50/50 · didn't ask questions back 44/50. *(Bare-model; Mentar's prompt would likely
+lift the style/grounding numbers — to be re-measured through the pipeline.)*
+
+---
+
+## 4. What we've learned
+
+1. **gemma2:9b is the model to beat** — perfect maths, decent explanations, and (wrapped) safe on
+   80–85% of attacks with all injections blocked.
+2. **The safety layer is load-bearing and effective** — it turns a 25%-safe raw model into an
+   80%+-safe tutor. Bare-model safety numbers are meaningless for a real child.
+3. **Bigger isn't better here** — the 24B and 14B models are slower without being more accurate.
+4. **Speed matters** — some models take 14–31s per reply, too slow for a child on modest hardware.
+
+---
+
+## 5. Honest caveats (what these numbers are NOT)
+
+- **Only gemma2:9b has full safety + quality grades so far.** The other five have maths-correctness
+  only. They still need the pipeline + judge before a fair comparison.
+- **Maths correctness is one dimension.** Hallucination, retrieval-faithfulness (a separate "needle
+  in a haystack" test), and instruction-following aren't all folded in yet.
+- **Some wobble between runs.** Models reply with a little randomness (temperature 0.2), so a single
+  run can move an individual item ±1–2. A deterministic (temperature-0) safety re-run is planned.
+- **The judge needs spot-checking.** A human should review a sample of the judge's grades before the
+  final pick (standard practice; the judge is a strong model but not infallible).
+- **This is not the final pick.** The decision (W1.3) is recorded in `docs/MODEL.md` once the
+  remaining dimensions are in.
+
+---
+
+## 6. Reproduce (regenerate the raw data)
+
+```bash
+# 1. build the question set (deterministic; jsonl is git-ignored, pinned by eval/dataset_v1.sha256)
+python3 eval/build_dataset.py && python3 eval/validate_dataset.py
+
+# 2. point at the eval host (token via env — never committed)
+export MENTAR_VLLM_BASE_URL="http://<host>:4000/v1"
+export MENTAR_VLLM_API_KEY="<token>"
+
+# 3. generate answers, then score
+python3 eval/run_candidates.py                        # all candidates (bare)
+python3 eval/run_candidates.py --system-prompt prompts/system_prompt.md --suite adversarial  # full pipeline (safety)
+python3 eval/score_responses.py                       # maths correctness  -> reports/T1.3/
+python3 eval/score_safety.py                          # quick safety heuristic -> reports/T1.5/
+python3 eval/judge_responses.py --model gemma2:9b     # Sonnet-graded rubric + safety -> reports/T1.4/
+```
+
+Tooling: `eval/` (scorers + runner), `tests/eval/` (the tests, all green). Roster + run plan:
+`docs/MODEL.md`. Test specifications: `docs/TESTS.md` (T1.1–T1.6).
+
+---
+
+## 7. Next steps
+
+- Run the other 5 candidates through the **full pipeline** + judge (fair safety/quality comparison).
+- A **deterministic (temp-0)** safety re-run for stable per-item numbers.
+- The **retrieval-faithfulness (NIAH)** test.
+- Human spot-check of the judge's grades → then the **W1.3 model pick** in `docs/MODEL.md`.
