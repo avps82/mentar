@@ -9,7 +9,7 @@ refs: "docs/design/W7_grounding_reader.md, SPEC §15 (RAG), SAFETY §1.5 (ground
 
 # Media & Interactivity — can Mentar handle video / audio / animation / interactive graphs?
 
-Pradeep's question: ZIM archives can contain video, audio, animations, and even interactive
+The maintainer's question: ZIM archives can contain video, audio, animations, and even interactive
 (JS) widgets — can we handle that? Short answer: the doubt dissolves once **grounding** and
 **presentation** are kept separate. They are different layers and must not be conflated.
 
@@ -51,7 +51,7 @@ any entry's bytes + mimetype, so serving ZIM media is technically feasible — b
 
 ## Licensing flag (acted on now)
 
-Pradeep is downloading **Khan Academy** ZIMs. Khan Academy content is **CC BY-NC-SA** — the
+The maintainer is downloading **Khan Academy** ZIMs. Khan Academy content is **CC BY-NC-SA** — the
 **NC (non-commercial)** clause is already logged as a hosted-tier conflict in
 `docs/CONTENT_LICENSES.md` / SPEC §24 #18. Fine for **personal/local** use and experimentation;
 **not** redistributable in a commercial/hosted edition without permission. Keep Khan out of any

@@ -82,7 +82,7 @@ def test_materialize_local_missing_returns_none(tmp_path):
 
 # ── Structured spec → newest matching filename ──────────────────────────────
 
-# Uses Pradeep's real-world filename examples.
+# Uses the maintainer's real-world filename examples.
 _DIR_FILES = [
     "wikipedia_ace_all_maxi_2026-01.zim",
     "wikipedia_ace_all_nopic_2026-04.zim",

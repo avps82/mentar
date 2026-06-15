@@ -53,7 +53,7 @@
 - **Local LLM hosting** chosen for a dual benefit: **privacy** (a child's data stays on the device) and **cost** (no per-seat API fees)
 - **OSS core** = template engine + dialogue framework + safety layer
 - **Paid hosted-inference tier** for non-technical parents is a *later bridge*, modelled on the dbt/Airbyte open-core playbook
-- **Origin:** emerged as a tangent from Pradeep's data-engineering ideation; the founding personal thesis was *"to change the way you think (with AI), you must change the way you read"* — which evolved into a tool that makes children actively engage with concepts rather than passively consume them
+- **Origin:** emerged as a tangent from the maintainer's data-engineering ideation; the founding personal thesis was *"to change the way you think (with AI), you must change the way you read"* — which evolved into a tool that makes children actively engage with concepts rather than passively consume them
 
 One-line: *An open-source, private, offline-capable tutor that helps kids genuinely understand their school curriculum through active questioning — with child safety built in from the first line, not bolted on.*
 
@@ -144,7 +144,7 @@ Nobody has integrated **curriculum-templated tutoring + built-in kid safety + lo
 |------|-----|----------------|
 | **Learner** | Children | Engages with questions, presses Help, answers re-checks |
 | **Configurer / Supervisor** | Parents (or teachers) | Sets mode, curriculum template, safeguards, completion criteria; stays in the loop |
-| **Builder / Maintainer** | Pradeep + OSS community | Template engine, dialogue framework, safety layer, content, model abstraction |
+| **Builder / Maintainer** | The maintainer + OSS community | Template engine, dialogue framework, safety layer, content, model abstraction |
 
 ### 6.2 Age & Supervision Model
 - **Not locked to a single age band** — deliberately broader than the original "5–7 year old" framing; spans year/grade-level templates.
@@ -399,7 +399,7 @@ EU AI Act **Annex III classifies education AI as HIGH-RISK** → heavy obligatio
 **Unresolved (to verify):** the high-risk category centres on **consequential decisions** (admissions, grading, exam monitoring). A *supplementary* home tutor that doesn't gate access or assign formal grades **may fall outside** the strictest sub-categories. Also unresolved: how OSS distribution is treated (provider vs deployer obligations).
 
 ### 17.2 DECISION — Regulatory exposure of the OSS local edition
-**Working position (Pradeep):** because the OSS edition is **local + parent-set-up + not a direct sale to children**, direct developer exposure is **low**.
+**Working position (the maintainer):** because the OSS edition is **local + parent-set-up + not a direct sale to children**, direct developer exposure is **low**.
 - **Data protection (COPPA/GDPR-K):** strongest support — no operator collecting child data ⇒ no COPPA operator / GDPR controller role; GDPR household-activity exemption likely covers home use.
 - **EU AI Act:** OSS status does *not* by itself dissolve obligations (the open-source exemption carves out Art. 5, Art. 6/Annex III, Art. 50). What keeps Mentar out of high-risk: (a) no consequential educational decisions; (b) purely-local non-commercial self-hosting may not be "placing on market." Both to verify. The Art. 5 manipulation ban travels regardless — but Mentar builds no manipulative mechanics.
 - **Risk concentrates in the paid hosted tier** ⇒ full COPPA/GDPR-K/AI-Act machinery applies there.
@@ -500,7 +500,7 @@ generate(prompt, grounding_passages, constraints) → text
   └─ Backend: Claude / other API (opt-in)      ← parent supplies + owns the key
 ```
 
-**Primary local backend = `llama.cpp` (decision, 2026-06-15, Pradeep).** Reasons: it is the
+**Primary local backend = `llama.cpp` (decision, 2026-06-15, the maintainer).** Reasons: it is the
 **lightest** runtime and gives the **broadest hardware support** (CPU-only, Apple Silicon
 (Metal), modest GPUs, Win/macOS/Linux), running quantized **GGUF** weights — which is what
 makes "runs on a parent's laptop/homelab" real, i.e. the local-first differentiator. vLLM is
@@ -616,10 +616,10 @@ Whole-number division
 | 10 | Open-ended critical-thinking measurement (LLM-as-judge) | Open | session | Rubric design, scoring calibration; Phase-2 dependency |
 | 11 | Transfer-test question generation strategy | Open | session | Authored vs generated-and-verified vs grounded |
 | 12 | Kolibri vs ZIM for Khan content | Verify | session | Format/integration path |
-| 13 | GitHub / npm name availability for "Mentar" | ✅ **Resolved 2026-06-11** (W4.1b) | memory | Clear on GitHub/npm/PyPI; keep Mentar. ⏳ Namespace reservation (npm + PyPI placeholder publish) still pending — Pradeep to run |
-| 14 | Cowork local filesystem setup | TODO | memory | Pradeep wants research docs written directly to local folder via Cowork; local filesystem MCP bridge not yet running. Files delivered as chat downloads until resolved. |
+| 13 | GitHub / npm name availability for "Mentar" | ✅ **Resolved 2026-06-11** (W4.1b) | memory | Clear on GitHub/npm/PyPI; keep Mentar. ⏳ Namespace reservation (npm + PyPI placeholder publish) still pending — the maintainer to run |
+| 14 | Cowork local filesystem setup | TODO | memory | The maintainer wants research docs written directly to local folder via Cowork; local filesystem MCP bridge not yet running. Files delivered as chat downloads until resolved. |
 | 15 | Safety research Buckets C–H | TODO | memory | C: chatbot harm cases; D: safeguarding/disclosure; E: content standards; F: guardrail tooling; G: over-reliance/developmental; H: kid-safe patterns. Full roadmap 17.5 |
-| 16 | **Data-flywheel tension** (local-first vs learning-from-usage) | **DECIDED 2026-06-15 → (c) per-child / per-household** | W5.7 (Pradeep) | OSS local edition learns **per child only**; no shared/aggregated flywheel. Cross-learner features (DAKS graph inference §10, shared vetted-variant bank §15) are NOT promised for the local edition — if ever pursued they live in the **hosted tier** (option (a) describes that later home). Keeps the OSS edition data-light; no reopening of the §17 compliance posture. Any "improves from usage" claim is per-household, not collective. §10/§15 caveats resolved to this. |
+| 16 | **Data-flywheel tension** (local-first vs learning-from-usage) | **DECIDED 2026-06-15 → (c) per-child / per-household** | W5.7 (the maintainer) | OSS local edition learns **per child only**; no shared/aggregated flywheel. Cross-learner features (DAKS graph inference §10, shared vetted-variant bank §15) are NOT promised for the local edition — if ever pursued they live in the **hosted tier** (option (a) describes that later home). Keeps the OSS edition data-light; no reopening of the §17 compliance posture. Any "improves from usage" claim is per-household, not collective. §10/§15 caveats resolved to this. |
 | 17 | Core design artifacts undrafted (session state machine, prompt set, pilot interface, repo sketch) | Open → **owned by W6** (26) | review 2026-06-12 | The dialogue 'pipeline/controller' that T4/T5 tests assume has no design doc; prompt templates must be versioned files (T7 gates on prompt changes); pilot UI surface undecided |
 | 18 | **Khan Academy content licence (CC BY-NC-SA) vs paid hosted tier** | **Phase-3 blocker** | W4.1 2026-06-14 | NC clause incompatible with a *paid* hosted tier; fine for non-commercial local/OSS use. Do NOT bundle Khan content into any paid offering without a separate Khan licence. Pilot sources (Vikidia, Simple English Wikipedia, CC BY-SA) cleared — see `docs/CONTENT_LICENSES.md` |
 
@@ -639,9 +639,9 @@ Whole-number division
 |---|----------|-------|
 | (a) | No candidate model passes the T1.6 quality gates | Raise the size ceiling **once**; if still 0 pass → **pause** the project and revisit the local-first bar (SPEC §20). |
 | (b) | EU AI Act verification (§24 #1) concludes high-risk applies **even to the OSS local edition** | **Halt EU framing**; US / parental-consent-first only; reassess at Phase 3. |
-| (c) | The pilot learner shows genuine distress or withdraws assent | **DEFERRED to Bucket D (Pradeep, 2026-06-15) — revisit.** Interim: the **present parent's judgment** governs (parent-mediated pilot), and a per-input distress disclosure is handled by SAFETY Layer 3. **Must NOT halt on normal learning frustration** ("I hate fractions" ≠ distress — the escalation classifier already separates these). No automated tolerance-count or distress-signal *mechanism* exists yet, so no auto-stop rule is set; don't shut the pilot down early on ordinary struggle. |
+| (c) | The pilot learner shows genuine distress or withdraws assent | **DEFERRED to Bucket D (the maintainer, 2026-06-15) — revisit.** Interim: the **present parent's judgment** governs (parent-mediated pilot), and a per-input distress disclosure is handled by SAFETY Layer 3. **Must NOT halt on normal learning frustration** ("I hate fractions" ≠ distress — the escalation classifier already separates these). No automated tolerance-count or distress-signal *mechanism* exists yet, so no auto-stop rule is set; don't shut the pilot down early on ordinary struggle. |
 
-> **On the (c) threshold — status & guidance.** Deferred per Pradeep: defining an auto-stop
+> **On the (c) threshold — status & guidance.** Deferred per the maintainer: defining an auto-stop
 > threshold makes little sense before a distress-signal *mechanism* exists, and a too-eager
 > rule would halt the pilot on normal frustration. Until Bucket D closes, the present parent
 > is the judge of genuine distress / loss of assent. When revisited, anchor on **continuous
@@ -649,7 +649,7 @@ Whole-number division
 > Involving Children), standard **IRB/ethics child-assent** practice, and **NSPCC** guidance
 > (Bucket D, SPEC §17.5). [⚠️ Verify against those sources before relying on it.]
 | (d) | Phase-0 actuals exceed the W5.5 estimate by **>2×** | Invoke the scope-cut order (§25.2). |
-| (e) | *(optional personal-runway line — ⏳ Pradeep to set)* solo time/€ budget exceeds **___** with G0 not reached | Invoke scope-cut order; if still blocked → pause. |
+| (e) | *(optional personal-runway line — ⏳ the maintainer to set)* solo time/€ budget exceeds **___** with G0 not reached | Invoke scope-cut order; if still blocked → pause. |
 
 ### 25.2 Scope-Cut Order (drop first → last)
 When (d) triggers, cut in this order:

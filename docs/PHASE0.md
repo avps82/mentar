@@ -7,7 +7,7 @@
 > - ✅ **W1.1** Eval host = local AI test PC (10GB vRAM, vLLM). → 20.3
 > - ✅ **W1.5** Model layer = **pluggable backends** (local Ollama default; own vLLM / Gemini / Claude opt-in, parent owns key). → 20.1
 > - ✅ **W2.6** Parent-mediated mechanism = Phase 0 honor system + transcript log; Phase 1 PIN gate. → 6.2
-> - ✅ **W4.1b** Name "Mentar" clear on GitHub/npm/PyPI — keep it. ⏳ namespace reservation pending (Pradeep).
+> - ✅ **W4.1b** Name "Mentar" clear on GitHub/npm/PyPI — keep it. ⏳ namespace reservation pending (the maintainer).
 > - ✅ **W5.1** UX moat → Option B: dropped from Phase 0 moat, deferred to Phase 1. → 4.1
 > - 🔭 **W1.6** Hardware + backend-integration watch added (NVIDIA *consumer* RTX Spark / AMD Strix Halo / Apple MLX) — forward-looking, not G0-blocking; deliverable = per-backend integration-effort matrix. → 20.4
 > - ⏳ Still open (G0): W1.2–W1.3 (model eval/pick), W2.1–W2.5 (safety spec), W3.1–W3.6 (pedagogy foundations), W4.1 (content licence audit), W5.2–W5.3 (spec hygiene).
@@ -78,7 +78,7 @@ Task ID convention: `W{workstream}.{n}` = entry task; `P{n}` = pilot-execution t
 | ID | Task | Dep | Exit criterion | Ref |
 |----|------|-----|----------------|-----|
 | W4.1 | **Content licence audit — pilot sources only.** Verify licences of pilot grounding sources (Vikidia, Simple English Wikipedia: CC BY-SA — compatible with local use). Flag Khan Academy CC BY-NC-SA as **hosted-tier conflict** (NC clause vs paid tier) — record as Phase-3 blocker, don't resolve now. [⚠️ Verify per source] | — | Licence table for pilot sources; Khan NC conflict logged in 24 | 18, 24 |
-| W4.1b | ✅ **Name check DONE (2026-06-11).** "Mentar" CLEAR on GitHub / npm / PyPI (only a dormant org stub + 2017 fork; no conflict). Alts rejected: Curio (npm taken), Gradus (npm graveyard), Paideia (active org + brand overload), Tutela/Hearth (weak). **Decision: keep Mentar.** ⏳ **PENDING SUBTASK (Pradeep to run):** reserve namespace — publish placeholder `mentar` v0.0.0 to npm (`npm publish`) + PyPI (`twine upload`) to claim the name before any public repo. ~5 min. | — | Name decision logged (1); ⏳ npm + PyPI namespace reserved | 1 |
+| W4.1b | ✅ **Name check DONE (2026-06-11).** "Mentar" CLEAR on GitHub / npm / PyPI (only a dormant org stub + 2017 fork; no conflict). Alts rejected: Curio (npm taken), Gradus (npm graveyard), Paideia (active org + brand overload), Tutela/Hearth (weak). **Decision: keep Mentar.** ⏳ **PENDING SUBTASK (the maintainer to run):** reserve namespace — publish placeholder `mentar` v0.0.0 to npm (`npm publish`) + PyPI (`twine upload`) to claim the name before any public repo. ~5 min. | — | Name decision logged (1); ⏳ npm + PyPI namespace reserved | 1 |
 | W4.2 | **Mentar OSS licence + name clearance** (was TODO #13). *Name clearance now done (W4.1b).* Remaining: choose project licence — permissive (Apache-2.0, maximises adoption) vs copyleft (AGPL, protects hosted-tier moat); decide deliberately. Basic trademark search ("Mentar", edtech classes). G2-blocking, not G0. | — | Licence chosen + recorded; trademark search logged | 1, TODO #13 |
 
 ---
