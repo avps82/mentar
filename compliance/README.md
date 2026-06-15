@@ -38,7 +38,7 @@ stores, and reputation, not merely to satisfy a regulator (SPEC §17.2).
 | **UK Age Appropriate Design Code** | In scope (consumer product likely accessed by minors) | 🟡 Mapped, controls partial | SPEC §17.3; SAFETY L4/L5 |
 | **California / state AADCs** | Hosted tier | 🟡 Mapped (partially enjoined) | SPEC §17.3 |
 | **EU AI Act — Art. 5 (manipulation ban)** | **Travels to all editions** | 🟢 Designed for: no dark patterns / compulsive mechanics; no emotion recognition | SAFETY L2 §2.3, §2.7; SPEC §17.4 |
-| **EU AI Act — Annex III high-risk (education)** | All editions | 🔴 **OPEN BLOCKER** — turns on "consequential decisions"; a supplementary tutor *may* fall outside, unverified | SPEC §17.1; open item §24 #1 |
+| **EU AI Act — Annex III high-risk (education)** | **EU market entry / hosted tier** (NOT the local pilot) | 🟠 Open for EU launch — turns on "consequential decisions"; the supervised non-grading **local** edition likely falls outside and does not "place on market" (§17.2), so it is **not pilot/G0-blocking** | SPEC §17.1–17.2; §24 #1 |
 | **Data minimisation / retention** | All editions | 🟢 Specified (local SQLite, rolling-90-day default, parent deletes) | SAFETY §4.3, §4.6 |
 | **Parental consent** | All editions (pilot) | 🟢 Pilot consent note authored | SAFETY §4.2; `docs/PILOT_CONSENT.md` (W2.5) |
 | **Content licensing** | All editions | 🟢 Pilot sources cleared (CC BY-SA); Khan NC = hosted-tier conflict | `docs/CONTENT_LICENSES.md` (W4.1) |

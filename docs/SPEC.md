@@ -593,7 +593,7 @@ Whole-number division
 
 | # | Item | Type | Source | Notes |
 |---|------|------|--------|-------|
-| 1 | EU AI Act high-risk classification | **Blocker** | memory | Verify Annex III / Art. 6 applicability for a supplementary home tutor; OSS distribution treatment. 17.1 |
+| 1 | EU AI Act high-risk classification | **Blocker — EU market entry / hosted tier ONLY; NOT the local pilot** | memory | Per §17.2: the supervised, non-grading, non-commercial **local** pilot does not "place on market" and makes no consequential decisions → high-risk likely does not attach; Art. 5 (manipulation ban) applies always but is satisfied by design. So this gates EU framing + the hosted tier, **not** Phase-0 or G0. Still verify Annex III / Art. 6 + OSS-distribution treatment before any EU launch. 17.1 |
 | 2 | Evaluate OSS LLMs for tutoring (low hallucination) | TODO → **re-homed W1.2–W1.3** (26) | memory | 20 #1 — gates pedagogical quality; eval host decided (20.3) |
 | 3 | Minimum local hardware requirements | TODO → **re-homed W1.4** (26) | memory | 20 #2 — now backend-dependent per 20.1 |
 | 4 | LLM compatibility & swappability abstraction | TODO → **re-homed W1.5** (26) | memory | 20 #3 — pluggable-backend decision made (20.1); build pending |
@@ -608,7 +608,7 @@ Whole-number division
 | 13 | GitHub / npm name availability for "Mentar" | ✅ **Resolved 2026-06-11** (W4.1b) | memory | Clear on GitHub/npm/PyPI; keep Mentar. ⏳ Namespace reservation (npm + PyPI placeholder publish) still pending — Pradeep to run |
 | 14 | Cowork local filesystem setup | TODO | memory | Pradeep wants research docs written directly to local folder via Cowork; local filesystem MCP bridge not yet running. Files delivered as chat downloads until resolved. |
 | 15 | Safety research Buckets C–H | TODO | memory | C: chatbot harm cases; D: safeguarding/disclosure; E: content standards; F: guardrail tooling; G: over-reliance/developmental; H: kid-safe patterns. Full roadmap 17.5 |
-| 16 | **Data-flywheel tension** (local-first vs learning-from-usage) | **Open — architectural** | review 2026-06-12 | DAKS graph inference (10) and the shared vetted-variant flywheel (15) need aggregated multi-learner data the data-light local edition never collects. Decide posture in **W5.7**: (a) hosted-tier-only features, (b) opt-in anonymized contribution path (reopens compliance posture, 17), or (c) accept manual/per-household only. Until decided, spec claims about 'improves from usage' apply to the hosted tier only |
+| 16 | **Data-flywheel tension** (local-first vs learning-from-usage) | **DECIDED 2026-06-15 → (c) per-child / per-household** | W5.7 (Pradeep) | OSS local edition learns **per child only**; no shared/aggregated flywheel. Cross-learner features (DAKS graph inference §10, shared vetted-variant bank §15) are NOT promised for the local edition — if ever pursued they live in the **hosted tier** (option (a) describes that later home). Keeps the OSS edition data-light; no reopening of the §17 compliance posture. Any "improves from usage" claim is per-household, not collective. §10/§15 caveats resolved to this. |
 | 17 | Core design artifacts undrafted (session state machine, prompt set, pilot interface, repo sketch) | Open → **owned by W6** (26) | review 2026-06-12 | The dialogue 'pipeline/controller' that T4/T5 tests assume has no design doc; prompt templates must be versioned files (T7 gates on prompt changes); pilot UI surface undecided |
 | 18 | **Khan Academy content licence (CC BY-NC-SA) vs paid hosted tier** | **Phase-3 blocker** | W4.1 2026-06-14 | NC clause incompatible with a *paid* hosted tier; fine for non-commercial local/OSS use. Do NOT bundle Khan content into any paid offering without a separate Khan licence. Pilot sources (Vikidia, Simple English Wikipedia, CC BY-SA) cleared — see `docs/CONTENT_LICENSES.md` |
 
@@ -628,7 +628,15 @@ Whole-number division
 |---|----------|-------|
 | (a) | No candidate model passes the T1.6 quality gates | Raise the size ceiling **once**; if still 0 pass → **pause** the project and revisit the local-first bar (SPEC §20). |
 | (b) | EU AI Act verification (§24 #1) concludes high-risk applies **even to the OSS local edition** | **Halt EU framing**; US / parental-consent-first only; reassess at Phase 3. |
-| (c) | The pilot learner disengages or shows distress past a defined threshold | **Stop sessions**; redesign before resuming. *Threshold (recommended default, ⏳ Pradeep to confirm): stop if the child shows reluctance/distress in **2 consecutive sessions**, or asks to stop and means it once.* |
+| (c) | The pilot learner shows distress or withdraws assent | **Stop sessions immediately**; redesign before resuming. *Threshold — safeguarding-informed (recommended default; ⏳ Pradeep to ratify): there is **no "tolerance count"**. Stop on **any** clear sign of distress, or the moment the child no longer wants to continue (ongoing assent). Do not wait for a 2nd session. This is research-ethics standard for child participants (see note below); a per-input distress disclosure is handled separately by SAFETY Layer 3 escalation.* |
+
+> **On the (c) threshold — external guidance.** There is no authoritative numeric
+> threshold; the standard for a child research/pilot participant is **continuous, qualitative
+> assent**: the child agrees to take part *and* can stop at any time, and any distress ends
+> the session. Relevant frameworks: **UNICEF's ERIC — Ethical Research Involving Children**;
+> standard **IRB/ethics child-assent** practice; **NSPCC** safeguarding guidance (Bucket D,
+> SPEC §17.5). Bucket D will firm this up; until then the conservative "stop on any sign"
+> default above governs. [⚠️ Verify against the named sources before relying on it.]
 | (d) | Phase-0 actuals exceed the W5.5 estimate by **>2×** | Invoke the scope-cut order (§25.2). |
 | (e) | *(optional personal-runway line — ⏳ Pradeep to set)* solo time/€ budget exceeds **___** with G0 not reached | Invoke scope-cut order; if still blocked → pause. |
 
