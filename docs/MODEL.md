@@ -75,6 +75,32 @@ Model quality directly gates pedagogical quality (SPEC §15). Score every candid
 - [ ] **Score + pick (W1.3)** — fill the Decision section; map sizes → hardware tiers (W1.4).
 - [ ] *(2nd pass, optional)* confirm Qwen `:9b`/`:2b` exact base+quant for reproducibility.
 
+## T1.3 first-pass results — transfer numeric correctness (2026-06-16)
+
+**ONE dimension only** — numeric correctness on the 31 checkable transfer items, via
+`verify_numeric.py`. This is an early signal, **NOT** the W1.3 decision (NIAH retrieval,
+hallucination, safety, and instruction-following are still pending). Latency = median seconds
+per item over all 101 prompts, as served by the eval-host proxy (includes model-load/queue).
+
+| Model | transfer pass | rate | median latency |
+|-------|---------------|------|----------------|
+| `gemma2:9b` | 31/31 | **1.00** | 7.5s |
+| `qwen3.5:2b` | 19/31 | 0.61 | 2.6s |
+| `qwen3.5:9b` | 19/31 | 0.61 | 13.7s |
+| `llama3.1:8b` | 18/31 | 0.58 | 1.1s |
+| `phi4-mini` | 15/31 | 0.48 | 1.0s |
+| `qwen3:14b` | _(run still completing)_ | — | ~31s/item (partial) |
+
+Observations (preliminary):
+- Only **`gemma2:9b`** clears the T1.6 numeric gate (≥95%) — perfect on transfer, but ~7.5s/item.
+- The others fail on **correctness alone** (≤0.61), before any other dimension.
+- Latency spread is wide: `qwen3.5:9b` (13.7s) and `qwen3:14b` (~31s) look too slow for the
+  broad-hardware envelope; `phi4-mini`/`llama3.1:8b` are sub-1.5s but weaker on correctness.
+- `qwen3:14b` is slow enough that its run is still finishing; it had not reached the transfer
+  items when scored. Re-score on completion.
+
+Raw: `eval/responses/*.jsonl`; scores: `reports/T1.3/scores.csv`.
+
 ## Decision (W1.3) — TBD
 
 _Pending the eval run. Records: chosen pilot model(s) per hardware tier, the scores that justified it,
