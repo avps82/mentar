@@ -54,9 +54,33 @@ grounding:
   #                             (needs the [nas] extra: pip install 'mentar[nas]'; the ZIM is
   #                             copied once to zim_cache_dir because libzim needs a local file)
   zim_dir: "${MENTAR_ZIM_DIR}"
+  # Each source declares the ZIM by parts of its filename:
+  #   <project>_<lang>_<selection>_<flavour>_<YYYY-MM>.zim
+  #   e.g. wikipedia_en_astronomy_maxi_2026-02.zim  ·  vikidia_en_all_nopic_2026-04.zim
+  # The NEWEST file in zim_dir matching project+lang+selection+flavour is used
+  # automatically (latest YYYY-MM wins) — no need to rename or re-pin on each update.
+  # Set `pin` to force a specific build ("2026-02") or an exact filename ("*.zim").
+  # (The dict key is the curriculum `source:` enum and drives the anchor scope guard.)
   sources:
-    vikidia:          "vikidia_en_all_nopic.zim"
-    wikipedia_simple: "wikipedia_en_simple_all.zim"
+    vikidia:
+      project:   vikidia
+      lang:      en
+      selection: all
+      flavour:   nopic
+      # pin:     null          # e.g. "2026-04" or "vikidia_en_all_nopic_2026-04.zim"
+    wikipedia_simple:
+      project:   wikipedia
+      lang:      en
+      selection: simple_all
+      flavour:   nopic
+    # Example subject ZIM (full English Wikipedia, astronomy selection, with media):
+    # astronomy:
+    #   project:   wikipedia
+    #   lang:      en
+    #   selection: astronomy
+    #   flavour:   maxi
+    # A plain string is still accepted as an exact filename:
+    #   wikibooks: "wikibooks_en_all_nopic_2025-12.zim"
   max_passage_chars: 1200                # length bound for small-model context
   cache: { enabled: true, dir: "${MENTAR_GROUNDING_CACHE:-.cache/grounding}" }   # resolved-passage cache
   zim_cache_dir: "${MENTAR_ZIM_CACHE:-.cache/zim}"   # local copies of smb:// ZIMs (NOT used for mounted NAS)

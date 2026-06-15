@@ -32,9 +32,12 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 import pytest
 
 from mentar.grounding.sources import (
+    build_filename_regex,
     is_smb_location,
     join_location,
     materialize_zim,
+    pick_latest,
+    resolve_filename,
     smb_url_to_unc,
 )
 
@@ -75,6 +78,66 @@ def test_materialize_local_existing(tmp_path):
 
 def test_materialize_local_missing_returns_none(tmp_path):
     assert materialize_zim(str(tmp_path / "nope.zim"), {}) is None
+
+
+# ── Structured spec → newest matching filename ──────────────────────────────
+
+# Uses Pradeep's real-world filename examples.
+_DIR_FILES = [
+    "wikipedia_ace_all_maxi_2026-01.zim",
+    "wikipedia_ace_all_nopic_2026-04.zim",
+    "wikipedia_en_astronomy_maxi_2026-01.zim",
+    "wikipedia_en_astronomy_maxi_2026-02.zim",
+    "vikidia_en_all_nopic_2024-03.zim",
+    "vikidia_en_all_nopic_2024-09.zim",
+    "vikidia_en_all_maxi_2024-09.zim",
+]
+
+
+def test_build_regex_and_pick_latest_subject():
+    spec = {"project": "wikipedia", "lang": "en", "selection": "astronomy", "flavour": "maxi"}
+    assert pick_latest(_DIR_FILES, build_filename_regex(spec)) == "wikipedia_en_astronomy_maxi_2026-02.zim"
+
+
+def test_build_regex_is_specific():
+    # ace/all/nopic must not match en/astronomy/maxi, and flavour must discriminate
+    spec = {"project": "wikipedia", "lang": "ace", "selection": "all", "flavour": "nopic"}
+    assert pick_latest(_DIR_FILES, build_filename_regex(spec)) == "wikipedia_ace_all_nopic_2026-04.zim"
+    spec_maxi = {**spec, "flavour": "maxi"}
+    assert pick_latest(_DIR_FILES, build_filename_regex(spec_maxi)) == "wikipedia_ace_all_maxi_2026-01.zim"
+
+
+def _write(tmp_path, names):
+    for n in names:
+        (tmp_path / n).write_bytes(b"x")
+    return tmp_path
+
+
+def test_resolve_filename_latest_in_dir(tmp_path):
+    _write(tmp_path, _DIR_FILES)
+    spec = {"project": "vikidia", "lang": "en", "selection": "all", "flavour": "nopic"}
+    assert resolve_filename(spec, str(tmp_path), {}) == "vikidia_en_all_nopic_2024-09.zim"
+
+
+def test_resolve_filename_pin_date(tmp_path):
+    _write(tmp_path, _DIR_FILES)
+    spec = {"project": "vikidia", "lang": "en", "selection": "all", "flavour": "nopic", "pin": "2024-03"}
+    assert resolve_filename(spec, str(tmp_path), {}) == "vikidia_en_all_nopic_2024-03.zim"
+
+
+def test_resolve_filename_pin_exact_file(tmp_path):
+    spec = {"project": "x", "lang": "en", "pin": "whatever_2030-01.zim"}
+    assert resolve_filename(spec, str(tmp_path), {}) == "whatever_2030-01.zim"  # no listing needed
+
+
+def test_resolve_filename_string_passthrough():
+    assert resolve_filename("exact_name.zim", "/whatever", {}) == "exact_name.zim"
+
+
+def test_resolve_filename_no_match_returns_none(tmp_path):
+    _write(tmp_path, _DIR_FILES)
+    spec = {"project": "gutenberg", "lang": "en", "selection": "all", "flavour": "nopic"}
+    assert resolve_filename(spec, str(tmp_path), {}) is None
 
 
 # ── SMB materialization (mocked smbclient) ──────────────────────────────────
