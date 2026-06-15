@@ -1,0 +1,21 @@
+# NIAH model config for a local vLLM endpoint (OpenAI-compatible).
+# Copy per candidate model; set `request.model` to the served id.
+# Endpoint + key come from ENV (never written here) — see config/README.md.
+#
+#   export MENTAR_VLLM_BASE_URL="http://localhost:8000/v1"
+#   export MENTAR_VLLM_API_KEY="dummy"     # vLLM usually accepts any token
+#
+id: "vllm-REPLACE_ME"          # e.g. vllm-qwen2.5-7b-instruct
+runtime:
+  sdk: "openai-python"          # vLLM speaks the OpenAI API
+  api: "chat_completions"
+client:
+  api_key_env: "MENTAR_VLLM_API_KEY"
+  base_url_env: "MENTAR_VLLM_BASE_URL"
+request:
+  model: "REPLACE_ME"           # served model id (W1.2 candidate)
+  max_tokens: 256
+  temperature: 0.0              # deterministic for eval
+pricing:
+  input: 0.0                    # local inference — no per-token cost
+  output: 0.0
