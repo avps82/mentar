@@ -35,6 +35,11 @@ dev = [
 inference-ollama = [
   "ollama>=0.3",
 ]
+nas = [
+  # SMB/Samba client for reading/downloading ZIMs from a NAS via smb:// URLs.
+  # Not needed when the share is mounted in the OS (libzim reads the mount directly).
+  "smbprotocol>=1.12",
+]
 
 [project.scripts]
 mentar = "mentar.cli.__main__:main"

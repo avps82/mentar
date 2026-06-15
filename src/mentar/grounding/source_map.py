@@ -36,24 +36,29 @@ class ScopeError(ValueError):
     """Raised when a node's anchor host does not match its declared source."""
 
 
-def get_zim_path(source: str, cfg: dict) -> Path | None:
-    """Return the absolute ZIM file path for ``source``, or ``None`` if unconfigured.
+def get_zim_path(source: str, cfg: dict) -> str | None:
+    """Return the configured ZIM *location* for ``source``, or ``None`` if unconfigured.
+
+    The location may be a local path, a mounted-NAS path, or an SMB URL/UNC,
+    depending on ``zim_dir`` — :func:`mentar.grounding.sources.materialize_zim`
+    turns it into a local path the reader can open.
 
     Args:
         source: Source enum string from the curriculum node (e.g. ``"vikidia"``).
         cfg:    The ``grounding:`` config block (``zim_dir``, ``sources`` sub-dict).
 
     Returns:
-        Resolved :class:`~pathlib.Path` if the source is configured, else ``None``.
+        The joined location string if the source is configured, else ``None``.
     """
-    zim_dir = cfg.get("zim_dir", "")
+    from mentar.grounding.sources import join_location
+
+    zim_dir = cfg.get("zim_dir", "") or "."
     sources_map: dict = cfg.get("sources", {})
     filename = sources_map.get(source)
     if not filename:
         logger.debug("get_zim_path: source %r not in config.grounding.sources", source)
         return None
-    zim_dir_path = Path(zim_dir).expanduser() if zim_dir else Path(".")
-    return zim_dir_path / filename
+    return join_location(zim_dir, filename)
 
 
 def check_scope(source: str, anchor: str) -> None:
@@ -85,8 +90,8 @@ def check_scope(source: str, anchor: str) -> None:
         )
 
 
-def resolve_zim(source: str, anchor: str, cfg: dict) -> Path | None:
-    """Validate scope and return the ZIM path for ``source``.
+def resolve_zim(source: str, anchor: str, cfg: dict) -> str | None:
+    """Validate scope and return the ZIM *location* for ``source``.
 
     Combines :func:`check_scope` and :func:`get_zim_path`.  Returns ``None``
     (with a logged warning) instead of raising on scope errors so callers can
@@ -98,7 +103,8 @@ def resolve_zim(source: str, anchor: str, cfg: dict) -> Path | None:
         cfg:    Grounding config block.
 
     Returns:
-        Resolved :class:`~pathlib.Path`, or ``None`` on scope error / missing config.
+        The ZIM location string (local / mounted / SMB), or ``None`` on scope
+        error / missing config.
     """
     try:
         check_scope(source, anchor)

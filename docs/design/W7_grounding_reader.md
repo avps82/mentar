@@ -43,7 +43,8 @@ hallucination-is-safety-failure component.
 
 | Concern | Decision |
 |---|---|
-| **Dependency** | `libzim` only (pin in `pyproject.toml`). OpenZIM MCP (`cameronrye/openzim-mcp`, MIT) = reference code to adapt; **not** a runtime dep. **No MCP server** (wrong shape for our controlled FSM). Hermit-AI (AGPL) = ideas only, clean-room. |
+| **Dependency** | `libzim` only (pin in `pyproject.toml`). `smbprotocol` is an **optional** `[nas]` extra (only for `smb://` ZIMs; mounted NAS needs nothing). OpenZIM MCP (`cameronrye/openzim-mcp`, MIT) = reference code to adapt; **not** a runtime dep. **No MCP server** (wrong shape for our controlled FSM). Hermit-AI (AGPL) = ideas only, clean-room. |
+| **ZIM location** | `zim_dir` accepts a local path, a **mounted NAS/share** path (read directly — no SMB client), or an **`smb://` URL / UNC** (copied once to `zim_cache_dir`, since libzim needs a local file). Resolution + materialization in `sources.py`; cache-hit short-circuits before any SMB copy. |
 | **Retrieval (pilot)** | Deterministic anchor-resolution: open ZIM → resolve node `anchor` → extract passage guided by `passage_hint` → length-bound. No model call. |
 | **Scope guard** | Node `source` enum must match the anchor host **and** the configured ZIM for that source. A `vikidia` node must not resolve out of the vikidia ZIM. No roaming. |
 | **Safety** | Output is DATA destined for `{{grounding_passage}}`. The `<<<GROUNDING_BEGIN/END>>>` markers already live in `system_prompt.md` → the reader returns the **inner text only** (never double-wraps), and never interprets/executes passage content. |
@@ -69,7 +70,8 @@ primary path, deps).
 |---|---|
 | `reader.py` | Thin owned `libzim` reader: `open(zim_path)`, `get_by_url(anchor)` (anchor URL → ZIM entry), `get_section(entry, hint)` → article text. ~100–200 lines over `libzim`. No server/JSON-RPC. Adapt OpenZIM MCP MIT search code as reference, reimplement minimally. |
 | `resolve.py` | Pilot path: node `grounding` block → `reader.get_by_url` → extract passage via `passage_hint` (lead section / heading match; deterministic) → length-bound. |
-| `source_map.py` | `source` enum → configured ZIM file path; anchor-host↔source **scope guard**. |
+| `source_map.py` | `source` enum → configured ZIM **location** (local / mounted-NAS / SMB); anchor-host↔source **scope guard**. |
+| `sources.py` | Turn a ZIM *location* into a local path libzim can open: local/mounted paths pass through unchanged; `smb://`/UNC locations are copied once to `zim_cache_dir` via `smbclient` (optional `[nas]` extra). `is_smb_location`, `smb_url_to_unc`, `join_location`, `materialize_zim`. Never raises → `None` on failure. |
 | `wrapper.py` | Return inner passage text for `{{grounding_passage}}` (no double-wrap). SAFETY §1.5 contract in docstring. |
 | `cache.py` | Memoize by `anchor` (in-memory + optional on-disk). |
 | `__init__.py` | Public `resolve_grounding(...)`; degradation contract documented. |
@@ -81,19 +83,32 @@ Committed example, env-var style (mirror existing conventions; real paths only i
 
 ```yaml
 grounding:
-  zim_dir: "${MENTAR_ZIM_DIR}"          # dir holding the pilot .zim files
+  zim_dir: "${MENTAR_ZIM_DIR}"          # local path | mounted-NAS path | smb:// URL / UNC
   sources:
     vikidia:          "vikidia_en_all_nopic.zim"
     wikipedia_simple: "wikipedia_en_simple_all.zim"
   max_passage_chars: 1200                # length bound for small-model context
-  cache: { enabled: true, dir: "${MENTAR_GROUNDING_CACHE:-.cache/grounding}" }
+  cache: { enabled: true, dir: "${MENTAR_GROUNDING_CACHE:-.cache/grounding}" }   # resolved-passage cache
+  zim_cache_dir: "${MENTAR_ZIM_CACHE:-.cache/zim}"   # local copies of smb:// ZIMs (not for mounted NAS)
+  smb:                                   # only for smb:// zim_dir; mounted share needs nothing
+    enabled: false
+    username: "${MENTAR_SMB_USER}"
+    password: "${MENTAR_SMB_PASSWORD}"
+    domain:   "${MENTAR_SMB_DOMAIN:-}"
 ```
 
 ## ZIM acquisition (W7.4)
 
-ZIMs are large and **must not** be committed. Add `scripts/fetch_pilot_zims.sh` (Kiwix URLs for
-Vikidia EN + Simple English Wikipedia) + a `.gitignore` rule for `*.zim`. Build/test against a
-**tiny fixture ZIM** under `tests/fixtures/` so the suite runs without multi-GB downloads.
+ZIMs are large and **must not** be committed. `scripts/fetch_pilot_zims.py` downloads the pilot
+sources (Vikidia EN + Simple English Wikipedia) from a **list of Kiwix mirrors** (tried in order:
+`download.kiwix.org`, `lbo.download.kiwix.org`, … — extend per region) to a destination that may be
+**local, a mounted NAS, or an `smb://` URL/UNC** (`--dest`, `--smb-user/-pass/-domain`; SMB needs
+the `[nas]` extra). `.gitignore` excludes `*.zim`. Build/test against a **tiny fixture ZIM** built
+programmatically (`tests/fixtures/build_fixture_zim.py`) so the suite runs without multi-GB downloads.
+
+**NAS/Samba, now (W7.4):** read + download via mounted share (any path) **or** `smb://` directly.
+**Future goal:** auto-discover available ZIMs/versions from the Kiwix OPDS catalog so filenames need
+not be pinned, targeting any reasonable destination on any OS. Catalog discovery is not built yet.
 
 ## Tests — `tests/grounding/`
 
@@ -107,6 +122,7 @@ pytest-style functions.
 | `test_scope_guard.py` | `vikidia` node whose anchor host ≠ vikidia → rejected. |
 | `test_degradation.py` | Missing ZIM / bad anchor → returns `""`, logs, does **not** raise. |
 | `test_safety_wrapper.py` | Passage containing "ignore your rules" returned **verbatim as data** (reader neither executes nor strips it). Pairs with `prompts/system_prompt.md`. |
+| `test_sources.py` | SMB/NAS: location detection + `smb://`→UNC + join; local passthrough; `smb://` copy to cache (mocked `smbclient`); missing `smbprotocol` → `None` (no raise). Runs without a live SMB server. |
 
 ## Verification (end-to-end)
 
