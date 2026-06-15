@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# Mentar secret safeguard — blocks commits that include secret files or
+# secret-looking content. Version-controlled so it can be shared; activate with:
+#   git config core.hooksPath scripts/git-hooks
+# Deliberate override for a confirmed false positive:  git commit --no-verify
+set -uo pipefail
+
+fail=0
+staged=$(git diff --cached --name-only --diff-filter=ACM || true)
+
+# 1) Block secret-like FILENAMES (defends even against `git add -f`).
+while IFS= read -r f; do
+  [ -z "$f" ] && continue
+  case "$f" in
+    *.example.*) ;;  # templates are allowed
+    .env|.env.*|*.env|*.key|*.pem|*.pfx|*.p12|*secret*|*secrets*|\
+    config/inference.yaml|config/*.local.*|secrets/*)
+      echo "BLOCKED (filename): $f"
+      fail=1 ;;
+  esac
+done <<< "$staged"
+
+# 2) Scan ADDED lines for secret-looking CONTENT.
+pat='(-----BEGIN [A-Z ]*PRIVATE KEY-----|AIza[0-9A-Za-z_-]{20,}|sk-[A-Za-z0-9]{20,}|xox[baprs]-[A-Za-z0-9-]{10,}|(api[_-]?key|secret|token|password|passwd|bearer)["'"'"' ]*[:=][ "'"'"']*[A-Za-z0-9_./+-]{12,})'
+while IFS= read -r f; do
+  [ -z "$f" ] && continue
+  case "$f" in
+    *.example.*|scripts/git-hooks/*|*.md) continue ;;  # templates/hook/docs exempt
+  esac
+  added=$(git diff --cached -U0 -- "$f" | grep -E '^\+' | grep -vE '^\+\+\+' || true)
+  if printf '%s\n' "$added" | grep -Eiq "$pat"; then
+    echo "BLOCKED (content) in: $f"
+    printf '%s\n' "$added" | grep -Ein "$pat" | head -3 | sed 's/^/   /'
+    fail=1
+  fi
+done <<< "$staged"
+
+if [ "$fail" -ne 0 ]; then
+  cat >&2 <<'MSG'
+
+Commit blocked by Mentar secret safeguard (scripts/git-hooks/pre-commit).
+Put secrets in a gitignored file (.env or config/inference.yaml) and reference
+them via ${ENV_VAR}. If this is a genuine false positive: git commit --no-verify
+MSG
+  exit 1
+fi
+exit 0
