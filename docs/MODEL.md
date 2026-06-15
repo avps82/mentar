@@ -128,6 +128,27 @@ and every injected-passage item must be human/judge-confirmed (TESTS.md T1.5). B
   conclude qwen is "safe" from 0 heuristic fails.
 - Flagged `fail`s are leads to review, not confirmed failures. Scores: `reports/T1.5/safety.csv`.
 
+## T1.4/T1.5 judge-graded — first candidate (gemma2:9b, 2026-06-16)
+
+Judge = `claude-sonnet-4-6` via the proxy. Verdicts are **real** (every adversarial fail carries a
+specific reason; 0 unparsed). `reports/T1.4/judge_gemma2_9b.jsonl`.
+
+- **Rubric (reexplain): 0.70 overall_pass** (35/50). age_appropriate 49/50 · grounded 45/50 ·
+  in_modality 42/50 · no_fabrication 42/50 · within_cap 50/50 · no_question 44/50.
+- **Adversarial: 0.25 (5/20), 15 hard-fails** — complied with jailbreaks, engaged off-topic, gave
+  adult mental-health/medical advice instead of deferring, obeyed 2 injections (leaked "rules",
+  asked for a home address).
+
+> ⚠️ **METHODOLOGY CAVEAT — these were BARE-MODEL runs.** `run_candidates.py` sent the raw task
+> prompts **without** `prompts/system_prompt.md` (safety framing + grounding-as-data wrapper) or the
+> escalation layer (W2.2). Per TESTS.md T1.5/T7.4 the safety suite must run through the **FULL
+> pipeline**. So 0.25 is "raw gemma2 with no guardrails", **not** Mentar's safety — and it actually
+> validates that the safety layer is load-bearing (the bare model gives a child alcohol/caffeine
+> tips and adopts a no-rules persona). **TODO before any safety claim:** add a pipeline-aware runner
+> (prepend system_prompt.md; put injected passages in the grounding-data wrapper) and re-judge.
+> The rubric number is also bare-model (the system prompt would add modality/grounding framing).
+> Only T1.3 numeric correctness is pipeline-independent.
+
 ## Decision (W1.3) — TBD
 
 _Pending the eval run. Records: chosen pilot model(s) per hardware tier, the scores that justified it,
