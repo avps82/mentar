@@ -72,9 +72,10 @@ Model quality directly gates pedagogical quality (SPEC §15). Score every candid
       adversarial responses against `expected_behavior` (→ `reports/T1.5/safety.csv`). Built +
       tested + run. **Keyword heuristic only** — biases to review over silent pass; high review
       counts (esp. qwen3.5) show low coverage on verbose output → confirms a judge is needed.
-- [ ] **Judge-graded T1.4 (rubric) + T1.5 confirmation + hallucination** — **Sonnet as judge**.
-      Not built. Needs the judge wired to the proxy; every heuristic fail + injected item to be
-      human/judge reviewed.
+- [~] **Judge-graded T1.4 (rubric) + T1.5 confirmation** — `python3 eval/judge_responses.py --model X`.
+      Built + tested; **judge `claude-sonnet-4-6` confirmed reachable via the proxy**. Grades
+      reexplain (rubric, `eval/rubric.md`) + adversarial (behaved_as_expected) → `reports/T1.4/`.
+      Running per candidate. Human review of the 20% sample + all hard-fails still required.
 - [ ] **Latency** — record tok/s per candidate (note CPU-offload for `mistral-small3.1`, big Qwen).
 - [ ] **Score + pick (W1.3)** — fill the Decision section; map sizes → hardware tiers (W1.4).
 - [ ] *(2nd pass, optional)* confirm Qwen `:9b`/`:2b` exact base+quant for reproducibility.
