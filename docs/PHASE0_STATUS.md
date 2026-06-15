@@ -30,7 +30,7 @@ exactly, so this doc is a thin overlay — never duplicate text from PHASE0.md, 
 | ID | Status | Artifact / Note |
 |----|--------|------------------|
 | W1.1 eval host | ✅ | Gaming PC, vLLM, 10GB vRAM — per SPEC §20.3 |
-| W1.2 candidate eval | ⏳ | **Candidate shortlist (Pradeep 2026-06-15, ~10GB vRAM):** Qwen2.5-7B-Instruct, Llama-3.1-8B-Instruct, Gemma-2-9B-it, Phi-4-mini, + others as found. **Eval focus:** lowest hallucination + retrieval/RAG accuracy. **Tool:** needle-in-a-haystack (github.com/gkamradt/needle-in-a-haystack) for retrieval/long-context faithfulness. Needs eval-host run (gaming PC). T1.1 dataset (model-agnostic) can be built now. |
+| W1.2 candidate eval | ⏳ | **Shortlist:** Qwen2.5-7B-Instruct, Llama-3.1-8B-Instruct, Gemma-2-9B-it, Phi-4-mini, + more. **Tooling scanned hands-on (2026-06-15):** needle-in-a-haystack **ADOPTED for the retrieval/grounding-faithfulness part** — cloned, installed, `niah demo --fake` ran E2E, 209 tests pass, vLLM-compatible via `base_url_env`. NIAH ≠ full harness (covers ~1 of ~5 dims); hallucination/correctness/safety stay in our own T1. See `docs/design/W1.2_eval_tooling.md` + `eval/niah/`. Needs eval-host run; T1.1 dataset (model-agnostic) buildable now. |
 | W1.3 selection + pick | ⏳ | Produces `docs/MODEL.md` |
 | W1.4 hardware tier mapping | ⏳ | Backend-dependent; needs W1.3 |
 | W1.5 abstraction layer v0 | ✅ | DECIDED (pluggable backends, SPEC §20.1); code stub at `src/mentar/inference/` |
@@ -188,3 +188,4 @@ once `pip install -e ".[dev]"`. (Test files for bkt/probe/registry now landed �
 | 2026-06-15 | Secret safeguard added — `.gitignore` secret rules + `config/inference.example.yaml` + `config/README.md` + `scripts/git-hooks/pre-commit` (blocks secret filenames + inline secrets; activate via `core.hooksPath`). Tested: blocks, clean commits pass. |
 | 2026-06-15 | Decisions (Pradeep) — **W5.7 = (c) per-child** (§24 #16); EU AI Act high-risk clarified **not local/G0-blocking** (§24 #1, §17.2); W5.6 (c) revised to safeguarding-informed assent-based threshold w/ external guides. |
 | 2026-06-15 | Decisions (Pradeep, mobile) — W5.6 (c) **deferred to Bucket D** (no auto-stop mechanism yet; don't halt on normal frustration); W1.2 model shortlist set (Qwen2.5-7B / Llama-3.1-8B / Gemma-2-9B / Phi-4-mini + more), eval focus = hallucination + retrieval accuracy via needle-in-a-haystack; cloud GitHub access to be granted (enables cloud routines). |
+| 2026-06-15 | W1.2 eval-tooling scan (Opus, hands-on) — NIAH cloned/installed/run (`demo --fake` E2E, 209 tests pass, vLLM-compatible). Verdict: **adopt for retrieval-faithfulness only**, not a full harness. `docs/design/W1.2_eval_tooling.md` + `eval/niah/` (vLLM config). |
