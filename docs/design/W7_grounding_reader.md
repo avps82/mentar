@@ -99,7 +99,7 @@ grounding:
 
 ## ZIM acquisition (W7.4)
 
-ZIMs are large and **must not** be committed. `scripts/fetch_pilot_zims.py` downloads the pilot
+ZIMs are large and **must not** be committed. `scripts/fetch_zim.py` downloads the pilot
 sources (Vikidia EN + Simple English Wikipedia) from a **list of Kiwix mirrors** (tried in order:
 `download.kiwix.org`, `lbo.download.kiwix.org`, … — extend per region) to a destination that may be
 **local, a mounted NAS, or an `smb://` URL/UNC** (`--dest`, `--smb-user/-pass/-domain`; SMB needs

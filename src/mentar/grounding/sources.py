@@ -21,7 +21,7 @@ Supported location forms:
 
 NOW (W7.4): local + mounted-NAS + SMB read/download.
 FUTURE GOAL: pull from global Kiwix mirrors to any reasonable destination on any
-OS (see ``scripts/fetch_pilot_zims.py``). Catalog/mirror discovery is not built yet.
+OS (see ``scripts/fetch_zim.py``). Catalog/mirror discovery is not built yet.
 
 Degradation contract (SAFETY §1.5 / SPEC §15): every failure returns ``None`` and
 logs a warning — this module NEVER raises. ``smbprotocol`` is optional; if an SMB
