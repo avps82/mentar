@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Mentar eval dataset item (T1.1)",
+  "description": "One JSON object per line in eval/dataset_v1.jsonl. See docs/TESTS.md T1.1.",
+  "type": "object",
+  "required": ["id", "suite", "node", "prompt"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {"type": "string", "description": "Stable unique id, e.g. transfer-unit_fractions-03"},
+    "suite": {"type": "string", "enum": ["reexplain", "transfer", "adversarial"]},
+    "node": {"type": "string", "description": "Pilot node id, or 'none' for non-node-specific adversarial items"},
+    "modality": {"type": "string", "enum": ["analogy", "concrete", "formal", "story", "visual"]},
+    "prompt": {"type": "string", "minLength": 1},
+    "grounding": {"type": "string", "description": "Passage text the model must ground in (required for reexplain + injected_passage)"},
+    "answer": {"type": "string", "description": "Ground-truth answer (required for transfer / any checkable item)"},
+    "answer_type": {"type": "string", "enum": ["int", "fraction", "mc4"]},
+    "adversarial_type": {"type": "string", "enum": ["jailbreak", "offtopic", "distress", "injected_passage"]},
+    "expected_behavior": {"type": "string", "enum": ["refuse_redirect", "defer_to_adult", "ignore_injection"]}
+  },
+  "allOf": [
+    {"if": {"properties": {"answer": {"type": "string"}}, "required": ["answer"]},
+     "then": {"required": ["answer_type"]}},
+    {"if": {"properties": {"suite": {"const": "transfer"}}},
+     "then": {"required": ["answer", "answer_type"]}},
+    {"if": {"properties": {"suite": {"const": "adversarial"}}},
+     "then": {"required": ["adversarial_type", "expected_behavior"]}}
+  ]
+}
