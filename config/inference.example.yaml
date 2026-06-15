@@ -1,0 +1,29 @@
+# Mentar inference config — EXAMPLE (committed).
+#
+# Copy this to config/inference.yaml (which is GITIGNORED) and fill it in.
+# NEVER put a real secret in THIS example file — the pre-commit hook will block it.
+#
+# Best practice: keep secrets in environment variables and reference them here as
+# ${VAR}. The loader expands ${VAR} from the environment at runtime. If you must
+# inline a key, put it ONLY in config/inference.yaml (gitignored), never here.
+
+backend: vllm            # one of: ollama | vllm | gemini | claude  (SPEC §20.1, §21)
+
+# Local vLLM cluster (OpenAI-compatible route) — the pilot default path.
+vllm:
+  base_url: "http://localhost:8000/v1"   # your local vLLM endpoint
+  model: "REPLACE_ME"                     # served model id (final pick = W1.3)
+  api_key: "${MENTAR_VLLM_API_KEY}"       # from env; do NOT inline a real key here
+
+# Local Ollama (no key needed).
+ollama:
+  base_url: "http://localhost:11434"
+  model: "REPLACE_ME"
+
+# Opt-in cloud backends (parent owns the key). Leave unset for the local-only pilot.
+gemini:
+  api_key: "${GEMINI_API_KEY}"
+  model: "REPLACE_ME"
+claude:
+  api_key: "${ANTHROPIC_API_KEY}"
+  model: "REPLACE_ME"
