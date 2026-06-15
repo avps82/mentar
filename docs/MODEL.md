@@ -13,6 +13,10 @@ The pilot tutor must be a **local OSS model** (SPEC §20 — local-first; closed
 opt-in only, never the default). This doc is the canonical eval roster + run plan; **W1.3 writes the
 final pick into the Decision section** below.
 
+> 📊 **Human-readable results write-up: [`docs/EVAL_RESULTS.md`](EVAL_RESULTS.md)** — why/how/results
+> in plain language. (Raw per-item scores live under git-ignored `reports/` + `eval/responses/`;
+> regenerate via the commands there.)
+
 ## Eval host (W1.1 — connection details, supplied 2026-06-15)
 
 - **Endpoint:** `http://192.168.xx.xxx:4000/v1` — an **OpenAI-compatible LiteLLM proxy** on Pradeep's
