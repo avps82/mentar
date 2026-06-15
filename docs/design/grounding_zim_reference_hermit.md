@@ -1,7 +1,7 @@
 ---
 title: "Grounding / ZIM-Reader — Design & References (Hermit-AI + OpenZIM MCP)"
 version: v0.2 (hands-on)
-status: "Recommendation: ADOPT OpenZIM MCP (MIT) for ZIM reading; BUILD the scope/safety wrapper (Hermit ideas, clean-room)."
+status: "Recommendation: BUILD a thin owned libzim reader (reuse OpenZIM MCP's MIT code as reference) — do NOT take the MCP server as a pilot runtime dependency."
 last-updated: 2026-06-15
 owner: Opus
 sources: "github.com/0nspaceshipearth/Hermit-AI (AGPL-3.0); SPEC §15 (pedagogical guardrails / RAG), §18 (sources); SAFETY §1.5 (grounding-as-data); curriculum templates `grounding:` anchors"
@@ -59,7 +59,7 @@ broad-hardware** posture (pairs naturally with the llama.cpp default).
   model on modest hardware we should keep the chain short (predict → lookup → score → refine)
   and cache, not run a heavy orchestration per turn.
 
-## ZIM reading: ADOPT OpenZIM MCP (MIT) — don't build the reader
+## ZIM reading: BUILD a thin owned reader (reuse OpenZIM MCP's MIT code, skip its server)
 
 Pradeep flagged the **ZIM MCP** option (mcpmarket.com/server/zim-1) = **OpenZIM MCP**
 (`github.com/cameronrye/openzim-mcp`). Verified via GitHub API: **MIT licence**, Python,
@@ -67,25 +67,32 @@ Pradeep flagged the **ZIM MCP** option (mcpmarket.com/server/zim-1) = **OpenZIM 
 sub-second full-text search, 8 clean tools (`zim_search`, `zim_query`, `zim_get`,
 `zim_get_section`, `zim_browse`, `zim_links`, `zim_metadata`, `zim_health`).
 
-**This changes the build-vs-adopt for the reader.** Unlike Hermit (AGPL → ideas only),
-OpenZIM MCP is **MIT → we can actually use it.** Recommendation:
+**Adopt-vs-rebuild — the decision.** OpenZIM MCP packages two things: **(a)** `libzim`
+reading + ZIM full-text/suggestion search, and **(b)** an **MCP server** wrapper around it.
+Unlike Hermit (AGPL → ideas only), it's **MIT → we may reuse its code.**
 
-- **ADOPT OpenZIM MCP for the ZIM-reading layer** instead of building a libzim reader from
-  scratch. It already solves indexing + full-text search + article/section retrieval offline.
-- **Use it DETERMINISTICALLY in the pilot, not as model-driven tools.** MCP's default pattern
-  has the *LLM* decide when to call tools — unreliable on small local models (llama.cpp 7–9B)
-  and low-control, which is wrong when hallucination = a safety failure. Instead, **our
-  controller calls its tools programmatically** (host the server / call its functions): pick
-  the article from the active concept's `grounding:` anchor (+ Hermit's title-prediction
-  idea), call `zim_search`/`zim_get`, then wrap the result as **untrusted DATA**
-  (`system_prompt.md`). We drive retrieval; the model never free-roams a search tool.
-- **Model-driven MCP tool-calling = a Phase-2 / capable-GPU-tier option**, not the pilot.
-- **What we still build (thin):** the scope/safety wrapper — restrict to vetted curriculum
-  sources, stay inside the concept anchor, data-wrap, and pair with the deterministic verifier
-  for STEM. That's Mentar's differentiator and stays ours.
+**Verdict: BUILD a thin, owned `libzim` reader — reuse OpenZIM MCP's MIT code as a
+reference/accelerator — and do NOT take the MCP server as a pilot runtime dependency.**
 
-> Licence note: OpenZIM MCP **MIT** is compatible with any W4.2 choice (unlike Hermit AGPL).
-> Confirm exact version/SBOM before pinning as a dependency.
+- **The MCP-server layer (b) is the wrong shape for the pilot.** MCP exists so an *LLM agent*
+  calls tools at its discretion. Mentar's loop is a **controlled FSM**, not an agent — we
+  fetch the passage for the active concept *deterministically*. Running a server + JSON-RPC
+  to do an in-process lookup is pure overhead (extra process, protocol, its config/security
+  surface) for no benefit here.
+- **The `libzim` layer (a) is the real work, and it's thin.** ZIM files carry their own
+  full-text/suggestion index; `libzim` exposes it. A reader doing *open → search →
+  get article/section → return text* is ~100–200 lines over the `libzim` dep. We depend only
+  on **`libzim`** (the hard part), not on a server.
+- **Safety tilts to "own it."** Child-facing, hallucination = safety failure → the retrieval
+  path should be small, auditable, and pinned by us, not a third-party server's tool
+  semantics/update cadence. We build the scope/safety wrapper either way.
+- **MIT = lift, don't reinvent.** We can legally copy/adapt OpenZIM MCP's proven search code
+  into our reader → "rebuild" is really *reuse libzim + adapt MIT code*. Fast **and** owned.
+- **When adopting the server flips to right:** Phase 2 / capable-GPU tier, IF we go agentic
+  (model calls ZIM tools via MCP) or want to expose Mentar's ZIM to other MCP clients. Not now.
+
+> Licence note: OpenZIM MCP **MIT** + `libzim` are compatible with any W4.2 choice (unlike
+> Hermit AGPL). Pin `libzim`; OpenZIM MCP is a reference, not a runtime dep, for the pilot.
 
 ## Where this lands in Mentar
 
@@ -96,10 +103,10 @@ prompt templates. This is the RAG half of SPEC §15 and is currently unbuilt; it
 own W-task. The Help-modality + system prompts (W6.2) already expect a `{{grounding_passage}}`.
 
 ## Next steps (not built here)
-1. Add a **grounding/retrieval W-task**: **adopt OpenZIM MCP (MIT)** as the ZIM reader,
-   called **deterministically** by our controller; **build** the thin scope/safety wrapper +
-   article-selection (concept anchor + Hermit's title-prediction idea, clean-room) +
-   passage→data wrapping. (Spike it hands-on — sandbox has pip/net.)
+1. Add a **grounding/retrieval W-task**: **build a thin `libzim` reader we own** (reuse
+   OpenZIM MCP's MIT search code as reference; skip its MCP server), + the scope/safety
+   wrapper + article-selection (concept anchor + Hermit's title-prediction idea) +
+   passage→data wrapping. Depend on `libzim` only. (Spike hands-on — sandbox has pip/net.)
 2. Acquire the pilot ZIMs (Vikidia / Simple English Wikipedia) via Kiwix for local grounding.
 3. Keep the chain minimal for small-model/CPU budgets; measure before adding embeddings.
 4. Licence: OpenZIM MCP MIT is fine for any W4.2 choice; keep Hermit (AGPL) as ideas-only.
