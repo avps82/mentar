@@ -110,6 +110,26 @@ Task ID convention: `W{workstream}.{n}` = entry task; `P{n}` = pilot-execution t
 
 ---
 
+## 26.6B Workstream W7 — Grounding / Retrieval (new 2026-06-15; G0-relevant, not a hard blocker)
+
+> **Why this workstream exists:** SPEC §15 layer-1 (RAG grounding) is the single biggest
+> hallucination-risk drop, and `prompts/system_prompt.md` already expects a `{{grounding_passage}}`
+> slot — but no component produces it. This builds the missing producer. Build-vs-adopt is settled
+> (`docs/design/grounding_zim_reference_hermit.md`): **build a thin owned `libzim` reader**, reuse
+> OpenZIM MCP's MIT code as reference, skip its MCP server. **Pilot scope = anchor-resolution only**
+> (pilot nodes carry explicit `anchor:` URLs); open/unanchored retrieval is deferred to W7.5.
+> Frozen build contract: `docs/design/W7_grounding_reader.md`.
+
+| ID | Task | Dep | Exit criterion | Ref |
+|----|------|-----|----------------|-----|
+| W7.1 | **Thin owned `libzim` reader** — `src/mentar/grounding/reader.py`: open ZIM, resolve anchor URL → entry, get section text. Adapt OpenZIM MCP (MIT) search code as reference; no server. | `libzim` dep | reader opens a fixture ZIM + resolves a known anchor; `tests/grounding/test_reader.py` smoke passes | 15, 20.1, W7-design |
+| W7.2 | **Resolve + scope/safety wrapper** — `resolve.py` (anchor + `passage_hint` → length-bound passage), `source_map.py` (source↔ZIM + host scope guard), `wrapper.py` (DATA, no double-wrap). Public `resolve_grounding(node_grounding, cfg) -> str`. | W7.1 | scope guard rejects host-mismatch; passage returned as inner text; `test_resolve.py` + `test_scope_guard.py` + `test_safety_wrapper.py` pass | 15, SAFETY §1.5, W2.3 |
+| W7.3 | **Config + degradation** — `grounding:` block in `config/inference.example.yaml`; `cache.py`; missing-ZIM/bad-anchor → `""` + warn, never raise. | W7.2 | `test_degradation.py` passes; example config committed (no secrets) | 20.1, W7-design |
+| W7.4 | **ZIM acquisition** — `scripts/fetch_pilot_zims.sh` (Kiwix: Vikidia EN + Simple English Wikipedia) + `.gitignore *.zim` + tiny fixture ZIM under `tests/fixtures/`. Binaries NOT committed. | — | script + gitignore land; fixture ZIM drives the suite without large downloads | W4.1, W7-design |
+| W7.5 | **(DEFERRED — Phase 2)** Open/unanchored retrieval: title-prediction → ZIM lookup (Hermit idea, clean-room) + BM25 fallback; embeddings only if measured to help. Not built in the pilot. | W7.1–W7.3 | — (deferred) | grounding-ref-doc |
+
+---
+
 ## 26.7 Pilot Execution Tasks & Success Criteria (Gate G1)
 
 **Pilot parameters (fill at G0):** learner = ___ (age, consent per W2.5) · sessions = suggest ≥8 sessions × ~20 min over 2–3 weeks · hardware = ___ (per W1.4) · model = per W1.3.
@@ -143,10 +163,11 @@ W2.1 → {W2.2, W2.3, W2.4} ; W2.5, W2.6 independent
 W3.1 → W3.2 ; W3.3 → W3.4 → W3.6 ; W3.5 independent
                      │
 W4.1, W5.1–W5.3, W5.6 independent ; W3.1+W2.2 → W6.1 ; W2.3 → W6.2 ; W3.5 → W6.3 → W6.4
+W7.1 → W7.2 → W7.3 ; W7.4 independent ; (W6.2 system_prompt slot ← W7 producer) ; W7.5 deferred
                      ▼
                   ── G0 ── → P1–P5 → G1 → {W4.2, W5.4, W5.5, W5.7} → G2 (Phase 1 go/no-go)
 ```
-Critical path: **W1.1→W1.3** (model selection) and **W2.1→W2.2** (interim escalation) — everything else parallelises around them.
+Critical path: **W1.1→W1.3** (model selection) and **W2.1→W2.2** (interim escalation) — everything else parallelises around them. W7 (grounding) is G0-relevant but degrades gracefully, so it does not sit on the hard critical path.
 
 ---
 

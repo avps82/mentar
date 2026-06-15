@@ -19,7 +19,7 @@ exactly, so this doc is a thin overlay — never duplicate text from PHASE0.md, 
 
 | Gate | Meaning | Status |
 |------|---------|--------|
-| **G0 — Pilot-ready** | All entry tasks done; pilot may begin | 🚫 blocked on: **W1.2–W1.3** (eval-host run — needs gaming PC) · W5.6 (needs Pradeep's distress/runway thresholds) · W3.5 (desk verdict done; optional hands-on spike) |
+| **G0 — Pilot-ready** | All entry tasks done; pilot may begin | 🚫 blocked on: **W1.2–W1.3** (eval-host run — needs gaming PC) · W5.6 (needs Pradeep's distress/runway thresholds) · W3.5 (desk verdict done; optional hands-on spike). **W7 grounding** = G0-relevant but degrades gracefully (no ZIM → empty passage), so **not** a hard blocker — pilot quality improves once W7.1–W7.4 land. |
 | **G1 — Pilot-complete** | P1–P5 thresholds met | gated on G0 |
 | **G2 — Phase 1 entry** | Go/no-go on OSS Local Edition build | gated on G1 + W4.2 + W5.4 + W5.5 + W5.7 |
 
@@ -97,6 +97,24 @@ exactly, so this doc is a thin overlay — never duplicate text from PHASE0.md, 
 
 ---
 
+## W7 — Grounding / Retrieval
+
+New workstream (2026-06-15). **G0-relevant but not a hard blocker** — grounding is core to
+SPEC §15, but the reader degrades gracefully (returns `""`) without ZIMs, so a degraded pilot can
+still run. Build-vs-adopt settled; **pilot scope = anchor-resolution only** (no LLM/BM25/embeddings).
+Frozen build contract: `docs/design/W7_grounding_reader.md`. **Opus froze the design; Sonnet builds
+B1–B5.**
+
+| ID | Status | Artifact / Note |
+|----|--------|------------------|
+| W7.1 reader | ⏳ | `src/mentar/grounding/reader.py` — thin owned `libzim` reader (adapt OpenZIM MCP MIT search code as ref; no server). Sandbox has pip/net → buildable + spike-testable now. |
+| W7.2 resolve + scope/safety | ⏳ | `resolve.py` (anchor + `passage_hint` → length-bound passage) + `source_map.py` (host scope guard) + `wrapper.py` (DATA, no double-wrap). Public `resolve_grounding(node_grounding, cfg) -> str`. |
+| W7.3 config + degradation | ⏳ | `grounding:` block in `config/inference.example.yaml` + `cache.py`; missing-ZIM/bad-anchor → `""` + warn, never raise. |
+| W7.4 ZIM acquisition | ⏳ | `scripts/fetch_pilot_zims.sh` (Kiwix: Vikidia EN + Simple English Wikipedia) + `.gitignore *.zim` + tiny fixture ZIM under `tests/fixtures/`. Binaries NOT committed. |
+| W7.5 open retrieval | 🔭 | **DEFERRED (Phase 2)** — title-prediction → ZIM lookup (Hermit idea, clean-room) + BM25 fallback; embeddings only if measured. Not in the pilot. |
+
+---
+
 ## W6 — Core Design Artifacts
 
 | ID | Status | Artifact / Note |
@@ -150,9 +168,10 @@ functions; full `pytest` run still pending `pip install -e ".[dev]"`.
 - **W4.1b** — reserve `mentar` namespace (npm + PyPI placeholder publish).
 
 **Doable autonomously next (Sonnet grunt):**
-1. **T1.1 eval dataset** — 50 + 30 + 20 prompts; needed before the eval-host run.
-2. **Dialogue controller** — wire the W6.2 prompts + FSM + engine modules into the turn loop (the dialogue framework T4/T5 assume).
-3. **Pilot web app** (W6.3 build) — Flask/FastAPI + the 4 views.
+1. **W7 grounding reader (B1–B5)** — build `src/mentar/grounding/` per the frozen contract `docs/design/W7_grounding_reader.md`: thin `libzim` reader + resolve/scope/safety wrapper + config + degradation + `tests/grounding/`. Sandbox has pip/net → spike `libzim` hands-on against a fixture ZIM.
+2. **T1.1 eval dataset** — 50 + 30 + 20 prompts; needed before the eval-host run.
+3. **Dialogue controller** — wire the W6.2 prompts + FSM + engine modules into the turn loop (the dialogue framework T4/T5 assume); includes calling `resolve_grounding` into the `{{grounding_passage}}` slot.
+4. **Pilot web app** (W6.3 build) — Flask/FastAPI + the 4 views.
 
 **Wiring follow-ups (not G0-blocking, Sonnet):** FSM caller wiring for `bkt.py`,
 `escalation.py` (handle_trigger), `probe_classify.py` (stale-mastery window from
@@ -191,3 +210,4 @@ once `pip install -e ".[dev]"`. (Test files for bkt/probe/registry now landed �
 | 2026-06-15 | W1.2 eval-tooling scan (Opus, hands-on) — NIAH cloned/installed/run (`demo --fake` E2E, 209 tests pass, vLLM-compatible). Verdict: **adopt for retrieval-faithfulness only**, not a full harness. `docs/design/W1.2_eval_tooling.md` + `eval/niah/` (vLLM config). |
 | 2026-06-15 | Directives (Pradeep) — **llama.cpp = primary local backend** (lightweight, broadest HW support; SPEC §20.1/§21, config, inference stub). **Hermit-AI** scanned hands-on as ZIM-grounding reference (AGPL → clean-room ideas only): borrow title-prediction-over-ZIM + libzim + staged retrieval; implies a new grounding/retrieval W-task. `docs/design/grounding_zim_reference_hermit.md`. |
 | 2026-06-15 | Grounding reader decision — verified ZIM-MCP option = **OpenZIM MCP** (`cameronrye/openzim-mcp`, **MIT**, libzim, maintained). **Decision: BUILD a thin owned `libzim` reader** (reuse OpenZIM MCP's MIT code as reference; **skip the MCP server** — wrong shape for our controlled FSM + safety-critical path). Depend on `libzim` only. MCP-server-as-runtime = a Phase-2/agentic option, not the pilot. |
+| 2026-06-15 | **W7 — Grounding/Retrieval workstream opened** (Opus design freeze; Pradeep approved scope). New `26.6B` in PHASE0.md (W7.1–W7.5) + this W7 status section. Frozen build contract `docs/design/W7_grounding_reader.md`. **Pilot scope = anchor-resolution only** (pilot nodes carry explicit `anchor:` URLs → no LLM title-prediction/BM25/embeddings; those = W7.5 deferred). G0-relevant but degrades gracefully (`resolve_grounding` → `""` on missing ZIM), so not a hard G0 blocker. SPEC §15 cross-references the new `src/mentar/grounding/` producer. **Sonnet builds B1–B5 next.** |

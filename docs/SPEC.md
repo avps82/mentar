@@ -349,7 +349,7 @@ non-clean classes are logged distinctly for review.
 **Risk:** every AI-generated re-explanation must be correct and clarifying. A wrong explanation creates confident misunderstanding. **Hallucination = a safety failure** (per project principle, 16). Goal: *tighten, not eliminate.*
 
 **Layered (strongest first):**
-1. **Ground in vetted source (RAG, not recall)** — re-represent a retrieved correct passage; do not free-invent facts. Biggest single risk drop.
+1. **Ground in vetted source (RAG, not recall)** — re-represent a retrieved correct passage; do not free-invent facts. Biggest single risk drop. *Implemented by* `src/mentar/grounding/` (**W7**) — a thin owned `libzim` reader that resolves each node's `grounding.anchor` to a passage for the system prompt's `{{grounding_passage}}` slot. Pilot scope = deterministic anchor-resolution (no LLM/BM25/embeddings); open retrieval deferred to W7.5. Contract: `docs/design/W7_grounding_reader.md`.
 2. **Deterministic check (STEM)** — verify any numeric/worked step computationally before serving.
 3. **Vetted variant bank** — builder/parent-approved alternative explanations for high-traffic concepts; live generation only for the long tail; approved variants accumulate (quality flywheel). ⚠️ **Flywheel caveat:** cross-household accumulation requires data the local-first edition doesn't collect; per-household banks work locally, but the *shared* flywheel is a hosted-tier or opt-in-contribution feature — see 24 #16 / W5.7.
 4. **Backstop** — the transfer-test re-check catches a bad variant after the fact (lagging, but caught and flagged).
