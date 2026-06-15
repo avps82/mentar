@@ -21,11 +21,15 @@ llamacpp:
   n_ctx: 8192
   n_gpu_layers: 0                         # 0 = CPU-only; raise to offload to GPU
 
-# Local vLLM cluster (OpenAI-compatible) — capable-GPU / throughput tier; also the eval host.
+# vLLM / OpenAI-compatible — capable-GPU / throughput tier AND the W1.2 eval host (SPEC §20.3).
+# Works with a vLLM server OR an OpenAI-compatible proxy (e.g. LiteLLM) fronting many models.
+# Eval host verified 2026-06-15: http://192.168.xx.xxx:4000/v1 (LiteLLM proxy), serving
+#   llama3.1:8b · gemma2:9b · phi4-mini · qwen3:14b · qwen3.5:9b · qwen3.5:2b · mistral-small3.1
+# Candidate roster, roles & run plan: docs/MODEL.md.
 vllm:
-  base_url: "http://localhost:8000/v1"   # your local vLLM endpoint
-  model: "REPLACE_ME"                     # served model id (final pick = W1.3)
-  api_key: "${MENTAR_VLLM_API_KEY}"       # from env; do NOT inline a real key here
+  base_url: "http://192.168.xx.xxx:4000/v1"  # eval-host proxy (override per environment)
+  model: "REPLACE_ME"                        # served candidate id (e.g. llama3.1:8b); final pick = W1.3
+  api_key: "${MENTAR_VLLM_API_KEY}"          # from env; NEVER inline the real token (rotate the chat-pasted one)
 
 # Local Ollama (no key needed).
 ollama:
