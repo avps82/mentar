@@ -628,15 +628,15 @@ Whole-number division
 |---|----------|-------|
 | (a) | No candidate model passes the T1.6 quality gates | Raise the size ceiling **once**; if still 0 pass → **pause** the project and revisit the local-first bar (SPEC §20). |
 | (b) | EU AI Act verification (§24 #1) concludes high-risk applies **even to the OSS local edition** | **Halt EU framing**; US / parental-consent-first only; reassess at Phase 3. |
-| (c) | The pilot learner shows distress or withdraws assent | **Stop sessions immediately**; redesign before resuming. *Threshold — safeguarding-informed (recommended default; ⏳ Pradeep to ratify): there is **no "tolerance count"**. Stop on **any** clear sign of distress, or the moment the child no longer wants to continue (ongoing assent). Do not wait for a 2nd session. This is research-ethics standard for child participants (see note below); a per-input distress disclosure is handled separately by SAFETY Layer 3 escalation.* |
+| (c) | The pilot learner shows genuine distress or withdraws assent | **DEFERRED to Bucket D (Pradeep, 2026-06-15) — revisit.** Interim: the **present parent's judgment** governs (parent-mediated pilot), and a per-input distress disclosure is handled by SAFETY Layer 3. **Must NOT halt on normal learning frustration** ("I hate fractions" ≠ distress — the escalation classifier already separates these). No automated tolerance-count or distress-signal *mechanism* exists yet, so no auto-stop rule is set; don't shut the pilot down early on ordinary struggle. |
 
-> **On the (c) threshold — external guidance.** There is no authoritative numeric
-> threshold; the standard for a child research/pilot participant is **continuous, qualitative
-> assent**: the child agrees to take part *and* can stop at any time, and any distress ends
-> the session. Relevant frameworks: **UNICEF's ERIC — Ethical Research Involving Children**;
-> standard **IRB/ethics child-assent** practice; **NSPCC** safeguarding guidance (Bucket D,
-> SPEC §17.5). Bucket D will firm this up; until then the conservative "stop on any sign"
-> default above governs. [⚠️ Verify against the named sources before relying on it.]
+> **On the (c) threshold — status & guidance.** Deferred per Pradeep: defining an auto-stop
+> threshold makes little sense before a distress-signal *mechanism* exists, and a too-eager
+> rule would halt the pilot on normal frustration. Until Bucket D closes, the present parent
+> is the judge of genuine distress / loss of assent. When revisited, anchor on **continuous
+> assent** (child agrees *and* can stop anytime) per **UNICEF ERIC** (Ethical Research
+> Involving Children), standard **IRB/ethics child-assent** practice, and **NSPCC** guidance
+> (Bucket D, SPEC §17.5). [⚠️ Verify against those sources before relying on it.]
 | (d) | Phase-0 actuals exceed the W5.5 estimate by **>2×** | Invoke the scope-cut order (§25.2). |
 | (e) | *(optional personal-runway line — ⏳ Pradeep to set)* solo time/€ budget exceeds **___** with G0 not reached | Invoke scope-cut order; if still blocked → pause. |
 
