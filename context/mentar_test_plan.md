@@ -8,10 +8,10 @@
 ## 0. Agent Execution Contract (applies to every test)
 
 **Environment assumptions:**
-- Repo root: `<workspace>/mentar` (<build-host>; adjust via `MENTAR_ROOT` env var)
+- Repo root: `<workspace>/mentar` (the build host; adjust via `MENTAR_ROOT` env var)
 - Python ≥3.11, `pip` available; R ≥4.3 only where stated
 - Network allowed to: pypi.org, github.com, cran.r-project.org, library.kiwix.org, download.kiwix.org, ollama.com
-- LLM inference host: per W1.1 decision (NOT <build-host> — 2-core/16GB/no-GPU cannot serve models)
+- LLM inference host: per W1.1 decision (NOT the build host — 2-core/16GB/no-GPU cannot serve models)
 
 **Standard block format:** `GOAL` (one sentence) · `CONTEXT` (why + domain background an agent needs) · `PRE` (preconditions, must all be true) · `INPUTS` (files/data/configs) · `STEPS` (ordered, deterministic where possible) · `PASS` (binary criteria — all must hold) · `OUT` (artifacts written, with paths) · `REFS` (links/spec sections).
 

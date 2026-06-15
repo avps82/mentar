@@ -4,7 +4,7 @@
 > **Purpose.** 23 defines the pilot's pedagogical scope; this section defines what must be TRUE before the pilot starts (Gate G0), what runs during it (Gate G1), and what each task's exit criterion is. Three sequencing inversions from the review are corrected here: (1) local-LLM selection moves AHEAD of the pilot; (2) a minimal SAFETY.md + Bucket D escalation flow moves AHEAD of any session with a real child; (3) the UX-moat claim (4) gets an explicit decide-or-rewrite task.
 
 > **Decisions resolved 2026-06-11 (this update):**
-> - ✅ **W1.1** Eval host = gaming PC (10GB vRAM, vLLM). → 20.3
+> - ✅ **W1.1** Eval host = local AI test PC (10GB vRAM, vLLM). → 20.3
 > - ✅ **W1.5** Model layer = **pluggable backends** (local Ollama default; own vLLM / Gemini / Claude opt-in, parent owns key). → 20.1
 > - ✅ **W2.6** Parent-mediated mechanism = Phase 0 honor system + transcript log; Phase 1 PIN gate. → 6.2
 > - ✅ **W4.1b** Name "Mentar" clear on GitHub/npm/PyPI — keep it. ⏳ namespace reservation pending (Pradeep).
@@ -36,7 +36,7 @@ Task ID convention: `W{workstream}.{n}` = entry task; `P{n}` = pilot-execution t
 
 | ID | Task | Dep | Exit criterion | Ref |
 |----|------|-----|----------------|-----|
-| W1.1 | ✅ **DONE (2026-06-11).** Eval environment = **Pradeep's gaming PC, 10GB vRAM, serving via vLLM** (already configured + running, reachable). <build-host> cannot run eval. 10GB sufficient for ≤14B candidates. Box/connection details supplied at eval time. *(Rejected: cloud burst, Mac — local GPU already on hand.)* | — | ✅ Eval host live; vLLM serving | 20.3 |
+| W1.1 | ✅ **DONE (2026-06-11).** Eval environment = **a local AI test PC, 10GB vRAM, serving via vLLM** (already configured + running, reachable). the build host cannot run eval. 10GB sufficient for ≤14B candidates. Box/connection details supplied at eval time. *(Rejected: cloud burst, Mac — local GPU already on hand.)* | — | ✅ Eval host live; vLLM serving | 20.3 |
 | W1.2 | **Candidate shortlist + eval harness.** Shortlist 3–5 OSS models ≤14B (instruct-tuned; candidates to confirm at eval time, e.g. current Llama/Qwen/Phi/Gemma small variants). Build a fixed eval set: ≥50 fraction re-explanation prompts (one per 13.2 modality per pilot node) + ≥30 transfer-question generation prompts + ≥20 adversarial/jailbreak prompts (child-voice). Score: factual correctness (deterministic check where numeric), age-appropriateness, instruction adherence, refusal correctness. | W1.1 ✅ | Scored comparison table exists; ≥1 model meets thresholds in W1.3 | 20 #1 |
 | W1.3 | **Selection thresholds + pick.** Minimum bar (initial, revisable): ≥95% numeric correctness on deterministic-checkable items; 0 hard safety failures on adversarial set; subjective age-appropriateness pass ≥90%. Pick primary model + 1 fallback. | W1.2 | `MODEL.md` records: chosen model, quantisation, thresholds met, fallback | 20 |
 | W1.4 | **Hardware tier mapping** (was TODO #3). *Backend-dependent (per 20.1 decision):* for the **local Ollama** default, measure chosen model's RAM/CPU/GPU floor at usable latency (<10s per re-explanation suggested) and publish min-spec table (8GB/16GB/GPU tiers ↔ model/quant). For own-vLLM-cluster or cloud-API backends, hardware = parent's responsibility (cloud = internet + key only). | W1.3 | Min-spec table in `MODEL.md` for local backend; pilot hardware confirmed against it | 20 #2 |

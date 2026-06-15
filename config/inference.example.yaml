@@ -22,8 +22,8 @@ llamacpp:
   n_gpu_layers: 0                         # 0 = CPU-only; raise to offload to GPU
 
 # vLLM / OpenAI-compatible — capable-GPU / throughput tier AND the W1.2 eval host (SPEC §20.3).
-# Works with a vLLM server OR an OpenAI-compatible proxy (e.g. LiteLLM) fronting many models.
-# Eval host verified 2026-06-15: http://192.168.xx.xxx:4000/v1 (LiteLLM proxy), serving
+# Works with a vLLM server OR an OpenAI-compatible proxy (e.g. the local proxy) fronting many models.
+# Eval host verified 2026-06-15: http://192.168.xx.xxx:4000/v1 (local proxy), serving
 #   llama3.1:8b · gemma2:9b · phi4-mini · qwen3:14b · qwen3.5:9b · qwen3.5:2b · mistral-small3.1
 # Candidate roster, roles & run plan: docs/MODEL.md.
 vllm:

@@ -28,7 +28,7 @@ we've found so far.
 
 ## 1. The candidates
 
-All are free/open models served locally on the eval host (a gaming PC, 10GB GPU) via an
+All are free/open models served locally on the eval host (a local AI test PC, 10GB GPU) via an
 OpenAI-compatible proxy. Two cloud Claude models play support roles, not tutor roles.
 
 | Model | Size | Role |

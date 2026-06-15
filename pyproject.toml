@@ -58,7 +58,7 @@ addopts = [
   "--strict-config",
 ]
 markers = [
-  "llm: tests that require a live LLM backend (skipped on <build-host>; run on eval host)",
+  "llm: tests that require a live LLM backend (skipped on the build host; run on eval host)",
   "slow: tests that take >5s",
   "human_gated: tests that require a human action (consent, review, child session)",
 ]

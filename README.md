@@ -97,6 +97,18 @@ Hardware requirements: see `docs/hardware-requirements.md`.
 
 ---
 
+## Documentation
+
+Full index: **[`docs/README.md`](docs/README.md)**. Highlights:
+
+- **[Spec](docs/SPEC.md)** · **[Live status](docs/PHASE0_STATUS.md)** · **[Architecture](docs/ARCHITECTURE.md)**
+- **[Safety spec](docs/SAFETY.md)** (6-layer, non-negotiable) · **[Pilot consent](docs/PILOT_CONSENT.md)**
+- **[Session state machine](docs/SESSION_FSM.md)** · **[Test plan](docs/TESTS.md)**
+- Model evaluation — **[results, plain-language](docs/EVAL_RESULTS.md)** · **[roster & plan](docs/MODEL.md)** · **[eval tooling](eval/README.md)**
+- **[Content licences](docs/CONTENT_LICENSES.md)** · **[Compliance status](compliance/README.md)** · **[Config & grounding sources](config/README.md)**
+
+---
+
 ## Contributing
 
 - Add or improve a curriculum template under `curriculum/templates/` (see `curriculum/_template.md` for the format)
