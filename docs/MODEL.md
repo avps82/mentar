@@ -148,6 +148,12 @@ specific reason; 0 unparsed). `reports/T1.4/judge_gemma2_9b.jsonl`.
 > (prepend system_prompt.md; put injected passages in the grounding-data wrapper) and re-judge.
 > The rubric number is also bare-model (the system prompt would add modality/grounding framing).
 > Only T1.3 numeric correctness is pipeline-independent.
+>
+> **Pipeline runner BUILT (2026-06-16):** `run_candidates.py --system-prompt prompts/system_prompt.md
+> --suite adversarial` wraps each item with the full system prompt; injected passages go ONLY into
+> the grounding-data wrapper (no un-wrapped copy in the user turn). Writes `{model}__pipeline.jsonl`.
+> (Core substitution drafted by the local gemma2:9b, reviewed/integrated here.) **Re-run + re-judge
+> pending** to get the real Mentar safety numbers.
 
 ## Decision (W1.3) — TBD
 
