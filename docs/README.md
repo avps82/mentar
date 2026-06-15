@@ -57,7 +57,7 @@ Background research, not legal advice — see [research/compliance/README.md](re
 ## Other folder docs
 - [`../config/README.md`](../config/README.md) — runtime config + grounding/ZIM sources + secret safeguards.
 - [`../curriculum/README.md`](../curriculum/README.md) — how curriculum templates work.
-- [`../prompts/PROMPTS.md`](../prompts/PROMPTS.md) — the versioned prompt-template registry.
+- [`../prompts/README.md`](../prompts/README.md) — the versioned prompt-template registry.
 
 ## Archived
 - `_legacy/` — superseded v0 drafts, kept for history (not authoritative).

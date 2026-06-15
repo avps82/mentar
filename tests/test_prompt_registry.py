@@ -1,7 +1,7 @@
 """T4.6 — prompt templates are versioned files the controller loads, never hardcoded.
 
 Implements the W6.2 acceptance + the T7.3 regression mechanism (docs/TESTS.md):
-  1. prompts/ has >=10 templates and every PROMPTS.md hash matches its file body.
+  1. prompts/ has >=10 templates and every README.md hash matches its file body.
   2. No prompt-like string literal (>200 chars, non-docstring) lives in src/.
   3. prompt_ref "{template_id}:{version}" round-trips.
   4. The combined prompt-set hash is deterministic (the T7.3 change signal).
@@ -31,11 +31,11 @@ def _body_hash(text: str) -> str:
 
 
 def _template_files() -> list[Path]:
-    return [f for f in sorted(PROMPTS.glob("*.md")) if f.name != "PROMPTS.md"]
+    return [f for f in sorted(PROMPTS.glob("*.md")) if f.name != "README.md"]
 
 
 def _registry_hashes() -> dict[str, str]:
-    reg = (PROMPTS / "PROMPTS.md").read_text()
+    reg = (PROMPTS / "README.md").read_text()
     return dict(re.findall(r"\| `([^`]+\.md)` \| `[^`]+` \|[^|]*\| `([0-9a-f]{12})` \|", reg))
 
 
@@ -49,7 +49,7 @@ def test_registry_hashes_match_bodies():
     assert len(reg) == len(files), "registry/file count mismatch (stale registry)"
     for f in files:
         h = _body_hash(f.read_text())
-        assert f.name in reg, f"{f.name} missing from PROMPTS.md"
+        assert f.name in reg, f"{f.name} missing from README.md"
         assert reg[f.name] == h, f"stale hash for {f.name}: registry={reg[f.name]} body={h}"
 
 

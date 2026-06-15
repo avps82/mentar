@@ -123,7 +123,7 @@ B1–B5.**
 | ID | Status | Artifact / Note |
 |----|--------|------------------|
 | W6.1 session state machine | ✅ | `docs/SESSION_FSM.md` (188 lines, Mermaid + transition tables) |
-| W6.2 prompt template registry | ✅ | `prompts/` — 10 versioned templates (3 patterns + 5 Help modalities + transfer-gen + system prompt) + `PROMPTS.md` registry. Hashing convention documented; **T4.6-equivalent check PASSES** (10/10 body hashes match registry + headers). `tests/test_prompt_registry.py` (T4.6 + T7.3 literal scan) landed ✅. Remaining (Sonnet): controller load-wiring. |
+| W6.2 prompt template registry | ✅ | `prompts/` — 10 versioned templates (3 patterns + 5 Help modalities + transfer-gen + system prompt) + `prompts/README.md` registry. Hashing convention documented; **T4.6-equivalent check PASSES** (10/10 body hashes match registry + headers). `tests/test_prompt_registry.py` (T4.6 + T7.3 literal scan) landed ✅. Remaining (Sonnet): controller load-wiring. |
 | W6.3 pilot interface decision | ✅ | **Decided: minimal local web app** (Flask/FastAPI localhost, 4 views). `docs/design/W6.3_pilot_interface.md` + SPEC §23. Fork ruled out by W3.5; TUI rejected. |
 | W6.4 repo architecture sketch | ✅ | `docs/ARCHITECTURE.md` (149 lines, src-layout) |
 | W6.5 interactive manipulatives | 🔭 | **POST-PILOT scoped (2026-06-15).** Mentar-OWNED interactive widgets (draggable fraction bar, splittable pie), parameterized per concept, rendered in the web app — NOT from ZIM (avoids unvetted ZIM-JS in a child webview). Needs a curriculum-schema widget field + a small owned widget lib. `docs/design/media_and_interactivity.md`. |
@@ -202,7 +202,7 @@ once `pip install -e ".[dev]"`. (Test files for bkt/probe/registry now landed �
 | 2026-06-14 | W3.4 ✅ (Opus) — `src/mentar/engine/probe_classify.py` + SPEC §14.4 false-confidence decision table; 7 cases smoke-verified. |
 | 2026-06-14 | W4.1 ✅ (Opus) — `docs/CONTENT_LICENSES.md`; pilot sources (CC BY-SA) cleared, Khan NC conflict logged (§24 #18). |
 | 2026-06-14 | W2.5 ✅ (Opus) — `docs/PILOT_CONSENT.md` signable consent template; required before session 1. |
-| 2026-06-14 (overnight) | W6.2 ✅ (Opus, after cloud routine failed on private-repo access) — 10 versioned templates in `prompts/` + `PROMPTS.md` registry; hashing convention documented; T4.6-equivalent check passes 10/10. |
+| 2026-06-14 (overnight) | W6.2 ✅ (Opus, after cloud routine failed on private-repo access) — 10 versioned templates in `prompts/` + `prompts/README.md` registry; hashing convention documented; T4.6-equivalent check passes 10/10. |
 | 2026-06-14 (overnight) | W3.5 🟡 (Opus) — verdict REFERENCE-ONLY (desk assessment); `docs/design/W3.5_build_vs_adopt.md` + SPEC §19.2. |
 | 2026-06-14 (overnight) | W6.3 ✅ (Opus) — pilot interface = minimal local web app (4 views); `docs/design/W6.3_pilot_interface.md` + SPEC §23. |
 | 2026-06-14 (overnight) | W5.6 🟡 (Opus) — kill criteria + scope-cut order drafted in SPEC §25.1–25.2; awaits the maintainer's distress/runway thresholds. |

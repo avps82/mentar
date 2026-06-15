@@ -208,7 +208,7 @@ These flow alongside the FSM and are NOT modeled as separate FSM states (they wo
 
 ## 6. Out of scope for this document
 
-- **Detailed prompt templates** — see [PROMPTS.md](PROMPTS.md) (W6.2).
+- **Detailed prompt templates** — see [prompts/README.md](../prompts/README.md) (W6.2).
 - **The verifier itself** — see `src/mentar/eval/verify_numeric.py` and TESTS.md T1.3 / T3.5.
 - **BKT mathematics** — see [bkt_notes.md](bkt_notes.md) (T3.3 output).
 - **Escalation trigger list** — see [SAFETY.md](SAFETY.md) §3.2 (W2.2 v0.1-interim).
