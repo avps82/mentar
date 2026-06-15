@@ -43,6 +43,13 @@ htmlcov/
 .claude-memory
 .claude/
 
+# ── ZIM binary files (large; downloaded via scripts/fetch_pilot_zims.sh) ─────
+# See: docs/design/W7_grounding_reader.md § ZIM acquisition
+*.zim
+
+# ── Grounding passage on-disk cache ──────────────────────────────────────────
+.cache/grounding/
+
 # ── Secrets & runtime config (NEVER commit) ──────────────────────────────────
 # Real inference config / API keys / vLLM routing secrets. Backed by the
 # pre-commit hook in scripts/git-hooks/ (see config/README.md).
