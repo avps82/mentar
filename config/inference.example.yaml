@@ -40,53 +40,71 @@ claude:
   api_key: "${ANTHROPIC_API_KEY}"
   model: "REPLACE_ME"
 
-# ── Grounding / ZIM-reader (W7) ───────────────────────────────────────────────
-# SPEC §15 (layer-1 RAG): fills {{grounding_passage}} in prompts/system_prompt.md.
-# ZIM files are large binaries — NEVER commit them (*.zim is gitignored).
-# Download with:  python3 scripts/fetch_zim.py   (supports local / NAS / smb:// dest)
-# See:            docs/design/W7_grounding_reader.md
+# ══ Grounding / ZIM-reader (W7) ═══════════════════════════════════════════════
+# SPEC §15 (layer-1 RAG): feeds vetted offline text into {{grounding_passage}} in
+# prompts/system_prompt.md so the local model re-explains FROM a source instead of
+# hallucinating. Grounding is TEXT-ONLY by design (media/interactivity = W6.5/W7.6).
+#
+# ZIM = the offline web-archive files (Kiwix). They are large binaries — NEVER commit
+# them (*.zim is gitignored). Download with scripts/fetch_zim.py (local / NAS / smb://).
+#
+#   FULL GUIDE — sources, licences, mirrors, fallbacks, download recipes:  config/README.md
+#   Design / contract:                                                     docs/design/W7_grounding_reader.md
 grounding:
-  # zim_dir = where the .zim files live. Three forms are accepted:
-  #   - local path           : "/data/zims"
-  #   - mounted NAS / share   : "/mnt/nas/zims"  or  "Z:\\zims"  (mount it in the OS;
-  #                             libzim reads it like any local file — no SMB config needed)
-  #   - SMB URL / UNC         : "smb://nas/share/zims" or "\\\\nas\\share\\zims"
-  #                             (needs the [nas] extra: pip install 'mentar[nas]'; the ZIM is
-  #                             copied once to zim_cache_dir because libzim needs a local file)
+
+  # ── Where the .zim files live ───────────────────────────────────────────────
+  # Accepts THREE forms (see config/README.md → "Where ZIMs live"):
+  #   local path          "/data/zims"
+  #   mounted NAS / share "/mnt/nas/zims"  or  "Z:\\zims"   (mount in the OS — no SMB cfg)
+  #   SMB URL / UNC       "smb://nas/share/zims" or "\\\\nas\\share\\zims"
+  #                       (needs the [nas] extra; the ZIM is copied once to zim_cache_dir)
   zim_dir: "${MENTAR_ZIM_DIR}"
-  # Each source declares the ZIM by parts of its filename:
-  #   <project>_<lang>_<selection>_<flavour>_<YYYY-MM>.zim
-  #   e.g. wikipedia_en_astronomy_maxi_2026-02.zim  ·  vikidia_en_all_nopic_2026-04.zim
-  # The NEWEST file in zim_dir matching project+lang+selection+flavour is used
-  # automatically (latest YYYY-MM wins) — no need to rename or re-pin on each update.
-  # Set `pin` to force a specific build ("2026-02") or an exact filename ("*.zim").
-  # (The dict key is the curriculum `source:` enum and drives the anchor scope guard.)
+
+  # ── Which ZIM each curriculum `source:` resolves to ─────────────────────────
+  # Declare a source by the PARTS of its Kiwix filename; the reader auto-picks the
+  # NEWEST matching file in zim_dir, so you never re-edit this on a ZIM update:
+  #
+  #     <project>_<lang>_<selection>_<flavour>_<YYYY-MM>.zim
+  #        │        │        │           │         └─ build date — latest wins automatically
+  #        │        │        │           └─ maxi (text+images) | nopic (text only) | mini (intros)
+  #        │        │        └─ "all" (whole project) | a subject e.g. "astronomy" | "simple_all"
+  #        │        └─ language code: en, ace, fr, …
+  #        └─ project: vikidia | wikipedia | wikibooks | gutenberg | phet | …
+  #
+  # The dict KEY is the curriculum `source:` enum (also drives the anchor scope guard).
+  # `pin:` overrides "latest" with a build date ("2026-02") or an exact filename.
+  # A plain string value is still accepted as an exact filename (no auto-latest).
+  # → See config/README.md → "Other sources & licences" before adding new ones.
   sources:
-    vikidia:
+    vikidia:                       # child-friendly encyclopaedia (CC BY-SA 3.0)
       project:   vikidia
       lang:      en
       selection: all
-      flavour:   nopic
-      # pin:     null          # e.g. "2026-04" or "vikidia_en_all_nopic_2026-04.zim"
-    wikipedia_simple:
+      flavour:   nopic             # text only — smallest; ideal for text-LLM grounding
+      # pin:     "2026-04"         # uncomment to freeze a build (or give an exact *.zim)
+    wikipedia_simple:              # Simple English Wikipedia (CC BY-SA 4.0)
       project:   wikipedia
       lang:      en
       selection: simple_all
       flavour:   nopic
-    # Example subject ZIM (full English Wikipedia, astronomy selection, with media):
-    # astronomy:
-    #   project:   wikipedia
-    #   lang:      en
+    # ── Examples (uncomment / adapt) ──
+    # astronomy:                   # a SUBJECT slice of full English Wikipedia, with images
+    #   project:   wikipedia       #   anchors are on en.wikipedia.org → needs a scope-guard
+    #   lang:      en              #   host entry (see config/README.md → "Adding a new source")
     #   selection: astronomy
     #   flavour:   maxi
-    # A plain string is still accepted as an exact filename:
-    #   wikibooks: "wikibooks_en_all_nopic_2025-12.zim"
-  max_passage_chars: 1200                # length bound for small-model context
-  cache: { enabled: true, dir: "${MENTAR_GROUNDING_CACHE:-.cache/grounding}" }   # resolved-passage cache
-  zim_cache_dir: "${MENTAR_ZIM_CACHE:-.cache/zim}"   # local copies of smb:// ZIMs (NOT used for mounted NAS)
-  # SMB/Samba credentials — only needed when zim_dir is an smb:// URL or UNC path.
-  # For an already-mounted share, leave this disabled. Keep real secrets in env / the
-  # gitignored config/inference.yaml, never in this example file.
+    # wikibooks: "wikibooks_en_all_nopic_2025-12.zim"   # plain string = exact filename
+
+  max_passage_chars: 1200          # cap passage length fed to the model (small-model budget)
+
+  # ── Caches ──────────────────────────────────────────────────────────────────
+  cache: { enabled: true, dir: "${MENTAR_GROUNDING_CACHE:-.cache/grounding}" }  # resolved-passage memo
+  zim_cache_dir: "${MENTAR_ZIM_CACHE:-.cache/zim}"   # local copies of smb:// ZIMs (NOT for mounted NAS)
+
+  # ── SMB / Samba credentials ─────────────────────────────────────────────────
+  # ONLY needed when zim_dir is an smb:// URL or UNC path. For an already-mounted
+  # share, leave enabled:false. Keep real secrets in env / the gitignored
+  # config/inference.yaml — never in this example file.
   smb:
     enabled: false
     username: "${MENTAR_SMB_USER}"
