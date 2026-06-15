@@ -43,6 +43,29 @@ python3 eval/score_safety.py                         # quick safety heuristic
 python3 eval/judge_responses.py --model gemma2:9b    # judge-graded quality + safety
 ```
 
+## Swapping the judge
+
+The model that **grades** the eval (explanation quality + safety) is configurable and **not
+hardcoded** — `claude-sonnet-4-6` is only the default. Three env vars control it:
+
+| Variable | Default | What it sets |
+|----------|---------|--------------|
+| `MENTAR_JUDGE_MODEL` | `claude-sonnet-4-6` | the judge model id |
+| `MENTAR_JUDGE_BASE_URL` | falls back to `MENTAR_VLLM_BASE_URL` | the endpoint |
+| `MENTAR_JUDGE_API_KEY` | falls back to `MENTAR_VLLM_API_KEY` | the key |
+
+```bash
+# a different judge model on the same endpoint (endpoint/key inherited):
+MENTAR_JUDGE_MODEL=qwen3:14b python3 eval/judge_responses.py --model gemma2:9b
+```
+
+**Cautions:**
+- **Don't self-grade.** Never use a model that is also a candidate under test (grading bias, TESTS.md T1.4).
+- **Use a capable judge.** A weak judge gives noisy grades — lean harder on the human spot-check.
+- The `role: judge` line in `eval/models.yaml` is documentation only; the **env var** decides the judge.
+
+*(This subsection first-drafted by the local gemma2:9b, verified + edited.)*
+
 ## Where results go
 
 Raw per-model answers (`eval/responses/`) and scores (`reports/`) are **git-ignored on purpose** —
