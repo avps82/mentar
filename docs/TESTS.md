@@ -8,10 +8,10 @@
 ## 0. Agent Execution Contract (applies to every test)
 
 **Environment assumptions:**
-- Repo root: `/opt/codework/Project Mentar` (CT 114; adjust via `MENTAR_ROOT` env var)
+- Repo root: `/opt/codework/Project Mentar` (the build host; adjust via `MENTAR_ROOT` env var)
 - Python ≥3.11, `pip` available; R ≥4.3 only where stated
 - Network allowed to: pypi.org, github.com, cran.r-project.org, library.kiwix.org, download.kiwix.org, ollama.com
-- LLM inference host: per W1.1 decision (NOT CT 114 — 2-core/16GB/no-GPU cannot serve models)
+- LLM inference host: per W1.1 decision (NOT the build host — 2-core/16GB/no-GPU cannot serve models)
 
 **Code-path translation (added 2026-06-13 per ARCHITECTURE.md §7):** this document uses flat artifact paths (`safety/escalation.py`, `tools/validate_template.py`, `eval/verify_numeric.py`, `db/schema.sql`). The actual repo uses Python src-layout — those modules live at `src/mentar/<flat>` (e.g. `src/mentar/safety/escalation.py`). Data artifacts under `eval/` (datasets, response files, score CSVs) and `reports/` remain at the top-level repo root. When a test step writes to a code path, target `src/mentar/<flat>`; when it reads from a data path under `eval/` or `reports/`, target the top-level dir. `docs/` artifacts (`bkt_notes.md`, `MODEL.md`, etc.) live at `docs/`.
 

@@ -487,7 +487,7 @@ generate(prompt, grounding_passages, constraints) → text
 3. **Model abstraction layer v0** — build + test the interface above against ≥2 backends. → W1.5.
 
 ### 20.3 Eval environment *(decision, 2026-06-11 — closes W1.1)*
-Model evaluation runs on **Pradeep's gaming PC (10GB vRAM), serving models via vLLM**, already configured and reachable. CT 114 (2-core/16GB, no GPU) remains the build host and cannot run eval. Box connection details to be supplied at eval time. 10GB vRAM is sufficient for the ≤14B-class candidates in scope.
+Model evaluation runs on **a local AI test PC (10GB vRAM), serving models via vLLM**, already configured and reachable. the build host (2-core/16GB, no GPU) remains the build host and cannot run eval. Box connection details to be supplied at eval time. 10GB vRAM is sufficient for the ≤14B-class candidates in scope.
 
 **Note (session):** the chosen backend must also serve Help-loop re-explanations, transfer-question generation, and (Phase 2) the LLM-as-judge layer. Model quality directly gates pedagogical quality (15) and is the project's biggest infrastructure dependency.
 
@@ -525,16 +525,16 @@ Mode/curriculum configs are **Markdown composition files** swapped at runtime �
 ---
 
 ## 22. Development Environment
-*Source: design session (Codework setup). Note: this is Pradeep's BUILD environment — distinct from the product's end-user deployment target (parents' local machines, 20).*
+*Note: this is the project's BUILD/dev environment — distinct from the product's end-user deployment target (parents' local machines, 20). Specifics are generic by design; nothing here is required to use or develop Mentar.*
 
-| Component | Location | Detail |
-|-----------|----------|--------|
-| Codework workspace | CT 114 | Debian 13 LXC, `192.168.1.77`, 16GB/4GB RAM/2-core; code-server `:8680` + Claude Code CLI; `/opt/codework` ↔ `/mnt/pve/drive6tb/codework` |
-| **LLM eval host** *(2026-06-11)* | Gaming PC | 10GB vRAM; serves models via **vLLM** (already configured + running); the eval environment for W1.2–W1.3 — CT 114 cannot run model eval. Box/connection details supplied at eval time. |
-| Content host | CT 105 | Kiwix ZIM files (role inferred from `wget` target — confirm) |
-| Remote access | CT 104 | Tailnet subnet router; phone via `/rc` |
+| Component | Role | Detail |
+|-----------|------|--------|
+| Build / dev host | code + tests | A low-resource Linux container, **no GPU** — runs the build, tests, and tooling; cannot serve models. |
+| LLM eval host | W1.2–W1.3 model eval | A separate local AI test PC with a discrete GPU (~10GB vRAM), serving candidate models via **vLLM** behind an OpenAI-compatible endpoint. |
+| Content | offline sources | Kiwix **ZIM** files served from local storage (the W7 grounding sources). |
 
-Access: browser → `http://192.168.1.77:8680` → Terminal → `tmux attach -t claude` → `claude`. tmux prefix is `Ctrl+a`.
+Connection details are environment-specific and supplied at run time via env vars
+(`MENTAR_VLLM_BASE_URL` / `MENTAR_VLLM_API_KEY`, etc.) — **never committed**. See `config/README.md`.
 
 ---
 

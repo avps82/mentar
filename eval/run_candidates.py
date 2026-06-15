@@ -5,7 +5,7 @@ Sends every dataset prompt to an OpenAI-compatible /v1/chat/completions endpoint
 one response file per model: eval/responses/{model}.jsonl (gitignored). Records latency per item.
 
 Endpoint + key come from ENV (never hardcoded):
-    export MENTAR_VLLM_BASE_URL="http://192.168.1.191:4000/v1"
+    export MENTAR_VLLM_BASE_URL="http://192.168.xx.xxx:4000/v1"
     export MENTAR_VLLM_API_KEY="<token>"
     python3 eval/run_candidates.py                 # all role=candidate models
     python3 eval/run_candidates.py --model llama3.1:8b

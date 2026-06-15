@@ -19,11 +19,11 @@ final pick into the Decision section** below.
 
 ## Eval host (W1.1 — connection details, supplied 2026-06-15)
 
-- **Endpoint:** `http://192.168.1.191:4000/v1` — an **OpenAI-compatible LiteLLM proxy** on Pradeep's
-  gaming PC, fronting all candidate models (≤14B run on the 10GB-vRAM GPU; larger ones CPU-offload).
+- **Endpoint:** `http://192.168.xx.xxx:4000/v1` — an **OpenAI-compatible proxy** on a local AI test
+  PC, fronting all candidate models (≤14B run on the 10GB-vRAM GPU; larger ones CPU-offload).
 - **Auth:** bearer token via env — **never commit it**. Set:
   ```bash
-  export MENTAR_VLLM_BASE_URL="http://192.168.1.191:4000/v1"
+  export MENTAR_VLLM_BASE_URL="http://192.168.xx.xxx:4000/v1"
   export MENTAR_VLLM_API_KEY="<token>"      # rotate the value pasted in chat on 2026-06-15
   ```
   (The NIAH harness reads these via `base_url_env`/`api_key_env`; see `eval/niah/models/vllm.example.yaml`.)
