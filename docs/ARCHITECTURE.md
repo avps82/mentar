@@ -140,6 +140,28 @@ TESTS.md (§0 and throughout) uses flat paths that predate the src-layout decisi
 
 ---
 
+## 7b. Dependency philosophy (build vs import)
+
+*Added 2026-06-15 (Pradeep).* Default to **importing well-maintained open-source libraries
+to reduce maintenance** — don't hand-roll what a focused, healthy lib already does well. We
+**own only**: (1) the thin *glue* wiring libs together, and (2) the **safety-critical and
+differentiating** logic (curriculum/pedagogy engine, safety layer, the scope/data-wrapping
+around retrieval, the deterministic verifier).
+
+The distinction that matters is **shape, not "third-party vs ours":**
+- ✅ **Import a focused library** that does one hard thing well — e.g. `libzim` (ZIM reading +
+  search), `llama-cpp-python`/llama.cpp (local inference), `needlehaystack` (retrieval eval).
+- ⛔ **Don't adopt a heavyweight framework/server whose architecture is the wrong shape** for
+  Mentar's controlled, local, child-safety loop just to reach the library inside it — e.g.
+  running the OpenZIM **MCP server** when we only need its `libzim` layer
+  (`docs/design/grounding_zim_reference_hermit.md`).
+
+"Build it ourselves" therefore never means reinventing a solved primitive; it means owning
+the thin glue + the parts that *are* the product. The grounding/ZIM reader is the canonical
+example: **depend on `libzim`, own the safety wrapper, skip the server.**
+
+---
+
 ## 8. Out of Scope for This Document
 
 - **Session FSM details** — state/transition table, absorbing states, persistence contract → `docs/SESSION_FSM.md` (W6.1)
