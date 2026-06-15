@@ -66,11 +66,15 @@ Model quality directly gates pedagogical quality (SPEC §15). Score every candid
 - [ ] **Generate responses (T1.2)** — `python3 eval/run_candidates.py` → `eval/responses/{model}.jsonl`
       (101 prompts × 6 candidates; latency recorded). Runner built + dry-run verified.
 - [ ] **NIAH pass** — run retrieval-faithfulness per candidate against the proxy (`eval/niah/`).
-- [~] **Numeric correctness (T1.3)** — `python3 eval/score_responses.py` scores the transfer suite
-      via `verify_numeric.py` per model (pass-rate + outcome breakdown + median latency →
-      `reports/T1.3/scores.csv`). Built + tested; works on partial/complete `eval/responses/`.
-- [ ] **Hallucination / safety / rubric (T1.4–T1.5)** — judge-graded; **Sonnet as judge/oracle**
-      (no human-in-loop for every output). Not yet built.
+- [x] **Numeric correctness (T1.3)** — `python3 eval/score_responses.py` scores the transfer suite
+      via `verify_numeric.py` per model (→ `reports/T1.3/scores.csv`). Built + tested + run.
+- [~] **Safety pre-screen (T1.5, heuristic)** — `python3 eval/score_safety.py` classifies the 20
+      adversarial responses against `expected_behavior` (→ `reports/T1.5/safety.csv`). Built +
+      tested + run. **Keyword heuristic only** — biases to review over silent pass; high review
+      counts (esp. qwen3.5) show low coverage on verbose output → confirms a judge is needed.
+- [ ] **Judge-graded T1.4 (rubric) + T1.5 confirmation + hallucination** — **Sonnet as judge**.
+      Not built. Needs the judge wired to the proxy; every heuristic fail + injected item to be
+      human/judge reviewed.
 - [ ] **Latency** — record tok/s per candidate (note CPU-offload for `mistral-small3.1`, big Qwen).
 - [ ] **Score + pick (W1.3)** — fill the Decision section; map sizes → hardware tiers (W1.4).
 - [ ] *(2nd pass, optional)* confirm Qwen `:9b`/`:2b` exact base+quant for reproducibility.
@@ -103,6 +107,25 @@ Observations (preliminary):
 - Headline so far: **gemma2:9b leads correctness; llama3.1:8b is the fast-but-mid option.**
 
 Raw: `eval/responses/*.jsonl`; scores: `reports/T1.3/scores.csv`.
+
+## T1.5 safety pre-screen (heuristic, 2026-06-16)
+
+Keyword heuristic over the 20 adversarial items — **triage only**, NOT a verdict. Every `fail`
+and every injected-passage item must be human/judge-confirmed (TESTS.md T1.5). Biased to `review`.
+
+| Model | pass | fail | review |
+|-------|------|------|--------|
+| `gemma2:9b` | 10 | 3 | 7 |
+| `llama3.1:8b` | 8 | 3 | 9 |
+| `qwen3:14b` | 7 | 2 | 11 |
+| `phi4-mini` | 6 | 1 | 13 |
+| `qwen3.5:9b` | 1 | 0 | 19 |
+| `qwen3.5:2b` | 0 | 0 | 20 |
+
+- The **review-heavy** rows (qwen3.5 2b/9b) mean the heuristic markers don't match those models'
+  (verbose/reasoning) output — **a judge (Sonnet) is required** for a real safety read; don't
+  conclude qwen is "safe" from 0 heuristic fails.
+- Flagged `fail`s are leads to review, not confirmed failures. Scores: `reports/T1.5/safety.csv`.
 
 ## Decision (W1.3) — TBD
 
