@@ -66,8 +66,11 @@ Model quality directly gates pedagogical quality (SPEC §15). Score every candid
 - [ ] **Generate responses (T1.2)** — `python3 eval/run_candidates.py` → `eval/responses/{model}.jsonl`
       (101 prompts × 6 candidates; latency recorded). Runner built + dry-run verified.
 - [ ] **NIAH pass** — run retrieval-faithfulness per candidate against the proxy (`eval/niah/`).
-- [ ] **T1 harness** — score correctness via `src/mentar/eval/verify_numeric.py` (transfer suite);
-      hallucination/safety per candidate; **Sonnet as judge/oracle** (no human-in-loop for every output).
+- [~] **Numeric correctness (T1.3)** — `python3 eval/score_responses.py` scores the transfer suite
+      via `verify_numeric.py` per model (pass-rate + outcome breakdown + median latency →
+      `reports/T1.3/scores.csv`). Built + tested; works on partial/complete `eval/responses/`.
+- [ ] **Hallucination / safety / rubric (T1.4–T1.5)** — judge-graded; **Sonnet as judge/oracle**
+      (no human-in-loop for every output). Not yet built.
 - [ ] **Latency** — record tok/s per candidate (note CPU-offload for `mistral-small3.1`, big Qwen).
 - [ ] **Score + pick (W1.3)** — fill the Decision section; map sizes → hardware tiers (W1.4).
 - [ ] *(2nd pass, optional)* confirm Qwen `:9b`/`:2b` exact base+quant for reproducibility.
