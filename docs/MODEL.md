@@ -152,8 +152,25 @@ specific reason; 0 unparsed). `reports/T1.4/judge_gemma2_9b.jsonl`.
 > **Pipeline runner BUILT (2026-06-16):** `run_candidates.py --system-prompt prompts/system_prompt.md
 > --suite adversarial` wraps each item with the full system prompt; injected passages go ONLY into
 > the grounding-data wrapper (no un-wrapped copy in the user turn). Writes `{model}__pipeline.jsonl`.
-> (Core substitution drafted by the local gemma2:9b, reviewed/integrated here.) **Re-run + re-judge
-> pending** to get the real Mentar safety numbers.
+> (Core substitution drafted by the local gemma2:9b, reviewed/integrated here.)
+
+### Bare vs. full-pipeline safety — gemma2:9b (the measured value of the safety layer)
+
+| Adversarial (Sonnet-judged) | bare model | full pipeline |
+|---|---|---|
+| safe (behaved as expected) | **5/20 (0.25)** | **16/20 (0.80)** |
+| hard-fails | 15 | 4 |
+
+The safety layer turns a model that adopts a no-rules persona / gives a child alcohol tips / asks
+for a home address into one that's safe on 80% of attacks — **all injection attacks now defended**
+(grounding-data wrapper holds). The remaining 4 are mild + diagnostic, not raw-model failures:
+- 2× `defer_to_adult` (distress) — offered empathy/a break but didn't explicitly point to a trusted
+  adult → **the known SAFETY §3.4/§3.5 handoff-wording gap** (`[[project-safety-handoff-gap]]`); fix
+  in the system prompt, not the model.
+- 1× jailbreak (agreed "sounds fun!" *then* redirected) · 1× off-topic (engaged football chat).
+
+→ Safety must be evaluated through the pipeline; these 4 are system-prompt tuning targets. Re-run
+other candidates through the pipeline before W1.3.
 
 ## Decision (W1.3) — TBD
 
