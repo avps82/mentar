@@ -16,6 +16,30 @@ Mentar is an open-source tutoring framework that lets parents run an AI tutor on
 
 ---
 
+## How this is built — an honesty note
+
+Mentar is, candidly, **AI-built software**. The great majority of the code, tests, and docs in this
+repo are written by AI agents working under a human maintainer's direction, decisions, and review —
+**not hand-written by a person**. In that sense it is close to "vibe coding," even though it follows
+deliberate engineering discipline: spec-first design, test-driven development (150+ tests gating
+changes), design docs before code, versioned prompts, and code review. Those principles raise the
+quality bar — but they don't change that underlying fact, and we'd rather be upfront about it.
+
+What this means for you:
+
+- **The human makes the decisions** (scope, safety thresholds, model choices, architecture); the AI
+  executes and advises. Changes are test-gated and reviewed — but the author is AI.
+- **It has not had a professional, independent audit.** In particular, the **child-safety** code and
+  spec are AI-authored and reviewed by AI plus the maintainer — *not* by a qualified safeguarding,
+  security, or child-development professional. The safety spec's own rollout guards
+  ([`docs/SAFETY.md`](docs/SAFETY.md)) require that review **before** any use beyond a single,
+  supervised pilot.
+- Treat the project accordingly: carefully built and openly documented, but **not yet independently
+  verified**. Read the code, run the tests, and do not put it in front of a real child outside a
+  supervised pilot until the open safety items are closed.
+
+---
+
 ## Why local-first
 
 Two reasons:
