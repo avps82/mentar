@@ -493,11 +493,22 @@ Mentar is **not tied to any single model or runtime.** As an OSS project, it shi
 
 ```
 generate(prompt, grounding_passages, constraints) → text
-  ├─ Backend: local Ollama / llama.cpp        ← DEFAULT (data-light, offline-capable)
-  ├─ Backend: parent's own vLLM cluster        ← self-hosted, parent-operated
+  ├─ Backend: llama.cpp (GGUF)                 ← PRIMARY local default (lightweight, broadest HW support)
+  │     • Ollama is an optional convenience wrapper over the same engine
+  ├─ Backend: parent's own vLLM cluster        ← capable-GPU / throughput tier, parent-operated
   ├─ Backend: Gemini API (opt-in)              ← parent supplies + owns the key
   └─ Backend: Claude / other API (opt-in)      ← parent supplies + owns the key
 ```
+
+**Primary local backend = `llama.cpp` (decision, 2026-06-15, Pradeep).** Reasons: it is the
+**lightest** runtime and gives the **broadest hardware support** (CPU-only, Apple Silicon
+(Metal), modest GPUs, Win/macOS/Linux), running quantized **GGUF** weights — which is what
+makes "runs on a parent's laptop/homelab" real, i.e. the local-first differentiator. vLLM is
+the high-throughput **capable-GPU** tier (and the eval host, §20.3); Ollama is just a
+convenience wrapper around llama.cpp. **Integration note:** `llama.cpp`'s `llama-server`
+exposes an **OpenAI-compatible** API, so it uses the *same* provider path as vLLM (one
+`base_url` swap) for both the inference layer and the NIAH retrieval eval — or it can run
+in-process via `llama-cpp-python`. Either mode is config + env only (no code change).
 
 - **Swappability = config + env var only** — no code change to switch backends (mirrors the 21 Markdown-config philosophy).
 - **Cloud is the parent's choice and the parent's responsibility.** If a parent opts into a cloud backend, *they* supply and own the API key, and *they* assume the data-policy responsibility for traffic leaving the device. Mentar neither stores nor routes that data.
@@ -543,7 +554,7 @@ A new class of large-unified-memory "local AI" hardware is arriving fast, raisin
 | Mastery threshold | 0–1 | **0.85** — pilot default (v0); consumed by `engine/fringe.py` (W5.3) |
 | Probe cadence | trigger rule | **After every 5 items OR when (mastery ≥ 0.85 ∧ Help-rate < 1 per 10 items) — whichever first** — pilot default (v0) (W5.3; SPEC §14.2) |
 | Completion criteria | Finish coursework / parent-defined question set | Parent-defined |
-| **LLM backend** *(2026-06-11)* | local Ollama / own vLLM cluster / Gemini API / Claude API (opt-in cloud; parent owns key) | **local Ollama** |
+| **LLM backend** *(updated 2026-06-15)* | local **llama.cpp** (GGUF) / own vLLM cluster / Gemini API / Claude API (opt-in cloud; parent owns key); Ollama = optional wrapper | **local llama.cpp** (lightweight, broadest HW support — §20.1) |
 
 Mode/curriculum configs are **Markdown composition files** swapped at runtime — no code change. Scholastic config = safe rules + filters on; Broader config = relaxed rules, wider scope. Curriculum templates (9) are the grade-aligned subset of these.
 
