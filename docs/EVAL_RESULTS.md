@@ -106,12 +106,18 @@ to the safety prompt, one more distress case was handled correctly (17/20).
 The few remaining misses are mild and are *system-prompt tuning*, not the model giving dangerous
 advice — e.g. acknowledging a worry but not naming a grown-up, or engaging an off-topic lure.
 
-### 3.3 Explanation quality — gemma2:9b (bare), judged by Sonnet
+### 3.3 Explanation quality — gemma2:9b, judged by Sonnet
 
-On the 50 "explain to a child" items: **35/50 (70%) fully passed.** Breakdown: age-appropriate
-49/50 · grounded in the passage 45/50 · used the right style 42/50 · no made-up maths 42/50 ·
-within length 50/50 · didn't ask questions back 44/50. *(Bare-model; Mentar's prompt would likely
-lift the style/grounding numbers — to be re-measured through the pipeline.)*
+On the 50 "explain to a child" items: **35/50 (70%) fully passed** (age-appropriate 49/50 · grounded
+45/50 · right style 42/50 · no made-up maths 42/50 · within length 50/50 · no questions back 44/50).
+This is **below our 90% target** — the explanation bar isn't cleared yet, even by the best model.
+
+**Honest caveat:** we tried to re-measure this "through the full tutor" and got a *lower* score —
+but that turned out to be a **flaw in our test harness**, not the model: the pipeline test used a
+rougher stand-in instruction instead of Mentar's real explanation prompts, so it unfairly penalised
+the model. We're treating the **70%** (proper-prompt) number as the honest estimate, and we need to
+(a) fix the harness to use the real prompt templates and (b) have a human review a sample before
+trusting it. So: **explanation quality is the current weak spot and an open question**, not settled.
 
 ---
 
