@@ -146,9 +146,9 @@ def test_models_yaml_loads_roster():
     assert roles["mistral-small3.1"] == "ceiling"
     assert roles["claude-sonnet-4-6"] == "judge"
     assert sum(1 for m in models if m["role"] == "candidate") >= 6
-    # queued models are present, carry a vram bucket, and are marked queued
+    # still-queued models are present, and every candidate carries a vram bucket
     queued = {m["name"]: m for m in models if m.get("status") == "queued"}
-    assert "falcon:7b-instruct" in queued and "nemotron-3-nano:4b" in queued
+    assert "falcon:7b-instruct" in queued and "vicuna:7b" in queued
     assert all(m.get("vram") for m in models if m.get("role") == "candidate")
 
 

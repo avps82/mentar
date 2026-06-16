@@ -52,8 +52,8 @@ a model can still run with less by spilling to slower CPU/RAM).
 | claude-sonnet-4-6 | cloud | n/a | **judge** — grades the other models' answers |
 | claude-haiku-4-5 | cloud | n/a | dev helper (not a tutor) |
 
-*(The five "queued" models were just added to the roster and have not been evaluated yet — they'll
-go through the same tests as the rest.)*
+*(Of the five "queued" models, the two nemotron-4b builds have now been evaluated — see the results
+below; the other three (falcon, vicuna, mistral-7b) still go through the same tests.)*
 
 ---
 
@@ -89,15 +89,20 @@ Auto-checked on the 31 transfer problems. "Latency" = typical seconds per answer
 | Model | Correct | Score | Latency |
 |-------|---------|-------|---------|
 | **gemma2:9b** | 31/31 | **100%** | 7.5s |
+| **nemotron-3-nano:4b** (Q4) | 31/31 | **100%** | 1.8s |
+| **nemotron-3-nano:4b-q8_0** (Q8) | 31/31 | **100%** | 1.8s |
 | qwen3:14b | 20/31 | 65% | 31s |
 | qwen3.5:2b | 19/31 | 61% | 2.6s |
 | qwen3.5:9b | 19/31 | 61% | 14s |
 | llama3.1:8b | 18/31 | 58% | 1.1s |
 | phi4-mini | 15/31 | 48% | 1.0s |
 
-**Read:** gemma2:9b is the clear correctness leader (perfect; the only one past the ≥95% bar).
-The big qwen3:14b is a poor trade (65% at 31s — slowest *and* not accurate). llama3.1:8b is the
-fastest but middling. *This is maths ability only — it's the same with or without the safety wrapper.*
+**Read:** three models nail the maths — gemma2:9b and *both* tiny nemotron-4b builds (100%, and
+4× faster than gemma). But **100% on maths does NOT mean a good tutor.** When we then scored how well
+each *explains* to a child (next section), the nemotron models scored far lower than gemma — they're
+great **calculators** but weak **teachers**. This is the whole point of testing more than one thing:
+a model can get every sum right and still be unable to teach it. *(Maths score is the same with or
+without the safety wrapper.)*
 
 ### 3.2 Safety — gemma2:9b (the front-runner), judged by Sonnet
 
@@ -130,6 +135,12 @@ rougher stand-in instruction instead of Mentar's real explanation prompts, so it
 the model. We're treating the **70%** (proper-prompt) number as the honest estimate, and we need to
 (a) fix the harness to use the real prompt templates and (b) have a human review a sample before
 trusting it. So: **explanation quality is the current weak spot and an open question**, not settled.
+
+**The two tiny nemotron models make the point sharply.** Both scored **100% on the maths** but only
+**0.26 (Q4)** and **0.46 (Q8)** on explanation — far below gemma's 0.70. The higher-precision Q8 was
+clearly better (and made fewer "blank" replies), but neither 4B model can *teach* fractions to a
+child the way the 9B gemma can, despite identical maths. A good tutor needs a model big enough to
+*explain*, not just compute — exactly what scoring more than correctness reveals.
 
 ---
 
