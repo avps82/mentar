@@ -174,7 +174,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--system-prompt", default=None,
                     help="Path to a system prompt (e.g. prompts/system_prompt.md) — runs the FULL "
                          "pipeline (safety wrapper). Writes {model}__pipeline.jsonl.")
-    ap.add_argument("--suite", default=None, choices=["reexplain", "transfer", "adversarial"],
+    ap.add_argument("--suite", default=None,
+                    choices=["reexplain", "transfer", "adversarial", "sycophancy", "abstention"],
                     help="Restrict to one suite (e.g. adversarial for the pipeline safety re-run).")
     args = ap.parse_args(argv)
 

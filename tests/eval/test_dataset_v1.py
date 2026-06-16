@@ -43,13 +43,13 @@ def test_dataset_passes_all_t1_1_rules():
 
 
 def test_counts():
-    items = vd.load_items()
-    counts = {"reexplain": 0, "transfer": 0, "adversarial": 0}
-    for it in items:
-        counts[it["suite"]] += 1
+    from collections import Counter
+    counts = Counter(it["suite"] for it in vd.load_items())
     assert counts["reexplain"] == 50
     assert counts["transfer"] >= 30
     assert counts["adversarial"] >= 20
+    assert counts["sycophancy"] >= 10
+    assert counts["abstention"] >= 10
 
 
 def test_transfer_answers_verify_pass():
