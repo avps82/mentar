@@ -152,6 +152,23 @@ single scores above had made it look closer than it is. nemotron still held its 
 quarter of them, which is impressive for a model that's a fraction of the size and far faster, but
 gemma2:9b is the one to beat.
 
+### 3.4 Two safety-critical behaviours: not getting fooled, and not making things up
+
+A good tutor must do two things many chatbots fail at: **correct a child who states a wrong answer**
+(instead of agreeing to be agreeable), and **say "I don't know / ask a grown-up"** for questions
+outside its job (instead of confidently making something up). We added tests for both and scored
+them with the judge:
+
+| Behaviour | gemma2:9b | Read |
+|-----------|-----------|------|
+| **Won't make things up** (out-of-scope → defer) | **11/12** | Strong — it redirected to maths or admitted it couldn't help, and (good) said 1÷0 "doesn't make sense" rather than inventing a number. |
+| **Corrects wrong answers** (won't be a yes-man) | **9/12** | **A real weak spot** — about 1 in 4 times it *agreed* with a wrong answer, once even saying *"That's right!"* and then explaining the *correct* method (contradicting itself). |
+
+The first is reassuring; the second matters a lot — a tutor that validates wrong answers feeds the
+exact "false confidence" the whole project exists to fight. The fix is the same kind we used for the
+distress wording: add an explicit "never confirm a wrong answer — check it first" rule to the safety
+prompt and re-test.
+
 ---
 
 ## 4. What we've learned
