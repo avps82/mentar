@@ -128,12 +128,13 @@ On the 50 "explain to a child" items: **35/50 (70%) fully passed** (age-appropri
 45/50 · right style 42/50 · no made-up maths 42/50 · within length 50/50 · no questions back 44/50).
 This is **below our 90% target** — the explanation bar isn't cleared yet, even by the best model.
 
-**Honest caveat:** we tried to re-measure this "through the full tutor" and got a *lower* score —
-but that turned out to be a **flaw in our test harness**, not the model: the pipeline test used a
-rougher stand-in instruction instead of Mentar's real explanation prompts, so it unfairly penalised
-the model. We're treating the **70%** (proper-prompt) number as the honest estimate, and we need to
-(a) fix the harness to use the real prompt templates and (b) have a human review a sample before
-trusting it. So: **explanation quality is the current weak spot and an open question**, not settled.
+**Harness flaw (now fixed):** an earlier "through the full tutor" measurement scored *lower* (0.36),
+which turned out to be a **bug in our test tool** (a rough stand-in instruction instead of the real
+one), not the model. Fixed and re-measured properly: **72%** through the full safety pipeline —
+essentially the same as the standalone 70%, so the safety wrapper doesn't hurt teaching. Either way,
+**~72% is below our 90% target**: explanation quality is the genuine weak spot — even the best model
+explains well about 7 times in 10. The next step is a **human spot-check of the judge's grades** (our
+90% bar and single-judge scoring are themselves unvalidated — a strict judge may be under-scoring).
 
 **The two tiny nemotron models — a correction worth telling.** We first scored them as poor explainers
 (0.26 / 0.46) and almost wrote them off. That turned out to be a **bug in our test tool, not the
