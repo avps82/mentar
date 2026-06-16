@@ -144,6 +144,13 @@ models a fraction of the size that run on **<4–6 GB** and answer **4× faster*
 slightly, but they're a genuine option for low-spec machines — and it's a good reminder that you have
 to trust your *test tools* before you trust the scores.
 
+We then did a **direct head-to-head**: show the judge gemma's and nemotron's explanation of the same
+thing and ask which is better (asked both ways round to be fair). **gemma won 82%** of the time
+(38 wins, 6 ties, 6 losses out of 50). So the bigger model is clearly the better *teacher* — the
+single scores above had made it look closer than it is. nemotron still held its own on about a
+quarter of them, which is impressive for a model that's a fraction of the size and far faster, but
+gemma2:9b is the one to beat.
+
 ---
 
 ## 4. What we've learned

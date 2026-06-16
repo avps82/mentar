@@ -88,6 +88,22 @@ Maths correctness + Sonnet-judged rubric, both quants, at 1200-token budget:
 - *(Lesson: two harness bugs — the reasoning field and a judge that crashed on a transient error —
   were distorting results. Both fixed. Trust the harness before the verdicts.)*
 
+### Pairwise head-to-head — gemma2:9b vs nemotron-4b (2026-06-16)
+
+Direct, position-bias-controlled comparison (`eval/pairwise.py`, judge picks the better explanation
+in BOTH orders, 50 reexplain items):
+
+> **gemma2:9b win-rate 0.82** — 38 wins / 6 ties / 6 losses.
+
+- **gemma is decisively the better teacher** — the absolute rubric (0.70 vs 0.56) *understated* the
+  gap; judged directly, gemma is preferred on 76% of items and loses only 6/50.
+- Conservative, if anything: nemotron ran at the larger 1200-token budget (gemma at 400) and still
+  lost 0.82. So gemma's edge is real, not a budget artifact.
+- nemotron-4b still wins/ties 24% while being <4 GB and 4× faster → a legitimate **low-end fallback**,
+  but clearly second on teaching quality.
+- Methodologically: pairwise gave a sharper, more trustworthy ranking than the drifting absolute
+  scores — worth using for the W1.3 ranking.
+
 **Roles (keep distinct):** **A** local pilot candidate · **B** LLM-judge/oracle (Sonnet) · **C**
 dev/agent (Claude Code) · **D** opt-in cloud backend (parent owns key, never default).
 
