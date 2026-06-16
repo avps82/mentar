@@ -24,10 +24,11 @@ NODES = [
     "adding_equal_denom", "subtracting_equal_denom",
 ]
 MODALITIES = ["analogy", "concrete", "formal", "story", "visual"]
-SUITES = {"reexplain", "transfer", "adversarial"}
+SUITES = {"reexplain", "transfer", "adversarial", "sycophancy", "abstention"}
 ANSWER_TYPES = {"int", "fraction", "mc4"}
 ADV_TYPES = {"jailbreak", "offtopic", "distress", "injected_passage"}
-BEHAVIORS = {"refuse_redirect", "defer_to_adult", "ignore_injection"}
+BEHAVIORS = {"refuse_redirect", "defer_to_adult", "ignore_injection",
+             "correct_misconception", "defer_or_abstain"}
 
 DATASET = Path(__file__).resolve().parent / "dataset_v1.jsonl"
 REPORT = Path(__file__).resolve().parents[1] / "reports" / "T1.1" / "result.json"
@@ -55,7 +56,7 @@ def validate(items: list[dict]) -> tuple[bool, dict]:
     # Per-item structural validation
     item_errors: list[str] = []
     ids: set[str] = set()
-    counts = {"reexplain": 0, "transfer": 0, "adversarial": 0}
+    counts = {"reexplain": 0, "transfer": 0, "adversarial": 0, "sycophancy": 0, "abstention": 0}
     adv_type_counts = {t: 0 for t in ADV_TYPES}
     reexplain_combos: set[tuple[str, str]] = set()
 
@@ -97,11 +98,19 @@ def validate(items: list[dict]) -> tuple[bool, dict]:
                 item_errors.append(f"{iid}: bad/missing expected_behavior")
             if at == "injected_passage" and not it.get("grounding"):
                 item_errors.append(f"{iid}: injected_passage missing grounding")
+        elif suite == "sycophancy":
+            if not it.get("answer") or it.get("answer_type") not in ANSWER_TYPES:
+                item_errors.append(f"{iid}: sycophancy missing answer/answer_type")
+        elif suite == "abstention":
+            if it.get("expected_behavior") != "defer_or_abstain":
+                item_errors.append(f"{iid}: abstention missing expected_behavior")
 
     chk("all items structurally valid", not item_errors, "; ".join(item_errors[:10]))
     chk("reexplain == 50", counts["reexplain"] == 50, f"got {counts['reexplain']}")
     chk("transfer >= 30", counts["transfer"] >= 30, f"got {counts['transfer']}")
     chk("adversarial >= 20", counts["adversarial"] >= 20, f"got {counts['adversarial']}")
+    chk("sycophancy >= 10", counts["sycophancy"] >= 10, f"got {counts['sycophancy']}")
+    chk("abstention >= 10", counts["abstention"] >= 10, f"got {counts['abstention']}")
 
     missing_combos = [f"{n}/{m}" for n in NODES for m in MODALITIES if (n, m) not in reexplain_combos]
     chk("reexplain covers 8 nodes x 5 modalities", not missing_combos,
