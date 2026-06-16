@@ -31,17 +31,29 @@ we've found so far.
 All are free/open models served locally on the eval host (a local AI test PC, 10GB GPU) via an
 OpenAI-compatible proxy. Two cloud Claude models play support roles, not tutor roles.
 
-| Model | Size | Role |
-|-------|------|------|
-| phi4-mini | ~3.8B | candidate (low-end hardware) |
-| qwen3.5:2b | ~2B | candidate (low-end hardware) |
-| llama3.1:8b | 8B | candidate (mid) |
-| gemma2:9b | 9B | candidate (mid) |
-| qwen3.5:9b | ~9B | candidate (mid) |
-| qwen3:14b | 14B | candidate (capable GPU) |
-| mistral-small3.1 | ~24B | **quality ceiling, not a pilot pick** (too big/slow for normal hardware) |
-| claude-sonnet-4-6 | cloud | **judge** — grades the other models' answers |
-| claude-haiku-4-5 | cloud | dev helper (not a tutor) |
+**~vRAM** = roughly how much graphics-card memory the model needs (approximate; assumes 4-bit
+compression + a modest conversation length, and rises with higher-quality settings or longer chats;
+a model can still run with less by spilling to slower CPU/RAM).
+
+| Model | Size | ~vRAM | Role |
+|-------|------|-------|------|
+| phi4-mini | ~3.8B | <4 GB | candidate (low-end) |
+| qwen3.5:2b | ~2B | <4 GB | candidate (low-end) |
+| nemotron-3-nano:4b | ~4B | <4 GB | candidate (low-end) — **queued, not yet run** |
+| nemotron-3-nano:4b-q8_0 | ~4B | <6 GB | candidate (low-end) — **queued, not yet run** |
+| falcon:7b-instruct | 7B | <6 GB | candidate (low-end) — **queued, not yet run** |
+| vicuna:7b | 7B | <6 GB | candidate (low-end) — **queued, not yet run** |
+| mistral:7b-instruct | 7B | <6 GB | candidate (low-end) — **queued, not yet run** |
+| llama3.1:8b | 8B | <6 GB | candidate (mid) |
+| gemma2:9b | 9B | <8 GB | candidate (mid) — current front-runner |
+| qwen3.5:9b | ~9B | <8 GB | candidate (mid) |
+| qwen3:14b | 14B | <10 GB | candidate (capable GPU) |
+| mistral-small3.1 | ~24B | ~16 GB (CPU-offload) | **quality ceiling, not a pilot pick** (too big/slow for normal hardware) |
+| claude-sonnet-4-6 | cloud | n/a | **judge** — grades the other models' answers |
+| claude-haiku-4-5 | cloud | n/a | dev helper (not a tutor) |
+
+*(The five "queued" models were just added to the roster and have not been evaluated yet — they'll
+go through the same tests as the rest.)*
 
 ---
 

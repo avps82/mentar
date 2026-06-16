@@ -32,17 +32,35 @@ final pick into the Decision section** below.
 
 ## Candidate roster
 
-| Served id | Family | ~Size | Tier (W1.4) | Role | Notes |
-|-----------|--------|-------|-------------|------|-------|
-| `phi4-mini` | Phi | ~3.8B | low-end / broad-HW | **candidate** | strong small model |
-| `qwen3.5:2b` | Qwen | ~2B | low-end / broad-HW | **candidate** | smallest; confirm exact base+quant |
-| `llama3.1:8b` | Llama | 8B | mid (broad-HW default story) | **candidate** | best-supported on llama.cpp |
-| `gemma2:9b` | Gemma | 9B | mid | **candidate** | |
-| `qwen3.5:9b` | Qwen | ~9B | mid | **candidate** | confirm exact base+quant |
-| `qwen3:14b` | Qwen | 14B (9.3GB) | capable-GPU | **candidate** | just fits 10GB vRAM |
-| `mistral-small3.1` | Mistral | ~24B (15GB) | — (CPU-offload) | **CEILING, not candidate** | quality upper-bound; too big/slow for the pilot deployment envelope — do **not** pick as the tutor |
-| `claude-sonnet-4-6` | Anthropic (cloud) | — | n/a | **judge / oracle** | grades candidate outputs; Phase-2 LLM-as-judge |
-| `claude-haiku-4-5` | Anthropic (cloud) | — | n/a | **dev / cheap judge** | not a tutor candidate |
+> **Reading the ~vRAM column.** vRAM is the memory on your graphics card (GPU); each model needs
+> roughly this much to run smoothly. Figures are **approximate** — they assume 4-bit compression and
+> a modest context length, and rise with higher-quality settings or longer conversations. A model can
+> still run with less vRAM by spilling onto slower CPU/RAM. *(Blurb drafted by the local gemma2:9b,
+> audited.)*
+
+| Served id | Family | ~Size | ~vRAM | Tier (W1.4) | Role | Notes |
+|-----------|--------|-------|-------|-------------|------|-------|
+| `phi4-mini` | Phi | ~3.8B | <4 GB | low-end / broad-HW | **candidate** | strong small model |
+| `qwen3.5:2b` | Qwen | ~2B | <4 GB | low-end / broad-HW | **candidate** | smallest; confirm exact base+quant |
+| `nemotron-3-nano:4b` | Nemotron | ~4B | <4 GB | low-end | **candidate** *(queued)* | Q4 — fast, smaller |
+| `nemotron-3-nano:4b-q8_0` | Nemotron | ~4B | <6 GB | low-end | **candidate** *(queued)* | Q8 — higher quality |
+| `falcon:7b-instruct` | Falcon | 7B | <6 GB | low-end | **candidate** *(queued)* | — |
+| `vicuna:7b` | Vicuna | 7B | <6 GB | low-end | **candidate** *(queued)* | — |
+| `mistral:7b-instruct` | Mistral | 7B | <6 GB | low-end | **candidate** *(queued)* | — |
+| `llama3.1:8b` | Llama | 8B | <6 GB | mid (broad-HW default story) | **candidate** | best-supported on llama.cpp; fast (1.1s) |
+| `gemma2:9b` | Gemma | 9B | <8 GB | mid | **candidate** | **front-runner** — correctness 100% |
+| `qwen3.5:9b` | Qwen | ~9B | <8 GB | mid | **candidate** | confirm exact base+quant |
+| `qwen3:14b` | Qwen | 14B (9.3GB) | <10 GB | capable-GPU | **candidate** | bad trade — slow (31s), mid accuracy |
+| `mistral-small3.1` | Mistral | ~24B (15GB) | ~16 GB (CPU-offload) | — | **CEILING, not candidate** | quality upper-bound; too big/slow for the pilot envelope — do **not** pick as the tutor |
+| `claude-sonnet-4-6` | Anthropic (cloud) | — | n/a | n/a | **judge / oracle** | grades candidate outputs; Phase-2 LLM-as-judge |
+| `claude-haiku-4-5` | Anthropic (cloud) | — | n/a | n/a | **dev / cheap judge** | not a tutor candidate |
+
+> 📌 **TODO (added 2026-06-16):** the 5 *(queued)* open-source models above
+> (`nemotron-3-nano:4b`, `nemotron-3-nano:4b-q8_0`, `falcon:7b-instruct`, `vicuna:7b`,
+> `mistral:7b-instruct`) are **added to the roster but not yet run**. Pull them on the eval host and
+> run them through the **same criteria** as the others (T1.1–T1.6: correctness → pipeline safety →
+> rubric). They're all small/low-end-friendly (<6 GB) — good for the broad-hardware tier if any clears
+> the gates.
 
 **Roles (keep distinct):** **A** local pilot candidate · **B** LLM-judge/oracle (Sonnet) · **C**
 dev/agent (Claude Code) · **D** opt-in cloud backend (parent owns key, never default).
