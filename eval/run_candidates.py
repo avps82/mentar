@@ -29,9 +29,12 @@ DATASET = ROOT / "eval" / "dataset_v1.jsonl"
 MODELS_YAML = ROOT / "eval" / "models.yaml"
 RESPONSES_DIR = ROOT / "eval" / "responses"
 
-TEMPERATURE = 0.2
-MAX_TOKENS = 400
-TIMEOUT = 120
+# Overridable via env (reasoning models need a bigger budget + sometimes a higher temperature —
+# e.g. NVIDIA Nemotron stalls at low temp and needs room to think before it emits the answer):
+#   MENTAR_EVAL_MAX_TOKENS (default 400) · MENTAR_EVAL_TEMPERATURE (default 0.2)
+TEMPERATURE = float(os.environ.get("MENTAR_EVAL_TEMPERATURE", "0.2"))
+MAX_TOKENS = int(os.environ.get("MENTAR_EVAL_MAX_TOKENS", "400"))
+TIMEOUT = int(os.environ.get("MENTAR_EVAL_TIMEOUT", "120"))
 
 
 def load_dataset(path: Path = DATASET) -> list[dict]:
@@ -107,7 +110,20 @@ def post_chat(base_url: str, api_key: str, payload: dict, timeout: int = TIMEOUT
 
 def _content_of(resp: dict) -> str:
     try:
-        return resp["choices"][0]["message"]["content"]
+        return resp["choices"][0]["message"]["content"] or ""
+    except (KeyError, IndexError, TypeError):
+        return ""
+
+
+def _reasoning_of(resp: dict) -> str:
+    """Reasoning/thinking text some models (e.g. NVIDIA Nemotron) put OUTSIDE `content`.
+
+    Such models route their output to a `reasoning` / `reasoning_content` field and may leave
+    `content` empty — without this, the harness silently records an empty response.
+    """
+    try:
+        m = resp["choices"][0]["message"]
+        return (m.get("reasoning") or m.get("reasoning_content") or "")
     except (KeyError, IndexError, TypeError):
         return ""
 
@@ -127,15 +143,22 @@ def run_model(model: str, items: list[dict], base_url: str, api_key: str,
     with open(out_path, "w", encoding="utf-8") as f:
         for it in items:
             t0 = time.time()
+            reasoning_fallback = False
             try:
                 resp = post(base_url, api_key, build_payload(it, model, system_prompt_text))
                 content, err = _content_of(resp), None
+                if not content.strip():
+                    # Reasoning models may emit only a reasoning/thinking field — use it
+                    # rather than recording an empty response.
+                    r = _reasoning_of(resp)
+                    if r.strip():
+                        content, reasoning_fallback = r, True
             except Exception as exc:  # noqa: BLE001
                 content, err = "", repr(exc)
             f.write(json.dumps({
                 "id": it["id"], "suite": it["suite"], "model": model,
-                "response": content, "latency_s": round(time.time() - t0, 3),
-                "error": err,
+                "response": content, "reasoning_fallback": reasoning_fallback,
+                "latency_s": round(time.time() - t0, 3), "error": err,
             }, ensure_ascii=True) + "\n")
     return out_path
 

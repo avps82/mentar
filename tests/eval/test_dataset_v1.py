@@ -138,6 +138,20 @@ def test_run_model_pipeline_uses_system_prompt(tmp_path):
     assert msgs[0]["role"] == "system" and "P" in msgs[0]["content"]
 
 
+def test_run_model_reasoning_fallback(tmp_path):
+    """Reasoning models (empty content, text in `reasoning`) → captured, not recorded empty."""
+    items = [{"id": "x", "suite": "reexplain", "prompt": "p"}]
+
+    def fake_post(b, k, payload, timeout=120):
+        return {"choices": [{"message": {"content": "", "reasoning": "the actual explanation"}}]}
+
+    out = rc.run_model("m", items, "http://f/v1", "k", out_dir=tmp_path, post=fake_post)
+    import json
+    rec = json.loads(out.read_text().splitlines()[0])
+    assert rec["response"] == "the actual explanation"
+    assert rec["reasoning_fallback"] is True
+
+
 def test_models_yaml_loads_roster():
     models = rc.load_models()
     names = {m["name"] for m in models}
