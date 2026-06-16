@@ -5,13 +5,22 @@
 # role: candidate (local OSS, under test) | ceiling (quality upper bound, NOT a pilot pick)
 #       | judge (grades outputs)          | dev (Claude Code agent, not a tutor candidate)
 # quant: "unknown" until confirmed on the host (W1.3 reproducibility).
+# vram: APPROX GPU memory bucket (4-bit unless the tag says otherwise, ~4-8k context); a model
+#       can still run with less by spilling to CPU/RAM (slower). status: queued = not yet run.
 models:
-  - {name: "phi4-mini",         source: ollama,    params: "~3.8B", quant: unknown, role: candidate, tier: low-end}
-  - {name: "qwen3.5:2b",        source: ollama,    params: "~2B",   quant: unknown, role: candidate, tier: low-end}
-  - {name: "llama3.1:8b",       source: ollama,    params: "8B",    quant: unknown, role: candidate, tier: mid}
-  - {name: "gemma2:9b",         source: ollama,    params: "9B",    quant: unknown, role: candidate, tier: mid}
-  - {name: "qwen3.5:9b",        source: ollama,    params: "~9B",   quant: unknown, role: candidate, tier: mid}
-  - {name: "qwen3:14b",         source: ollama,    params: "14B",   quant: unknown, role: candidate, tier: capable-gpu}
-  - {name: "mistral-small3.1",  source: ollama,    params: "~24B",  quant: unknown, role: ceiling,   tier: ceiling}
-  - {name: "claude-sonnet-4-6", source: anthropic, params: "n/a",   quant: "n/a",  role: judge,     tier: cloud}
-  - {name: "claude-haiku-4-5",  source: anthropic, params: "n/a",   quant: "n/a",  role: dev,       tier: cloud}
+  - {name: "phi4-mini",            source: ollama,    params: "~3.8B", quant: unknown, role: candidate, tier: low-end,     vram: "<4 GB"}
+  - {name: "qwen3.5:2b",           source: ollama,    params: "~2B",   quant: unknown, role: candidate, tier: low-end,     vram: "<4 GB"}
+  - {name: "llama3.1:8b",          source: ollama,    params: "8B",    quant: unknown, role: candidate, tier: mid,         vram: "<6 GB"}
+  - {name: "gemma2:9b",            source: ollama,    params: "9B",    quant: unknown, role: candidate, tier: mid,         vram: "<8 GB"}
+  - {name: "qwen3.5:9b",           source: ollama,    params: "~9B",   quant: unknown, role: candidate, tier: mid,         vram: "<8 GB"}
+  - {name: "qwen3:14b",            source: ollama,    params: "14B",   quant: unknown, role: candidate, tier: capable-gpu, vram: "<10 GB"}
+  # ── Queued (added 2026-06-16) — pull on the host, then run with the eval criteria (T1.1–T1.6). ──
+  - {name: "nemotron-3-nano:4b",      source: ollama, params: "~4B", quant: "Q4", role: candidate, tier: low-end, vram: "<4 GB", status: queued}
+  - {name: "nemotron-3-nano:4b-q8_0", source: ollama, params: "~4B", quant: "Q8", role: candidate, tier: low-end, vram: "<6 GB", status: queued}
+  - {name: "falcon:7b-instruct",      source: ollama, params: "7B",  quant: "Q4", role: candidate, tier: low-end, vram: "<6 GB", status: queued}
+  - {name: "vicuna:7b",               source: ollama, params: "7B",  quant: "Q4", role: candidate, tier: low-end, vram: "<6 GB", status: queued}
+  - {name: "mistral:7b-instruct",     source: ollama, params: "7B",  quant: "Q4", role: candidate, tier: low-end, vram: "<6 GB", status: queued}
+  # ── Reference / support roles (not pilot candidates) ──
+  - {name: "mistral-small3.1",     source: ollama,    params: "~24B",  quant: unknown, role: ceiling,   tier: ceiling,     vram: "~16 GB (CPU-offload)"}
+  - {name: "claude-sonnet-4-6",    source: anthropic, params: "n/a",   quant: "n/a",   role: judge,     tier: cloud,       vram: "n/a (cloud)"}
+  - {name: "claude-haiku-4-5",     source: anthropic, params: "n/a",   quant: "n/a",   role: dev,       tier: cloud,       vram: "n/a (cloud)"}
