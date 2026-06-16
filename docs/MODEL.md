@@ -254,29 +254,36 @@ Ran all 101 items through the full pipeline (`run_candidates.py --system-prompt 
 |---|---|---|
 | Correctness (transfer) | **100%** bare and pipeline (pipeline even faster, 4.7s vs 7.5s) | ✅ ≥95% |
 | Safety (adversarial, pipeline) | **17–18/20** across runs (temp-0.2 wobble), **injection 5/5**, distress handled; weak spot = off-topic redirect | ⚠️ not 0 hard-fails, but the 2 fails are "engaged off-topic", not dangerous |
-| Rubric (explanation quality) | **0.70 (trustworthy) — below the 0.90 gate.** See caveat. | ❌ not cleared on trustworthy evidence |
+| Rubric (explanation quality, **faithful pipeline**) | **0.72** (36/50) | ❌ below the 0.90 gate |
 
-> ⚠️ **HARNESS BUG — the pipeline rubric number is an artifact.** The pipeline run reported rubric
-> **0.36**, *worse* than bare 0.70 — but that's because `run_candidates.py::pipeline_inputs()` builds
-> a **strawman re-explanation turn** (`"Please explain <node_id> using a <modality> example"`) that
-> **drops the real constraints** ("max 120 words, no questions back") and uses the raw node id instead
-> of the actual versioned **Help-modality templates** (`prompts/help_*.md`). So `no_question` fell
-> 44→30 and modality adherence dropped — purely a worse prompt. **Discard the 0.36.** The bare 0.70
-> (which used the proper dataset prompt) is the trustworthy rubric estimate.
-> **Fix needed:** for a faithful pipeline rubric the eval must use the real `prompts/help_*.md`
-> templates as the tutoring turn (fill `{{concept}}`/`{{grounding_passage}}`) — this ties to the W6.2
-> registry + the (not-yet-built) dialogue controller. Until then, treat rubric as ~0.70 and
-> human-review a sample of the fails (`in_modality` 42/50, `no_fabrication` 42/50 on the bare run).
+> ✅ **HARNESS BUG — NOW FIXED (2026-06-16).** The pipeline rubric had read **0.36**, an artifact:
+> `pipeline_inputs()` built a strawman reexplain turn that dropped the constraints ("max 120 words,
+> no questions back") and used the raw node id. Fix: pipeline mode now uses each item's **own
+> constraint-bearing prompt** wrapped in the safety system prompt (the strawman branch is gone).
+> Re-measured: **faithful pipeline rubric = 0.72** (36/50) — essentially the bare 0.70, *with* the
+> safety wrapper applied, so the wrapper doesn't hurt explanation quality. Discard the old 0.36.
+> Breakdown: age_appropriate 50/50 · in_modality 43/50 · grounded 45/50 · no_fabrication 40/50 ·
+> within_cap 50/50 · no_question 40/50. **Still ~0.72 < the 0.90 gate.**
+> *(Separate, future: the runtime **Help loop** uses `prompts/help_*.md` which deliberately end with a
+> transfer question — a different scenario from this "explain, no questions" suite, and its own eval.
+> That scaffolding dimension is what MathTutorBench would cover — see `docs/design/W1.2b_mathtutorbench.md`.)*
 
 ## Decision (W1.3) — provisional, NOT final
 
 **gemma2:9b is the front-runner** — the only candidate clearing the correctness gate (others 48–65%
-are out), with solid-and-improving pipeline safety (injections fully blocked). **But W1.3 is NOT
-finalized**: the explanation-quality gate isn't cleared on trustworthy evidence (0.70 < 0.90), and a
-faithful measurement is blocked on (a) the harness fix above and (b) human review of the rubric
-fails. Next: fix the reexplain harness → re-measure gemma2:9b rubric through real Help templates →
-if it clears (with human spot-check), gemma2:9b is the pick; if not, invoke the kill-criteria path
-(SPEC §25.1: raise the size ceiling once, or relax the pilot gate deliberately).
+are out), pairwise-confirmed the best teacher (0.82 win-rate over nemotron-4b), pipeline safety
+solid (injections 5/5). The reexplain-harness faithfulness fix is **done**, so the rubric is now
+trustworthy: **gemma2:9b = 0.72 — below the 0.90 gate.**
+
+**So W1.3 hits a real fork: no model clears the explanation-quality gate (gemma 0.72 is the best).**
+The options (SPEC §25.1 kill-criteria) are now concrete:
+1. **Human-calibrate the gate/judge first** — our 0.90 + single-judge rubric is uncalibrated; do the
+   Cohen's-κ human review (TESTS.md T1.4). 0.72 from a strict single judge may understate real quality.
+2. **Raise the size ceiling once** — try larger models (a 27B/30B-class) to see if any clears 0.90.
+3. **Relax the pilot gate deliberately** — accept ~0.72 for the *supervised* pilot (parent present,
+   transcripts reviewed) and treat 0.90 as the bar for unsupervised rollout.
+**Recommendation:** do (1) before (2)/(3) — calibrate before chasing a possibly-miscalibrated gate.
+Add the **MathTutorBench scaffolding** check (W1.2b) to the finalist before committing.
 
 _Pending the eval run. Records: chosen pilot model(s) per hardware tier, the scores that justified it,
 and the kill-criteria check (SPEC §25.1(a): if no candidate passes the T1.6 quality gates, raise the
