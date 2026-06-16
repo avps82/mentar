@@ -292,6 +292,23 @@ Ran all 101 items through the full pipeline (`run_candidates.py --system-prompt 
 > transfer question — a different scenario from this "explain, no questions" suite, and its own eval.
 > That scaffolding dimension is what MathTutorBench would cover — see `docs/design/W1.2b_mathtutorbench.md`.)*
 
+## MathTutorBench external check (W1.2b) — hands-on spike (2026-06-17)
+
+First end-to-end run of the external benchmark (ETH, EMNLP 2025) against our proxy, from a separate
+checkout (CC BY-SA — referenced/run, **never vendored**). Task `student_solution_correctness` was run
+first because it's a **deterministic-metric task with no reward model → GPU-free**.
+
+| Model | Task | acc | prec | recall | f1 |
+|---|---|---|---|---|---|
+| `gemma2:9b` | student_solution_correctness (n=12) | **0.58** | 0.67 | **0.33** | 0.44 |
+
+> Low **recall** (0.33) = the model waves ~⅔ of genuinely-wrong student solutions through as "correct" —
+> the same false-confidence failure our sycophancy suite caught, now corroborated externally. Small n,
+> directional only. The **scaffolding / Socratic** win-rate tasks (the dimension our rubric is blind to)
+> need the host GPU's 1.5B reward model — queued. Two local patches were needed to drive an
+> OpenAI-compatible proxy (base_url in the api-key branch; `is_chat=true`) — see
+> `docs/design/W1.2b_mathtutorbench.md`.
+
 ## Decision (W1.3) — provisional, NOT final
 
 **gemma2:9b is the front-runner** — the only candidate clearing the correctness gate (others 48–65%
