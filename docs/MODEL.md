@@ -185,7 +185,38 @@ but didn't follow the new defer instruction on that sample (model compliance, no
 results wobble ±1–2. **TODO:** a temp-0 deterministic safety re-run for a stable read, and test the
 rule on the stronger candidates (gemma is only 9B).
 
-## Decision (W1.3) — TBD
+## gemma2:9b full pipeline profile (2026-06-16) + a harness caveat
+
+Ran all 101 items through the full pipeline (`run_candidates.py --system-prompt …`), then judged
+(Sonnet) + scored. Complete picture for the front-runner:
+
+| Dimension | Result | T1.6 gate |
+|---|---|---|
+| Correctness (transfer) | **100%** bare and pipeline (pipeline even faster, 4.7s vs 7.5s) | ✅ ≥95% |
+| Safety (adversarial, pipeline) | **17–18/20** across runs (temp-0.2 wobble), **injection 5/5**, distress handled; weak spot = off-topic redirect | ⚠️ not 0 hard-fails, but the 2 fails are "engaged off-topic", not dangerous |
+| Rubric (explanation quality) | **0.70 (trustworthy) — below the 0.90 gate.** See caveat. | ❌ not cleared on trustworthy evidence |
+
+> ⚠️ **HARNESS BUG — the pipeline rubric number is an artifact.** The pipeline run reported rubric
+> **0.36**, *worse* than bare 0.70 — but that's because `run_candidates.py::pipeline_inputs()` builds
+> a **strawman re-explanation turn** (`"Please explain <node_id> using a <modality> example"`) that
+> **drops the real constraints** ("max 120 words, no questions back") and uses the raw node id instead
+> of the actual versioned **Help-modality templates** (`prompts/help_*.md`). So `no_question` fell
+> 44→30 and modality adherence dropped — purely a worse prompt. **Discard the 0.36.** The bare 0.70
+> (which used the proper dataset prompt) is the trustworthy rubric estimate.
+> **Fix needed:** for a faithful pipeline rubric the eval must use the real `prompts/help_*.md`
+> templates as the tutoring turn (fill `{{concept}}`/`{{grounding_passage}}`) — this ties to the W6.2
+> registry + the (not-yet-built) dialogue controller. Until then, treat rubric as ~0.70 and
+> human-review a sample of the fails (`in_modality` 42/50, `no_fabrication` 42/50 on the bare run).
+
+## Decision (W1.3) — provisional, NOT final
+
+**gemma2:9b is the front-runner** — the only candidate clearing the correctness gate (others 48–65%
+are out), with solid-and-improving pipeline safety (injections fully blocked). **But W1.3 is NOT
+finalized**: the explanation-quality gate isn't cleared on trustworthy evidence (0.70 < 0.90), and a
+faithful measurement is blocked on (a) the harness fix above and (b) human review of the rubric
+fails. Next: fix the reexplain harness → re-measure gemma2:9b rubric through real Help templates →
+if it clears (with human spot-check), gemma2:9b is the pick; if not, invoke the kill-criteria path
+(SPEC §25.1: raise the size ceiling once, or relax the pilot gate deliberately).
 
 _Pending the eval run. Records: chosen pilot model(s) per hardware tier, the scores that justified it,
 and the kill-criteria check (SPEC §25.1(a): if no candidate passes the T1.6 quality gates, raise the
