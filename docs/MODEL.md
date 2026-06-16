@@ -42,8 +42,8 @@ final pick into the Decision section** below.
 |-----------|--------|-------|-------|-------------|------|-------|
 | `phi4-mini` | Phi | ~3.8B | <4 GB | low-end / broad-HW | **candidate** | strong small model |
 | `qwen3.5:2b` | Qwen | ~2B | <4 GB | low-end / broad-HW | **candidate** | smallest; confirm exact base+quant |
-| `nemotron-3-nano:4b` | Nemotron | ~4B | <4 GB | low-end | **out — weak explainer** | Q4: maths **100%**, rubric **0.26**, 18% empty, 1.8s |
-| `nemotron-3-nano:4b-q8_0` | Nemotron | ~4B | <6 GB | low-end | **out — weak explainer** | Q8: maths **100%**, rubric **0.46**, 8% empty, 1.8s |
+| `nemotron-3-nano:4b` | Nemotron | ~4B | <4 GB | low-end | **candidate** | Q4: maths **100%**, rubric **0.56**, 0 empty, 1.8s — best of the two (same quality, less RAM) |
+| `nemotron-3-nano:4b-q8_0` | Nemotron | ~4B | <6 GB | low-end | **candidate** | Q8: maths **100%**, rubric **0.50**, 0 empty, 1.9s |
 | `falcon:7b-instruct` | Falcon | 7B | <6 GB | low-end | **candidate** *(queued)* | — |
 | `vicuna:7b` | Vicuna | 7B | <6 GB | low-end | **candidate** *(queued)* | — |
 | `mistral:7b-instruct` | Mistral | 7B | <6 GB | low-end | **candidate** *(queued)* | — |
@@ -59,28 +59,34 @@ final pick into the Decision section** below.
 > `falcon:7b-instruct`, `vicuna:7b`, `mistral:7b-instruct` — pull on the eval host and run through the
 > same criteria (T1.1–T1.6). All <6 GB — good for the broad-hardware tier *if* any clears the gates.
 
-## Queued-model results — nemotron-3-nano (2026-06-16)
+## Queued-model results — nemotron-3-nano (2026-06-16, CORRECTED)
 
-First of the queued models. Bare correctness + Sonnet-judged rubric, both quants:
+> ⚠️ **Correction.** An earlier write-up here called both nemotron quants "calculators, not teachers"
+> (rubric 0.26/0.46). That was **wrong — a harness bug, not the model.** Nemotron is a reasoning model:
+> at the eval's 400-token budget it was cut off mid-explanation (16% empty replies → auto-fails), and
+> the harness also wasn't reading the `reasoning` field. Fixed both (capture `reasoning`;
+> `MENTAR_EVAL_MAX_TOKENS`, re-run at 1200). The corrected numbers below supersede the old ones.
+
+Maths correctness + Sonnet-judged rubric, both quants, at 1200-token budget:
 
 | Model | Correctness | Rubric (teaching) | Empty resp. | Latency | vRAM |
 |-------|-------------|-------------------|-------------|---------|------|
-| `nemotron-3-nano:4b` (Q4) | **100%** (31/31) | **0.26** (13/50) | 16/101 | 1.8s | <4 GB |
-| `nemotron-3-nano:4b-q8_0` (Q8) | **100%** (31/31) | **0.46** (23/50) | 8/101 | 1.8s | <6 GB |
-| `gemma2:9b` (reference) | 100% | 0.70 | low | 7.5s | <8 GB |
+| `nemotron-3-nano:4b` (Q4) | **100%** (31/31) | **0.56** (28/50) | **0** | 1.8s | <4 GB |
+| `nemotron-3-nano:4b-q8_0` (Q8) | **100%** (31/31) | **0.50** (25/50) | **0** | 1.9s | <6 GB |
+| `gemma2:9b` (reference, 400-tok) | 100% | 0.70 | low | 7.5s | <8 GB |
 
-**Findings:**
-- **Both are calculators, not teachers.** Perfect maths, but explanation quality (rubric) is far
-  below gemma's 0.70 and the 0.90 gate. The rubric caught what the numeric gate alone would have
-  falsely promoted — **correctness ≠ teaching ability**.
-- **Q8 ~doubled the rubric** (0.26→0.46) and halved the empties (16→8). Higher precision materially
-  improves *generation/explanation* quality; the maths was already perfect at both quants.
-  (`in_modality` 18→28, `grounded` 34→41, `no_fabrication` 32→41.)
-- **Out as a primary tutor** (explanation bar not cleared). But they're excellent *fast, tiny*
-  calculators (1.8s, <4–6 GB) — a possible low-end **answer-checker** or fallback role, never the
-  explainer. Pipeline-safety not run (already out on rubric — not decision-relevant).
-- Reinforces the core read: explanation quality scales with model capability; the 9B gemma teaches
-  far better than the 4B nemotron despite identical maths. **gemma2:9b stays the front-runner.**
+**Findings (corrected):**
+- **A genuinely competent tiny teacher.** Perfect maths AND a rubric (~0.53) close to gemma's 0.70 —
+  remarkable for a model <half the size, **4× faster**, on **<4 GB**. The earlier "calculator only"
+  read was a token-budget artifact.
+- **Q4 ≈ Q8 once the budget is fixed** (0.56 vs 0.50 — within run-to-run noise). The old Q8>Q4 gap was
+  just the empties. So the smaller **Q4 is the better pick** (same quality, less memory).
+- **Still below the 0.90 rubric gate — but so is gemma (0.70); no model has cleared it yet.** That
+  gate + the reexplain-harness faithfulness fix + human review remain the open W1.3 question.
+- A strong **low-end-tier candidate** to carry forward, not eliminate. gemma2:9b still leads on
+  rubric (0.70); nemotron-4b is the best *small* option by a wide margin.
+- *(Lesson: two harness bugs — the reasoning field and a judge that crashed on a transient error —
+  were distorting results. Both fixed. Trust the harness before the verdicts.)*
 
 **Roles (keep distinct):** **A** local pilot candidate · **B** LLM-judge/oracle (Sonnet) · **C**
 dev/agent (Claude Code) · **D** opt-in cloud backend (parent owns key, never default).

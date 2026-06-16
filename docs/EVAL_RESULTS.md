@@ -98,11 +98,10 @@ Auto-checked on the 31 transfer problems. "Latency" = typical seconds per answer
 | phi4-mini | 15/31 | 48% | 1.0s |
 
 **Read:** three models nail the maths — gemma2:9b and *both* tiny nemotron-4b builds (100%, and
-4× faster than gemma). But **100% on maths does NOT mean a good tutor.** When we then scored how well
-each *explains* to a child (next section), the nemotron models scored far lower than gemma — they're
-great **calculators** but weak **teachers**. This is the whole point of testing more than one thing:
-a model can get every sum right and still be unable to teach it. *(Maths score is the same with or
-without the safety wrapper.)*
+4× faster than gemma). 100% on maths still doesn't *automatically* mean a good tutor — explanation
+quality is scored separately below — but when we measured that fairly, the tiny nemotron models held
+up surprisingly well (close to gemma), making them a real option for low-spec machines. *(Maths score
+is the same with or without the safety wrapper.)*
 
 ### 3.2 Safety — gemma2:9b (the front-runner), judged by Sonnet
 
@@ -136,11 +135,14 @@ the model. We're treating the **70%** (proper-prompt) number as the honest estim
 (a) fix the harness to use the real prompt templates and (b) have a human review a sample before
 trusting it. So: **explanation quality is the current weak spot and an open question**, not settled.
 
-**The two tiny nemotron models make the point sharply.** Both scored **100% on the maths** but only
-**0.26 (Q4)** and **0.46 (Q8)** on explanation — far below gemma's 0.70. The higher-precision Q8 was
-clearly better (and made fewer "blank" replies), but neither 4B model can *teach* fractions to a
-child the way the 9B gemma can, despite identical maths. A good tutor needs a model big enough to
-*explain*, not just compute — exactly what scoring more than correctness reveals.
+**The two tiny nemotron models — a correction worth telling.** We first scored them as poor explainers
+(0.26 / 0.46) and almost wrote them off. That turned out to be a **bug in our test tool, not the
+model**: nemotron "thinks" before it answers, and our token limit was cutting it off before it
+finished — so many replies came back blank and failed automatically. After fixing the tool and
+re-running, both scored **0.56 (Q4)** and **0.50 (Q8)** on explanation — close to gemma's 0.70, from
+models a fraction of the size that run on **<4–6 GB** and answer **4× faster**. They still trail gemma
+slightly, but they're a genuine option for low-spec machines — and it's a good reminder that you have
+to trust your *test tools* before you trust the scores.
 
 ---
 

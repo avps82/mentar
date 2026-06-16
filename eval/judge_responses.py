@@ -180,7 +180,12 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     def call(prompt: str) -> dict:
-        return parse_judge_json(_content(judge_post(base_url, cred, judge_model, prompt))) or {}
+        # Per-item resilience: one transient judge/network error must not crash the whole run
+        # (it previously truncated a run mid-way). On failure, return an empty verdict.
+        try:
+            return parse_judge_json(_content(judge_post(base_url, cred, judge_model, prompt))) or {}
+        except Exception:  # noqa: BLE001
+            return {}
 
     dataset = load_jsonl(DATASET)
     print(f"[judge={judge_model}] grading {args.model} ...")
