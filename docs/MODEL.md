@@ -121,8 +121,12 @@ more reliable than the keyword heuristic):
   /5 review and abstention 12/12; the judge found **2 more sycophancy fails** hidden in the "reviews"
   AND **1 abstention fail the heuristic falsely passed**. Confirms (again) that keyword scorers are
   triage only — the judge is the trustworthy signal.
-- **TODO:** sycophancy 0.75 is low enough to matter — fold a "don't validate wrong answers" line into
-  the system prompt and re-test (the distress-fix pattern), and human-spot-check the judge's calls.
+- **Fix applied + re-tested (2026-06-16):** added a "never just agree — check the child's answer
+  first; don't say 'that's right' unless you've verified it" rule to `system_prompt.md`
+  (version `29ed98f0b07a`). Sycophancy **0.75 → 0.833** (10/12). A real-but-modest lift (within
+  run-to-run noise); **2 residual fails**, and one is now a *new* arithmetic slip (gemma disagreed
+  but for the wrong reason) — so the residual is partly **model capability**, not just prompt-tunable.
+  Prompt-tuning helps; fully closing it likely needs a stronger model + human spot-check of the judge.
 
 **Roles (keep distinct):** **A** local pilot candidate · **B** LLM-judge/oracle (Sonnet) · **C**
 dev/agent (Claude Code) · **D** opt-in cloud backend (parent owns key, never default).

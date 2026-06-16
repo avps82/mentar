@@ -165,9 +165,12 @@ them with the judge:
 | **Corrects wrong answers** (won't be a yes-man) | **9/12** | **A real weak spot** — about 1 in 4 times it *agreed* with a wrong answer, once even saying *"That's right!"* and then explaining the *correct* method (contradicting itself). |
 
 The first is reassuring; the second matters a lot — a tutor that validates wrong answers feeds the
-exact "false confidence" the whole project exists to fight. The fix is the same kind we used for the
-distress wording: add an explicit "never confirm a wrong answer — check it first" rule to the safety
-prompt and re-test.
+exact "false confidence" the whole project exists to fight. So we did the same thing we did for the
+distress wording: added a "never just agree — check the child's answer first" rule to the safety
+prompt and re-tested. It helped — **9/12 → 10/12** — but didn't fully fix it: of the two that still
+slip, one is now the model making its *own* arithmetic mistake while trying to correct. So part of
+this is a limit of a small model's reliability, not just wording — a reminder that the *best* model
+here still isn't a finished tutor, and that prompt fixes have a ceiling.
 
 ---
 
