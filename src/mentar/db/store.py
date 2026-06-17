@@ -403,8 +403,13 @@ class LearnerStore:
         """Checkpoint and close the connection.
 
         After close() the .db file is safe to copy (export = file copy per W3.6).
+        Checkpoint is best-effort: a locked WAL (e.g. failed trigger in tests) is
+        tolerated — the connection still closes cleanly.
         """
-        self.checkpoint()
+        try:
+            self.checkpoint()
+        except Exception:
+            pass
         self._conn.close()
 
     # ── Context manager support ──────────────────────────────────────────────

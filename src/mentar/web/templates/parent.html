@@ -1,0 +1,36 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<title>Mentar — Parent view</title>
+<style>
+  body { background:#fffbe6; font-family: 'Segoe UI', Arial, sans-serif;
+         max-width:700px; margin:40px auto; padding:20px; }
+  h1 { color:#4a4a4a; font-size:1.6rem; }
+  .btn { font-size:1.1rem; padding:10px 24px; background:#4caf50; color:#fff;
+          border:none; border-radius:8px; cursor:pointer; margin-left:8px; }
+  .btn-danger { background:#e53935; }
+  .alert { background:#fde8e8; border:2px solid #e53935; border-radius:10px;
+            padding:20px; margin-bottom:20px; }
+  table { width:100%; border-collapse:collapse; margin-top:16px; }
+  th, td { padding:8px 12px; border:1px solid #ddd; text-align:left; font-size:0.95rem; }
+  th { background:#f5f5f5; }
+</style>
+</head><body>
+<h1>Parent / carer view</h1>
+{% if escalated %}
+<div class="alert">
+  <b>The session is paused.</b> Mentar noticed something that needs your attention.<br><br>
+  <i>{{ handoff_msg }}</i><br><br>
+  <form method="POST" action="/parent/ack">
+    <button class="btn" name="action" value="resume" type="submit">Resume the lesson</button>
+    <button class="btn btn-danger" name="action" value="end" type="submit">End the session</button>
+  </form>
+</div>
+{% endif %}
+<h2>Session log</h2>
+<table>
+  <tr><th>Who</th><th>Text</th></tr>
+  {% for t in turns %}
+  <tr><td>{{ t.role }}</td><td>{{ t.text }}</td></tr>
+  {% endfor %}
+</table>
+<p><a href="/">Back to lesson</a></p>
+</body></html>

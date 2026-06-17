@@ -78,7 +78,7 @@ exactly, so this doc is a thin overlay — never duplicate text from PHASE0.md, 
 | ID | Status | Artifact / Note |
 |----|--------|------------------|
 | W4.1 pilot content licence audit | ✅ | `docs/CONTENT_LICENSES.md` — Vikidia (CC BY-SA 3.0) + Simple English Wikipedia (CC BY-SA 4.0) CLEARED for local pilot w/ attribution+share-alike notes; Khan CC BY-NC-SA logged as Phase-3 hosted-tier conflict (SPEC §24 #18). |
-| W4.1b name "Mentar" check | ✅ | Clear on GitHub/npm/PyPI; **namespace reservation still pending — the maintainer** |
+| W4.1b name "Mentar" check | ✅ | Clear on GitHub/npm/PyPI; **namespace reserved 2026-06-17: `@mentar/mentar@0.0.1` on npm (org `@mentar` created) + `mentar` on PyPI.** |
 | W4.2 OSS licence + trademark | ⏳ | G2 blocker, not G0 |
 
 ---
