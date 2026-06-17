@@ -1,0 +1,25 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<title>Mentar</title>
+<style>
+  body { background:#fffbe6; font-family: 'Segoe UI', Arial, sans-serif;
+         max-width:700px; margin:40px auto; padding:20px; }
+  h1 { color:#4a4a4a; font-size:1.6rem; }
+  .question { background:#fff; border-radius:12px; padding:24px;
+              font-size:1.3rem; line-height:1.6; margin-bottom:20px;
+              box-shadow:0 2px 8px rgba(0,0,0,0.08); }
+  input[type=text] { font-size:1.2rem; padding:10px 16px; width:60%;
+                     border:2px solid #ccc; border-radius:8px; }
+  .btn { font-size:1.1rem; padding:10px 24px; background:#4caf50; color:#fff;
+          border:none; border-radius:8px; cursor:pointer; margin-left:8px; }
+  .hint { color:#888; font-size:0.9rem; margin-top:8px; }
+</style>
+</head><body>
+<h1>🍕 Mentar</h1>
+<div class="question">{{ question }}</div>
+<form method="POST" action="/answer">
+  <input type="text" name="answer" autofocus placeholder="Type your answer…">
+  <button class="btn" type="submit">Send ✓</button>
+</form>
+<p class="hint">Type <b>?</b> or <b>help</b> for a hint &nbsp;·&nbsp; <b>stop</b> to finish.</p>
+<hr><a href="/parent" style="color:#888;font-size:0.85rem">Parent view</a>
+</body></html>
