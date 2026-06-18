@@ -26,10 +26,12 @@ from pathlib import Path
 
 import yaml
 from flask import Flask, redirect, render_template, request, session, url_for
-from openai import OpenAI
 
 from mentar.db.store import LearnerStore
 from mentar.dialogue.controller import FSMState, SessionController
+from mentar.engine.itembank import load_item_bank
+from mentar.engine.itemgen import build_item_source
+from mentar.inference import load_inference_config, make_llm_call
 
 app = Flask(__name__, template_folder="templates")
 app.secret_key = os.environ.get("SECRET_KEY", "mentar-dev-insecure-change-in-prod")
@@ -46,6 +48,10 @@ PROMPT_DIR   = Path(os.environ.get("MENTAR_PROMPT_DIR", str(_REPO / "prompts")))
 CURRICULUM_PATH = Path(os.environ.get(
     "MENTAR_CURRICULUM",
     str(_REPO / "curriculum" / "templates" / "_pilot" / "fractions.md"),
+))
+ITEMBANK_PATH = Path(os.environ.get(
+    "MENTAR_ITEMBANK",
+    str(_REPO / "curriculum" / "itembank" / "pilot_fractions.jsonl"),
 ))
 
 # ── One-time startup ──────────────────────────────────────────────────────────
@@ -75,19 +81,28 @@ def _load_curriculum(path: Path) -> dict:
 
 
 _CURRICULUM = _load_curriculum(CURRICULUM_PATH)
-_GROUNDING_CFG: dict = {}  # populated from config/inference.yaml if present
 
-_openai_client = OpenAI(api_key=LLM_CRED, base_url=LLM_BASE_URL)
+# Inference backend: prefer config/inference.yaml (the canonical, backend-agnostic
+# source — llamacpp/vllm/ollama). Fall back to the legacy MENTAR_LLM_* env vars so an
+# existing env-only setup keeps working (treated as an OpenAI-compatible endpoint).
+_INFERENCE_CFG = load_inference_config()
+if _INFERENCE_CFG is None:
+    _INFERENCE_CFG = {
+        "backend": "vllm",
+        "vllm": {"base_url": LLM_BASE_URL, "api_key": LLM_CRED, "model": LLM_MODEL},
+    }
+_GROUNDING_CFG: dict = _INFERENCE_CFG.get("grounding", {})  # ZIM reader config (W7)
+
+# Built lazily: an in-process llama.cpp backend loads the GGUF on construction, so we
+# defer it until the first turn (keeps `import mentar.web.app` cheap for tests/CLI reuse).
+_llm_call_cached = None
 
 
 def _llm_call(messages: list[dict]) -> str:
-    resp = _openai_client.chat.completions.create(
-        model=LLM_MODEL,
-        messages=messages,
-        max_tokens=400,
-        temperature=0.3,
-    )
-    return resp.choices[0].message.content or ""
+    global _llm_call_cached
+    if _llm_call_cached is None:
+        _llm_call_cached = make_llm_call(_INFERENCE_CFG)
+    return _llm_call_cached(messages)
 
 
 # Per-learner controller instances and turn logs.
@@ -101,8 +116,16 @@ def _get_or_create_controller(learner_uuid: str) -> SessionController:
     if learner_uuid not in _controllers:
         store = LearnerStore(DB_PATH)
         _stores[learner_uuid] = store
-        db_id = store.create_learner(name=f"pilot-{learner_uuid[:8]}", year_level="pilot")
+        db_id = store.create_learner(
+            name=f"pilot-{learner_uuid[:8]}",
+            year_level="pilot",
+            country="GB",
+            age_mode="parent_mediated",  # SPEC §6.2 pilot default
+        )
         _db_learner_ids[learner_uuid] = db_id
+        bank = load_item_bank(ITEMBANK_PATH) if ITEMBANK_PATH.exists() else None
+        # item_source: composite (default, generator+bank) | generator | bank
+        item_bank = build_item_source(_INFERENCE_CFG.get("item_source", "composite"), bank=bank)
         _controllers[learner_uuid] = SessionController(
             llm_call=_llm_call,
             prompt_dir=PROMPT_DIR,
@@ -110,6 +133,7 @@ def _get_or_create_controller(learner_uuid: str) -> SessionController:
             curriculum=_CURRICULUM,
             db_store=_DbStoreAdapter(store, db_id),
             learner_id=learner_uuid,
+            item_bank=item_bank,
         )
         _turn_logs[learner_uuid] = []
     return _controllers[learner_uuid]
@@ -130,6 +154,7 @@ class _DbStoreAdapter:
             learner_id=self._db_id,
             skill_id=node_id,
             p_mastery=p,
+            priors_used=True,  # pilot uses cold-start priors (W3.3: fitted only at N>=100)
         )
 
 
@@ -231,7 +256,7 @@ def _last_mentar_text(learner_uuid: str) -> str | None:
 
 if __name__ == "__main__":
     print(f"Mentar pilot — http://localhost:5000")
-    print(f"  LLM:  {LLM_BASE_URL}  model={LLM_MODEL}")
+    print(f"  LLM:  backend={_INFERENCE_CFG.get('backend')}")
     print(f"  DB:   {DB_PATH}")
     print(f"  curriculum: {CURRICULUM_PATH}")
     app.run(host="127.0.0.1", port=5000, debug=False)

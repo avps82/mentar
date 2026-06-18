@@ -4,6 +4,8 @@
 
 Local LLM hosting. Curriculum-templated by country and year level. Built-in kid safety from day one.
 
+▶️ **Want to run it?** See **[docs/RUNNING.md](docs/RUNNING.md)** — a 6-step quick start for Windows, macOS (incl. MacBook Pro M1 16 GB) and Linux.
+
 ---
 
 ## What it is
