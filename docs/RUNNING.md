@@ -3,8 +3,26 @@
 A simple getting-started guide to run the Mentar tutor on your own machine. You'll run a
 local LLM (no cloud, no API key needed) and talk to the tutor in the terminal or a browser.
 
-> **TL;DR:** install Python + Ollama → `pip install -e ".[web]"` → `ollama pull gemma2:9b`
-> → copy the example config → `mentar run-session`.
+> **TL;DR:** install Python → `pip install -e ".[web,setup]"` → **`mentar setup`** → `mentar run-session`.
+
+---
+
+## Fastest path: `mentar setup`
+
+After installing the package (steps 1–3 below), one command detects your hardware, picks the
+best-fit **vetted** model, downloads it, and writes `config/inference.yaml` for you:
+
+```bash
+mentar setup            # auto: uses Ollama if installed, else downloads a GGUF to run in-process
+mentar run-session      # start tutoring
+```
+
+- It picks only from Mentar's vetted roster (`config/model_roster.yaml`) and sizes each model to
+  your RAM with [gguf-parser](https://github.com/gpustack/gguf-parser-go) — no manual model choice.
+- Preview without downloading: `mentar setup --dry-run`. Force a runtime: `--runtime ollama|gguf`.
+  Override the model: `--model gemma2:9b`.
+
+Prefer to do it by hand? The manual steps (4–6) below still work.
 
 ---
 

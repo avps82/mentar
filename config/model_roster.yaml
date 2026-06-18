@@ -1,0 +1,97 @@
+# Mentar vetted model roster — drives `mentar setup` auto-selection.
+#
+# These are the ONLY models setup will install: candidates from the Mentar eval
+# roster (docs/MODEL.md, eval/models.yaml) — NOT a generic "best model" list. A
+# child tutor must run a safety/pedagogy-vetted model, then constrained to what fits.
+#
+# Ordered best -> worst by `rank` (1 = highest capability). `mentar setup` walks this
+# list and picks the FIRST model that fits the detected hardware comfortably.
+#
+# Fields:
+#   id          stable key
+#   ollama_tag  pullable via `ollama pull` (primary runtime)
+#   hf_repo/hf_file  a Q4_K_M GGUF for the in-process fallback runtime (optional;
+#                    provisional — verify before relying on it; ollama-only if absent)
+#   params_b    parameter count (billions) — used by the heuristic fallback sizing
+#   reasoning   true => emit generation.extra_body.think=false (see backend)
+#   tier        low-end | mid | capable-gpu  (see docs/hardware-requirements.md)
+#   min_ram_gb  heuristic floor (params_b*0.6 + overhead) used only when gguf-parser
+#               is unavailable; gguf-parser supersedes this when present.
+#
+# Ranking is PROVISIONAL until W1.3 finalises the pick; edit freely (data, no code change).
+
+models:
+  - id: gemma4-12b
+    ollama_tag: "gemma4:12b"
+    params_b: 12
+    reasoning: true
+    tier: capable-gpu
+    rank: 1
+    min_ram_gb: 9
+    note: "Eval: correctness 100%, safety 1.00, sycophancy 1.00; reasoning model (think:false); full-GPU."
+
+  - id: qwen3-14b
+    ollama_tag: "qwen3:14b"
+    params_b: 14
+    reasoning: false
+    tier: capable-gpu
+    rank: 2
+    min_ram_gb: 10
+
+  - id: gemma2-9b
+    ollama_tag: "gemma2:9b"
+    hf_repo: "bartowski/gemma-2-9b-it-GGUF"
+    hf_file: "gemma-2-9b-it-Q4_K_M.gguf"
+    params_b: 9
+    reasoning: false
+    tier: mid
+    rank: 3
+    min_ram_gb: 7
+    note: "Strong vetted mid-tier default; good fit for 16 GB (incl. MacBook Pro M1 16 GB)."
+
+  - id: qwen3.5-9b
+    ollama_tag: "qwen3.5:9b"
+    params_b: 9
+    reasoning: false
+    tier: mid
+    rank: 4
+    min_ram_gb: 7
+
+  - id: llama3.1-8b
+    ollama_tag: "llama3.1:8b"
+    hf_repo: "bartowski/Meta-Llama-3.1-8B-Instruct-GGUF"
+    hf_file: "Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf"
+    params_b: 8
+    reasoning: false
+    tier: mid
+    rank: 5
+    min_ram_gb: 6
+
+  - id: phi4-mini
+    ollama_tag: "phi4-mini"
+    params_b: 3.8
+    reasoning: false
+    tier: low-end
+    rank: 6
+    min_ram_gb: 4
+
+  - id: qwen2.5-3b
+    ollama_tag: "qwen2.5:3b"
+    hf_repo: "Qwen/Qwen2.5-3B-Instruct-GGUF"
+    hf_file: "qwen2.5-3b-instruct-q4_k_m.gguf"
+    params_b: 3
+    reasoning: false
+    tier: low-end
+    rank: 7
+    min_ram_gb: 3.5
+
+  - id: qwen2.5-0.5b
+    ollama_tag: "qwen2.5:0.5b"
+    hf_repo: "Qwen/Qwen2.5-0.5B-Instruct-GGUF"
+    hf_file: "qwen2.5-0.5b-instruct-q4_k_m.gguf"
+    params_b: 0.5
+    reasoning: false
+    tier: low-end
+    rank: 8
+    min_ram_gb: 1.8
+    note: "Smallest fallback; runs on very low-end / pre-AVX2 CPUs (~7 tok/s on a 2-core AMD A10)."
