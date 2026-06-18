@@ -51,6 +51,7 @@ final pick into the Decision section** below.
 | `gemma2:9b` | Gemma | 9B | <8 GB | mid | **candidate** | **front-runner** — correctness 100% |
 | `qwen3.5:9b` | Qwen | ~9B | <8 GB | mid | **candidate** | confirm exact base+quant |
 | `qwen3:14b` | Qwen | 14B (9.3GB) | <10 GB | capable-GPU | **candidate** | bad trade — slow (31s), mid accuracy |
+| `gemma4:12b` | Gemma 4 | 12B | <8 GB | capable-GPU | **candidate** (added 2026-06-18) | 4-bit quant; claimed ~26B-class quality — eval queued |
 | `mistral-small3.1` | Mistral | ~24B (15GB) | ~16 GB (CPU-offload) | — | **CEILING, not candidate** | quality upper-bound; too big/slow for the pilot envelope — do **not** pick as the tutor |
 | `claude-sonnet-4-6` | Anthropic (cloud) | — | n/a | n/a | **judge / oracle** | grades candidate outputs; Phase-2 LLM-as-judge |
 | `claude-haiku-4-5` | Anthropic (cloud) | — | n/a | n/a | **dev / cheap judge** | not a tutor candidate |
@@ -58,6 +59,14 @@ final pick into the Decision section** below.
 > 📌 **TODO (2026-06-16):** the 2 nemotron models are **done** (results below). Still **queued**:
 > `falcon:7b-instruct`, `vicuna:7b`, `mistral:7b-instruct` — pull on the eval host and run through the
 > same criteria (T1.1–T1.6). All <6 GB — good for the broad-hardware tier *if* any clears the gates.
+
+> 📌 **gemma4:12b — hardware-limited, revisit with full-GPU (2026-06-18):**
+> Correctness **100% (31/31)** — passes the gate. Pipeline latency **~95s/item** (thinking model,
+> 36%/64% CPU/GPU offload on the 10GB-vRAM eval host, context 262144). Consistently hangs on
+> pipeline runs — CPU threads saturate mid-reasoning-chain and urllib blocks indefinitely.
+> **Not viable on current hardware for real-time tutoring (20× slower than gemma2:9b's 4.7s).**
+> Rubric/safety eval skipped — latency alone disqualifies it at this tier. Revisit if a full-GPU
+> (≥16GB vRAM) host becomes available; pure-GPU it would likely be fast and high-quality.
 
 ## Queued-model results — nemotron-3-nano (2026-06-16, CORRECTED)
 
@@ -309,15 +318,45 @@ first because it's a **deterministic-metric task with no reward model → GPU-fr
 > OpenAI-compatible proxy (base_url in the api-key branch; `is_chat=true`) — see
 > `docs/design/W1.2b_mathtutorbench.md`.
 
+## gemma4:12b full pipeline profile (2026-06-18, 100% GPU, context 16384)
+
+| Dimension | gemma4:12b | gemma2:9b | Notes |
+|---|---|---|---|
+| Correctness (transfer, bare) | **100%** | 100% | tie |
+| Rubric (reexplain, pipeline) | **0.720** (36/50) | 0.720 (36/50) | tie — same score |
+| Safety (adversarial, pipeline) | **20/20 = 1.00** | 17–18/20 = 0.85 | gemma4 wins — 0 hard fails |
+| Sycophancy (12, pipeline) | **12/12 = 1.00** | 10/12 = 0.833 | **gemma4 wins decisively** |
+| Abstention (12, pipeline) | 11/12 = 0.917 | 11/12 = 0.917 | tie |
+| Pipeline latency (median) | **14.6s/item** | 4.7s/item | gemma4 ~3× slower |
+
+Rubric breakdown: age_appropriate 45/50 · in_modality 37/50 · grounded 44/50 · no_fabrication 44/50 ·
+within_cap 45/50 · no_question 45/50.
+
+**Headline finding:** gemma4:12b ties on rubric quality but is meaningfully safer and sycophancy-free.
+The sycophancy result (12/12 = 1.00 vs gemma2:9b's 2 residual fails) directly addresses the
+false-confidence failure Mentar exists to prevent. The 14.6s pipeline latency requires 100% GPU
+(10GB vRAM); on CPU-offloaded hardware it hangs (confirmed earlier — context 262144 vs 16384 matters).
+
+> ⚠️ **Harness note (2026-06-18):** `run_candidates.py` used `open("w")` — each suite run overwrote
+> the output file. Fixed to `open("a")` in the same session. Run the full pipeline without `--suite`
+> splitting to avoid stale partial files.
+
 ## Decision (W1.3) — provisional, NOT final
 
-**gemma2:9b is the front-runner** — the only candidate clearing the correctness gate (others 48–65%
-are out), pairwise-confirmed the best teacher (0.82 win-rate over nemotron-4b), pipeline safety
-solid (injections 5/5). The reexplain-harness faithfulness fix is **done**, so the rubric is now
-trustworthy: **gemma2:9b = 0.72 — below the 0.90 gate.**
+**Two viable candidates — different trade-offs:**
 
-**So W1.3 hits a real fork: no model clears the explanation-quality gate (gemma 0.72 is the best).**
-The options (SPEC §25.1 kill-criteria) are now concrete:
+| | gemma2:9b | gemma4:12b |
+|---|---|---|
+| Rubric | 0.72 | **0.72** (tie) |
+| Safety | 0.85 | **1.00** |
+| Sycophancy | 0.833 | **1.00** |
+| Latency (pipeline) | **4.7s** | 14.6s |
+| Hardware | <8 GB (CPU-offload OK) | **100% GPU required** (10 GB) |
+
+**gemma2:9b** remains the broad-hardware pick — works on CPU-offload, 3× faster.
+**gemma4:12b** is the better safety/anti-sycophancy pick — but requires a full-GPU host.
+
+**Both hit the same rubric wall (0.72 < 0.90 gate).** The W1.3 fork is unchanged:
 1. **Human-calibrate the gate/judge first** — our 0.90 + single-judge rubric is uncalibrated; do the
    Cohen's-κ human review (TESTS.md T1.4). 0.72 from a strict single judge may understate real quality.
 2. **Raise the size ceiling once** — try larger models (a 27B/30B-class) to see if any clears 0.90.
