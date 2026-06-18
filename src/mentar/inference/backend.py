@@ -72,6 +72,19 @@ def _default_config_path() -> Path:
     return Path(__file__).resolve().parents[3] / "config" / "inference.yaml"
 
 
+def write_inference_config(cfg: dict, path: str | Path | None = None) -> Path:
+    """Write an inference config (the inverse of load_inference_config).
+
+    Used by `mentar setup` to materialise the chosen backend/model. Does NOT expand
+    ${VAR} — values are written verbatim. Returns the path written.
+    """
+    import yaml
+    out = Path(path) if path else _default_config_path()
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(yaml.safe_dump(cfg, sort_keys=False, default_flow_style=False), encoding="utf-8")
+    return out
+
+
 def load_inference_config(path: str | Path | None = None) -> dict | None:
     """Load and ``${VAR}``-expand the inference config.
 

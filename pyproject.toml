@@ -39,6 +39,13 @@ dev = [
 inference-ollama = [
   "ollama>=0.3",
 ]
+setup = [
+  # `mentar setup` hardware detection. psutil gives accurate cross-OS RAM (stdlib
+  # sysconf is POSIX-only — Windows needs this). gguf-parser is a downloaded binary,
+  # not a Python dep; the GGUF runtime additionally needs llama-cpp-python (installed
+  # on demand). HF GGUFs are fetched over plain HTTPS (no extra dep).
+  "psutil>=5.9",
+]
 nas = [
   # SMB/Samba client for reading/downloading ZIMs from a NAS via smb:// URLs.
   # Not needed when the share is mounted in the OS (libzim reads the mount directly).

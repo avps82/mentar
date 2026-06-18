@@ -1,6 +1,7 @@
 """CLI entry point. Wired in pyproject.toml [project.scripts].
 
 Subcommands:
+  setup             — Detect hardware, pick + download the best-fit vetted model, write config.
   run-session       — Drive a full tutoring session (headless) against the configured backend.
   serve             — Start the pilot web app (mentar.web.app).
   eval              — Run the eval harness (stub).
@@ -10,6 +11,9 @@ Subcommands:
 from __future__ import annotations
 
 import argparse
+import os
+import shutil
+import subprocess
 import sys
 import time
 import uuid
@@ -116,9 +120,112 @@ def _emit(text: str, latency: float | None = None) -> None:
     print(f"\n{tag}{text}\n")
 
 
+def _download_gguf(hf_repo: str, hf_file: str, dest_dir: Path) -> bool:
+    import urllib.request
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    dest = dest_dir / hf_file
+    if dest.exists():
+        print(f"  {hf_file} already present.")
+        return True
+    url = f"https://huggingface.co/{hf_repo}/resolve/main/{hf_file}?download=true"
+    print(f"  downloading {hf_file} from {hf_repo} ...")
+    part = dest.with_suffix(dest.suffix + ".part")
+    try:
+        with urllib.request.urlopen(url, timeout=300) as r, open(part, "wb") as f:
+            shutil.copyfileobj(r, f)
+        part.replace(dest)
+        return True
+    except Exception as exc:
+        print(f"ERROR: download failed: {exc}", file=sys.stderr)
+        return False
+
+
+def _setup(args) -> int:
+    from mentar.inference.autoselect import load_roster, select
+    from mentar.inference.backend import write_inference_config
+
+    repo = _repo_root()
+    roster = load_roster(args.roster)
+    n_ctx = args.ctx
+
+    if args.model:
+        chosen = next((m for m in roster
+                       if m["id"] == args.model or m.get("ollama_tag") == args.model), None)
+        if not chosen:
+            print(f"ERROR: --model {args.model!r} not in roster: {[m['id'] for m in roster]}",
+                  file=sys.stderr)
+            return 1
+        roster = [chosen]
+
+    sel = select(roster, prefer=args.runtime, n_ctx=n_ctx)
+    m = sel.model
+
+    print("\nmentar setup")
+    print(f"  {sel.reason}")
+    for w in sel.warnings:
+        print(f"  ! {w}")
+
+    gen: dict = {"temperature": 0.3, "max_tokens": 512}
+    if m.get("reasoning"):
+        gen["extra_body"] = {"think": False}
+
+    if sel.runtime == "ollama":
+        cfg = {"backend": "ollama",
+               "ollama": {"base_url": "http://localhost:11434", "model": m["ollama_tag"]},
+               "generation": gen}
+        model_desc = f"ollama pull {m['ollama_tag']}"
+    else:  # gguf in-process
+        model_path = repo / "models" / m["hf_file"]
+        cfg = {"backend": "llamacpp",
+               "llamacpp": {"mode": "in_process", "model_path": str(model_path),
+                            "n_ctx": n_ctx, "n_gpu_layers": 0},
+               "generation": gen}
+        model_desc = f"download {m['hf_repo']}/{m['hf_file']}"
+
+    zim_dir = os.environ.get("MENTAR_ZIM_DIR")
+    if zim_dir:
+        cfg["grounding"] = {"zim_dir": zim_dir}
+
+    cfg_path = Path(args.config) if args.config else (repo / "config" / "inference.yaml")
+
+    if args.dry_run:
+        import yaml
+        print(f"\n[dry-run] would acquire: {model_desc}")
+        print(f"[dry-run] would write {cfg_path}:\n")
+        print(yaml.safe_dump(cfg, sort_keys=False))
+        return 0
+
+    if sel.runtime == "ollama":
+        if shutil.which("ollama") is None:
+            print("ERROR: Ollama not installed — get it at https://ollama.com/download, "
+                  "or re-run: mentar setup --runtime gguf", file=sys.stderr)
+            return 1
+        print(f"\nPulling {m['ollama_tag']} (may take a while)...")
+        if subprocess.run(["ollama", "pull", m["ollama_tag"]]).returncode != 0:
+            print("ERROR: ollama pull failed.", file=sys.stderr)
+            return 1
+    else:
+        if not _download_gguf(m["hf_repo"], m["hf_file"], repo / "models"):
+            return 1
+
+    write_inference_config(cfg, cfg_path)
+    print(f"\n✓ Wrote {cfg_path}")
+    print("✓ Ready — run:  mentar run-session")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="mentar")
     sub = parser.add_subparsers(dest="cmd", required=True)
+
+    su = sub.add_parser("setup", help="Detect hardware, pick + download the best-fit model, write config.")
+    su.add_argument("--runtime", choices=["auto", "ollama", "gguf"], default="auto",
+                    help="Runtime to target (default: auto = Ollama if present, else in-process GGUF).")
+    su.add_argument("--model", help="Override auto-selection with a roster id or ollama tag.")
+    su.add_argument("--ctx", type=int, default=4096, help="Context size for fit sizing (default: 4096).")
+    su.add_argument("--roster", help="Roster yaml (default: config/model_roster.yaml).")
+    su.add_argument("--config", help="Output config path (default: config/inference.yaml).")
+    su.add_argument("--dry-run", action="store_true", help="Show the selection + config without downloading/writing.")
 
     rs = sub.add_parser("run-session", help="Drive a full tutoring session (headless).")
     rs.add_argument("--config", help="Path to inference config (default: config/inference.yaml).")
@@ -136,6 +243,9 @@ def main(argv: list[str] | None = None) -> int:
     vt.add_argument("path", help="Path to curriculum template Markdown file.")
 
     args = parser.parse_args(argv)
+
+    if args.cmd == "setup":
+        return _setup(args)
 
     if args.cmd == "run-session":
         return _run_session(args)
