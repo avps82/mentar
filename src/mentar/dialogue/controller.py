@@ -99,6 +99,7 @@ class _SessionCtx:
     current_node_id: Optional[str] = None
     current_pattern: Optional[str] = None
     current_question: Optional[str] = None           # rendered question text
+    current_item: Optional[object] = None            # current checkable Item (or None = LLM-gen)
     current_answer: Optional[str] = None             # child's latest answer
     last_scored_correct: Optional[bool] = None
     items_since_probe: int = 0
@@ -125,6 +126,7 @@ class SessionController:
         curriculum: dict,
         db_store,
         learner_id: str,
+        item_bank=None,
     ) -> None:
         self._llm = llm_call
         self._prompt_dir = Path(prompt_dir)
@@ -132,6 +134,10 @@ class SessionController:
         self._curriculum = curriculum          # node_id -> {concept, answer_type, checker, expected_answer, grounding, prerequisites, bkt_priors?}
         self._store = db_store
         self._learner_id = learner_id
+        # Optional ItemBank: when present, checkable questions are drawn from it (the
+        # verifier scores against the item's ground truth).  When None, fall back to the
+        # legacy LLM-generated question + node["expected_answer"] path.
+        self._item_bank = item_bank
         self._templates: dict[str, str] = {}  # loaded lazily
         self._ctx = _SessionCtx()
 
@@ -283,6 +289,15 @@ class SessionController:
     def _do_present(self) -> tuple[str, bool]:
         ctx = self._ctx
         node = self._curriculum[ctx.current_node_id]
+        item = self._sample_item(ctx.current_node_id)
+        if item is not None:
+            # Checkable item: present the problem verbatim so it matches its ground truth.
+            ctx.current_item = item
+            ctx.current_question = item.problem
+            ctx.state = FSMState.AWAIT_ANSWER
+            return (item.problem, False)
+        # Fallback: LLM-generated question (nodes without a bank / legacy callers).
+        ctx.current_item = None
         passage = resolve_grounding(node.get("grounding", {}), self._grounding_cfg)
         system_text = self._render_system_prompt(node["concept"], passage)
         pattern_text = self._render_template(ctx.current_pattern, node, passage)
@@ -293,6 +308,25 @@ class SessionController:
         ctx.current_question = question
         ctx.state = FSMState.AWAIT_ANSWER
         return (question, False)
+
+    # ── Item / answer-spec helpers ──────────────────────────────────────────────
+
+    def _sample_item(self, node_id: str):
+        """Draw a checkable item for *node_id*, or None when no bank covers it."""
+        if self._item_bank is not None and self._item_bank.has(node_id):
+            return self._item_bank.sample(node_id)
+        return None
+
+    def _answer_spec(self, node: dict) -> tuple[str, str, str]:
+        """(answer_type, checker, ground_truth) — from the current item if set, else node."""
+        item = self._ctx.current_item
+        if item is not None:
+            return item.answer_type, item.checker, item.answer
+        return (
+            node.get("answer_type", "free_text"),
+            node.get("checker", "none"),
+            node.get("expected_answer", ""),
+        )
 
     def _do_await_answer(self, inp: str | None) -> tuple[str, bool]:
         ctx = self._ctx
@@ -316,11 +350,12 @@ class SessionController:
     def _do_score(self) -> tuple[str, bool]:
         ctx = self._ctx
         node = self._curriculum[ctx.current_node_id]
+        answer_type, checker, ground_truth = self._answer_spec(node)
         outcome = check(
-            answer_type=node.get("answer_type", "free_text"),
-            checker=node.get("checker", "none"),
+            answer_type=answer_type,
+            checker=checker,
             llm_output=ctx.current_answer or "",
-            ground_truth=node.get("expected_answer", ""),
+            ground_truth=ground_truth,
         )
         if outcome.result is CheckResult.SAFE_REJECT:
             # Regenerate — do not penalise
@@ -386,7 +421,10 @@ class SessionController:
         node = self._curriculum[ctx.current_node_id]
         passage = resolve_grounding(node.get("grounding", {}), self._grounding_cfg)
         system_text = self._render_system_prompt(node["concept"], passage)
-        help_text = self._render_template(ctx.current_pattern, node, passage)
+        help_text = self._render_template(
+            ctx.current_pattern, node, passage,
+            worked_example=self._worked_example_for(ctx.current_node_id),
+        )
         explanation = self._llm([
             {"role": "system", "content": system_text},
             {"role": "user", "content": help_text},
@@ -396,10 +434,20 @@ class SessionController:
 
     def _do_help_recheck_present(self) -> tuple[str, bool]:
         ctx = self._ctx
+        item = self._sample_item(ctx.current_node_id)
+        if item is not None:
+            ctx.current_item = item
+            ctx.current_question = item.problem
+            ctx.state = FSMState.HELP_RECHECK_AWAIT
+            return (item.problem, False)
+        ctx.current_item = None
         node = self._curriculum[ctx.current_node_id]
         passage = resolve_grounding(node.get("grounding", {}), self._grounding_cfg)
         system_text = self._render_system_prompt(node["concept"], passage)
-        transfer_text = self._render_template("transfer_question_gen", node, passage)
+        transfer_text = self._render_template(
+            "transfer_question_gen", node, passage,
+            worked_example=self._worked_example_for(ctx.current_node_id),
+        )
         recheck_q = self._llm([
             {"role": "system", "content": system_text},
             {"role": "user", "content": transfer_text},
@@ -423,11 +471,12 @@ class SessionController:
     def _do_help_recheck_score(self) -> tuple[str, bool]:
         ctx = self._ctx
         node = self._curriculum[ctx.current_node_id]
+        answer_type, checker, ground_truth = self._answer_spec(node)
         outcome = check(
-            answer_type=node.get("answer_type", "free_text"),
-            checker=node.get("checker", "none"),
+            answer_type=answer_type,
+            checker=checker,
             llm_output=ctx.help_answer or "",
-            ground_truth=node.get("expected_answer", ""),
+            ground_truth=ground_truth,
         )
         ctx.help_scored_correct = (outcome.result is CheckResult.PASS)
         ctx.state = FSMState.HELP_RECHECK_BKT_UPDATE
@@ -467,10 +516,20 @@ class SessionController:
 
     def _do_probe_present(self) -> tuple[str, bool]:
         ctx = self._ctx
+        item = self._sample_item(ctx.current_node_id)
+        if item is not None:
+            ctx.current_item = item
+            ctx.current_question = item.problem
+            ctx.state = FSMState.PROBE_AWAIT_ANSWER
+            return (item.problem, False)
+        ctx.current_item = None
         node = self._curriculum[ctx.current_node_id]
         passage = resolve_grounding(node.get("grounding", {}), self._grounding_cfg)
         system_text = self._render_system_prompt(node["concept"], passage)
-        transfer_text = self._render_template("transfer_question_gen", node, passage)
+        transfer_text = self._render_template(
+            "transfer_question_gen", node, passage,
+            worked_example=self._worked_example_for(ctx.current_node_id),
+        )
         probe_q = self._llm([
             {"role": "system", "content": system_text},
             {"role": "user", "content": transfer_text},
@@ -493,11 +552,12 @@ class SessionController:
     def _do_probe_score(self) -> tuple[str, bool]:
         ctx = self._ctx
         node = self._curriculum[ctx.current_node_id]
+        answer_type, checker, ground_truth = self._answer_spec(node)
         outcome = check(
-            answer_type=node.get("answer_type", "free_text"),
-            checker=node.get("checker", "none"),
+            answer_type=answer_type,
+            checker=checker,
             llm_output=ctx.probe_answer or "",
-            ground_truth=node.get("expected_answer", ""),
+            ground_truth=ground_truth,
         )
         ctx.probe_scored_correct = (outcome.result is CheckResult.PASS)
         if ctx.probe_variant == 0:
@@ -552,14 +612,31 @@ class SessionController:
             self._templates[name] = raw
         return self._templates[name]
 
-    def _render_template(self, name: str, node: dict, passage: str) -> str:
+    def _render_template(self, name: str, node: dict, passage: str, worked_example: str = "") -> str:
         tmpl = self._load_template(name)
         return (
             tmpl
             .replace("{{concept}}", node.get("concept", "fractions"))
             .replace("{{answer_type}}", node.get("answer_type", "fraction"))
             .replace("{{grounding_passage}}", passage)
+            .replace("{{worked_example}}", worked_example)
         )
+
+    def _worked_example_for(self, node_id: str) -> str:
+        """A solved example string for the worked-example slot in Help/transfer prompts.
+
+        Prefers a node-authored `worked_example`; else a solved item from the bank (excluding
+        the live question so its answer isn't revealed); else "".
+        """
+        node = self._curriculum.get(node_id, {})
+        if node.get("worked_example"):
+            return str(node["worked_example"])
+        if self._item_bank is not None:
+            cur_id = getattr(self._ctx.current_item, "id", None)
+            ex = self._item_bank.example(node_id, exclude_id=cur_id)
+            if ex is not None:
+                return f"{ex.problem} (Answer: {ex.answer})"
+        return ""
 
     def _render_system_prompt(self, concept: str, passage: str) -> str:
         tmpl = self._load_template("system_prompt")

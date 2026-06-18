@@ -36,6 +36,23 @@ ollama:
   base_url: "http://localhost:11434"
   model: "REPLACE_ME"
 
+# Generation params (apply to whichever HTTP backend is active).
+#   extra_body = passthrough for non-standard request fields. REASONING models (e.g.
+#   gemma4:12b) otherwise burn the whole token budget on hidden reasoning_content and
+#   return empty/truncated `content` — disable it with think:false (Ollama) or
+#   reasoning_effort:none. A child tutor wants a direct answer; correctness is the verifier's job.
+generation:
+  temperature: 0.3
+  max_tokens: 512
+  extra_body:
+    think: false        # disable hidden chain-of-thought on reasoning models
+
+# Where checkable questions come from (the verifier scores against their ground truth):
+#   composite (default) — parametric generator + authored bank fallback (infinite variety)
+#   generator           — parametric only
+#   bank                — authored item bank only (curriculum/itembank/*.jsonl)
+item_source: composite
+
 # Opt-in cloud backends (parent owns the key). Leave unset for the local-only pilot.
 gemini:
   api_key: "${GEMINI_API_KEY}"

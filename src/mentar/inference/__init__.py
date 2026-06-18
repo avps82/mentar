@@ -5,3 +5,11 @@ Also: vLLM (capable-GPU tier), Ollama (wrapper), Gemini/Claude API (opt-in, pare
 llama.cpp + vLLM both expose OpenAI-compatible endpoints → one provider path (base_url swap).
 Spec: docs/SPEC.md §20.1.
 """
+
+from mentar.inference.backend import (
+    LLMCall,
+    load_inference_config,
+    make_llm_call,
+)
+
+__all__ = ["LLMCall", "load_inference_config", "make_llm_call"]

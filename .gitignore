@@ -47,6 +47,11 @@ htmlcov/
 # See: docs/design/W7_grounding_reader.md § ZIM acquisition
 *.zim
 
+# ── Local model weights (large; never commit GGUF/safetensors) ───────────────
+*.gguf
+*.safetensors
+models/
+
 # ── Grounding passage on-disk cache ──────────────────────────────────────────
 .cache/grounding/
 
