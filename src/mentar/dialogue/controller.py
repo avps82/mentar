@@ -36,6 +36,12 @@ from mentar.safety.escalation import (
 logger = logging.getLogger(__name__)
 
 HELP_MODALITIES = ["visual", "concrete", "analogy", "story", "formal"]
+STOP_WORDS = {"stop", "quit", "bye", "exit"}  # learner-initiated session end
+
+
+def _is_stop(text: str) -> bool:
+    return text.strip().lower() in STOP_WORDS
+
 HELP_RETRY_CAP = 3
 PROBE_EVERY_N = 5  # W5.3 pilot default
 
@@ -186,7 +192,10 @@ class SessionController:
 
             text, advance = self._tick(state, learner_input)
             if text:
-                output_text = text
+                # Accumulate across ticks: a single turn can emit several messages
+                # (e.g. a Help explanation THEN the re-check question). Overwriting would
+                # drop the explanation and show only the last message.
+                output_text = f"{output_text}\n\n{text}" if output_text else text
             learner_input = None  # consumed; subsequent ticks are transient
             if not advance:
                 break  # reached a natural await/terminal
@@ -340,7 +349,7 @@ class SessionController:
             ctx.state = FSMState.HELP_MODALITY_SELECT
             return ("", True)
         # Learner wants to stop
-        if stripped.lower() in ("stop", "quit", "bye", "exit"):
+        if _is_stop(stripped):
             ctx.state = FSMState.SESSION_END_BY_LEARNER
             return ("OK, see you next time!", False)
         ctx.current_answer = stripped
@@ -461,6 +470,9 @@ class SessionController:
         if inp is None:
             return ("", False)
         stripped = inp.strip()
+        if _is_stop(stripped):
+            ctx.state = FSMState.SESSION_END_BY_LEARNER
+            return ("OK, see you next time!", False)
         if not stripped:
             # Skip attempt rejected — stay in state
             return ("Please give it a try — even a guess is OK!", False)
@@ -543,6 +555,9 @@ class SessionController:
         if inp is None:
             return ("", False)
         stripped = inp.strip()
+        if _is_stop(stripped):
+            ctx.state = FSMState.SESSION_END_BY_LEARNER
+            return ("OK, see you next time!", False)
         if not stripped:
             return ("Give it a go — what do you think?", False)
         ctx.probe_answer = stripped
