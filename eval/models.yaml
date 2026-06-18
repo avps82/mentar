@@ -20,6 +20,7 @@ models:
   - {name: "falcon:7b-instruct",      source: ollama, params: "7B",  quant: "Q4", role: candidate, tier: low-end, vram: "<6 GB", status: queued}
   - {name: "vicuna:7b",               source: ollama, params: "7B",  quant: "Q4", role: candidate, tier: low-end, vram: "<6 GB", status: queued}
   - {name: "mistral:7b-instruct",     source: ollama, params: "7B",  quant: "Q4", role: candidate, tier: low-end, vram: "<6 GB", status: queued}
+  - {name: "gemma4:12b", source: ollama, params: "12B", quant: "Q4", role: candidate, tier: capable-gpu, vram: "10 GB (100% GPU, context 16384)", status: "evaluated", note: "correctness 100%, rubric 0.72, safety 1.00, sycophancy 1.00 — 14.6s/item; requires full-GPU (hangs on CPU-offload)"}
   # ── Reference / support roles (not pilot candidates) ──
   - {name: "mistral-small3.1",     source: ollama,    params: "~24B",  quant: unknown, role: ceiling,   tier: ceiling,     vram: "~16 GB (CPU-offload)"}
   - {name: "claude-sonnet-4-6",    source: anthropic, params: "n/a",   quant: "n/a",   role: judge,     tier: cloud,       vram: "n/a (cloud)"}
