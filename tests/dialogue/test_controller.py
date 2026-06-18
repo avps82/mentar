@@ -148,6 +148,39 @@ def test_help_recheck_skip_rejected():
     assert "try" in result.text.lower() or "guess" in result.text.lower()
 
 
+def test_help_explanation_not_swallowed():
+    """A Help turn returns BOTH the explanation and the re-check question (not just the last)."""
+    calls = {"n": 0}
+    def counting_llm(msgs):
+        calls["n"] += 1
+        return f"LLM_MSG_{calls['n']}"
+    ctrl = _make_controller(llm_fn=counting_llm)
+    ctrl.step(None)                      # present (LLM_MSG_1)
+    result = ctrl.step("?")              # help_explain (LLM_MSG_2) + recheck present (LLM_MSG_3)
+    assert result.state == FSMState.HELP_RECHECK_AWAIT.value
+    assert "LLM_MSG_2" in result.text and "LLM_MSG_3" in result.text
+
+
+def test_stop_in_help_recheck_ends_session():
+    """'stop' during a Help re-check ends the session (not treated as an answer)."""
+    ctrl = _make_controller(llm_fn=lambda msgs: "explanation or recheck")
+    ctrl.step(None)
+    ctrl.step("?")                       # -> HELP_RECHECK_AWAIT
+    result = ctrl.step("stop")
+    assert result.state == FSMState.SESSION_END_BY_LEARNER.value
+    assert result.done
+
+
+def test_stop_in_probe_ends_session():
+    """'stop' during a Probe ends the session (not treated as an answer)."""
+    ctrl = _make_controller()
+    ctrl.step(None)                      # establishes current_node_id
+    ctrl._ctx.state = FSMState.PROBE_AWAIT_ANSWER   # jump into probe await
+    result = ctrl.step("stop")
+    assert result.state == FSMState.SESSION_END_BY_LEARNER.value
+    assert result.done
+
+
 def test_all_mastered_ends_session():
     """When fringe is empty (all mastered), SESSION_END_COMPLETE is returned."""
     ctrl = _make_controller(
@@ -167,6 +200,9 @@ def _smoke():
     test_escalation_is_absorbing(); print("[smoke] escalation absorbing OK")
     test_help_request_enters_help_loop(); print("[smoke] help loop OK")
     test_help_recheck_skip_rejected(); print("[smoke] skip reject OK")
+    test_help_explanation_not_swallowed(); print("[smoke] help explanation shown OK")
+    test_stop_in_help_recheck_ends_session(); print("[smoke] stop in help recheck OK")
+    test_stop_in_probe_ends_session(); print("[smoke] stop in probe OK")
     test_all_mastered_ends_session(); print("[smoke] all mastered OK")
     print("[smoke] test_controller.py PASS")
 
