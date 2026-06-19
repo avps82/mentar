@@ -157,6 +157,14 @@ class _DbStoreAdapter:
             priors_used=True,  # pilot uses cold-start priors (W3.3: fitted only at N>=100)
         )
 
+    def write_escalation(self, learner_id: str, trigger_class: str, trigger_text_verbatim: str) -> int:
+        # Verbatim text stored untruncated (SAFETY §3.3 Step 2).
+        return self._store.write_escalation(
+            learner_id=self._db_id,
+            trigger_class=trigger_class,
+            trigger_text_verbatim=trigger_text_verbatim,
+        )
+
 
 # HTML templates live in src/mentar/web/templates/ (learner.html, done.html, parent.html).
 
