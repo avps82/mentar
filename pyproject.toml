@@ -80,4 +80,12 @@ line-length = 100
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP"]
-ignore = ["E501"]
+# E501: long lines tolerated. UP042: our enums are deliberate `(str, Enum)`; switching to
+# StrEnum changes str()/format semantics (we rely on explicit .value), so we decline it.
+ignore = ["E501", "UP042"]
+
+[tool.ruff.lint.per-file-ignores]
+# Test + script conventions: inline python3 smoke-runners need sys.path before imports (E402);
+# compact one-liner fakes / lambdas in fixtures (E702/E731/E741); test zip without strict (B905).
+"tests/**" = ["E402", "E702", "E731", "E741", "B905"]
+"scripts/**" = ["E741"]

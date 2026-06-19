@@ -11,7 +11,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
-from mentar.engine.bkt import P_L0, BktParams, bkt_update, params_for  # noqa: E402
+from mentar.engine.bkt import P_L0, bkt_update, params_for  # noqa: E402
 
 
 def test_class_priors_resolve():

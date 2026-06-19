@@ -19,10 +19,9 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import re
 import sys
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "eval"))

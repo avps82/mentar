@@ -104,7 +104,7 @@ def test_wrapper_length_bounds_but_does_not_filter():
     short_injection = f"{INJECTION_STRING} is data."
     result2 = wrap_passage(short_injection, {"max_passage_chars": 200})
     assert result2 == short_injection, (
-        f"FAIL: wrapper must not filter injection string in short passage"
+        "FAIL: wrapper must not filter injection string in short passage"
     )
 
 
@@ -156,11 +156,11 @@ def test_wrapper_empty_passage_returns_empty():
 # ── Inline smoke runner ───────────────────────────────────────────────────────
 
 def _smoke():
-    from mentar.grounding.reader import ZimReader
-    from mentar.grounding.wrapper import wrap_passage
-    from mentar.grounding import resolve_grounding
     from mentar.grounding import cache as gcache
+    from mentar.grounding import resolve_grounding
+    from mentar.grounding.reader import ZimReader
     from mentar.grounding.resolve import clear_reader_pool
+    from mentar.grounding.wrapper import wrap_passage
 
     gcache.clear_memory()
     clear_reader_pool()

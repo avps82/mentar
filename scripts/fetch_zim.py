@@ -39,7 +39,6 @@ import argparse
 import os
 import sys
 import urllib.request
-from typing import Optional
 
 # Shared filename grammar / index helpers live in the package (one source of truth).
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
@@ -124,6 +123,7 @@ def _write_local(resp, dest_dir: str, filename: str) -> str:
 def _write_smb(resp, dest_dir: str, filename: str, user, pw, domain) -> str:
     try:
         import smbclient
+
         from mentar.grounding.sources import join_location, smb_url_to_unc
     except ImportError as exc:
         raise RuntimeError("SMB dest needs: pip install 'mentar[nas]'") from exc
@@ -160,7 +160,7 @@ def _jobs_from_config(path: str) -> list[dict]:
     return jobs
 
 
-def main(argv: Optional[list[str]] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Download ZIMs (auto-latest) to local / NAS / SMB.")
     ap.add_argument("--dest", default=os.environ.get("MENTAR_ZIM_DIR", "./zims"),
                     help="Destination: local path, mounted-NAS path, or smb:// URL / UNC.")

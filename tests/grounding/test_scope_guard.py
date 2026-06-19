@@ -28,7 +28,6 @@ import pytest
 
 from mentar.grounding.source_map import ScopeError, check_scope, resolve_zim
 
-
 # ── Tests ─────────────────────────────────────────────────────────────────────
 
 def test_vikidia_anchor_passes():
@@ -86,8 +85,8 @@ def test_resolve_zim_scope_violation_returns_none(tmp_path):
 
 def test_resolve_grounding_returns_empty_on_scope_violation(tmp_path):
     """resolve_grounding returns '' when scope guard fires — never raises."""
-    from mentar.grounding import resolve_grounding
     from mentar.grounding import cache as gcache
+    from mentar.grounding import resolve_grounding
     gcache.clear_memory()
 
     cfg = {

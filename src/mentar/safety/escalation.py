@@ -24,9 +24,6 @@ import re
 import sqlite3
 from dataclasses import dataclass
 from enum import Enum
-from pathlib import Path
-from typing import Optional
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Public API types  (design §3)
@@ -223,7 +220,7 @@ _SEVERITY_RANK: dict[Severity, int] = {
 # Classifier (design §3)
 # ─────────────────────────────────────────────────────────────────────────────
 
-def classify(text: str) -> Optional[TriggerMatch]:
+def classify(text: str) -> TriggerMatch | None:
     """Single-turn classifier. Returns the HIGHEST-severity match, or None.
 
     Sensitivity-biased: when in doubt, fire. False positives are acceptable and
@@ -237,7 +234,7 @@ def classify(text: str) -> Optional[TriggerMatch]:
     if not text or not text.strip():
         return None
 
-    best: Optional[TriggerMatch] = None
+    best: TriggerMatch | None = None
 
     for trigger_class, severity, patterns in _CLASSIFIER_BANKS:
         # Early exit: nothing can beat a CRITICAL already found, and the banks
@@ -269,7 +266,7 @@ def handle_trigger(
     text: str,
     learner_id: int,
     conn: sqlite3.Connection,
-) -> Optional[TriggerMatch]:
+) -> TriggerMatch | None:
     """Run the §4 flow for one child turn against a live SQLite connection.
 
     Returns the TriggerMatch if triggered (caller should enter ESCALATION_FREEZE

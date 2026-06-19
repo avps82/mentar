@@ -17,7 +17,6 @@ sys.path.insert(0, str(REPO / "eval"))
 
 import score_responses as sr  # noqa: E402
 
-
 _TRUTH = {
     "transfer-x-01": {"id": "transfer-x-01", "suite": "transfer", "answer": "3/8", "answer_type": "fraction"},
     "transfer-x-02": {"id": "transfer-x-02", "suite": "transfer", "answer": "4", "answer_type": "int"},

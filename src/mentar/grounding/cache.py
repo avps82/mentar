@@ -19,7 +19,6 @@ import logging
 import os
 import pickle
 from pathlib import Path
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +41,7 @@ def _disk_path(cache_dir: str | Path, anchor: str) -> Path:
 # ── Public API ────────────────────────────────────────────────────────────────
 
 
-def get(anchor: str, cfg: dict) -> Optional[str]:
+def get(anchor: str, cfg: dict) -> str | None:
     """Return a cached passage for ``anchor``, or ``None`` if not cached.
 
     Checks in-memory first, then on-disk (if enabled).
@@ -117,7 +116,7 @@ def clear_memory() -> None:
     _MEM_CACHE.clear()
 
 
-def _resolve_cache_dir(cache_cfg: dict) -> Optional[str]:
+def _resolve_cache_dir(cache_cfg: dict) -> str | None:
     """Expand env-var substitution in cache_dir and return the resolved string."""
     raw_dir: str = cache_cfg.get("dir", "")
     if not raw_dir:

@@ -64,7 +64,7 @@ class ItemBank:
             self._queue[node_id] = queue
         return queue.pop()
 
-    def example(self, node_id: str, exclude_id: str | None = None) -> "Item | None":
+    def example(self, node_id: str, exclude_id: str | None = None) -> Item | None:
         """A stable solved example for a node WITHOUT consuming the sample queue.
 
         Used to fill a worked-example slot in Help prompts. Excludes *exclude_id* (the live

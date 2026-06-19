@@ -19,7 +19,7 @@ any parsing. This is cheap and avoids spurious SAFE_REJECTs on copy-paste input 
 
 from __future__ import annotations
 
-import pytest
+from fractions import Fraction
 
 from mentar.eval.verify_numeric import (
     CheckResult,
@@ -27,8 +27,6 @@ from mentar.eval.verify_numeric import (
     extract_answer,
     normalise_fraction,
 )
-from fractions import Fraction
-
 
 # ===========================================================================
 # normalise_fraction — unit tests

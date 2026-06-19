@@ -18,7 +18,7 @@ equivalent form, so the child may reduce or not.
 from __future__ import annotations
 
 import random
-from typing import Callable
+from collections.abc import Callable
 
 from mentar.engine.itembank import Item
 

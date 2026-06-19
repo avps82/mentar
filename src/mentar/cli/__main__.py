@@ -31,8 +31,8 @@ def _build_controller(args):
     Reuses the web app's curriculum loader and DB adapter so CLI and web exercise
     the exact same turn loop.
     """
-    from mentar.dialogue.controller import SessionController
     from mentar.db.store import LearnerStore
+    from mentar.dialogue.controller import SessionController
     from mentar.engine.itembank import load_item_bank
     from mentar.engine.itemgen import build_item_source
     from mentar.inference import load_inference_config, make_llm_call
@@ -116,7 +116,7 @@ def _run_session(args) -> int:
 def _emit(text: str, latency: float | None = None) -> None:
     if not text:
         return
-    tag = f"mentar> " if latency is None else f"mentar> ({latency:.1f}s) "
+    tag = "mentar> " if latency is None else f"mentar> ({latency:.1f}s) "
     print(f"\n{tag}{text}\n")
 
 

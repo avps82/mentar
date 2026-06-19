@@ -263,7 +263,7 @@ def _last_mentar_text(learner_uuid: str) -> str | None:
 # ── Entry point ───────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    print(f"Mentar pilot — http://localhost:5000")
+    print("Mentar pilot — http://localhost:5000")
     print(f"  LLM:  backend={_INFERENCE_CFG.get('backend')}")
     print(f"  DB:   {DB_PATH}")
     print(f"  curriculum: {CURRICULUM_PATH}")

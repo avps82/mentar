@@ -37,7 +37,6 @@ import os
 import re
 import shutil
 from pathlib import Path
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -102,7 +101,7 @@ def parse_index(html: str) -> list[str]:
     return re.findall(r'href="([^"?/]+\.zim)"', html)
 
 
-def pick_latest(filenames: list[str], regex: str) -> Optional[str]:
+def pick_latest(filenames: list[str], regex: str) -> str | None:
     """Pick the newest filename matching ``regex`` (YYYY-MM sorts lexicographically)."""
     rx = re.compile(regex)
     cands = sorted(f for f in filenames if rx.search(f))
@@ -148,7 +147,7 @@ def list_zim_dir(zim_dir: str, cfg: dict) -> list[str]:
         return []
 
 
-def resolve_filename(spec, zim_dir: str, cfg: dict) -> Optional[str]:
+def resolve_filename(spec, zim_dir: str, cfg: dict) -> str | None:
     """Resolve a source spec to a concrete ZIM filename present in ``zim_dir``.
 
     ``spec`` may be:
@@ -176,7 +175,7 @@ def resolve_filename(spec, zim_dir: str, cfg: dict) -> Optional[str]:
 # ── Materialization ───────────────────────────────────────────────────────────
 
 
-def materialize_zim(location: str, cfg: dict) -> Optional[Path]:
+def materialize_zim(location: str, cfg: dict) -> Path | None:
     """Return a local filesystem path libzim can open, or ``None`` on failure.
 
     Local / mounted paths are returned as-is (no copy). SMB locations are copied
@@ -220,7 +219,7 @@ def _configure_smb_auth(cfg: dict) -> None:
         smbclient.ClientConfig(username=user, password=pw)
 
 
-def _materialize_smb(location: str, cfg: dict) -> Optional[Path]:
+def _materialize_smb(location: str, cfg: dict) -> Path | None:
     """Copy an SMB ZIM to the local cache and return the cached path, or None."""
     try:
         import smbclient
@@ -242,7 +241,7 @@ def _materialize_smb(location: str, cfg: dict) -> Optional[Path]:
     local = cache_dir / Path(unc.replace("\\", "/")).name
 
     # Reuse a cached copy when its size matches the remote (cheap freshness check).
-    remote_size: Optional[int] = None
+    remote_size: int | None = None
     try:
         remote_size = smbclient.stat(unc).st_size
     except Exception:

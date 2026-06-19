@@ -22,7 +22,6 @@ import html
 import logging
 import re
 from pathlib import Path
-from typing import Optional
 from urllib.parse import unquote, urlparse
 
 logger = logging.getLogger(__name__)
@@ -207,7 +206,7 @@ class ZimReader:
 
     # ── Lookup ────────────────────────────────────────────────────────────────
 
-    def get_by_url(self, anchor_url: str) -> Optional[bytes]:
+    def get_by_url(self, anchor_url: str) -> bytes | None:
         """Resolve a wiki anchor URL to raw HTML bytes from the ZIM archive.
 
         Tries:

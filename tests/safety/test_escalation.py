@@ -41,7 +41,7 @@ import sys
 from pathlib import Path
 
 try:
-    import pytest
+    import pytest  # noqa: F401  (availability probe for the skip guard below)
     _PYTEST_AVAILABLE = True
 except ImportError:
     _PYTEST_AVAILABLE = False

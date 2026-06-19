@@ -17,20 +17,19 @@ from __future__ import annotations
 
 import logging
 import random
-from datetime import datetime, timezone
+from collections.abc import Callable
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
-from typing import Callable, Optional
 
-from mentar.engine.bkt import BktParams, P_L0, bkt_update, params_for
+from mentar.engine.bkt import P_L0, bkt_update, params_for
 from mentar.engine.fringe import DEFAULT_MASTERY_THRESHOLD, outer_fringe
 from mentar.engine.probe_classify import ProbeClass, classify_probe
 from mentar.eval.verify_numeric import CheckResult, check
 from mentar.grounding import resolve_grounding
 from mentar.safety.escalation import (
     HANDOFF_MESSAGE_PRIMARY,
-    TriggerClass,
     classify,
 )
 
@@ -45,7 +44,7 @@ def _is_stop(text: str) -> bool:
     return text.strip().lower() in STOP_WORDS
 
 
-def _is_stale_mastery(updated_at: Optional[str], now: Optional[datetime] = None) -> bool:
+def _is_stale_mastery(updated_at: str | None, now: datetime | None = None) -> bool:
     """True if a skill's mastery timestamp is older than STALE_MASTERY_DAYS.
 
     Pure + null-safe: missing/unparseable timestamps are treated as not-stale (no false
@@ -58,8 +57,8 @@ def _is_stale_mastery(updated_at: Optional[str], now: Optional[datetime] = None)
     except (ValueError, TypeError):
         return False
     if ts.tzinfo is None:
-        ts = ts.replace(tzinfo=timezone.utc)
-    now = now or datetime.now(timezone.utc)
+        ts = ts.replace(tzinfo=UTC)
+    now = now or datetime.now(UTC)
     return (now - ts).days > STALE_MASTERY_DAYS
 
 HELP_RETRY_CAP = 3
@@ -123,23 +122,23 @@ class _SessionCtx:
     state: FSMState = FSMState.SESSION_START
     mastery: dict = field(default_factory=dict)      # node_id -> float
     mastery_updated_at: dict = field(default_factory=dict)  # node_id -> ISO ts | None
-    current_node_id: Optional[str] = None
-    current_pattern: Optional[str] = None
-    current_question: Optional[str] = None           # rendered question text
-    current_item: Optional[object] = None            # current checkable Item (or None = LLM-gen)
-    current_answer: Optional[str] = None             # child's latest answer
-    last_scored_correct: Optional[bool] = None
+    current_node_id: str | None = None
+    current_pattern: str | None = None
+    current_question: str | None = None           # rendered question text
+    current_item: object | None = None            # current checkable Item (or None = LLM-gen)
+    current_answer: str | None = None             # child's latest answer
+    last_scored_correct: bool | None = None
     items_since_probe: int = 0
     # Help loop
     help_n: int = 0                                  # retry counter (1-indexed)
     help_modalities_used: list = field(default_factory=list)
-    help_answer: Optional[str] = None
-    help_scored_correct: Optional[bool] = None
+    help_answer: str | None = None
+    help_scored_correct: bool | None = None
     # Probe loop
     probe_variant: int = 0                           # 0 = first, 1 = retry
-    probe_first_correct: Optional[bool] = None
-    probe_answer: Optional[str] = None
-    probe_scored_correct: Optional[bool] = None
+    probe_first_correct: bool | None = None
+    probe_answer: str | None = None
+    probe_scored_correct: bool | None = None
 
 
 class SessionController:
@@ -244,7 +243,6 @@ class SessionController:
 
     def _tick(self, state: FSMState, inp: str | None) -> tuple[str, bool]:
         """Process one FSM state.  Returns (text_output, should_advance_immediately)."""
-        ctx = self._ctx
         match state:
             case FSMState.SESSION_START:
                 return self._do_session_start()
