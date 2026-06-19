@@ -19,10 +19,7 @@ Test cases:
 
 from __future__ import annotations
 
-import pytest
-
-from mentar.eval.verify_numeric import CheckResult, CheckOutcome, check
-
+from mentar.eval.verify_numeric import CheckOutcome, CheckResult, check
 
 # ---------------------------------------------------------------------------
 # The thin pipeline function (represents the engine's serve-time wrapper).

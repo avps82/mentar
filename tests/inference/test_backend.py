@@ -28,7 +28,6 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from mentar.inference import backend as B  # noqa: E402
 
-
 # ── Fake OpenAI client (records calls, optionally raises) ─────────────────────
 
 class _FakeMessage:

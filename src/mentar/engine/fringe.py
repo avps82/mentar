@@ -15,7 +15,6 @@ This module is stdlib-only and side-effect-free. The dialogue controller calls
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Optional
 
 DEFAULT_MASTERY_THRESHOLD = 0.85   # PHASE0 W5.3 pilot default
 
@@ -93,7 +92,7 @@ def graph_from_template(template_path: str) -> Graph:
 
 def fringe_from_template(
     template_path: str,
-    mastery: Optional[Mastery] = None,
+    mastery: Mastery | None = None,
     threshold: float = DEFAULT_MASTERY_THRESHOLD,
 ) -> set[str]:
     """Convenience: load a template + compute fringe in one call.

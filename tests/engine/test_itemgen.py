@@ -23,10 +23,13 @@ import sys
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
-from mentar.engine.itemgen import (  # noqa: E402
-    DEFAULT_GENERATORS, CompositeItemSource, ItemGenerator, default_item_generator,
-)
 from mentar.engine.itembank import Item, ItemBank  # noqa: E402
+from mentar.engine.itemgen import (  # noqa: E402
+    DEFAULT_GENERATORS,
+    CompositeItemSource,
+    ItemGenerator,
+    default_item_generator,
+)
 from mentar.eval.verify_numeric import CheckResult, check  # noqa: E402
 
 

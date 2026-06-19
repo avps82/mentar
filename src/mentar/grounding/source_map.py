@@ -13,7 +13,6 @@ Spec: docs/design/W7_grounding_reader.md (Scope guard row in module contract).
 from __future__ import annotations
 
 import logging
-from pathlib import Path
 from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)

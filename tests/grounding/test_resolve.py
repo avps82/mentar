@@ -187,7 +187,7 @@ def _smoke():
         "passage_hint": "Opening section — fraction as part of something",
     }
     result = resolve_grounding_inner(node, cfg)
-    assert result, f"FAIL: empty passage for Fraction"
+    assert result, "FAIL: empty passage for Fraction"
     print(f"[smoke] resolve Fraction: {len(result)} chars, starts={result[:80]!r}")
 
     bounded = wrap_passage(result, {"max_passage_chars": 50})

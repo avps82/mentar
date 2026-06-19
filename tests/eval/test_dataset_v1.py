@@ -11,7 +11,6 @@ Inline smoke runner:
 
 from __future__ import annotations
 
-import importlib.util
 import pathlib
 import sys
 
@@ -19,11 +18,11 @@ REPO = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "src"))
 sys.path.insert(0, str(REPO / "eval"))
 
-from mentar.eval.verify_numeric import CheckResult, check  # noqa: E402
-
 import build_dataset as bd  # noqa: E402
-import validate_dataset as vd  # noqa: E402
 import run_candidates as rc  # noqa: E402
+import validate_dataset as vd  # noqa: E402
+
+from mentar.eval.verify_numeric import CheckResult, check  # noqa: E402
 
 _CHECKER = {"int": "int_exact", "fraction": "fraction_equiv", "mc4": "mc_choice"}
 

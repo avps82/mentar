@@ -16,12 +16,11 @@ from __future__ import annotations
 
 import pathlib
 import sys
-import types
 
 REPO = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "src"))
 
-from mentar.dialogue.controller import FSMState, SessionController, TurnResult
+from mentar.dialogue.controller import FSMState, SessionController
 
 PROMPTS = REPO / "prompts"
 

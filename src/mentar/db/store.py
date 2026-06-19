@@ -22,7 +22,6 @@ from __future__ import annotations
 
 import sqlite3
 from pathlib import Path
-from typing import Union
 
 # Path to the schema DDL file alongside this module.
 _SCHEMA_PATH = Path(__file__).parent / "schema.sql"
@@ -41,7 +40,7 @@ class LearnerStore:
     multi-threaded web tier would need one connection per thread or a pool.
     """
 
-    def __init__(self, db_path: Union[str, Path]) -> None:
+    def __init__(self, db_path: str | Path) -> None:
         """Open (or create) the SQLite database at *db_path*.
 
         If the database is new (user_version == 0), the schema DDL in
@@ -414,7 +413,7 @@ class LearnerStore:
 
     # ── Context manager support ──────────────────────────────────────────────
 
-    def __enter__(self) -> "LearnerStore":
+    def __enter__(self) -> LearnerStore:
         return self
 
     def __exit__(self, *_: object) -> None:

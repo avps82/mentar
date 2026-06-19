@@ -157,6 +157,7 @@ def test_non_dict_grounding_does_not_raise():
 def test_missing_zim_logs_warning(tmp_path, caplog):
     """A missing ZIM logs a warning (not an error — a turn-degradation event)."""
     import logging
+
     from mentar.grounding import resolve_grounding
     cfg = {
         "zim_dir": str(tmp_path),
@@ -182,8 +183,9 @@ def test_missing_zim_logs_warning(tmp_path, caplog):
 
 def _smoke():
     import tempfile
-    from mentar.grounding import resolve_grounding
+
     from mentar.grounding import cache as gcache
+    from mentar.grounding import resolve_grounding
     from mentar.grounding.resolve import clear_reader_pool
 
     def reset():
