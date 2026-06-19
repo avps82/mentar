@@ -64,7 +64,7 @@ def _has_avx2() -> bool | None:
 
 def _ref_for(model: dict, runtime: str) -> dict:
     """gguf-parser ref for sizing: prefer the artifact the chosen runtime will actually use."""
-    if runtime == "gguf" and model.get("hf_repo") and model.get("hf_file"):
+    if runtime in ("gguf", "llama_app") and model.get("hf_repo") and model.get("hf_file"):
         return {"hf_repo": model["hf_repo"], "hf_file": model["hf_file"]}
     if model.get("ol_model") or model.get("ollama_tag"):
         return {"ol_model": model.get("ollama_tag") or model.get("ol_model")}
@@ -88,25 +88,28 @@ def select(roster: list[dict], prefer: str = "auto", n_ctx: int = 4096,
     warnings: list[str] = []
 
     ollama_avail = shutil.which("ollama") is not None
-    if prefer == "ollama":
-        runtime = "ollama"
-    elif prefer == "gguf":
-        runtime = "gguf"
-    else:  # auto
-        runtime = "ollama" if ollama_avail else "gguf"
+    llama_app_avail = shutil.which("llama") is not None
+    if prefer in ("ollama", "llama_app", "gguf"):
+        runtime = prefer
+    else:  # auto — prefer Ollama, then llama.app (`llama serve`), then in-process GGUF
+        runtime = "ollama" if ollama_avail else ("llama_app" if llama_app_avail else "gguf")
     if runtime == "ollama" and not ollama_avail:
         warnings.append("Ollama not found on PATH — install it, or run setup with --runtime gguf.")
+    if runtime == "llama_app" and not llama_app_avail:
+        warnings.append("llama (llama.app) not found on PATH — install from https://llama.app, "
+                        "or run setup with --runtime gguf.")
 
     total = ram_gb if ram_gb is not None else ggufparser.total_ram_gb()
     if total is None:
         warnings.append("Could not detect system RAM — picking a conservative small model.")
 
-    # Candidates the chosen runtime can actually install.
+    # Candidates the chosen runtime can actually install. Both gguf (in-process) and
+    # llama_app (`llama serve -m <gguf>`) need a local GGUF; ollama uses its own registry tag.
     candidates = list(roster)
-    if runtime == "gguf":
+    if runtime in ("gguf", "llama_app"):
         candidates = [m for m in roster if m.get("hf_repo") and m.get("hf_file")]
         if not candidates:
-            raise ValueError("No roster model has a GGUF (hf_repo/hf_file) for the gguf runtime.")
+            raise ValueError(f"No roster model has a GGUF (hf_repo/hf_file) for the {runtime} runtime.")
 
     smallest = min(candidates, key=lambda m: m.get("params_b", 0))
     chosen, est, used_parser, fits = None, None, False, False

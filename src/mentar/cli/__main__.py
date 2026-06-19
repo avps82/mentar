@@ -4,7 +4,7 @@ Subcommands:
   setup             — Detect hardware, pick + download the best-fit vetted model, write config.
   run-session       — Drive a full tutoring session (headless) against the configured backend.
   serve             — Start the pilot web app (mentar.web.app).
-  eval              — Run the eval harness (stub).
+  eval              — Generate (local model) + judge (Sonnet) over the eval dataset.
   validate-template — Validate a curriculum template against the W3.1 schema.
 """
 
@@ -169,13 +169,20 @@ def _setup(args) -> int:
     if m.get("reasoning"):
         gen["extra_body"] = {"think": False}
 
+    model_path = repo / "models" / (m["hf_file"] or "")
     if sel.runtime == "ollama":
         cfg = {"backend": "ollama",
                "ollama": {"base_url": "http://localhost:11434", "model": m["ollama_tag"]},
                "generation": gen}
         model_desc = f"ollama pull {m['ollama_tag']}"
+    elif sel.runtime == "llama_app":
+        # llama.app's `llama serve` exposes an OpenAI-compatible endpoint — reuse the vllm path.
+        cfg = {"backend": "vllm",
+               "vllm": {"base_url": "http://127.0.0.1:8081/v1", "model": m["hf_file"],
+                        "api_key": "no-key"},
+               "generation": gen}
+        model_desc = f"download {m['hf_repo']}/{m['hf_file']} (served via `llama serve`)"
     else:  # gguf in-process
-        model_path = repo / "models" / m["hf_file"]
         cfg = {"backend": "llamacpp",
                "llamacpp": {"mode": "in_process", "model_path": str(model_path),
                             "n_ctx": n_ctx, "n_gpu_layers": 0},
@@ -210,8 +217,31 @@ def _setup(args) -> int:
 
     write_inference_config(cfg, cfg_path)
     print(f"\n✓ Wrote {cfg_path}")
-    print("✓ Ready — run:  mentar run-session")
+    if sel.runtime == "llama_app":
+        print(f"✓ Start the model server:  llama serve -m {model_path} --port 8081")
+        print("  then run:  mentar run-session")
+    else:
+        print("✓ Ready — run:  mentar run-session")
     return 0
+
+
+def _eval(args, repo) -> int:
+    """Run the generate→verify pipeline by shelling out to the eval scripts."""
+    cmd = [sys.executable, str(repo / "eval" / "run_candidates.py"), "--model", args.model]
+    if args.suite:
+        cmd += ["--suite", args.suite]
+    if args.dry_run:
+        cmd += ["--dry-run"]
+    print(f"[eval] generating with {args.model} ...")
+    rc = subprocess.run(cmd).returncode
+    if rc != 0:
+        print("ERROR: candidate generation failed.", file=sys.stderr)
+        return rc
+    if args.dry_run:
+        return 0
+    cmd2 = [sys.executable, str(repo / "eval" / "judge_responses.py"), "--model", args.model]
+    print("[eval] judging with Sonnet ...")
+    return subprocess.run(cmd2).returncode
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -219,8 +249,8 @@ def main(argv: list[str] | None = None) -> int:
     sub = parser.add_subparsers(dest="cmd", required=True)
 
     su = sub.add_parser("setup", help="Detect hardware, pick + download the best-fit model, write config.")
-    su.add_argument("--runtime", choices=["auto", "ollama", "gguf"], default="auto",
-                    help="Runtime to target (default: auto = Ollama if present, else in-process GGUF).")
+    su.add_argument("--runtime", choices=["auto", "ollama", "llama_app", "gguf"], default="auto",
+                    help="Runtime: auto = Ollama, else llama.app (`llama serve`), else in-process GGUF.")
     su.add_argument("--model", help="Override auto-selection with a roster id or ollama tag.")
     su.add_argument("--ctx", type=int, default=4096, help="Context size for fit sizing (default: 4096).")
     su.add_argument("--roster", help="Roster yaml (default: config/model_roster.yaml).")
@@ -235,7 +265,12 @@ def main(argv: list[str] | None = None) -> int:
     rs.add_argument("--db", help="SQLite path (default: mentar_pilot.db).")
 
     sub.add_parser("serve", help="Start the pilot web app.")
-    sub.add_parser("eval", help="Run the eval harness (stub).")
+    ev = sub.add_parser("eval", help="Generate (local model) + judge (Sonnet) over the eval dataset.")
+    ev.add_argument("--model", required=True, help="Candidate model id (e.g. gemma4:12b).")
+    ev.add_argument("--suite", default=None,
+                    choices=["reexplain", "transfer", "adversarial", "sycophancy", "abstention"],
+                    help="Restrict to one suite.")
+    ev.add_argument("--dry-run", action="store_true", help="Show what would run; no network, skip judging.")
     vt = sub.add_parser(
         "validate-template",
         help="Validate a curriculum template against the W3.1 schema.",
@@ -246,6 +281,9 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.cmd == "setup":
         return _setup(args)
+
+    if args.cmd == "eval":
+        return _eval(args, _repo_root())
 
     if args.cmd == "run-session":
         return _run_session(args)

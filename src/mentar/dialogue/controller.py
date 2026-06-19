@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import logging
 import random
+from datetime import datetime, timezone
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
@@ -37,10 +38,29 @@ logger = logging.getLogger(__name__)
 
 HELP_MODALITIES = ["visual", "concrete", "analogy", "story", "formal"]
 STOP_WORDS = {"stop", "quit", "bye", "exit"}  # learner-initiated session end
+STALE_MASTERY_DAYS = 14  # mastery older than this counts as "stale" for forgetting detection
 
 
 def _is_stop(text: str) -> bool:
     return text.strip().lower() in STOP_WORDS
+
+
+def _is_stale_mastery(updated_at: Optional[str], now: Optional[datetime] = None) -> bool:
+    """True if a skill's mastery timestamp is older than STALE_MASTERY_DAYS.
+
+    Pure + null-safe: missing/unparseable timestamps are treated as not-stale (no false
+    forgetting signal). ``updated_at`` is an ISO-8601 string (schema writes ...Z).
+    """
+    if not updated_at:
+        return False
+    try:
+        ts = datetime.fromisoformat(updated_at.replace("Z", "+00:00"))
+    except (ValueError, TypeError):
+        return False
+    if ts.tzinfo is None:
+        ts = ts.replace(tzinfo=timezone.utc)
+    now = now or datetime.now(timezone.utc)
+    return (now - ts).days > STALE_MASTERY_DAYS
 
 HELP_RETRY_CAP = 3
 PROBE_EVERY_N = 5  # W5.3 pilot default
@@ -102,6 +122,7 @@ class _SessionCtx:
     """Mutable FSM context — all transient state for one session."""
     state: FSMState = FSMState.SESSION_START
     mastery: dict = field(default_factory=dict)      # node_id -> float
+    mastery_updated_at: dict = field(default_factory=dict)  # node_id -> ISO ts | None
     current_node_id: Optional[str] = None
     current_pattern: Optional[str] = None
     current_question: Optional[str] = None           # rendered question text
@@ -173,6 +194,14 @@ class SessionController:
                 logger.warning(
                     "escalation: span=%s class=%s", trigger.matched_span[:80], trigger.trigger_class
                 )
+                # Persist the event for the parent (SAFETY §3.x): full UNTRUNCATED text +
+                # class. Best-effort — a DB failure must never block the safety freeze/handoff.
+                try:
+                    self._store.write_escalation(
+                        self._learner_id, trigger.trigger_class.value, learner_input
+                    )
+                except Exception:
+                    logger.warning("escalation: failed to persist escalation_log row", exc_info=True)
                 return TurnResult(
                     state=ctx.state.value,
                     text=HANDOFF_MESSAGE_PRIMARY,
@@ -271,9 +300,17 @@ class SessionController:
         for node_id in self._curriculum:
             try:
                 row = self._store.get_skill_state(self._learner_id, node_id)
-                ctx.mastery[node_id] = row["p_mastery"] if row else P_L0
+                if row:
+                    ctx.mastery[node_id] = row["p_mastery"]
+                    ctx.mastery_updated_at[node_id] = (
+                        row["updated_at"] if "updated_at" in row.keys() else None
+                    )
+                else:
+                    ctx.mastery[node_id] = P_L0
+                    ctx.mastery_updated_at[node_id] = None
             except Exception:
                 ctx.mastery[node_id] = P_L0
+                ctx.mastery_updated_at[node_id] = None
         ctx.state = FSMState.NODE_SELECT
         return ("", True)
 
@@ -583,7 +620,7 @@ class SessionController:
     def _do_probe_classify(self) -> tuple[str, bool]:
         ctx = self._ctx
         mastery = ctx.mastery.get(ctx.current_node_id, 0.0)
-        stale = False  # TODO: wire updated_at from skill_state for forgetting detection
+        stale = _is_stale_mastery(ctx.mastery_updated_at.get(ctx.current_node_id))
         probe_class = classify_probe(
             first_correct=ctx.probe_first_correct or False,
             retry_correct=ctx.probe_scored_correct if ctx.probe_variant > 0 else None,

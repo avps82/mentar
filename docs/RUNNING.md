@@ -19,8 +19,15 @@ mentar run-session      # start tutoring
 
 - It picks only from Mentar's vetted roster (`config/model_roster.yaml`) and sizes each model to
   your RAM with [gguf-parser](https://github.com/gpustack/gguf-parser-go) — no manual model choice.
-- Preview without downloading: `mentar setup --dry-run`. Force a runtime: `--runtime ollama|gguf`.
-  Override the model: `--model gemma2:9b`.
+- Preview without downloading: `mentar setup --dry-run`. Force a runtime:
+  `--runtime ollama|llama_app|gguf`. Override the model: `--model gemma2:9b`.
+- **Runtime auto-order:** Ollama → **llama.app** → in-process GGUF. [llama.app](https://llama.app)
+  is the official llama.cpp distro (`curl -LsSf https://llama.app/install.sh | sh`); its installer
+  auto-picks a prebuilt binary matched to your **CPU instruction set + GPU**, so it Just Works on
+  older (pre-AVX2) CPUs with no source build. `mentar setup --runtime llama_app` downloads the
+  GGUF and writes the config to talk to `llama serve` (it then prints the `llama serve …` command
+  to start). On very old CPUs the portable prebuilt is slower than a native source build — see the
+  GGUF section below for the perf path.
 
 Prefer to do it by hand? The manual steps (4–6) below still work.
 

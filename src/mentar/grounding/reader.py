@@ -37,7 +37,9 @@ _HEADING_RE = re.compile(
 )
 _PARA_RE = re.compile(r"<p[^>]*>(.*?)</p>", re.IGNORECASE | re.DOTALL)
 _SECTION_HEADING_RE = re.compile(
-    r"<(?:h[1-6])[^>]*>(.*?)</(?:h[1-6])>", re.IGNORECASE | re.DOTALL
+    # h2–h6 only: the article TITLE is an <h1>, so matching it would truncate the lead
+    # to the pre-title chrome (no paragraphs). Section headings start at <h2>.
+    r"<(?:h[2-6])[^>]*>(.*?)</(?:h[2-6])>", re.IGNORECASE | re.DOTALL
 )
 
 
@@ -53,6 +55,20 @@ def _strip_html(raw: str) -> str:
     text = re.sub(r" *\n *", "\n", text)
     text = _MULTI_BLANK_RE.sub("\n\n", text)
     return text.strip()
+
+
+_NOISE_BLOCK_RE = re.compile(r"<(script|style|table)\b[^>]*>.*?</\1>", re.IGNORECASE | re.DOTALL)
+_COMMENT_RE = re.compile(r"<!--.*?-->", re.DOTALL)
+
+
+def _drop_noise(html_content: str) -> str:
+    """Remove structural HTML chrome (script/style/table blocks + comments) BEFORE text
+    extraction. Strips non-content markup ONLY — never removes or alters visible passage
+    words (SAFETY §1.5: passage content stays verbatim; filtering is the prompt layer's job).
+    """
+    content = _COMMENT_RE.sub(" ", html_content)
+    content = _NOISE_BLOCK_RE.sub(" ", content)
+    return content
 
 
 def _anchor_to_zim_path(anchor_url: str) -> str:
@@ -108,7 +124,7 @@ def _extract_section_by_hint(html_content: str, passage_hint: str) -> str:
     """
     # Split into (heading_text, section_html) pairs
     parts = re.split(
-        r"(<h[1-6][^>]*>.*?</h[1-6]>)", html_content, flags=re.IGNORECASE | re.DOTALL
+        r"(<h[2-6][^>]*>.*?</h[2-6]>)", html_content, flags=re.IGNORECASE | re.DOTALL
     )
     # parts alternates: [pre_first_heading, heading1, body1, heading2, body2, ...]
     sections: list[tuple[str, str]] = []
@@ -149,6 +165,11 @@ def _extract_section_by_hint(html_content: str, passage_hint: str) -> str:
     text = "\n\n".join(p for p in paras if p.strip())
     if not text:
         text = _strip_html(best_body)
+    # Short/empty match (e.g. a stub heading) -> fall back to the lead section.
+    if len(text.strip()) < 40:
+        lead = _extract_lead_section(html_content)
+        if len(lead.strip()) > len(text.strip()):
+            return lead
     return text
 
 
@@ -247,6 +268,8 @@ class ZimReader:
             Plain-text passage (may be empty if HTML contained no text).
         """
         html_content = html_bytes.decode("utf-8", errors="replace")
+        # Drop structural chrome (infobox tables, scripts, styles) so real prose surfaces.
+        html_content = _drop_noise(html_content)
         if passage_hint.strip():
             return _extract_section_by_hint(html_content, passage_hint)
         return _extract_lead_section(html_content)
