@@ -294,32 +294,9 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.cmd == "validate-template":
-        from mentar.tools.validate_template import validate
+        from mentar.tools.validate_template import report, validate
 
-        result = validate(args.path)
-
-        for w in result.warnings:
-            print(f"WARNING: {w}", file=sys.stderr)
-
-        for e in result.errors:
-            print(f"ERROR: {e}", file=sys.stderr)
-
-        if result.ok:
-            n = len(result.concept_ids)
-            print(
-                f"OK: {args.path} — {n} concept(s); "
-                f"roots={result.roots}; leaves={result.leaves}",
-                file=sys.stdout,
-            )
-            if result.warnings:
-                print(f"  {len(result.warnings)} warning(s) — see stderr.", file=sys.stdout)
-        else:
-            print(
-                f"FAIL: {args.path} — {len(result.errors)} error(s).",
-                file=sys.stdout,
-            )
-
-        return 0 if result.ok else 1
+        return report(validate(args.path), args.path)
 
     # stubs
     print(f"mentar: '{args.cmd}' not implemented yet (stub).", file=sys.stderr)

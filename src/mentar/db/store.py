@@ -65,7 +65,9 @@ class LearnerStore:
         elif version < _EXPECTED_VERSION:
             # Future migration hook: run incremental ALTER TABLE statements here,
             # then bump user_version to _EXPECTED_VERSION.
-            # For now (schema v1 is the only version) this branch is unreachable.
+            # For now (schema v1 is the only version) this branch is unreachable,
+            # but it is spec-required (T3.6(d)) and tested — it turns "newer binary
+            # opens a stale DB" from silent corruption into a loud, clear error.
             raise RuntimeError(
                 f"Database schema version {version} is older than expected "
                 f"{_EXPECTED_VERSION}. Run the migration script."
