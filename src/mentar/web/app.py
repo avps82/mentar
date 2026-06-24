@@ -165,6 +165,40 @@ class _DbStoreAdapter:
             trigger_text_verbatim=trigger_text_verbatim,
         )
 
+    # ── Durable session logging (controller calls these best-effort) ──────────
+
+    def create_session(self, session_id: str) -> None:
+        self._store.create_session(self._db_id, session_id)
+
+    def end_session(self, session_id: str, ended_reason: str) -> None:
+        self._store.end_session(self._db_id, session_id, ended_reason)
+
+    def write_transcript(self, session_id: str, turn_index: int, role: str, text: str) -> int:
+        return self._store.write_transcript(self._db_id, session_id, turn_index, role, text)
+
+    def write_response(
+        self, session_id: str, skill_id: str, prompt_ref: str, answer: str,
+        scored: int, hinted: int, check_result: str | None,
+    ) -> int:
+        return self._store.write_response(
+            self._db_id, session_id, skill_id, prompt_ref, answer, scored, hinted, check_result,
+        )
+
+    def write_help_event(
+        self, session_id: str, skill_id: str, modality: str, response_log_id: int,
+    ) -> int:
+        return self._store.write_help_event(
+            self._db_id, session_id, skill_id, modality, response_log_id,
+        )
+
+    def write_probe_event(
+        self, session_id: str, skill_id: str, response_log_id: int,
+        retry_response_log_id: int | None, class_: str,
+    ) -> int:
+        return self._store.write_probe_event(
+            self._db_id, session_id, skill_id, response_log_id, retry_response_log_id, class_,
+        )
+
 
 # HTML templates live in src/mentar/web/templates/ (learner.html, done.html, parent.html).
 
