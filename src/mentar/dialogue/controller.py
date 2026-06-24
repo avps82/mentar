@@ -378,7 +378,7 @@ class SessionController:
             return ("", False)
         stripped = inp.strip()
         # Learner requests help
-        if stripped in ("?", "help", "Help", "HELP", "h"):
+        if stripped.lower() in ("?", "help", "h"):
             ctx.help_n = 1
             ctx.help_modalities_used = []
             ctx.state = FSMState.HELP_MODALITY_SELECT

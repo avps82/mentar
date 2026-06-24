@@ -128,10 +128,6 @@ def validate(path: str) -> ValidationResult:
         errors.append(f"'concepts' must be a YAML list, got {type(raw_concepts).__name__}")
         return ValidationResult(ok=False, errors=errors, warnings=warnings)
 
-    if len(raw_concepts) == 0:
-        errors.append("concepts list is empty or missing")
-        return ValidationResult(ok=False, errors=errors, warnings=warnings)
-
     # ---- per-entry validation: id, label, prereqs -------------------------
     seen_ids: dict[str, int] = {}   # id → first-seen index (1-based)
     concept_ids: list[str] = []
@@ -281,6 +277,33 @@ def validate(path: str) -> ValidationResult:
 # CLI
 # ---------------------------------------------------------------------------
 
+def report(result: ValidationResult, path: str) -> int:
+    """Print a ValidationResult (warnings/errors to stderr, summary to stdout).
+
+    Returns the process exit code: 0 on pass, 1 on error.  Shared by this
+    module's CLI and the unified ``mentar validate-template`` subcommand so the
+    output format lives in exactly one place.
+    """
+    for w in result.warnings:
+        print(f"WARNING: {w}", file=sys.stderr)
+
+    for e in result.errors:
+        print(f"ERROR: {e}", file=sys.stderr)
+
+    if result.ok:
+        n = len(result.concept_ids)
+        print(
+            f"OK: {path} — {n} concept(s); "
+            f"roots={result.roots}; leaves={result.leaves}",
+            file=sys.stdout,
+        )
+        if result.warnings:
+            print(f"  {len(result.warnings)} warning(s) — see stderr.", file=sys.stdout)
+        return 0
+    print(f"FAIL: {path} — {len(result.errors)} error(s).", file=sys.stdout)
+    return 1
+
+
 def main(argv: list[str] | None = None) -> int:
     """CLI entry point.  Returns 0 on pass, 1 on error."""
     import argparse
@@ -292,30 +315,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("path", help="Path to curriculum template Markdown file.")
     args = parser.parse_args(argv)
 
-    result = validate(args.path)
-
-    for w in result.warnings:
-        print(f"WARNING: {w}", file=sys.stderr)
-
-    for e in result.errors:
-        print(f"ERROR: {e}", file=sys.stderr)
-
-    if result.ok:
-        n = len(result.concept_ids)
-        print(
-            f"OK: {args.path} — {n} concept(s); "
-            f"roots={result.roots}; leaves={result.leaves}",
-            file=sys.stdout,
-        )
-        if result.warnings:
-            print(f"  {len(result.warnings)} warning(s) — see stderr.", file=sys.stdout)
-        return 0
-    else:
-        print(
-            f"FAIL: {args.path} — {len(result.errors)} error(s).",
-            file=sys.stdout,
-        )
-        return 1
+    return report(validate(args.path), args.path)
 
 
 if __name__ == "__main__":
