@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import logging
 import random
+import uuid
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -107,6 +108,13 @@ _AWAIT = {
     FSMState.ESCALATION_FREEZE,
 }
 
+# Terminal state -> session.ended_reason recorded when the session closes.
+_END_REASON = {
+    FSMState.SESSION_END_COMPLETE: "completed",
+    FSMState.SESSION_END_BY_LEARNER: "ended_by_learner",
+    FSMState.SESSION_END_BY_PARENT: "ended_by_parent",
+}
+
 
 @dataclass
 class TurnResult:
@@ -139,6 +147,10 @@ class _SessionCtx:
     probe_first_correct: bool | None = None
     probe_answer: str | None = None
     probe_scored_correct: bool | None = None
+    probe_response_log_id: int | None = None         # FK target for probe_event linkage
+    probe_retry_response_log_id: int | None = None
+    # Durable logging
+    turn_index: int = 0                              # next transcript turn index (0-based)
 
 
 class SessionController:
@@ -153,6 +165,7 @@ class SessionController:
         db_store,
         learner_id: str,
         item_bank=None,
+        session_id: str | None = None,
     ) -> None:
         self._llm = llm_call
         self._prompt_dir = Path(prompt_dir)
@@ -160,6 +173,11 @@ class SessionController:
         self._curriculum = curriculum          # node_id -> {concept, answer_type, checker, expected_answer, grounding, prerequisites, bkt_priors?}
         self._store = db_store
         self._learner_id = learner_id
+        # One tutoring session per controller instance. A session row is created lazily
+        # on the first step() and closed at a terminal state (both best-effort).
+        self._session_id = session_id or uuid.uuid4().hex
+        self._session_created = False
+        self._session_ended = False
         # Optional ItemBank: when present, checkable questions are drawn from it (the
         # verifier scores against the item's ground truth).  When None, fall back to the
         # legacy LLM-generated question + node["expected_answer"] path.
@@ -170,6 +188,28 @@ class SessionController:
     # ── Public API ────────────────────────────────────────────────────────────
 
     def step(self, learner_input: str | None) -> TurnResult:
+        """Advance the FSM by one turn, persisting the transcript around it.
+
+        Wraps the FSM core (:meth:`_step_core`) with best-effort durable logging:
+        the child's input and the tutor's reply are appended to the immutable
+        transcript, and the session row is created/closed at the boundaries.
+        All persistence is best-effort — a DB failure must never block tutoring.
+        """
+        self._maybe_create_session()
+        if (
+            learner_input is not None
+            and learner_input.strip()
+            and self._ctx.state not in _TERMINAL
+        ):
+            self._log_transcript("learner", learner_input)
+        result = self._step_core(learner_input)
+        if result.text:
+            self._log_transcript("tutor", result.text)
+        if result.done:
+            self._maybe_end_session(self._ctx.state)
+        return result
+
+    def _step_core(self, learner_input: str | None) -> TurnResult:
         """Advance the FSM by one logical turn.
 
         Drive through transient states automatically; stop at any state that
@@ -238,6 +278,64 @@ class SessionController:
     @property
     def state(self) -> str:
         return self._ctx.state.value
+
+    # ── Durable logging (best-effort) ─────────────────────────────────────────
+
+    def _safe_store(self, method: str, *args):
+        """Call an optional store method; never let persistence break a turn.
+
+        Returns the call result (e.g. a new row id) or None when the store does
+        not implement *method* (lightweight test fakes) or the write fails. This
+        mirrors the existing best-effort escalation/BKT persistence: a logging
+        failure must never crash a tutoring turn.
+        """
+        fn = getattr(self._store, method, None)
+        if fn is None:
+            return None
+        try:
+            return fn(*args)
+        except Exception:
+            logger.warning("store.%s failed", method, exc_info=True)
+            return None
+
+    def _maybe_create_session(self) -> None:
+        if not self._session_created:
+            self._session_created = True
+            self._safe_store("create_session", self._session_id)
+
+    def _maybe_end_session(self, state: FSMState) -> None:
+        if not self._session_ended:
+            self._session_ended = True
+            self._safe_store("end_session", self._session_id, _END_REASON.get(state, "ended"))
+
+    def _log_transcript(self, role: str, text: str) -> None:
+        idx = self._ctx.turn_index
+        self._ctx.turn_index += 1
+        self._safe_store("write_transcript", self._session_id, idx, role, text)
+
+    def _log_response(
+        self, skill_id: str | None, answer: str | None, *,
+        scored: bool, hinted: bool, outcome,
+    ) -> int | None:
+        """Persist one scored response; return its row id (for help/probe FKs)."""
+        item = self._ctx.current_item
+        prompt_ref = (
+            f"item:{item.id}" if item is not None else f"pattern:{self._ctx.current_pattern}"
+        )
+        return self._safe_store(
+            "write_response", self._session_id, skill_id, prompt_ref,
+            answer or "", int(bool(scored)), int(bool(hinted)),
+            outcome.result.value if outcome is not None else None,
+        )
+
+    def _log_probe_event(self, skill_id: str | None, probe_class: ProbeClass) -> None:
+        rid = self._ctx.probe_response_log_id
+        if rid is None:
+            return  # response logging was skipped (e.g. a fake store) — nothing to link
+        self._safe_store(
+            "write_probe_event", self._session_id, skill_id, rid,
+            self._ctx.probe_retry_response_log_id, probe_class.value,
+        )
 
     # ── FSM tick dispatch ─────────────────────────────────────────────────────
 
@@ -402,10 +500,14 @@ class SessionController:
             ground_truth=ground_truth,
         )
         if outcome.result is CheckResult.SAFE_REJECT:
-            # Regenerate — do not penalise
+            # Regenerate — do not penalise (and do not log a scored response)
             ctx.state = FSMState.PRESENT
             return ("", True)
         ctx.last_scored_correct = (outcome.result is CheckResult.PASS)
+        self._log_response(
+            ctx.current_node_id, ctx.current_answer,
+            scored=ctx.last_scored_correct, hinted=False, outcome=outcome,
+        )
         ctx.state = FSMState.BKT_UPDATE
         return ("", True)
 
@@ -441,6 +543,8 @@ class SessionController:
             ctx.items_since_probe = 0
             ctx.probe_variant = 0
             ctx.probe_first_correct = None
+            ctx.probe_response_log_id = None
+            ctx.probe_retry_response_log_id = None
             ctx.state = FSMState.PROBE_PRESENT
         else:
             ctx.state = FSMState.NODE_SELECT
@@ -526,6 +630,16 @@ class SessionController:
             ground_truth=ground_truth,
         )
         ctx.help_scored_correct = (outcome.result is CheckResult.PASS)
+        rid = self._log_response(
+            ctx.current_node_id, ctx.help_answer,
+            scored=ctx.help_scored_correct, hinted=True, outcome=outcome,
+        )
+        if rid is not None and ctx.help_modalities_used:
+            # Link the Help round's modality to the response it produced.
+            self._safe_store(
+                "write_help_event", self._session_id, ctx.current_node_id,
+                ctx.help_modalities_used[-1], rid,
+            )
         ctx.state = FSMState.HELP_RECHECK_BKT_UPDATE
         return ("", True)
 
@@ -610,8 +724,15 @@ class SessionController:
             ground_truth=ground_truth,
         )
         ctx.probe_scored_correct = (outcome.result is CheckResult.PASS)
+        rid = self._log_response(
+            ctx.current_node_id, ctx.probe_answer,
+            scored=ctx.probe_scored_correct, hinted=False, outcome=outcome,
+        )
         if ctx.probe_variant == 0:
             ctx.probe_first_correct = ctx.probe_scored_correct
+            ctx.probe_response_log_id = rid
+        else:
+            ctx.probe_retry_response_log_id = rid
         ctx.state = FSMState.PROBE_CLASSIFY
         return ("", True)
 
@@ -622,19 +743,21 @@ class SessionController:
         probe_class = classify_probe(
             first_correct=ctx.probe_first_correct or False,
             retry_correct=ctx.probe_scored_correct if ctx.probe_variant > 0 else None,
-            p_mastery=mastery,
-            help_used=len(ctx.help_modalities_used) > 0,
-            stale_mastery=stale,
+            mastery=mastery,
+            help_pressed=len(ctx.help_modalities_used) > 0,
+            mastery_is_stale=stale,
         )
         if probe_class is ProbeClass.CLEAN_PASS:
+            self._log_probe_event(ctx.current_node_id, probe_class)
             ctx.state = FSMState.BRANCH_DECISION
             return ("", True)
         if probe_class is ProbeClass.SLIP_SUSPECT and ctx.probe_variant == 0:
-            # One retry allowed before classifying
+            # One retry allowed before classifying (event written after the retry)
             ctx.probe_variant = 1
             ctx.state = FSMState.PROBE_PRESENT
             return ("", True)
         # false_confidence / forgetting_suspect / slip after retry -> advance
+        self._log_probe_event(ctx.current_node_id, probe_class)
         ctx.state = FSMState.BRANCH_DECISION
         return ("", True)
 
