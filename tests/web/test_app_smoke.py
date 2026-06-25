@@ -57,6 +57,53 @@ def test_web_learner_flow():
     assert db.execute("SELECT count(*) FROM skill_state").fetchone()[0] >= 1
 
 
+def test_parent_view_reads_db_and_persists_ack():
+    """A1: /parent renders the durable DB transcript; /parent/ack persists the
+    parent's acknowledgement to escalation_log (SAFETY.md §3.3 Step 6)."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+    import sqlite3
+
+    app_mod, c = _client()  # noqa: F841
+    dbp = os.environ["MENTAR_DB_PATH"]
+
+    # A normal turn so the transcript + a scored response persist to the DB.
+    c.get("/")
+    c.post("/answer", data={"answer": "4"})
+
+    db = sqlite3.connect(dbp)
+    assert db.execute("SELECT count(*) FROM transcript").fetchone()[0] > 0  # write path
+    db.close()
+
+    # /parent renders (DB-backed) without error.
+    assert c.get("/parent").status_code == 200
+
+    # Trigger an escalation; it logs un-acknowledged.
+    c.post("/answer", data={"answer": "I want to die"})
+    db = sqlite3.connect(dbp)
+    row = db.execute(
+        "SELECT id, parent_ack_at, session_outcome FROM escalation_log"
+    ).fetchone()
+    db.close()
+    assert row is not None, "escalation not logged"
+    assert row[1] is None, "ack should be unset before the parent acks"
+
+    # Parent acknowledges via the parent view.
+    c.post("/parent/ack", data={"action": "end"})
+    db = sqlite3.connect(dbp)
+    ack_at, outcome = db.execute(
+        "SELECT parent_ack_at, session_outcome FROM escalation_log"
+    ).fetchone()
+    db.close()
+    assert ack_at is not None, "parent_ack_at not persisted"
+    assert outcome == "acknowledged", f"session_outcome={outcome!r}"
+
+
 if __name__ == "__main__":
     test_web_learner_flow()
     print("  ✓ test_web_learner_flow")
+    test_parent_view_reads_db_and_persists_ack()
+    print("  ✓ test_parent_view_reads_db_and_persists_ack")
