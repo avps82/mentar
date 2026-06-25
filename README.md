@@ -6,6 +6,11 @@ Local LLM hosting. Curriculum-templated by country and year level. Built-in kid 
 
 ▶️ **Want to run it?** See **[docs/RUNNING.md](docs/RUNNING.md)** — a 6-step quick start for Windows, macOS (incl. MacBook Pro M1 16 GB) and Linux.
 
+> ⚠️ **Research preview — supervised pilot only.** Mentar is pre-1.0 and **not** ready for
+> unsupervised use with real children (known safety gaps: no emergency-services signposting,
+> handoff wording not yet professionally reviewed, no PIN gate). Use only with a parent/carer
+> present. See **[SECURITY.md](SECURITY.md)** before running it with a child.
+
 ---
 
 ## What it is

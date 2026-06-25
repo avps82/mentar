@@ -1,0 +1,58 @@
+# AGENTS.md
+
+Tool-neutral guidance for any AI coding agent (or human) working in this repo. Tool-specific files
+(e.g. `CLAUDE.md`) point here; keep project guidance in **this** file.
+
+## What Mentar is
+An OSS-first, **local-first AI tutor for children** that supplements school. Python `src`-layout;
+a deterministic FSM dialogue engine + BKT mastery + a safety layer + ZIM grounding. Spec authority
+lives in `docs/` — **`docs/PHASE0_STATUS.md` is the canonical task ledger**, and
+`docs/REMAINDER_PLAN.md` tracks remaining work.
+
+## Setup
+```bash
+pip install -e ".[dev,web]"     # dev tools + the Flask web extra
+```
+
+## Commands
+```bash
+python -m pytest tests/ -q       # full test suite
+ruff check .                     # lint (must be clean)
+mentar setup                     # hardware-aware model pick + download
+mentar run-session               # headless tutoring session
+mentar serve                     # localhost web app
+mentar validate-template <path>  # curriculum template validator
+```
+
+## Project layout
+- Code: `src/mentar/<module>/` (**src-layout, not flat**). Modules: `engine`, `dialogue`,
+  `safety`, `inference`, `eval`, `grounding`, `db`, `tools`, `cli`, `web`.
+- Tests mirror src under `tests/`; each test file also carries an inline `python3`-runnable smoke
+  runner. The root `conftest.py` puts `src/` (and `.vendor/`) on `sys.path`; see `docs/TESTS.md`.
+- `eval/` = model/prompt evaluation (run-only tools like promptfoo/MathTutorBench live here, never
+  vendored). `prompts/` = **tutor product** prompt templates (not agent prompts — don't conflate).
+
+## The gate (every change)
+`python -m pytest tests/ -q` **green** *and* `ruff check .` **clean** before a change is done.
+
+## Conventions
+- DB/persistence writes from the controller are **best-effort** (`_safe_store`): a logging failure
+  must never break a tutoring turn. Follow that pattern.
+- Prefer well-maintained OSS libs for non-differentiating work; own only the thin glue + the
+  safety-critical/differentiating logic. Judge a dependency by its *shape* (focused lib ✅ /
+  wrong-shape framework-server ⚠️).
+
+## RULES — protected paths (do not weaken without explicit sign-off)
+- **`src/mentar/eval/verify_numeric.py`** — the decimal `SAFE_REJECT` is safety-critical. Don't
+  regress it.
+- **`src/mentar/safety/escalation.py`** — escalation/freeze + the fixed handoff wording. Changes
+  need safety review.
+- **DB transcript immutability** (schema triggers) — append-only; never add an update/delete path.
+- **`.vendor/`** — vendored upstream (PyYAML). Don't edit; it ships its own LICENSE.
+- **Content:** never commit third-party grounding content; Khan Academy is CC BY-NC-SA (NC). See
+  `docs/LICENSE_AUDIT.md`.
+- **Secrets:** never commit endpoints/tokens (a pre-commit hook guards this). Commit messages use a
+  `Co-Authored-By` trailer but **no `Claude-Session` URL trailer**.
+
+Safety first: read `SECURITY.md` + `docs/SAFETY.md` before touching anything in `safety/` or the
+escalation path.
