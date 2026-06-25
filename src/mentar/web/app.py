@@ -252,17 +252,22 @@ def answer():
 @app.route("/parent")
 def parent():
     learner_uuid = session.get("learner_uuid", "")
-    escalated = (
-        learner_uuid in _controllers
-        and _controllers[learner_uuid].state == FSMState.ESCALATION_FREEZE.value
-    )
+    ctrl = _controllers.get(learner_uuid)
+    escalated = ctrl is not None and ctrl.state == FSMState.ESCALATION_FREEZE.value
     from mentar.safety.escalation import HANDOFF_MESSAGE_PRIMARY
-    turns = _turn_logs.get(learner_uuid, [])
+
+    # Prefer the durable transcript from the DB (survives restarts); fall back to
+    # the in-memory live log only if the store has nothing yet.
+    turns = _persisted_turns(learner_uuid)
+    if turns is None:
+        turns = _turn_logs.get(learner_uuid, [])
+
     return render_template(
         "parent.html",
         escalated=escalated,
         handoff_msg=HANDOFF_MESSAGE_PRIMARY,
         turns=turns,
+        escalations=_persisted_escalations(learner_uuid),
     )
 
 
@@ -270,6 +275,9 @@ def parent():
 def parent_ack():
     learner_uuid = session.get("learner_uuid", "")
     action = request.form.get("action", "resume")  # "resume" or "end"
+    # Persist the parent's acknowledgement against the latest open escalation
+    # (SAFETY.md §3.3 Step 6) before resuming/ending the session.
+    _ack_latest_escalation(learner_uuid)
     if learner_uuid in _controllers:
         ctrl = _controllers[learner_uuid]
         result = ctrl.step(action)
@@ -281,6 +289,43 @@ def parent_ack():
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
+
+# DB transcript role -> parent-facing display label.
+_ROLE_DISPLAY = {"learner": "Child", "tutor": "Mentar", "system": "System"}
+
+
+def _store_and_id(learner_uuid: str) -> tuple[LearnerStore | None, int | None]:
+    return _stores.get(learner_uuid), _db_learner_ids.get(learner_uuid)
+
+
+def _persisted_turns(learner_uuid: str) -> list[dict] | None:
+    """The durable transcript for this learner's live session, or None if unavailable."""
+    store, db_id = _store_and_id(learner_uuid)
+    ctrl = _controllers.get(learner_uuid)
+    if store is None or db_id is None or ctrl is None:
+        return None
+    rows = store.transcript_for_session(db_id, ctrl.session_id)
+    if not rows:
+        return None
+    return [{"role": _ROLE_DISPLAY.get(r["role"], r["role"]), "text": r["text"]} for r in rows]
+
+
+def _persisted_escalations(learner_uuid: str) -> list[dict]:
+    store, db_id = _store_and_id(learner_uuid)
+    if store is None or db_id is None:
+        return []
+    return store.learner_escalations(db_id)
+
+
+def _ack_latest_escalation(learner_uuid: str) -> None:
+    """Mark the most recent un-acknowledged escalation as acknowledged by the parent."""
+    store, db_id = _store_and_id(learner_uuid)
+    if store is None or db_id is None:
+        return
+    open_escs = [e for e in store.learner_escalations(db_id) if not e.get("parent_ack_at")]
+    if open_escs:
+        store.parent_ack_escalation(open_escs[-1]["id"])
+
 
 def _log_turn(learner_uuid: str, role: str, text: str) -> None:
     if text:
