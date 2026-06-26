@@ -25,6 +25,17 @@
   </form>
 </div>
 {% endif %}
+{% if escalations %}
+<h2>Safety alerts</h2>
+<table>
+  <tr><th>When</th><th>Type</th><th>What the child wrote</th><th>Acknowledged</th></tr>
+  {% for e in escalations %}
+  <tr><td>{{ e.freeze_started_at }}</td><td>{{ e.trigger_class }}</td>
+      <td>{{ e.trigger_text_verbatim }}</td>
+      <td>{{ 'yes' if e.parent_ack_at else 'no' }}</td></tr>
+  {% endfor %}
+</table>
+{% endif %}
 <h2>Session log</h2>
 <table>
   <tr><th>Who</th><th>Text</th></tr>

@@ -279,6 +279,11 @@ class SessionController:
     def state(self) -> str:
         return self._ctx.state.value
 
+    @property
+    def session_id(self) -> str:
+        """The id of this controller's tutoring session (for durable-log reads)."""
+        return self._session_id
+
     # ── Durable logging (best-effort) ─────────────────────────────────────────
 
     def _safe_store(self, method: str, *args):
