@@ -209,6 +209,39 @@ class SessionController:
             self._maybe_end_session(self._ctx.state)
         return result
 
+    def parent_acknowledge(self, action: str) -> TurnResult:
+        """Parent control-plane action on a frozen/awaiting session: ``resume``/``end``.
+
+        Separate from :meth:`step` on purpose — the escalation freeze stays *absorbing*
+        for child input (a child can never unfreeze a session by typing), so only the
+        parent UI (``/parent/ack``) drives the transition out of ESCALATION_FREEZE via
+        this method. On resume the FSM is driven to present the next question.
+        """
+        ctx = self._ctx
+        self._maybe_create_session()
+        if ctx.state not in (FSMState.ESCALATION_FREEZE, FSMState.PARENT_ACK_WAIT):
+            # Nothing to acknowledge; report current status with no side effects.
+            return TurnResult(
+                state=ctx.state.value, text="",
+                done=ctx.state in _TERMINAL,
+                escalated=ctx.state is FSMState.ESCALATION_FREEZE,
+            )
+        self._log_transcript("system", f"parent_ack:{action}")
+        result = self._handle_parent_ack(action)
+        # Resume leaves the FSM at NODE_SELECT (transient) — drive it to the next
+        # question so the child has something to do.
+        if not result.done and ctx.state not in _AWAIT and ctx.state not in _TERMINAL:
+            driven = self._step_core(None)
+            text = "\n\n".join(t for t in (result.text, driven.text) if t)
+            result = TurnResult(
+                state=ctx.state.value, text=text, done=driven.done, escalated=False,
+            )
+        if result.text:
+            self._log_transcript("tutor", result.text)
+        if result.done:
+            self._maybe_end_session(ctx.state)
+        return result
+
     def _step_core(self, learner_input: str | None) -> TurnResult:
         """Advance the FSM by one logical turn.
 
