@@ -90,13 +90,21 @@ def pipeline_inputs(item: dict) -> tuple[str, str | None]:
     return item["prompt"], None
 
 
+# Reasoning models hide output behind a thinking phase and return empty `content` unless
+# thinking is disabled (verified for gemma4:12b on the eval host; see docs/MODEL.md + memory).
+REASONING_MODELS = {"gemma4:12b"}
+
+
 def build_payload(item: dict, model: str, system_prompt_text: str | None = None) -> dict:
     if system_prompt_text:
         user_turn, grounding = pipeline_inputs(item)
         messages = build_pipeline_messages(system_prompt_text, user_turn, grounding)
     else:
         messages = [{"role": "user", "content": item["prompt"]}]
-    return {"model": model, "messages": messages, "temperature": TEMPERATURE, "max_tokens": MAX_TOKENS}
+    payload = {"model": model, "messages": messages, "temperature": TEMPERATURE, "max_tokens": MAX_TOKENS}
+    if model in REASONING_MODELS:
+        payload["think"] = False  # top-level; LiteLLM forwards to Ollama so `content` isn't empty
+    return payload
 
 
 def post_chat(base_url: str, api_key: str, payload: dict, timeout: int = TIMEOUT) -> dict:
