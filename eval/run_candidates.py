@@ -151,7 +151,9 @@ def run_model(model: str, items: list[dict], base_url: str, api_key: str,
     out_dir.mkdir(parents=True, exist_ok=True)
     stem = model.replace("/", "_").replace(":", "_") + ("__pipeline" if system_prompt_text else "")
     out_path = out_dir / f"{stem}.jsonl"
-    with open(out_path, "a", encoding="utf-8") as f:
+    # Overwrite (not append) so a re-run produces a clean file — appending silently mixed
+    # a prior run's responses into the next, corrupting the judge's per-suite counts.
+    with open(out_path, "w", encoding="utf-8") as f:
         for it in items:
             t0 = time.time()
             reasoning_fallback = False
