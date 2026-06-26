@@ -280,7 +280,9 @@ def parent_ack():
     _ack_latest_escalation(learner_uuid)
     if learner_uuid in _controllers:
         ctrl = _controllers[learner_uuid]
-        result = ctrl.step(action)
+        # Parent control plane — transitions out of the escalation freeze (child
+        # input via /answer cannot). See SessionController.parent_acknowledge.
+        result = ctrl.parent_acknowledge(action)
         if result.text:
             _log_turn(learner_uuid, "Mentar", result.text)
         if result.done:
