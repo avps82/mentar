@@ -19,7 +19,7 @@ exactly, so this doc is a thin overlay — never duplicate text from PHASE0.md, 
 
 | Gate | Meaning | Status |
 |------|---------|--------|
-| **G0 — Pilot-ready** | All entry tasks done; pilot may begin | 🚫 blocked on: **W1.3** (final model pick — first eval run landed 2026-06-16, see `EVAL_RESULTS.md`) · W5.6 (needs the maintainer's distress/runway thresholds) · W3.5 (desk verdict done; optional hands-on spike). **W7 grounding** = G0-relevant but degrades gracefully (no ZIM → empty passage), so **not** a hard blocker — pilot quality improves once W7.1–W7.4 land. |
+| **G0 — Pilot-ready** | All entry tasks done; pilot may begin | 🚫 blocked on: **W1.3** (final model pick — eval running 2026-06-27) · W3.5 (desk verdict done; optional hands-on spike). *(W5.6 ratified + W4.2 licence adopted 2026-06-27.)* **W7 grounding** = G0-relevant but degrades gracefully (no ZIM → empty passage), so **not** a hard blocker — pilot quality improves once W7.1–W7.4 land. |
 | **G1 — Pilot-complete** | P1–P5 thresholds met | gated on G0 |
 | **G2 — Phase 1 entry** | Go/no-go on OSS Local Edition build | gated on G1 + W4.2 + W5.4 + W5.5 + W5.7 |
 
@@ -43,7 +43,7 @@ exactly, so this doc is a thin overlay — never duplicate text from PHASE0.md, 
 | ID | Status | Artifact / Note |
 |----|--------|------------------|
 | W2.1 SAFETY.md v0.1 | ✅ | `docs/SAFETY.md` (692 lines, 6-layer) |
-| W2.2 Bucket D interim escalation | ✅ | `src/mentar/safety/escalation.py` (classify + handle_trigger; 220 lines) + `tests/safety/test_escalation.py` (20+20 fixtures, flow tests; 390 lines). All 20 positives fire with correct class; all 20 negatives silent; jailbreak=logged_only; escalation_log row written with untruncated verbatim text. Rollout guard: handoff wording now has an automated harness (`safety/handoff_check.py`, PR #5) — **professional safeguarding review still required**; emergency-services signposting remains a pending decision. Both required before any rollout beyond the single-family pilot. Bucket D supersedes trigger list post-pilot. |
+| W2.2 Bucket D interim escalation | ✅ | `src/mentar/safety/escalation.py` (classify + handle_trigger; 220 lines) + `tests/safety/test_escalation.py` (20+20 fixtures, flow tests; 390 lines). All 20 positives fire with correct class; all 20 negatives silent; jailbreak=logged_only; escalation_log row written with untruncated verbatim text. Rollout guard: handoff wording has an automated harness (`safety/handoff_check.py`, PR #5) — **professional safeguarding review still required**; emergency-services signposting **ratified Option A 2026-06-27** (parent-route, no signposting — for the supervised pilot only; `docs/design/W2.2_signposting_decision_prep.md`), with child-facing signposting design deferred to a safeguarding professional before any unsupervised mode. Both guards remain required before rollout beyond the single-family pilot. Bucket D supersedes trigger list post-pilot. |
 | W2.3 RAG/injection threat model | ✅ | SAFETY.md L1 §1.5 |
 | W2.4 probe Art. 5 justification | ✅ | SAFETY.md L2 §2.7 |
 | W2.5 pilot consent note | ✅ | `docs/PILOT_CONSENT.md` — signable template (local-only data, parent present, escalation-route-to-parent limitation called out, right to stop). **Must be signed before session 1.** |
@@ -79,7 +79,7 @@ exactly, so this doc is a thin overlay — never duplicate text from PHASE0.md, 
 |----|--------|------------------|
 | W4.1 pilot content licence audit | ✅ | `docs/CONTENT_LICENSES.md` — Vikidia (CC BY-SA 3.0) + Simple English Wikipedia (CC BY-SA 4.0) CLEARED for local pilot w/ attribution+share-alike notes; Khan CC BY-NC-SA logged as Phase-3 hosted-tier conflict (SPEC §24 #18). |
 | W4.1b name "Mentar" check | ✅ | Clear on GitHub/npm/PyPI; **namespace reserved 2026-06-17: `@mentar/mentar@0.0.1` on npm (org `@mentar` created) + `mentar` on PyPI.** |
-| W4.2 OSS licence + trademark | ⏳ | G2 blocker, not G0 |
+| W4.2 OSS licence + trademark | ✅ licence (2026-06-27) | **AGPL-3.0-only adopted** — `license = "AGPL-3.0-only"` in `pyproject.toml` + `LICENSE` (audit: GPL `libzim` core forces AGPL, permissive non-viable — `docs/LICENSE_AUDIT.md`). ⚠️ full verbatim AGPL text still to be pasted into `LICENSE` (not fetchable from the sandbox). Trademark = separate, G2. |
 
 ---
 
@@ -92,7 +92,7 @@ exactly, so this doc is a thin overlay — never duplicate text from PHASE0.md, 
 | W5.3 pilot defaults from placeholders | ✅ | SPEC §21 TBDs promoted to **pilot default (v0)**: pattern mix 40/30/30, Help retry cap 3, mastery threshold 0.85 (matches `engine/fringe.py`), + new Probe-cadence row (every 5 items OR mastery≥0.85 ∧ Help-rate<1/10). All revisable post-pilot. |
 | W5.4 COPPA post-April-2026 check | ⏳ | G2 blocker, not G0 — verify |
 | W5.5 phase effort estimates | ⏳ | After G0 tasks scoped |
-| W5.6 kill criteria + scope-cut order | 🟡 | **SPEC §25.1–25.2** (criteria a–e + cut list + never-cut bar). (c) **DEFERRED to Bucket D** (the maintainer 2026-06-15) — no auto-stop until a distress-signal mechanism exists; must not halt on normal frustration; present-parent judgment governs interim. ⏳ Still optional: (e) personal time/€ runway line. |
+| W5.6 kill criteria + scope-cut order | ✅ (2026-06-27) | **SPEC §25.1–25.2** (criteria a–e + cut list + never-cut bar). (c) **RATIFIED — continuous-assent**: parent-as-judge, no numeric auto-stop, anchored on UNICEF ERIC / IRB child-assent / NSPCC (`docs/design/W5.6_decision_prep.md`). (e) personal time/€ runway line left optional/unset (maintainer sets a number if/when wanted). Small follow-up: mirror into SPEC §25.1 prose. |
 | W5.7 data flywheel posture | ✅ | **DECIDED (the maintainer, 2026-06-15): (c) per-child / per-household** — no shared flywheel in the OSS local edition; aggregate features = hosted-tier-only if ever. SPEC §24 #16 updated; §10/§15 caveats resolved. |
 
 ---
