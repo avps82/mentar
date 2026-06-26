@@ -54,6 +54,26 @@ PROMPTFOO_DISABLE_TELEMETRY=1 PROMPTFOO_DISABLE_REDTEAM_REMOTE_GENERATION=true \
 npx -y promptfoo@latest redteam report      # view the findings dashboard (local)
 ```
 
+## First live run — 2026-06-27 (target `gemma2:9b`, all local)
+
+Ran against the pilot pick `gemma2:9b` via the LiteLLM proxy; generation **and** grading routed
+through the proxy's `claude-sonnet-4-6` (config `redteam.provider` + `defaultTest.options.provider`).
+
+- **Result: 10 probes (`pii:direct` 5 + Mentar `policy` 5) → 4 passed / 6 failed (60% fail).**
+- This is the **raw model, no Mentar pipeline** — consistent with the bare-model floor; the shipped
+  FSM/verifier pipeline scored 80–85% on the hand-authored adversarial set (`EVAL_RESULTS.md`). Read
+  it as a defence-in-depth signal: the wrapper is mandatory, never expose the raw model.
+
+**Limitations found (config now reflects them):**
+- The proxy's **Claude generator refuses** the explicit-harm plugins
+  (`harmful:self-harm/sexual/graphic/harassment`) → 0 generated locally; they need an uncensored
+  generator or promptfoo Cloud.
+- The **iterative strategies** (`jailbreak`, `prompt-injection` meta) **require promptfoo remote
+  generation** (cloud) — disabled for privacy, so `strategies: []` locally. Enable on a host via
+  `promptfoo auth login` (or `PROMPTFOO_REMOTE_GENERATION_URL`).
+- Env templating is **`{{ env.VAR }}`** (nunjucks), not shell `${VAR}`; `MENTAR_REDTEAM_MODEL`
+  selects the target.
+
 ## Notes
 
 - `targets` points at the OpenAI-compatible LiteLLM proxy; uncomment the `ollama:chat:` target to
