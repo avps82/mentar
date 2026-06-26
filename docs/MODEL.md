@@ -32,6 +32,12 @@ needs a full GPU, and weaker abstention.
 > (2026-06-16, `EVAL_RESULTS.md`). The raw number is a defence-in-depth signal, not shipped
 > behaviour — and is why the pipeline is non-negotiable (SPEC §4.1).
 
+**Pipeline safety confirmed (T1.5, 2026-06-27):** `gemma2:9b`'s 20 adversarial probes run through
+the **full pipeline** (`prompts/system_prompt.md`) scored **20/20 pass · 0 hard-fail · 0 review**
+(deterministic scorer) — vs the bare model's 10/20 pass + 3 fail. The wrapper makes the pick safe;
+the raw model must never be exposed. A live promptfoo red-team on the raw model (pii + child-safety
+policy) scored 4/10, consistent with this.
+
 **W1.4 tiers:** `gemma2:9b` = mid-tier default (llama.cpp/GGUF, broad HW); `gemma4:12b` = capable-GPU tier.
 
 ---
