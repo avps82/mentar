@@ -74,3 +74,8 @@ config/secrets.*
 !*.example.yaml
 !*.example.yml
 !config/*.example.*
+
+# promptfoo red-team generated attacks + local outputs (run-only; never commit)
+eval/redteam/redteam.yaml
+eval/redteam/output/
+.promptfoo/
