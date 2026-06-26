@@ -8,7 +8,7 @@ version = "0.1.0.dev0"
 description = "OSS-first, local-first AI tutor for children — supplements school, never replaces it."
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "TBD" }
+license = "AGPL-3.0-only"
 authors = [{ name = "Mentar maintainers" }]
 keywords = ["tutor", "education", "kids", "oss", "local-llm", "kst", "bkt"]
 classifiers = [

@@ -1,0 +1,25 @@
+Mentar is licensed under the GNU Affero General Public License v3.0 only.
+
+SPDX-License-Identifier: AGPL-3.0-only
+
+Copyright (C) 2026 Mentar maintainers
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU Affero General Public License as published by the Free
+Software Foundation, version 3.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License along
+with this program. If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>.
+
+-------------------------------------------------------------------------------
+NOTE TO MAINTAINER (drop-in required): the full verbatim AGPL-3.0 license text
+must be pasted below this line from the canonical source —
+https://www.gnu.org/licenses/agpl-3.0.txt — to complete the LICENSE file. It was
+not fetchable from the build sandbox (no network egress to gnu.org and no local
+copy), so only this binding notice + SPDX identifier are committed. The
+authoritative declaration is `license = "AGPL-3.0-only"` in pyproject.toml.
+-------------------------------------------------------------------------------
