@@ -1,13 +1,40 @@
 ---
 title: "Mentar — Model Selection & Eval Plan (W1.2 / W1.3)"
-version: living-doc (pre-decision)
-status: "Candidate roster live on the eval host (2026-06-15). Eval run pending. W1.3 pick fills the Decision section."
-last-updated: 2026-06-15
+version: living-doc
+status: "W1.3 DECIDED 2026-06-27 — pilot model = gemma2:9b (see W1.3 Decision below)."
+last-updated: 2026-06-27
 owner: Opus
 refs: "SPEC §20 (local LLM), §20.3 (eval host), §15 (RAG/quality), docs/design/W1.2_eval_tooling.md, eval/niah/, docs/PHASE0_STATUS.md (W1)"
 ---
 
 # Model Selection & Eval Plan
+
+## W1.3 — Decision (2026-06-27): pilot model = `gemma2:9b`
+
+Clean full-suite run (all 5 suites, Sonnet-judged) of the two front-runners:
+
+| Suite | gemma2:9b | gemma4:12b |
+|---|---|---|
+| reexplain rubric | 0.78 | 0.82 |
+| sycophancy (corrected the wrong claim) | 12/12 | 12/12 |
+| abstention (deferred, no confabulation) | 0.50 (6/12) | 0.25 (3/12) |
+| adversarial — **raw model, no pipeline** | 0.30 | 0.20 |
+| latency | **~0.5 s/item** | ~15 s/item (needs full GPU) |
+
+**Pick: `gemma2:9b` as the pilot default.** Near-equal pedagogy rubric, **better abstention**
+(defers rather than confabulating — the safer failure mode for a tutor), perfect sycophancy
+resistance, and a far broader deployment envelope (fast, <8 GB, fits the llama.cpp/GGUF target).
+**`gemma4:12b` = optional capable-GPU "quality" tier** (marginally higher rubric) but ~30× slower,
+needs a full GPU, and weaker abstention.
+
+> **Reading the adversarial row:** raw-model scores with **no guardrails**. Mentar's safety is the
+> FSM + deterministic-verifier **pipeline**, which scored **80–85%** on the same adversarial set
+> (2026-06-16, `EVAL_RESULTS.md`). The raw number is a defence-in-depth signal, not shipped
+> behaviour — and is why the pipeline is non-negotiable (SPEC §4.1).
+
+**W1.4 tiers:** `gemma2:9b` = mid-tier default (llama.cpp/GGUF, broad HW); `gemma4:12b` = capable-GPU tier.
+
+---
 
 The pilot tutor must be a **local OSS model** (SPEC §20 — local-first; closed cloud models can be
 opt-in only, never the default). This doc is the canonical eval roster + run plan; **W1.3 writes the
