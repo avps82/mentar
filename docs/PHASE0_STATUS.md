@@ -2,7 +2,7 @@
 title: "Mentar — Phase 0 Status"
 version: living-doc
 status: "Active"
-last-updated: 2026-06-14
+last-updated: 2026-06-26
 ---
 
 # Phase 0 — Status
@@ -19,7 +19,7 @@ exactly, so this doc is a thin overlay — never duplicate text from PHASE0.md, 
 
 | Gate | Meaning | Status |
 |------|---------|--------|
-| **G0 — Pilot-ready** | All entry tasks done; pilot may begin | 🚫 blocked on: **W1.2–W1.3** (eval-host run — needs local AI test PC) · W5.6 (needs the maintainer's distress/runway thresholds) · W3.5 (desk verdict done; optional hands-on spike). **W7 grounding** = G0-relevant but degrades gracefully (no ZIM → empty passage), so **not** a hard blocker — pilot quality improves once W7.1–W7.4 land. |
+| **G0 — Pilot-ready** | All entry tasks done; pilot may begin | 🚫 blocked on: **W1.3** (final model pick — first eval run landed 2026-06-16, see `EVAL_RESULTS.md`) · W5.6 (needs the maintainer's distress/runway thresholds) · W3.5 (desk verdict done; optional hands-on spike). **W7 grounding** = G0-relevant but degrades gracefully (no ZIM → empty passage), so **not** a hard blocker — pilot quality improves once W7.1–W7.4 land. |
 | **G1 — Pilot-complete** | P1–P5 thresholds met | gated on G0 |
 | **G2 — Phase 1 entry** | Go/no-go on OSS Local Edition build | gated on G1 + W4.2 + W5.4 + W5.5 + W5.7 |
 
@@ -30,7 +30,7 @@ exactly, so this doc is a thin overlay — never duplicate text from PHASE0.md, 
 | ID | Status | Artifact / Note |
 |----|--------|------------------|
 | W1.1 eval host | ✅ | Local AI test PC, 10GB vRAM GPU — per SPEC §20.3. **Endpoint supplied 2026-06-15:** OpenAI-compatible **local proxy** at `http://192.168.xx.xxx:4000/v1` (token via env `MENTAR_VLLM_API_KEY`; reachable from build sandbox). |
-| W1.2 candidate eval | ⏳ (roster live, run pending) | **Roster now serving on the eval host** (`docs/MODEL.md`): `llama3.1:8b`, `gemma2:9b`, `phi4-mini`, `qwen3:14b`, `qwen3.5:9b`, `qwen3.5:2b` (candidates) + `mistral-small3.1` (≈24B **quality ceiling, NOT a pilot candidate** — too big/slow for the deployment envelope) + Claude Sonnet (judge/oracle). `llama3.1:8b`/`gemma2:9b`/`phi4-mini` verified responding 2026-06-15. **Eval dimensions:** hallucination, correctness, retrieval-faithfulness (**NIAH**, `eval/niah/`), safety, instruction-following, **+ latency tok/s** (CPU-offload matters). NIAH adopted; rest in own T1. **Run plan + roles A–D in `docs/MODEL.md`.** **T1.1 dataset ✅ BUILT** (`eval/dataset_v1.jsonl`, 101 items = 50/31/20; schema + validator PASS + `models.yaml` + `run_candidates.py` runner, dry-run verified; `tests/eval/test_dataset_v1.py` green). Next: export the eval env → `python3 eval/run_candidates.py` (T1.2) → NIAH + scoring → W1.3 pick. **Tooling scanned hands-on (2026-06-15):** needle-in-a-haystack **ADOPTED for the retrieval/grounding-faithfulness part** — cloned, installed, `niah demo --fake` ran E2E, 209 tests pass, vLLM-compatible via `base_url_env`. NIAH ≠ full harness (covers ~1 of ~5 dims); hallucination/correctness/safety stay in our own T1. See `docs/design/W1.2_eval_tooling.md` + `eval/niah/`. Needs eval-host run; T1.1 dataset (model-agnostic) buildable now. |
+| W1.2 candidate eval | 🟡 first run done; pick (W1.3) pending | **First eval run landed 2026-06-16 → `docs/EVAL_RESULTS.md`** (gemma2:9b front-runner: 100% maths-correctness, 85% safety with the full pipeline; raw data git-ignored). **Roster now serving on the eval host** (`docs/MODEL.md`): `llama3.1:8b`, `gemma2:9b`, `phi4-mini`, `qwen3:14b`, `qwen3.5:9b`, `qwen3.5:2b` (candidates) + `mistral-small3.1` (≈24B **quality ceiling, NOT a pilot candidate** — too big/slow for the deployment envelope) + Claude Sonnet (judge/oracle). `llama3.1:8b`/`gemma2:9b`/`phi4-mini` verified responding 2026-06-15. **Eval dimensions:** hallucination, correctness, retrieval-faithfulness (**NIAH**, `eval/niah/`), safety, instruction-following, **+ latency tok/s** (CPU-offload matters). NIAH adopted; rest in own T1. **Run plan + roles A–D in `docs/MODEL.md`.** **T1.1 dataset ✅ BUILT** (`eval/dataset_v1.jsonl`, 101 items = 50/31/20; schema + validator PASS + `models.yaml` + `run_candidates.py` runner, dry-run verified; `tests/eval/test_dataset_v1.py` green). Next: export the eval env → `python3 eval/run_candidates.py` (T1.2) → NIAH + scoring → W1.3 pick. **Tooling scanned hands-on (2026-06-15):** needle-in-a-haystack **ADOPTED for the retrieval/grounding-faithfulness part** — cloned, installed, `niah demo --fake` ran E2E, 209 tests pass, vLLM-compatible via `base_url_env`. NIAH ≠ full harness (covers ~1 of ~5 dims); hallucination/correctness/safety stay in our own T1. See `docs/design/W1.2_eval_tooling.md` + `eval/niah/`. Needs eval-host run; T1.1 dataset (model-agnostic) buildable now. |
 | W1.3 selection + pick | ⏳ | Produces `docs/MODEL.md` |
 | W1.4 hardware tier mapping | ⏳ | Backend-dependent; needs W1.3. **Tiers (2026-06-15):** llama.cpp/GGUF = broad/low-end (CPU/Apple/modest GPU) DEFAULT; vLLM = capable-GPU tier. |
 | W1.5 abstraction layer v0 | ✅ | **REAL (2026-06-18)** — `src/mentar/inference/backend.py`: `load_inference_config()` (`${VAR}` expand) + `make_llm_call(cfg)` dispatching llamacpp(server)/vllm/ollama over the shared OpenAI path + llamacpp(in_process) via llama-cpp-python; retries + clear unreachable error. Thin owned wrapper, swappable in one file (same shape as the libzim reader). Web app + new `mentar run-session` CLI both consume it. `tests/inference/test_backend.py` (10). **Verified end-to-end on a LOCAL GGUF** (Qwen2.5-0.5B Q4, throwaway smoke vehicle — NOT a pick): full FSM loop ran on local llama.cpp inference (~7 tok/s on a 2-core AMD A10). ⚠️ **Pre-AVX2 CPU = stock wheel SIGILLs**; needs from-source build (`GGML_NATIVE=ON`, AVX2 off) — hardware-tier note for W1.4. **Primary = llama.cpp** (2026-06-15). |
@@ -43,7 +43,7 @@ exactly, so this doc is a thin overlay — never duplicate text from PHASE0.md, 
 | ID | Status | Artifact / Note |
 |----|--------|------------------|
 | W2.1 SAFETY.md v0.1 | ✅ | `docs/SAFETY.md` (692 lines, 6-layer) |
-| W2.2 Bucket D interim escalation | ✅ | `src/mentar/safety/escalation.py` (classify + handle_trigger; 220 lines) + `tests/safety/test_escalation.py` (20+20 fixtures, flow tests; 390 lines). All 20 positives fire with correct class; all 20 negatives silent; jailbreak=logged_only; escalation_log row written with untruncated verbatim text. Rollout guard intact: emergency signposting + handoff wording validation both remain required before any rollout beyond single-family pilot. Bucket D supersedes trigger list post-pilot. |
+| W2.2 Bucket D interim escalation | ✅ | `src/mentar/safety/escalation.py` (classify + handle_trigger; 220 lines) + `tests/safety/test_escalation.py` (20+20 fixtures, flow tests; 390 lines). All 20 positives fire with correct class; all 20 negatives silent; jailbreak=logged_only; escalation_log row written with untruncated verbatim text. Rollout guard: handoff wording now has an automated harness (`safety/handoff_check.py`, PR #5) — **professional safeguarding review still required**; emergency-services signposting remains a pending decision. Both required before any rollout beyond the single-family pilot. Bucket D supersedes trigger list post-pilot. |
 | W2.3 RAG/injection threat model | ✅ | SAFETY.md L1 §1.5 |
 | W2.4 probe Art. 5 justification | ✅ | SAFETY.md L2 §2.7 |
 | W2.5 pilot consent note | ✅ | `docs/PILOT_CONSENT.md` — signable template (local-only data, parent present, escalation-route-to-parent limitation called out, right to stop). **Must be signed before session 1.** |
@@ -57,8 +57,8 @@ exactly, so this doc is a thin overlay — never duplicate text from PHASE0.md, 
 |----|--------|------------------|
 | W3.1 template→graph schema | ✅ | `curriculum/_template.md` + validator at `src/mentar/tools/validate_template.py` |
 | W3.2 pilot concept graph | ✅ | `curriculum/templates/_pilot/fractions.md` (8 nodes, DAG verified) |
-| W3.3 BKT cold-start + hinted-win | ✅ | `src/mentar/engine/bkt.py` (deterministic recurrence) + `docs/design/W3.3_bkt.md`. Hinted-win = elevated-guess class; cold-start priors hand-set by node class; pyBKT scoped OUT of hot path → offline fit only. 7 invariants verified numerically. SPEC §11 updated. `tests/engine/test_bkt.py` (T3.3) landed ✅. **Remaining (Sonnet):** caller wiring in FSM `bkt_update`. |
-| W3.4 false-confidence classifier | ✅ | `src/mentar/engine/probe_classify.py` (decision table, 7 cases smoke-verified) + SPEC §14.4 (definition + table). Forgetting checked before false_confidence; false_confidence only when both-fail ∧ mastery≥threshold ∧ no-Help. `tests/engine/test_probe_classify.py` landed ✅. Remaining (Sonnet): caller wiring of stale-mastery window from `skill_state.updated_at`. |
+| W3.3 BKT cold-start + hinted-win | ✅ | `src/mentar/engine/bkt.py` (deterministic recurrence) + `docs/design/W3.3_bkt.md`. Hinted-win = elevated-guess class; cold-start priors hand-set by node class; pyBKT scoped OUT of hot path → offline fit only. 7 invariants verified numerically. SPEC §11 updated. `tests/engine/test_bkt.py` (T3.3) landed ✅. Wired into the FSM (`_do_bkt_update`). |
+| W3.4 false-confidence classifier | ✅ | `src/mentar/engine/probe_classify.py` (decision table, 7 cases smoke-verified) + SPEC §14.4 (definition + table). Forgetting checked before false_confidence; false_confidence only when both-fail ∧ mastery≥threshold ∧ no-Help. `tests/engine/test_probe_classify.py` landed ✅. Wired into the FSM (stale-mastery window from `skill_state.updated_at`); a `classify_probe` kwarg crash in `PROBE_CLASSIFY` was found + fixed (PR #4). |
 | W3.5 Open TutorAI build-vs-adopt | 🟡 | **Verdict: REFERENCE-ONLY** (don't fork) — `docs/design/W3.5_build_vs_adopt.md` + SPEC §19.2. Desk assessment (no sandbox web); §5 lists a hands-on spike to confirm. Unblocked W6.3. |
 | W3.6 learner data model | ✅ | `src/mentar/db/schema.sql` (202 lines) + `store.py`; triggers verified |
 
@@ -142,50 +142,27 @@ B1–B5.**
 
 ---
 
-## Tests written but not yet runnable as a suite
+## Test suite
 
-The sandbox has no `pip` / `pytest`. PyYAML was vendored under `.vendor/` for runtime checks
-of the validator/fringe; full pytest runs need `pip install -e ".[dev]"` from a real shell.
-
-| Test file | Lines | Inline smoke check |
-|-----------|-------|--------------------|
-| `tests/tools/test_validate_template.py` | 283 | 5 negative cases + pilot template ✅ pass |
-| `tests/eval/test_verify_numeric.py` | 265 | 10 hand-picked cases ✅ pass (after decimal bug fix) |
-| `tests/engine/test_verifier.py` | 193 | not run; depends on T3.5 integration |
-| `tests/db/test_datamodel.py` | 391 | schema load + trigger E2E ✅ pass |
-| `tests/engine/test_fringe.py` | 200 | 5 T3.2 cases ✅ pass |
-| `tests/safety/test_escalation.py` | 689 | 20+20 T2.1 fixtures + flow ✅ pass (re-verified) |
-| `tests/engine/test_bkt.py` | — | 7 T3.3 invariants ✅ pass |
-| `tests/engine/test_probe_classify.py` | — | 7 decision-table cases ✅ pass |
-| `tests/test_prompt_registry.py` | — | 6 T4.6/T7.3 checks ✅ pass (incl. src literal scan) |
-
-All test files carry an inline `python3`-runnable smoke runner **and** pytest-style
-functions; full `pytest` run still pending `pip install -e ".[dev]"`.
+The full suite runs via `python -m pytest tests/` — the root `conftest.py` puts `src/` + `.vendor/`
+on `sys.path`, so no editable install is needed. **363 tests pass and `ruff check .` is clean** as of
+2026-06-26. Each test file also carries an inline `python3`-runnable smoke runner (project convention).
 
 ---
 
-## Next batch (immediately actionable)
+## Next actions
 
-**Needs the maintainer (G0):**
-- **W5.6** — confirm the (c) distress threshold + optional (e) personal time/€ runway line in SPEC §25.1 (defaults proposed; just say yes or give numbers).
-- **W1.2 → W1.3** model eval/selection — needs the gaming-PC eval host run; not doable in sandbox.
-- **W4.1b** — reserve `mentar` namespace (npm + PyPI placeholder publish).
+Canonical remaining-work plan: **[REMAINDER_PLAN.md](REMAINDER_PLAN.md)**. Done/remaining + stale-doc
+register: **[DOC_AUDIT.md](DOC_AUDIT.md)**. The earlier autonomous build list (grounding reader,
+dialogue controller, web app, eval dataset, FSM caller wiring) has **all shipped** — see the changelog.
 
-**Doable autonomously next (Sonnet grunt):**
-1. **W7 grounding reader (B1–B5)** — build `src/mentar/grounding/` per the frozen contract `docs/design/W7_grounding_reader.md`: thin `libzim` reader + resolve/scope/safety wrapper + config + degradation + `tests/grounding/`. Sandbox has pip/net → spike `libzim` hands-on against a fixture ZIM.
-2. **T1.1 eval dataset** — 50 + 30 + 20 prompts; needed before the eval-host run.
-3. **Dialogue controller** — wire the W6.2 prompts + FSM + engine modules into the turn loop (the dialogue framework T4/T5 assume); includes calling `resolve_grounding` into the `{{grounding_passage}}` slot.
-4. **Pilot web app** (W6.3 build) — Flask/FastAPI + the 4 views.
-
-**Wiring follow-ups (not G0-blocking, Sonnet):** FSM caller wiring for `bkt.py`,
-`escalation.py` (handle_trigger), `probe_classify.py` (stale-mastery window from
-`skill_state.updated_at`), and the controller loading `prompts/` templates; full `pytest`
-once `pip install -e ".[dev]"`. (Test files for bkt/probe/registry now landed ✅.)
-
-**Test/wiring follow-ups (not G0-blocking, Sonnet):** formal `tests/engine/test_bkt.py`
-(T3.3) and `tests/engine/test_probe_classify.py` (T5.x); FSM caller wiring for `bkt.py`,
-`escalation.py` (handle_trigger), and `probe_classify.py` (stale-mastery window from
-`skill_state.updated_at`); full `pytest` run once `pip install -e ".[dev]"` is available.
+**Maintainer-gated (not locally doable):**
+- **W1.3** — final model pick. The first eval run landed 2026-06-16 (`EVAL_RESULTS.md`; gemma2:9b
+  front-runner); the pick decision + any fuller dimensions remain.
+- **W4.2** — LICENSE ratification (audit → AGPL-3.0; GPL `libzim` core). See `LICENSE_AUDIT.md`.
+- **W5.6** — distress/runway thresholds (decision).
+- **W2.2** — emergency-services signposting decision + professional handoff-wording review.
+- **W7.4** — real Vikidia/Simple-WP ZIM download + reader path verification (needs NAS/ZIMs).
 
 ---
 
