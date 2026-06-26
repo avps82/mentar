@@ -1,6 +1,8 @@
 # LLM Compatibility
 
-⚠️ **TODO** — This document is a placeholder. Evaluation is an open task.
+> ⚠️ **Superseded — placeholder retained for its criteria sketch only.** Actual evaluation results
+> live in **[EVAL_RESULTS.md](EVAL_RESULTS.md)** (first run 2026-06-16; gemma2:9b front-runner) and the
+> candidate roster + run plan in **[MODEL.md](MODEL.md)**. The final model pick is W1.3 (pending).
 
 ---
 
