@@ -191,7 +191,25 @@ def _setup(args) -> int:
 
     zim_dir = os.environ.get("MENTAR_ZIM_DIR")
     if zim_dir:
-        cfg["grounding"] = {"zim_dir": zim_dir}
+        # Write the FULL grounding block. A config with only `zim_dir` (no `sources`)
+        # resolves every passage to "" silently — so emit the pilot sources too.
+        cfg["grounding"] = {
+            "zim_dir": zim_dir,
+            "sources": {
+                "vikidia": {
+                    "project": "vikidia",
+                    "lang": "en",
+                    "selection": "all",
+                    "flavour": "nopic",
+                },
+                "wikipedia_simple": {
+                    "project": "wikipedia",
+                    "lang": "en",
+                    "selection": "simple_all",
+                    "flavour": "nopic",
+                },
+            },
+        }
 
     cfg_path = Path(args.config) if args.config else (repo / "config" / "inference.yaml")
 
