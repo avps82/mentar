@@ -229,17 +229,20 @@ def test_help_at_recheck_not_scored_as_answer():
     assert ctrl._ctx.help_scored_correct is None     # never scored
 
 
-def test_help_at_probe_not_scored_as_answer():
-    """'?'/'help' during a Probe must NOT be scored — re-prompt, stay in state.
+def test_help_at_probe_enters_help_not_scored():
+    """'?'/'help' during a Probe gives help (enters the Help loop), never scored.
 
-    Regression for the defect where _do_probe_await_answer lacked the help guard.
+    Regression: _do_probe_await_answer first lacked the guard (scored help as an
+    answer), then dead-ended with a re-prompt that hid the question. It must route
+    to the Help loop so the child gets a hint and a question.
     """
     for token in ("?", "help"):
-        ctrl = _make_controller()
+        ctrl = _make_controller(llm_fn=lambda msgs: "explanation or recheck")
         ctrl.step(None)
         ctrl._ctx.state = FSMState.PROBE_AWAIT_ANSWER
         result = ctrl.step(token)
-        assert result.state == FSMState.PROBE_AWAIT_ANSWER.value
+        assert result.state == FSMState.HELP_RECHECK_AWAIT.value  # in the Help loop
+        assert result.text.strip()                   # a hint/question was shown
         assert ctrl._ctx.probe_answer != token       # not captured as an answer
         assert ctrl._ctx.probe_scored_correct is None  # never scored
 
