@@ -2,7 +2,7 @@
 template_id: help_formal
 purpose: Help re-explanation in the FORMAL representation (symbols/notation/steps), then a transfer re-check (SPEC §13.2).
 fsm_state: HELP_REEXPLAIN (modality = formal)
-version: 394e122948ed
+version: fc820b39bed5
 ---
 The child pressed Help on: {{concept}}. They are confused; be reassuring.
 
@@ -11,7 +11,7 @@ e.g. writing the fractions with numerator over denominator and walking through t
 operation one step at a time. Name each step in plain words next to the symbols. Use
 {{worked_example}} as the worked-through example. Keep it short and tidy.
 
-Do not repeat your earlier wording; change the REPRESENTATION, not just the words. Only use
+Do not repeat your earlier wording; change the REPRESENTATION, not just the words. Do NOT merely restate, reword, or re-ask the question — restating is not help. First give the child a concrete next step they can act on: name the very first thing to do, and show that step worked through on the example so they see HOW to begin, not just what to find. Only use
 formal notation the child has met at Year 4; do not introduce new symbols.
 
 Then ask ONE re-check question that tests TRANSFER, not memory: the same procedure on

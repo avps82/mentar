@@ -180,6 +180,37 @@ def test_stop_in_probe_ends_session():
     assert result.done
 
 
+def test_help_at_recheck_not_scored_as_answer():
+    """'?' during a Help re-check must NOT be scored — it gives another Help round.
+
+    Regression for the defect where _do_help_recheck_await lacked the help guard,
+    so '?'/'help' was captured as help_answer and run through the verifier.
+    """
+    ctrl = _make_controller(llm_fn=lambda msgs: "explanation or recheck")
+    ctrl.step(None)
+    ctrl.step("?")                                   # -> HELP_RECHECK_AWAIT (round 1)
+    result = ctrl.step("?")                          # ask for help AGAIN at the re-check
+    # Routed back through the Help loop (another modality), not scored:
+    assert result.state == FSMState.HELP_RECHECK_AWAIT.value
+    assert ctrl._ctx.help_answer != "?"              # never captured as an answer
+    assert ctrl._ctx.help_scored_correct is None     # never scored
+
+
+def test_help_at_probe_not_scored_as_answer():
+    """'?'/'help' during a Probe must NOT be scored — re-prompt, stay in state.
+
+    Regression for the defect where _do_probe_await_answer lacked the help guard.
+    """
+    for token in ("?", "help"):
+        ctrl = _make_controller()
+        ctrl.step(None)
+        ctrl._ctx.state = FSMState.PROBE_AWAIT_ANSWER
+        result = ctrl.step(token)
+        assert result.state == FSMState.PROBE_AWAIT_ANSWER.value
+        assert ctrl._ctx.probe_answer != token       # not captured as an answer
+        assert ctrl._ctx.probe_scored_correct is None  # never scored
+
+
 def test_all_mastered_ends_session():
     """When fringe is empty (all mastered), SESSION_END_COMPLETE is returned."""
     ctrl = _make_controller(
