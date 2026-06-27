@@ -149,6 +149,14 @@ The reference config for product testing: the W1.3 pilot pick (`gemma2:9b`) with
 wired to the pilot ZIMs. Full-stack web smoke verified — `/`, `/progress`, `/parent` all serve, the
 assent line shows, and `gemma2:9b` returns a clean **grounded** Help explanation.
 
+**0. Install with the `grounding` extra.** Grounding needs `libzim`, which is optional (the base
+install doesn't pull it — it's lazy + degrades gracefully). On **Apple Silicon use Python 3.13** —
+`libzim`'s prebuilt arm64 wheel only exists for cp313/macOS ≥13; on 3.11/3.12 there's no wheel and
+the source build usually fails (or `brew install libzim` first).
+```bash
+pip install -e ".[web,setup,grounding]"
+```
+
 **1. Get the two pilot ZIMs onto a persistent, writable dir** (the read-only NAS mount won't do):
 ```bash
 python3 scripts/fetch_zim.py --preset vikidia --preset wikipedia_simple --dest /path/to/zims
