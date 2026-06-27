@@ -176,7 +176,7 @@ class SessionController:
         item_bank=None,
         session_id: str | None = None,
     ) -> None:
-        self._llm = llm_call
+        self._llm = self._make_safe_llm(llm_call)
         self._prompt_dir = Path(prompt_dir)
         self._grounding_cfg = grounding_cfg
         self._curriculum = curriculum          # node_id -> {concept, answer_type, checker, expected_answer, grounding, prerequisites, bkt_priors?}
@@ -554,17 +554,66 @@ class SessionController:
             llm_output=ctx.current_answer or "",
             ground_truth=ground_truth,
         )
-        if outcome.result is CheckResult.SAFE_REJECT:
-            # Regenerate — do not penalise (and do not log a scored response)
+        if outcome.result in (CheckResult.SAFE_REJECT, CheckResult.EXTRACT_FAIL):
+            # Couldn't read a checkable answer (blank / gibberish like "jjjd", or
+            # malformed/ambiguous input). Don't penalise or log a scored response —
+            # tell the child and re-present. EXTRACT_FAIL especially must NOT count
+            # as a wrong attempt (it was silently scored wrong before).
             ctx.state = FSMState.PRESENT
-            return ("", True)
+            return ("Hmm, I couldn't quite read an answer there — let's try another one.", True)
         ctx.last_scored_correct = (outcome.result is CheckResult.PASS)
         self._log_response(
             ctx.current_node_id, ctx.current_answer,
             scored=ctx.last_scored_correct, hinted=False, outcome=outcome,
         )
         ctx.state = FSMState.BKT_UPDATE
-        return ("", True)
+        # Deterministic correctness feedback — the child must be told right/wrong
+        # (and the correct answer when wrong), per the system-prompt honesty rule.
+        # Uses the verified ground truth, so it can never tell a child wrong maths.
+        return (self._answer_feedback(ctx.last_scored_correct, ground_truth), True)
+
+    @staticmethod
+    def _make_safe_llm(llm_call):
+        """Wrap the injected LLM so a backend failure degrades to '' instead of
+        crashing the turn (which 500s the web page). Callers handle empty output
+        (item bank covers questions; Help has a deterministic fallback hint)."""
+        def _safe(messages):
+            try:
+                out = llm_call(messages)
+                return out if isinstance(out, str) else ""
+            except Exception:
+                logger.warning("llm_call failed; degrading to empty output", exc_info=True)
+                return ""
+        return _safe
+
+    def _fallback_hint(self, node_id: str) -> str:
+        """Deterministic hint used when the LLM is unavailable/empty — Help must
+        never come back with nothing."""
+        example = self._worked_example_for(node_id)
+        if example:
+            return (
+                "Let's take it one step at a time. Here's a similar one worked out:\n"
+                f"{example}\n"
+                "Try the same steps on your question."
+            )
+        return (
+            "Let's take it one step at a time — read the question again and try just "
+            "the first part. You can do this!"
+        )
+
+    @staticmethod
+    def _answer_feedback(correct: bool, ground_truth: str) -> str:
+        """Short, warm, deterministic right/wrong feedback for a scored answer."""
+        if correct:
+            return random.choice([
+                "That's right — nice work!",
+                "Correct! Well done.",
+                "Yes, that's it — great job!",
+            ])
+        return (
+            f"Not quite — the answer is {ground_truth}. "
+            "That's okay, mistakes are part of learning. Let's try another."
+        )
 
     def _do_bkt_update(self, hinted: bool) -> tuple[str, bool]:
         ctx = self._ctx
@@ -632,6 +681,9 @@ class SessionController:
             {"role": "system", "content": system_text},
             {"role": "user", "content": help_text},
         ])
+        if not (explanation and explanation.strip()):
+            # LLM unavailable/empty — never leave the child with no hint.
+            explanation = self._fallback_hint(ctx.current_node_id)
         ctx.state = FSMState.HELP_RECHECK_PRESENT
         return (explanation, True)
 
