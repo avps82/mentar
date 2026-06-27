@@ -1,0 +1,25 @@
+# NIAH run config (needlehaystack) — copy/edit per run. RUN-ONLY tooling.
+# Verified working 2026-06-27 against gemma2:9b (9/9 cells score 1.00).
+#
+# Usage (see README.md for the OPENAI_BASE_URL gotcha — the openai provider ignores
+# base_url_env, so route via the SDK env var):
+#   export OPENAI_BASE_URL="$MENTAR_VLLM_BASE_URL"  OPENAI_API_KEY="$MENTAR_VLLM_API_KEY"
+#   niah run eval/niah/run.example.yaml --model-dir eval/niah/models --dry-run   # validate
+#   niah run eval/niah/run.example.yaml --model-dir eval/niah/models             # real run
+#
+# `model:` is resolved by FILENAME STEM under --model-dir (e.g. model: gemma2 -> models/gemma2.yaml,
+# whose request.model is the served id like gemma2:9b). Model configs live in models/ (gitignored).
+
+run_name: mentar-niah
+model: gemma2                 # -> eval/niah/models/gemma2.yaml
+task:
+  type: uuid                  # single UUID needle; deterministic exact_match scoring (no LLM judge)
+haystack:
+  type: text                  # RepeatingTextHaystack — repeats `text` to the target length
+  text: "The class practised sharing pizzas into equal fractions during the lesson. "
+sweep:
+  context_lengths: [1000, 2000, 4000]   # pilot working lengths (gemma2:9b context)
+  depth_percents: [10, 50, 90]          # needle position; 3x3 = 9 cells
+store:
+  type: jsonl
+  path: /tmp/niah_results.jsonl         # gitignored output (per-cell score rows)
