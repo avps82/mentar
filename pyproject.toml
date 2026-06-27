@@ -21,7 +21,6 @@ classifiers = [
 
 dependencies = [
   "pyyaml>=6.0",
-  "pyBKT>=1.4",
   "libzim>=3.10",
   "openai>=1.0",
 ]
@@ -50,6 +49,14 @@ nas = [
   # SMB/Samba client for reading/downloading ZIMs from a NAS via smb:// URLs.
   # Not needed when the share is mounted in the OS (libzim reads the mount directly).
   "smbprotocol>=1.12",
+]
+offline-fit = [
+  # pyBKT is OFFLINE-ONLY (post-pilot BKT model fitting at N>=100; see
+  # docs/design/W3.3_bkt.md). The live tutor uses the owned pure-Python recurrence in
+  # engine/bkt.py and never imports pyBKT — so it is NOT a runtime/install dependency
+  # (it ships C++/Cython extensions that fail to build on a plain machine, e.g. macOS
+  # without a toolchain). Install only when running the offline fit.
+  "pyBKT>=1.4",
 ]
 
 [project.scripts]
