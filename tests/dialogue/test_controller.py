@@ -97,6 +97,39 @@ def test_correct_answer_advances():
     assert not result.escalated
 
 
+def test_correct_answer_gives_praise():
+    """A correct answer is acknowledged (not silently advanced)."""
+    ctrl = _make_controller(llm_fn=lambda msgs: "Next question text.")
+    ctrl.step(None)
+    result = ctrl.step("1/3")
+    low = result.text.lower()
+    assert any(w in low for w in ("right", "correct", "well done", "great job"))
+
+
+def test_wrong_answer_marked_with_correct_answer():
+    """A wrong answer is told it's wrong AND given the correct answer (not silent).
+
+    Regression: the deterministic verifier scored silently — the child was never
+    told right/wrong and wrong answers just advanced.
+    """
+    ctrl = _make_controller(llm_fn=lambda msgs: "Next question text.")
+    ctrl.step(None)
+    result = ctrl.step("2/5")                 # wrong (expected 1/3)
+    low = result.text.lower()
+    assert "not quite" in low
+    assert "1/3" in result.text               # the verified correct answer
+
+
+def test_gibberish_is_reprompted_not_scored():
+    """Unreadable input (SAFE_REJECT) is re-prompted, never scored as wrong."""
+    ctrl = _make_controller(llm_fn=lambda msgs: "Another question.")
+    ctrl.step(None)
+    result = ctrl.step("jjjd")
+    assert result.state == FSMState.AWAIT_ANSWER.value
+    assert "couldn't" in result.text.lower() or "try" in result.text.lower()
+    assert ctrl._ctx.last_scored_correct is None   # never scored
+
+
 def test_stop_ends_session():
     """Typing 'stop' in AWAIT_ANSWER transitions to SESSION_END_BY_LEARNER."""
     ctrl = _make_controller()
@@ -209,6 +242,31 @@ def test_help_at_probe_not_scored_as_answer():
         assert result.state == FSMState.PROBE_AWAIT_ANSWER.value
         assert ctrl._ctx.probe_answer != token       # not captured as an answer
         assert ctrl._ctx.probe_scored_correct is None  # never scored
+
+
+def test_help_gives_fallback_hint_when_llm_empty():
+    """If the LLM returns nothing, Help still gives a deterministic hint (not blank).
+
+    Regression: when the Help explanation LLM failed, the child got no hint (and
+    the web turn could blank out).
+    """
+    ctrl = _make_controller(llm_fn=lambda msgs: "")
+    ctrl.step(None)
+    result = ctrl.step("?")
+    assert result.state == FSMState.HELP_RECHECK_AWAIT.value
+    assert result.text.strip()                       # a hint was produced
+    assert "step" in result.text.lower()             # fallback phrasing
+
+
+def test_llm_exception_does_not_crash():
+    """A raising LLM backend degrades gracefully (no exception → no 500)."""
+    def boom(msgs):
+        raise RuntimeError("backend down")
+    ctrl = _make_controller(llm_fn=boom)
+    ctrl.step(None)                                  # present (LLM safe-wrapped)
+    result = ctrl.step("?")                          # Help -> fallback hint, no raise
+    assert not result.escalated
+    assert result.text.strip()
 
 
 def test_all_mastered_ends_session():
