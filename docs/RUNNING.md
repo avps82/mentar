@@ -162,29 +162,17 @@ pip install -e ".[web,setup,grounding]"
 python3 scripts/fetch_zim.py --preset vikidia --preset wikipedia_simple --dest /path/to/zims
 ```
 
-**2. `config/inference.yaml`** (gitignored — copy from `config/inference.example.yaml`, then set):
-```yaml
-backend: vllm
-vllm:
-  base_url: "http://<eval-host>:4000/v1"   # or local Ollama: http://localhost:11434/v1
-  model: "gemma2:9b"                       # the W1.3 pilot pick (not a reasoning model)
-  api_key: "${MENTAR_VLLM_API_KEY}"        # from env; never inline the token
-generation: { temperature: 0.3, max_tokens: 512, timeout: 120 }
-grounding:
-  zim_dir: "/path/to/zims"
-  sources:                                 # ⚠️ REQUIRED — without it grounding is silently empty
-    vikidia:          { project: vikidia,   lang: en, selection: all,        flavour: nopic }
-    wikipedia_simple: { project: wikipedia, lang: en, selection: simple_all, flavour: nopic }
-```
-
-**3. Run** (export the token first):
+**2. Run `mentar setup` with the ZIM dir exported** — it picks the runtime (Ollama → llama.app →
+in-process GGUF, all llama.cpp under the hood), downloads `gemma2:9b`, and writes the **complete**
+`config/inference.yaml` including the full `grounding` block (zim_dir **+** the pilot `sources`):
 ```bash
-export MENTAR_VLLM_API_KEY="<token>"
+MENTAR_ZIM_DIR=/path/to/zims mentar setup --model gemma2:9b
 mentar serve            # → http://127.0.0.1:5000   (child: / and /progress ; parent: /parent)
 ```
 
-> **Gotcha:** the `grounding.sources` block is **required** — a config with only `zim_dir` resolves
-> every passage to `""` (silently). The example template carries it; don't drop it when you copy.
+That's the whole flow — no hand-editing. `mentar setup` writes the `grounding.sources` block for
+you (a config with only `zim_dir` resolves every passage to `""` silently, so setup never emits a
+partial block). Preview first with `--dry-run`.
 
 ---
 
