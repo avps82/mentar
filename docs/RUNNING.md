@@ -162,17 +162,25 @@ pip install -e ".[web,setup,grounding]"
 python3 scripts/fetch_zim.py --preset vikidia --preset wikipedia_simple --dest /path/to/zims
 ```
 
-**2. Run `mentar setup` with the ZIM dir exported** — it picks the runtime (Ollama → llama.app →
-in-process GGUF, all llama.cpp under the hood), downloads `gemma2:9b`, and writes the **complete**
+**2. Run `mentar setup` with the ZIM dir exported.** It **auto-picks the best-fit vetted model for
+your machine's RAM** (gguf-parser sizing — no manual model choice), picks the runtime (Ollama →
+llama.app → in-process GGUF, all llama.cpp under the hood), and writes the **complete**
 `config/inference.yaml` including the full `grounding` block (zim_dir **+** the pilot `sources`):
 ```bash
-MENTAR_ZIM_DIR=/path/to/zims mentar setup --model gemma2:9b
+MENTAR_ZIM_DIR=/path/to/zims mentar setup       # auto-picks a model sized to your RAM
 mentar serve            # → http://127.0.0.1:5000   (child: / and /progress ; parent: /parent)
 ```
 
 That's the whole flow — no hand-editing. `mentar setup` writes the `grounding.sources` block for
 you (a config with only `zim_dir` resolves every passage to `""` silently, so setup never emits a
-partial block). Preview first with `--dry-run`.
+partial block). Preview the pick without downloading: `mentar setup --dry-run`.
+
+> **Want to reproduce the exact pilot pick?** `gemma2:9b` is the W1.3 pilot model. To make your
+> test results match what the pilot ships, **pin it** (needs ≥16 GB RAM; on smaller machines drop
+> the flag and let auto-pick size a model that fits):
+> ```bash
+> MENTAR_ZIM_DIR=/path/to/zims mentar setup --model gemma2:9b
+> ```
 
 ---
 
