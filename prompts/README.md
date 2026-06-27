@@ -23,11 +23,11 @@ reproduce every hash below or the test FAILS (stale registry).
 
 | File | template_id | Purpose | version (sha256[:12]) |
 |------|-------------|---------|------------------------|
-| `help_analogy.md` | `help_analogy` | Help re-explanation by ANALOGY (mapping the idea to something familiar), then a transfe… | `edda40b1f122` |
-| `help_concrete.md` | `help_concrete` | Help re-explanation in the CONCRETE representation (real objects/actions), then a trans… | `bf2c82082cf1` |
-| `help_formal.md` | `help_formal` | Help re-explanation in the FORMAL representation (symbols/notation/steps), then a trans… | `394e122948ed` |
-| `help_story.md` | `help_story` | Help re-explanation as a short STORY (narrative with characters), then a transfer re-ch… | `f406474a04dd` |
-| `help_visual.md` | `help_visual` | Help re-explanation in the VISUAL representation (shapes/pictures), then a transfer re-… | `a6a96063170b` |
+| `help_analogy.md` | `help_analogy` | Help re-explanation by ANALOGY (mapping the idea to something familiar), then a transfe… | `e9ab909300bf` |
+| `help_concrete.md` | `help_concrete` | Help re-explanation in the CONCRETE representation (real objects/actions), then a trans… | `5f75fa34e45b` |
+| `help_formal.md` | `help_formal` | Help re-explanation in the FORMAL representation (symbols/notation/steps), then a trans… | `fc820b39bed5` |
+| `help_story.md` | `help_story` | Help re-explanation as a short STORY (narrative with characters), then a transfer re-ch… | `6b1088404ae3` |
+| `help_visual.md` | `help_visual` | Help re-explanation in the VISUAL representation (shapes/pictures), then a transfer re-… | `721efd007401` |
 | `pattern_problem_first.md` | `pattern_problem_first` | Interaction pattern — pose a problem first, then probe the child's reasoning. Best for … | `99be00694e8e` |
 | `pattern_read_then_question.md` | `pattern_read_then_question` | Interaction pattern — present a short grounded passage, then ask a checking question. B… | `5d924c54d035` |
 | `pattern_state_and_challenge.md` | `pattern_state_and_challenge` | Interaction pattern — child states what they learned, system gently challenges an assum… | `7b3bbf3285c3` |
