@@ -208,8 +208,13 @@ llamacpp:
 
 ## Per-machine notes
 
+> **Verified testing config:** use the [Testing setup — `gemma2:9b` + grounding](#testing-setup--gemma29b--grounding-verified-2026-06-27)
+> above as the reference for product testing on any of these machines. `gemma2:9b` is the W1.3
+> pilot pick; pair it with the Vikidia + Simple-WP ZIMs and the `grounding.sources` block.
+
 - **MacBook Pro M1 16 GB:** Ollama uses the Apple Metal GPU automatically. `gemma2:9b` (~6 GB)
   runs comfortably and leaves headroom; a 12B (~8 GB) also fits but is tighter. No extra setup.
+  Recommended for testing — the verified config above runs as-is.
 - **Windows:** Ollama uses your GPU if available, otherwise CPU. Use the PowerShell commands above.
 - **Linux:** as shown. For NVIDIA GPUs Ollama uses CUDA automatically.
 
