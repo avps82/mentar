@@ -1,0 +1,86 @@
+"""Tests for GET /progress and the enhanced GET /parent mastery table.
+
+Uses the same _client() pattern as test_app_smoke.py: reloads the app with a
+temp DB so there is no live LLM and no shared state between tests.
+"""
+
+from __future__ import annotations
+
+import os
+import pathlib
+import sys
+import tempfile
+
+REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO_ROOT / "src"))
+
+
+def _client():
+    """Return a freshly-reloaded (app_mod, test_client) pair backed by a temp DB."""
+    os.environ["MENTAR_DB_PATH"] = os.path.join(tempfile.mkdtemp(), "test_progress.db")
+    import importlib
+
+    import mentar.web.app as app_mod
+    app_mod = importlib.reload(app_mod)
+    return app_mod, app_mod.app.test_client()
+
+
+def test_progress_empty_session():
+    """GET /progress works (200) when no session exists yet (no skills shown)."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+
+    _app_mod, c = _client()
+    r = c.get("/progress")
+    assert r.status_code == 200
+    body = r.get_data(as_text=True)
+    assert "progress" in body.lower()
+
+
+def test_progress_shows_skill_after_answer():
+    """GET /progress shows a skill row after the learner has answered a question
+    (the item-bank path scores deterministically, no LLM required)."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+
+    _app_mod, c = _client()
+
+    # Kick off the session and submit one answer so a skill_state row is written.
+    c.get("/")
+    c.post("/answer", data={"answer": "4"})
+
+    r = c.get("/progress")
+    assert r.status_code == 200
+    body = r.get_data(as_text=True)
+    # At least one skill card should appear (skill_id rendered in some form).
+    assert "⭐" in body, "Expected at least one star rating in the progress view"
+
+
+def test_parent_mastery_table_appears_after_answer():
+    """GET /parent includes the mastery table and session summary after one answer."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+
+    _app_mod, c = _client()
+
+    c.get("/")
+    c.post("/answer", data={"answer": "4"})
+
+    r = c.get("/parent")
+    assert r.status_code == 200
+    body = r.get_data(as_text=True)
+    # Mastery table heading must be present.
+    assert "Mastery progress" in body
+    # Session summary line must be present.
+    assert "Session summary" in body
+    # At least one skill_id row inside the table (check for % sign from pct column).
+    assert "%" in body
