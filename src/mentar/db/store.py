@@ -21,6 +21,7 @@ Design notes:
 from __future__ import annotations
 
 import sqlite3
+import threading
 from pathlib import Path
 
 # Path to the schema DDL file alongside this module.
@@ -35,9 +36,14 @@ class LearnerStore:
     Multi-learner support is achieved via the learner_id column present on
     every table — each method scopes queries to a single learner.
 
-    Thread safety: sqlite3 connections are NOT thread-safe by default.
-    For the pilot (single-process, single-thread) this is fine.  A future
-    multi-threaded web tier would need one connection per thread or a pool.
+    Thread safety: the Flask dev server (`mentar serve`) handles requests on
+    multiple worker threads. A single sqlite3.Connection cannot be shared
+    across threads (raises "SQLite objects created in a thread can only be used
+    in that same thread"), and even with check_same_thread=False a shared
+    connection is unsafe under simultaneous use. So each thread gets its OWN
+    connection (lazily, via the `_conn` property), all pointing at the same
+    file. The DB is in WAL mode with a busy timeout, which makes concurrent
+    multi-connection reads/writes safe (writers serialise + wait, not error).
     """
 
     def __init__(self, db_path: str | Path) -> None:
@@ -47,11 +53,29 @@ class LearnerStore:
         schema.sql is applied and user_version is set to 1.
         """
         self._path = Path(db_path)
-        self._conn = sqlite3.connect(str(self._path))
-        self._conn.row_factory = sqlite3.Row
-        # Enable FK enforcement for this connection (must be per-connection).
-        self._conn.execute("PRAGMA foreign_keys = ON;")
+        self._local = threading.local()  # per-thread connection store
+        # Open this thread's connection and apply the schema if the DB is new.
         self._apply_schema_if_needed()
+
+    def _new_conn(self) -> sqlite3.Connection:
+        """Open a fresh connection for the current thread with our pragmas."""
+        conn = sqlite3.connect(str(self._path), check_same_thread=False)
+        conn.row_factory = sqlite3.Row
+        # Per-connection pragmas (FK enforcement + busy timeout are not shared
+        # across connections; WAL is DB-level but cheap+idempotent to re-set).
+        conn.execute("PRAGMA foreign_keys = ON;")
+        conn.execute("PRAGMA journal_mode = WAL;")
+        conn.execute("PRAGMA busy_timeout = 5000;")
+        return conn
+
+    @property
+    def _conn(self) -> sqlite3.Connection:
+        """The current thread's connection, opened on first use in that thread."""
+        conn = getattr(self._local, "conn", None)
+        if conn is None:
+            conn = self._new_conn()
+            self._local.conn = conn
+        return conn
 
     # ── Schema management ────────────────────────────────────────────────────
 
@@ -407,11 +431,16 @@ class LearnerStore:
         Checkpoint is best-effort: a locked WAL (e.g. failed trigger in tests) is
         tolerated — the connection still closes cleanly.
         """
+        conn = getattr(self._local, "conn", None)
+        if conn is None:
+            return
         try:
-            self.checkpoint()
+            conn.execute("PRAGMA wal_checkpoint(TRUNCATE);")
         except Exception:
             pass
-        self._conn.close()
+        conn.close()
+        # Drop the ref so a later access in this thread reopens a live connection.
+        self._local.conn = None
 
     # ── Context manager support ──────────────────────────────────────────────
 
