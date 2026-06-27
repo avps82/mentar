@@ -588,13 +588,29 @@ class SessionController:
 
     def _fallback_hint(self, node_id: str) -> str:
         """Deterministic hint used when the LLM is unavailable/empty — Help must
-        never come back with nothing."""
+        never come back with nothing.
+
+        Prefers the grounding passage (real explanatory text from the ZIM) over a
+        bare worked example, which is just a problem + its answer (not an
+        explanation). This is a DEGRADED path — a live model gives the real
+        modality-based explanation; if you see this, the backend isn't serving
+        (run scripts/check_backend.py).
+        """
+        node = self._curriculum.get(node_id, {})
+        passage = resolve_grounding(node.get("grounding", {}), self._grounding_cfg)
+        if passage and passage.strip():
+            snippet = passage.strip()[:400]
+            return (
+                "Let's look at how this works:\n"
+                f"{snippet}\n"
+                "Now try your question using that idea."
+            )
         example = self._worked_example_for(node_id)
         if example:
             return (
-                "Let's take it one step at a time. Here's a similar one worked out:\n"
-                f"{example}\n"
-                "Try the same steps on your question."
+                "Let's take it one step at a time. Here's a similar question and its "
+                f"answer to compare with:\n{example}\n"
+                "Look at how the answer comes from the numbers, then try yours the same way."
             )
         return (
             "Let's take it one step at a time — read the question again and try just "
