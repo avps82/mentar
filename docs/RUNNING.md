@@ -143,6 +143,43 @@ That's it — the curriculum and question bank ship with the repo, so it works o
 
 ---
 
+## Testing setup — `gemma2:9b` + grounding (verified 2026-06-27)
+
+The reference config for product testing: the W1.3 pilot pick (`gemma2:9b`) with offline grounding
+wired to the pilot ZIMs. Full-stack web smoke verified — `/`, `/progress`, `/parent` all serve, the
+assent line shows, and `gemma2:9b` returns a clean **grounded** Help explanation.
+
+**1. Get the two pilot ZIMs onto a persistent, writable dir** (the read-only NAS mount won't do):
+```bash
+python3 scripts/fetch_zim.py --preset vikidia --preset wikipedia_simple --dest /path/to/zims
+```
+
+**2. `config/inference.yaml`** (gitignored — copy from `config/inference.example.yaml`, then set):
+```yaml
+backend: vllm
+vllm:
+  base_url: "http://<eval-host>:4000/v1"   # or local Ollama: http://localhost:11434/v1
+  model: "gemma2:9b"                       # the W1.3 pilot pick (not a reasoning model)
+  api_key: "${MENTAR_VLLM_API_KEY}"        # from env; never inline the token
+generation: { temperature: 0.3, max_tokens: 512, timeout: 120 }
+grounding:
+  zim_dir: "/path/to/zims"
+  sources:                                 # ⚠️ REQUIRED — without it grounding is silently empty
+    vikidia:          { project: vikidia,   lang: en, selection: all,        flavour: nopic }
+    wikipedia_simple: { project: wikipedia, lang: en, selection: simple_all, flavour: nopic }
+```
+
+**3. Run** (export the token first):
+```bash
+export MENTAR_VLLM_API_KEY="<token>"
+mentar serve            # → http://127.0.0.1:5000   (child: / and /progress ; parent: /parent)
+```
+
+> **Gotcha:** the `grounding.sources` block is **required** — a config with only `zim_dir` resolves
+> every passage to `""` (silently). The example template carries it; don't drop it when you copy.
+
+---
+
 ## Using a local GGUF directly (advanced, no Ollama)
 
 Instead of Ollama you can run a `.gguf` file in-process via `llama-cpp-python`
