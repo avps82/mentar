@@ -88,8 +88,8 @@ concepts:
     label: "Unit fractions (1/n)"
     prereqs: [equal_vs_unequal_parts]
     grounding:
-      source: wikipedia_simple
-      anchor: "https://simple.wikipedia.org/wiki/Unit_fraction"
+      source: vikidia
+      anchor: "https://en.vikidia.org/wiki/Fraction"
       passage_hint: "Definition — one part of n equal parts"
     transfer_seeds:
       - "A glass is full of juice. You pour ONE of FIVE equal cups from it. What fraction of the juice did you pour?"
@@ -126,8 +126,8 @@ concepts:
     label: "Comparing fractions with equal denominators"
     prereqs: [equivalent_fractions]
     grounding:
-      source: wikipedia_simple
-      anchor: "https://simple.wikipedia.org/wiki/Fraction"
+      source: vikidia
+      anchor: "https://en.vikidia.org/wiki/Fraction"
       passage_hint: "Comparing fractions with the same bottom number"
     transfer_seeds:
       - "Lia drank 3/7 of her water bottle. Theo drank 5/7 of his (same-size bottle). Who drank more?"
@@ -145,8 +145,8 @@ concepts:
     label: "Adding fractions with equal denominators"
     prereqs: [equivalent_fractions]
     grounding:
-      source: wikipedia_simple
-      anchor: "https://simple.wikipedia.org/wiki/Fraction"
+      source: vikidia
+      anchor: "https://en.vikidia.org/wiki/Fraction"
       passage_hint: "Adding fractions with the same bottom number"
     transfer_seeds:
       - "You eat 2 of 8 slices of a pizza for lunch and 3 of 8 slices for dinner. What fraction of the pizza did you eat in total?"
@@ -164,8 +164,8 @@ concepts:
     label: "Subtracting fractions with equal denominators"
     prereqs: [adding_equal_denom]
     grounding:
-      source: wikipedia_simple
-      anchor: "https://simple.wikipedia.org/wiki/Fraction"
+      source: vikidia
+      anchor: "https://en.vikidia.org/wiki/Fraction"
       passage_hint: "Subtracting fractions with the same bottom number"
     transfer_seeds:
       - "A jug holds 7/10 of a litre of milk. You pour out 2/10 of a litre. How much milk is left?"
