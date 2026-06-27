@@ -38,6 +38,7 @@ logger = logging.getLogger(__name__)
 
 HELP_MODALITIES = ["visual", "concrete", "analogy", "story", "formal"]
 STOP_WORDS = {"stop", "quit", "bye", "exit"}  # learner-initiated session end
+HELP_WORDS = {"?", "help", "h"}               # learner-initiated help request
 STALE_MASTERY_DAYS = 14  # mastery older than this counts as "stale" for forgetting detection
 # W5.6 continuous-assent: shown ONCE at the start so the child knows they can withdraw anytime.
 # (A learner 'stop' = self-withdrawal; a parent 'end' via /parent/ack = parent-withdrawal —
@@ -47,6 +48,10 @@ ASSENT_LINE = "Remember — you can stop anytime, just say 'stop'."
 
 def _is_stop(text: str) -> bool:
     return text.strip().lower() in STOP_WORDS
+
+
+def _is_help_request(text: str) -> bool:
+    return text.strip().lower() in HELP_WORDS
 
 
 def _is_stale_mastery(updated_at: str | None, now: datetime | None = None) -> bool:
@@ -526,7 +531,7 @@ class SessionController:
             return ("", False)
         stripped = inp.strip()
         # Learner requests help
-        if stripped.lower() in ("?", "help", "h"):
+        if _is_help_request(stripped):
             ctx.help_n = 1
             ctx.help_modalities_used = []
             ctx.state = FSMState.HELP_MODALITY_SELECT
@@ -662,6 +667,12 @@ class SessionController:
         if _is_stop(stripped):
             ctx.state = FSMState.SESSION_END_BY_LEARNER
             return ("OK, see you next time!", False)
+        # A help request at the re-check must NOT be scored as an answer — give
+        # another Help round instead (HELP_MODALITY_SELECT self-limits once all
+        # modalities are exhausted -> LINK_BACK).
+        if _is_help_request(stripped):
+            ctx.state = FSMState.HELP_MODALITY_SELECT
+            return ("", True)
         if not stripped:
             # Skip attempt rejected — stay in state
             return ("Please give it a try — even a guess is OK!", False)
@@ -757,6 +768,12 @@ class SessionController:
         if _is_stop(stripped):
             ctx.state = FSMState.SESSION_END_BY_LEARNER
             return ("OK, see you next time!", False)
+        # A probe is an independent transfer check — a help request here must NOT
+        # be scored as an answer. Re-prompt (no help loop mid-probe), staying in
+        # state, like the empty-input case. (Probe-time help routing is a future
+        # pedagogy decision — see PHASE0_STATUS Known defects.)
+        if _is_help_request(stripped):
+            return ("Give it your best try — even a guess is OK!", False)
         if not stripped:
             return ("Give it a go — what do you think?", False)
         ctx.probe_answer = stripped

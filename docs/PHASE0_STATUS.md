@@ -164,27 +164,21 @@ dialogue controller, web app, eval dataset, FSM caller wiring) has **all shipped
 - **W2.2** — emergency-services signposting decision + professional handoff-wording review.
 - **W7.4** — real Vikidia/Simple-WP ZIM download + reader path verification (needs NAS/ZIMs).
 
-### Known defects (found in testing — fix before pilot)
-- **🐞 Help reframes the question instead of giving real hints (2026-06-27, maintainer testing).**
-  When a child asks for Help, the response just **restates/reframes the question** rather than
-  giving a **scaffolded hint toward the next step** (Socratic nudge, worked sub-step, or
-  partial-strategy cue). This defeats the point of Help — it adds no instructional value. **Pilot
-  blocker** (Help is a core pedagogy surface). Likely a **prompt + FSM-state** issue: investigate
-  the Help prompt template (`prompts/`) and how the Help state passes context (current step,
-  misconception, mastery) to the model — the prompt should demand a *next-step hint, not a
-  rephrase*, and should be grounded. **Noted, not yet actioned.** Cross-ref the assent/Help wiring
-  in `dialogue/controller.py`.
-- **🐞 A Help request (`?`/`help`/`h`) at a re-check or probe prompt is scored as an answer
-  (2026-06-27, maintainer testing).** **Root cause identified:** only the main answer state
-  `_do_await_answer` (`controller.py:529`) intercepts `?`/`help`/`h` and routes to the Help flow.
-  The two *other* await states — `_do_help_recheck_await` (`controller.py:657`) and
-  `_do_probe_await_answer` (`controller.py:752`) — **lack that guard**, so a help request typed at
-  those prompts is captured as `help_answer`/`probe_answer` and run through `check(...)` →
-  logged as a scored response (and can register as correct), **corrupting BKT/mastery + the
-  response log**. Data-integrity / pedagogy **pilot blocker**. **Fix:** hoist the `?`/`help`/`h`
-  intercept (and arguably the empty/stop handling) into a shared helper used by all three await
-  states; assert in tests that help input is never logged as a scored answer. **Noted, not yet
-  actioned.**
+### Known defects (found in testing)
+- **✅ FIXED (prompt) — Help reframed the question instead of giving real hints (2026-06-27).**
+  All 5 Help templates (`prompts/help_*.md`) now explicitly forbid restating/rewording/re-asking
+  the question and require a **concrete next step worked through on the example** before the
+  transfer re-check. Inputs were already sound (concept = node label via `web/app.py:72`;
+  worked-example from the 31-item bank), so the fix is in the prompts. Hashes + README registry
+  re-synced (T4.6/T7.3 green). ⚠️ **Effectiveness needs a live re-test on `gemma2:9b`** (prompt
+  quality can't be unit-tested) — verify on the Mac/eval host.
+- **✅ FIXED — Help request at a re-check/probe was scored as an answer (2026-06-27).** Added a
+  shared `_is_help_request()` guard (mirroring `_is_stop`) to the two unguarded await states:
+  `_do_help_recheck_await` now routes `?`/`help`/`h` to another Help round (not the verifier);
+  `_do_probe_await_answer` re-prompts (probe stays an independent check). No more BKT/response-log
+  corruption from help input. Regression tests in `tests/dialogue/test_controller.py`
+  (`test_help_at_recheck_not_scored_as_answer`, `test_help_at_probe_not_scored_as_answer`).
+  Probe-time help *routing* (offer a full Help loop mid-probe?) left as a future pedagogy decision.
 
 ---
 
@@ -207,6 +201,7 @@ Cross-cutting "later" items not tied to a single W-task. Add here as they come u
 
 | Date | Change |
 |------|--------|
+| 2026-06-27 | **FIX: two Help defects found in maintainer testing** (Opus). (1) **Help-as-reframe** — all 5 `prompts/help_*.md` now forbid restating/re-asking the question and require a concrete worked next step before the re-check (hashes + README re-synced; needs a live `gemma2:9b` re-test). (2) **Help scored as an answer** — new shared `_is_help_request()` guard added to `_do_help_recheck_await` (→ another Help round) and `_do_probe_await_answer` (→ re-prompt), so `?`/`help`/`h` at a re-check/probe is never run through the verifier (was corrupting BKT + response_log). Regression tests added. **373 tests pass, ruff clean.** `dialogue/controller.py`, `prompts/help_*.md`. |
 | 2026-06-27 | **FIX: `/parent` + `/progress` 500 (SQLite cross-thread) — found in maintainer testing** (Opus). `mentar serve` runs the threaded Werkzeug dev server, but `LearnerStore` opened one `sqlite3` connection and reused it across request worker threads → `sqlite3.ProgrammingError: SQLite objects created in a thread can only be used in that same thread` (surfaced after `stop`, when the next request hit a new thread). The single-threaded `test_client` smoke never caught it. **Fix:** thread-local connections (each worker thread lazily opens its own connection to the same file) + the WAL mode the code's `checkpoint()`/`close()` already assumed (was never actually set in `__init__`, so it was a silent no-op) + `busy_timeout=5000`. `close()` now clears the thread-local ref so reopen works. New `tests/db/test_store_threadsafe.py` (cross-thread read, 4-thread concurrent writes, WAL/busy_timeout asserted). **371 tests pass, ruff clean.** `db/store.py`. |
 | 2026-06-27 | **Red-team generator: uncensored-local attempt → reverted to Sonnet; harmful-coverage gap is structural** (Opus). Tried `mistral:7b-instruct` as an uncensored attack generator to cover the explicit-harm plugins locally — too weak at promptfoo's structured generation (produced **only `pii:direct`**, 0 harmful). Reverted the generator to **`claude-sonnet-4-6`** (strongest Claude on the proxy; Opus is NOT served). **Key finding:** a stronger *aligned* model doesn't help — Claude (Sonnet/Opus) refuses to synthesise self-harm/sexual/graphic/harassment attacks by design. So **explicit-harm + iterative-jailbreak red-team coverage requires promptfoo Cloud or a genuinely uncensored+capable generator** — an open item, documented in `eval/redteam/README.md`. Local run reliably covers `pii:direct` + the Mentar policy. |
 | 2026-06-27 | **Grounding reader fully verified on real pilot ZIMs** (Opus). Downloaded both pilot-cleared sources via `fetch_zim.py` from the Kiwix mirror — **Vikidia 8.4 MB + Simple-WP 937 MB**. `ZimReader`/`resolve_grounding` extract clean verbatim from both (Vikidia *Fraction* 216c; Simple-WP *Decimal* 399c, *Multiplication* 1200c). Verified the **full public path** (auto-latest dir pick + host-scope guard), the **scope guard** (wrong anchor host → blocked → `""`), and **graceful degradation** (unknown source / missing `zim_dir` / missing anchor → `""`, no crash). Finding: Simple-WP's *Fraction* is a thin disambiguation (75c) vs Vikidia's substantive 216c → **prefer Vikidia for the fractions anchors**. `tests/grounding/` 61/61; `libzim` ok. Reader is pilot-ready; remaining = place the two ZIMs on a writable runtime `zim_dir`. |
