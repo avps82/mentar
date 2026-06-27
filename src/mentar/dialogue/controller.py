@@ -39,6 +39,10 @@ logger = logging.getLogger(__name__)
 HELP_MODALITIES = ["visual", "concrete", "analogy", "story", "formal"]
 STOP_WORDS = {"stop", "quit", "bye", "exit"}  # learner-initiated session end
 STALE_MASTERY_DAYS = 14  # mastery older than this counts as "stale" for forgetting detection
+# W5.6 continuous-assent: shown ONCE at the start so the child knows they can withdraw anytime.
+# (A learner 'stop' = self-withdrawal; a parent 'end' via /parent/ack = parent-withdrawal —
+# both recorded in session.ended_reason. See docs/design/W5.6_decision_prep.md.)
+ASSENT_LINE = "Remember — you can stop anytime, just say 'stop'."
 
 
 def _is_stop(text: str) -> bool:
@@ -183,6 +187,7 @@ class SessionController:
         # legacy LLM-generated question + node["expected_answer"] path.
         self._item_bank = item_bank
         self._templates: dict[str, str] = {}  # loaded lazily
+        self._assent_shown = False             # W5.6: assent line shown once, first turn
         self._ctx = _SessionCtx()
 
     # ── Public API ────────────────────────────────────────────────────────────
@@ -203,6 +208,13 @@ class SessionController:
         ):
             self._log_transcript("learner", learner_input)
         result = self._step_core(learner_input)
+        if result.text and not self._assent_shown:
+            # W5.6: prepend the continuous-assent line to the very first child-facing turn.
+            self._assent_shown = True
+            result = TurnResult(
+                state=result.state, text=f"{ASSENT_LINE}\n\n{result.text}",
+                done=result.done, escalated=result.escalated,
+            )
         if result.text:
             self._log_transcript("tutor", result.text)
         if result.done:
