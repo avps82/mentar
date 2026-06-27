@@ -726,8 +726,8 @@ class SessionController:
             ctx.state = FSMState.HELP_MODALITY_SELECT
             return ("", True)
         if not stripped:
-            # Skip attempt rejected — stay in state
-            return ("Please give it a try — even a guess is OK!", False)
+            # Skip attempt rejected — keep the question on screen (web shows last msg).
+            return (f"Please give it a try — even a guess is OK!\n\n{ctx.current_question}", False)
         ctx.help_answer = stripped
         ctx.state = FSMState.HELP_RECHECK_SCORE
         return ("", True)
@@ -820,14 +820,17 @@ class SessionController:
         if _is_stop(stripped):
             ctx.state = FSMState.SESSION_END_BY_LEARNER
             return ("OK, see you next time!", False)
-        # A probe is an independent transfer check — a help request here must NOT
-        # be scored as an answer. Re-prompt (no help loop mid-probe), staying in
-        # state, like the empty-input case. (Probe-time help routing is a future
-        # pedagogy decision — see PHASE0_STATUS Known defects.)
+        # Child wants help on the probe — GIVE it (enter the Help loop) rather than
+        # dead-ending with a re-prompt. The probe is abandoned, but a child needing
+        # help is itself useful signal, and help must never be refused.
         if _is_help_request(stripped):
-            return ("Give it your best try — even a guess is OK!", False)
+            ctx.help_n = 1
+            ctx.help_modalities_used = []
+            ctx.state = FSMState.HELP_MODALITY_SELECT
+            return ("", True)
         if not stripped:
-            return ("Give it a go — what do you think?", False)
+            # Keep the question on screen (the web view shows the last message).
+            return (f"Give it a go — what do you think?\n\n{ctx.current_question}", False)
         ctx.probe_answer = stripped
         ctx.state = FSMState.PROBE_SCORE
         return ("", True)
