@@ -1,83 +1,82 @@
 ---
-title: "Mentar — Remainder Build Plan (Phase 0 → G0 + go-public)"
+title: "Mentar — Remainder Build Plan v2 (post-G0-validation)"
 version: living-doc
 status: "Active"
-created: 2026-06-24
+updated: 2026-06-27
 ---
 
-# Remainder Build Plan
+# Remainder Build Plan — v2
 
-Prioritised, high-gain-first plan for the work left to reach **G0 (pilot-ready)** plus the
-**go-public** track. This is the executable spec; it **supersedes the stale "Next batch" section**
-of [PHASE0_STATUS.md](PHASE0_STATUS.md) (status doc stays the canonical task ledger — update it as
-waves land).
+Most of v1 shipped; **G0 is essentially validated** (model pick, safety, retrieval, E2E,
+licence, decisions all done). This is the refreshed list of what's left, with **tight specs for
+the parts local `gemma4:12b` can code** (generate → Opus/Sonnet verify; per-task gate =
+`pytest` green + `ruff` clean; one branch+PR per task).
 
-## Execution model
-
-- **Local-generate → verify** (standing default): `gemma4:12b` drafts grunt code/specs; **Opus/Sonnet
-  verify every output**. Reuse `eval/run_candidates.py` + `judge_responses.py` where relevant.
-- ⚠️ **`gemma4:12b` is eval-host-only** (12B will not fit the 4 GB build sandbox). It runs via the
-  eval-host LiteLLM proxy → **needs `MENTAR_VLLM_BASE_URL` + `MENTAR_VLLM_API_KEY` exported in the
-  session**. Until that's present, Gemma routing is blocked and Opus builds directly.
-- **Per-task gate:** `pytest` green **and** `ruff check .` clean before a task counts as done.
-- **Owner tags:** **[G]** Gemma-generates → Opus/Sonnet verifies · **[O]** Opus/me (design / safety /
-  integration judgment) · **[M]** maintainer-only (eval-host run, real ZIMs, or a human decision).
-
-## Reality check (what's already DONE, vs the stale "Next batch")
-
-Built + verified since "Next batch" was written (350 tests pass): grounding reader (W7.1–3),
-dialogue controller + FSM, web app, item bank + parametric generator, inference backend, `mentar`
-CLI, escalation persistence, stale-mastery wiring, prompt-template loading. The "Sonnet wiring
-follow-ups" are essentially closed **except the DB-logging gap (Task 1.1 below)**.
+## Done since v1 (for context — don't redo)
+W1.3 pick (`gemma2:9b`) · W4.2 AGPL-3.0 · W5.6 + W2.2 decisions ratified · W7.4 reader verified on
+real ZIMs (Vikidia + Simple-WP) · eval: quality + **safety pipeline 20/20** + **retrieval 9/9** +
+E2E clean · local red-team (pii + policy) · DB logging + parent-oversight + escalation-resume ·
+go-public docs. `main` green.
 
 ---
 
-## Priority waves — high gain first
+## A. Codeable now — Gemma-able `[G]`, tight specs
 
-### Wave 0 — Unblock the critical path (tiny effort, unblocks everything else) · [M]
+### A1 — W5.6 session-start assent line + loss-of-assent note  `[G]`
+- **Why:** W5.6 ratified *continuous-assent*; the session-start "you can stop anytime" line is the
+  one unbuilt piece. (Parent-end-as-loss-of-assent is already captured by
+  `session.ended_reason='ended_by_parent'`.)
+- **Spec:** add a module constant `ASSENT_LINE = "Remember — you can stop anytime, just say 'stop'."`
+  in `controller.py`. Include it **once** in the first child-facing turn (prepend in
+  `_do_session_start`'s hand-off to the first PRESENT, or accumulate it onto the first `step(None)`
+  output). Add a one-line comment tying `_END_REASON['ended_by_parent']` to W5.6 loss-of-assent
+  (no new mechanism). Don't repeat the line on later turns.
+- **Files:** `src/mentar/dialogue/controller.py`; new assertion in `tests/dialogue/`.
+- **Accept:** first `step(None)` output contains the assent phrase; it does **not** reappear on
+  subsequent turns; full suite + ruff green.
 
-| # | Task | Spec / acceptance | Gain |
-|---|------|-------------------|------|
-| 0.1 | **Supply eval-host creds to the session** | Export `MENTAR_VLLM_BASE_URL` + `MENTAR_VLLM_API_KEY` (rotate the key if it was ever exposed). | Unblocks **both** Gemma routing **and** the model eval run. Hard prerequisite for [G] tasks + Wave 2. |
-| 0.2 | **W5.6 thresholds** | Confirm the (c) distress threshold + optional (e) time/€ runway line in SPEC §25.1 — defaults already proposed; a yes / numbers reply closes it. | Clears a standing G0 blocker in one message. |
-| 0.3 | **W1.2 → W1.3 model run + pick** | Run the eval host (orchestration spec in 2.1). | THE model decision the whole pilot assumes. Everything downstream is provisional until picked. |
-
-### Wave 1 — Close the data + safety gaps (highest-gain build)
-
-| # | Task | Spec / acceptance | Owner | Gain |
-|---|------|-------------------|-------|------|
-| 1.1 | **Wire DB logging** (gap found 2026-06-24) | Controller/web must call `write_transcript` (every turn, both roles, monotonic `turn_index`), `write_response` (each scored answer + `check_result` + `hinted`), `write_help_event`, `write_probe_event`. **Accept:** a scripted full session populates all 5 tables; `/parent` renders the real transcript; tests assert per-session row counts. | **[G]** | Parent oversight, the **immutable transcript (a SAFETY-layer feature)**, and P1–P5 metrics all depend on this — currently silently empty. |
-| 1.2 | **W2.2 handoff-wording validation** | Build a validation harness/test asserting `HANDOFF_MESSAGE_PRIMARY/SUPPORT` meet the frozen criteria (age-appropriate, routes to present parent, no false promises); then route for professional review. | **[O]** build · **[M]** review | Load-bearing rollout guard (blocks rollout beyond single-family pilot + public). |
-| 1.3 | **W2.2 emergency-services signposting** | Safeguarding **decision** (needs external input) on whether/what to display, esp. the residual "parent is the source of harm" hole; then build the display/routing once decided. | **[M]** decide · **[O]** build | The other load-bearing rollout guard; blocks unsupervised mode + public. |
-
-### Wave 2 — Eval execution → model pick (high gain; needs 0.1)
-
-| # | Task | Spec / acceptance | Owner | Gain |
-|---|------|-------------------|-------|------|
-| 2.1 | **Run the candidate eval** | Export env → `run_candidates.py` (full roster) → NIAH (`eval/niah/`) → `judge_responses.py` (Sonnet) → `score_*` → write `docs/MODEL.md` pick (W1.3) + W1.4 tier. Opus orchestrates + analyses; maintainer runs on the host. | **[M]** run · **[O]** analyse | Produces the model pick (0.3) + the latency/quality evidence. |
-| 2.2 | **promptfoo red-team scaffold** | `eval/redteam/promptfooconfig.yaml` + README, **run-only / never vendored**, pointed at LiteLLM + Ollama, Sonnet grader, kids'-safety threats (jailbreak / prompt-injection / PII / harmful / emergency-signposting). **Use LOCAL attack-gen, not promptfoo cloud.** ⚠️ host needs **Node ≥20.20 / ≥22**; set `PROMPTFOO_DISABLE_TELEMETRY=1`. | **[G]** | Generated adversarial coverage for the Wave-1 safety gaps; complements the hand-authored suites. Spike-verified working (see backlog row). |
-
-### Wave 3 — Grounding completion (medium gain; not a hard G0 blocker)
-
-| # | Task | Spec / acceptance | Owner | Gain |
-|---|------|-------------------|-------|------|
-| 3.1 | **W7.4 real-ZIM verification** | Acquire pilot ZIMs (Vikidia + Simple-WP) to NAS; point `zim_dir`; verify the reader's path convention against a real modern ZIM (W7.4 contract step 2). | **[M]** | Lifts the pilot from degraded (empty passages) to genuinely grounded. |
-
-### Wave 4 — Go-public prep (high gain for the public goal; G2-track, not G0)
-
-| # | Task | Spec / acceptance | Owner | Gain |
-|---|------|-------------------|-------|------|
-| 4.1 | **W4.2 license + LICENSE file** | Decide commercial posture (earlier thread: **AGPL-3.0 + CLA** recommended to preserve optionality); add `LICENSE`, fix `pyproject` `license = TBD`. | **[M]** decide · **[O]** apply | The repo is "all rights reserved" until this lands — disqualifying for a public OSS repo. |
-| 4.2 | **Dependency + content license audit** | Confirm no AGPL/NC **code or content** vendored (Hermit-AI ideas-only; MathTutorBench not pulled in; only synthetic ZIM committed); deps compatible with the chosen license. | **[O]** | The "commercial eval" prerequisite for going public. |
-| 4.3 | **SECURITY.md + README disclaimer** | Research-preview / controlled-pilot-only / not-for-unsupervised-child-use, with the documented safety gaps (1.2/1.3) named. | **[G]** | Stops public readers deploying a half-safe build to real children. |
-| 4.4 | **AGENTS.md + CONTRIBUTING.md** | Focused subset of the ai-repo-structure convention (keystone `AGENTS.md`, thin `CLAUDE.md` pointer, contributor guide, safety/protected-paths rules). Skip the sprawl. | **[G]** | Contributor on-ramp; "don't start from scratch." |
+### A2 — NIAH reusable run config  `[G]`
+- **Why:** the NIAH run worked but its run config was ad-hoc in `/tmp`; make it reproducible.
+- **Spec:** add `eval/niah/run.example.yaml` using the verified schema (`run_name`, `model` =
+  filename stem, `task: {type: uuid}`, `haystack: {type: text, text: "..."}`, `sweep:
+  {context_lengths, depth_percents}`, `store`). Keep model configs gitignored. README already
+  documents the `OPENAI_BASE_URL` gotcha.
+- **Files:** `eval/niah/run.example.yaml`.
+- **Accept:** `niah run eval/niah/run.example.yaml --model-dir eval/niah/models --dry-run` validates
+  on a Node ≥20.20 host.
 
 ---
 
-## Sequencing notes
+## B. Codeable but verify-led  `[O]` + `[G]`
 
-- **0.1 and 0.3 gate the most** — without eval-host creds, neither Gemma nor the model run can proceed.
-- **Wave 1 is the highest-gain *build*** and is mostly sandbox-doable now (1.1 fully; 1.2 the harness).
-- Waves 2/4 carry the [G] grunt work best suited to Gemma once 0.1 lands.
-- Backlog items (promptfoo, AI-repo-structure, private/public MCP) feed Waves 2 and 4; the two MCP
-  tasks remain "needs a proper plan" and are **not** in G0 scope.
+### B1 — Pilot grounding-anchor QA + re-point
+- **Why:** verification found Simple-WP "Fraction" is a **thin disambiguation (75c)**; several nodes
+  (`comparing_equal_denom`, `adding_equal_denom`, `subtracting_equal_denom`) point at
+  `wikipedia_simple` "Fraction" → poor grounding. Vikidia's Fraction is substantive (216c).
+- **Spec:** for each of the 8 pilot nodes, run `ZimReader`/`resolve_grounding` against its anchor
+  (zim_dir holding Vikidia + Simple-WP), capture extracted length; **re-point any anchor whose
+  extract is thin/disambiguation (< ~150c) to the best available source** (prefer Vikidia for
+  fractions). Update the node `grounding: {source, anchor}` blocks.
+- **Files:** `curriculum/templates/_pilot/fractions.md`.
+- **Accept:** every node's anchor extracts substantive verbatim (no disambiguation stubs);
+  `validate-template` still passes.
+- **Owner:** Opus produces the per-node extraction report (needs the ZIMs on a readable `zim_dir`);
+  Gemma/mechanical applies the anchor edits.
+
+---
+
+## C. Maintainer-only (NOT codeable — flagged so they're not lost)
+- Paste the full **AGPL-3.0 text** into `LICENSE` (gnu.org unreachable from the sandbox).
+- **Rotate** the eval-host token.
+- **Safeguarding professional review** — handoff wording + child-facing emergency signposting
+  (gates rollout beyond the supervised single-family pilot).
+- Place **Vikidia + Simple-WP** on a *writable* runtime `zim_dir` (the `/mnt/zim` mount is read-only).
+- **Sign `PILOT_CONSENT`** before session 1.
+- **Explicit-harm + iterative-jailbreak red-team** — needs promptfoo Cloud or an uncensored+capable
+  generator (the aligned-Claude refusal is structural; the local 7B was too weak). Decision + setup.
+- Run the **pilot** (P1–P5).
+
+## Execution
+Route `[G]` tasks through the `gemma` skill (spec → gemma codes → Opus/Sonnet verifies); needs
+`MENTAR_VLLM_*` in the session. Backlog (post-pilot): private/public MCP, AU/ACARA template, W6.5
+manipulatives, W7.5/7.6, LLM-guided onboarding — see the `PHASE0_STATUS.md` backlog section.
