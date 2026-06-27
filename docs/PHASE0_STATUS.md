@@ -174,6 +174,17 @@ dialogue controller, web app, eval dataset, FSM caller wiring) has **all shipped
   misconception, mastery) to the model — the prompt should demand a *next-step hint, not a
   rephrase*, and should be grounded. **Noted, not yet actioned.** Cross-ref the assent/Help wiring
   in `dialogue/controller.py`.
+- **🐞 A Help request (`?`/`help`/`h`) at a re-check or probe prompt is scored as an answer
+  (2026-06-27, maintainer testing).** **Root cause identified:** only the main answer state
+  `_do_await_answer` (`controller.py:529`) intercepts `?`/`help`/`h` and routes to the Help flow.
+  The two *other* await states — `_do_help_recheck_await` (`controller.py:657`) and
+  `_do_probe_await_answer` (`controller.py:752`) — **lack that guard**, so a help request typed at
+  those prompts is captured as `help_answer`/`probe_answer` and run through `check(...)` →
+  logged as a scored response (and can register as correct), **corrupting BKT/mastery + the
+  response log**. Data-integrity / pedagogy **pilot blocker**. **Fix:** hoist the `?`/`help`/`h`
+  intercept (and arguably the empty/stop handling) into a shared helper used by all three await
+  states; assert in tests that help input is never logged as a scored answer. **Noted, not yet
+  actioned.**
 
 ---
 
