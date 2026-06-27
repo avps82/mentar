@@ -3,7 +3,8 @@
 A simple getting-started guide to run the Mentar tutor on your own machine. You'll run a
 local LLM (no cloud, no API key needed) and talk to the tutor in the terminal or a browser.
 
-> **TL;DR:** install Python → `pip install -e ".[web,setup]"` → **`mentar setup`** → `mentar run-session`.
+> **TL;DR:** install Python → `pip install -e ".[web,setup]"` → **`mentar setup`** → `mentar serve`
+> (web UI at http://localhost:5000). For a quick terminal-only session instead: `mentar run-session`.
 
 ---
 
@@ -14,7 +15,8 @@ best-fit **vetted** model, downloads it, and writes `config/inference.yaml` for 
 
 ```bash
 mentar setup            # auto: uses Ollama if installed, else downloads a GGUF to run in-process
-mentar run-session      # start tutoring
+mentar serve            # web UI (parent + child) at http://localhost:5000
+# or, terminal-only:  mentar run-session
 ```
 
 - It picks only from Mentar's vetted roster (`config/model_roster.yaml`) and sizes each model to
@@ -127,17 +129,16 @@ generation:
 
 ## 6. Run it
 
-**Terminal tutor session**
+**Web app** — the full product (child tutor + parent oversight). Then open http://localhost:5000:
+```bash
+mentar serve            # child: / and /progress ; parent: /parent
+```
+
+**Terminal session** — headless, quick dev/testing (no parent UI):
 ```bash
 mentar run-session
-# or:  python -m mentar.cli run-session
 ```
 Type answers when prompted; type `?` for help, `stop` to end.
-
-**Web app** (then open http://localhost:5000)
-```bash
-python -m mentar.web.app
-```
 
 That's it — the curriculum and question bank ship with the repo, so it works out of the box.
 
