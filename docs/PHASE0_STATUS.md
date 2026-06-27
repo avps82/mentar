@@ -164,6 +164,17 @@ dialogue controller, web app, eval dataset, FSM caller wiring) has **all shipped
 - **W2.2** — emergency-services signposting decision + professional handoff-wording review.
 - **W7.4** — real Vikidia/Simple-WP ZIM download + reader path verification (needs NAS/ZIMs).
 
+### Known defects (found in testing — fix before pilot)
+- **🐞 Help reframes the question instead of giving real hints (2026-06-27, maintainer testing).**
+  When a child asks for Help, the response just **restates/reframes the question** rather than
+  giving a **scaffolded hint toward the next step** (Socratic nudge, worked sub-step, or
+  partial-strategy cue). This defeats the point of Help — it adds no instructional value. **Pilot
+  blocker** (Help is a core pedagogy surface). Likely a **prompt + FSM-state** issue: investigate
+  the Help prompt template (`prompts/`) and how the Help state passes context (current step,
+  misconception, mastery) to the model — the prompt should demand a *next-step hint, not a
+  rephrase*, and should be grounded. **Noted, not yet actioned.** Cross-ref the assent/Help wiring
+  in `dialogue/controller.py`.
+
 ---
 
 ## Backlog — deferred (post-pilot / later)
