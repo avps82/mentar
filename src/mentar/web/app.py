@@ -249,6 +249,16 @@ def answer():
     return redirect(url_for("index"))
 
 
+@app.route("/progress")
+def progress():
+    learner_uuid = session.get("learner_uuid", "")
+    store, db_id = _store_and_id(learner_uuid)
+    skill_states = store.all_skill_states(db_id) if (store and db_id is not None) else []
+    # Convert sqlite3.Row to plain dicts for the template.
+    skills = [dict(r) for r in skill_states]
+    return render_template("progress.html", skills=skills)
+
+
 @app.route("/parent")
 def parent():
     learner_uuid = session.get("learner_uuid", "")
@@ -262,12 +272,28 @@ def parent():
     if turns is None:
         turns = _turn_logs.get(learner_uuid, [])
 
+    # Session summary counts from the DB.
+    store, db_id = _store_and_id(learner_uuid)
+    session_id = ctrl.session_id if ctrl is not None else None
+    skill_states: list[dict] = []
+    session_summary: dict = {}
+    if store and db_id is not None and session_id:
+        skill_states = [dict(r) for r in store.all_skill_states(db_id)]
+        responses = store.session_responses(db_id, session_id)
+        help_events = store.session_help_events(db_id, session_id)
+        session_summary = {
+            "n_responses": len(responses),
+            "n_help": len(help_events),
+        }
+
     return render_template(
         "parent.html",
         escalated=escalated,
         handoff_msg=HANDOFF_MESSAGE_PRIMARY,
         turns=turns,
         escalations=_persisted_escalations(learner_uuid),
+        skill_states=skill_states,
+        session_summary=session_summary,
     )
 
 

@@ -12,6 +12,11 @@
   table { width:100%; border-collapse:collapse; margin-top:16px; }
   th, td { padding:8px 12px; border:1px solid #ddd; text-align:left; font-size:0.95rem; }
   th { background:#f5f5f5; }
+  .bar-wrap { background:#eee; border-radius:4px; height:12px; width:120px; display:inline-block; vertical-align:middle; }
+  .bar-fill { background:#4caf50; border-radius:4px; height:12px; }
+  .summary { background:#fff; border-radius:10px; padding:14px 18px;
+             margin-bottom:20px; font-size:0.95rem; color:#444;
+             box-shadow:0 1px 4px rgba(0,0,0,0.07); }
 </style>
 </head><body>
 <h1>Parent / carer view</h1>
@@ -25,6 +30,30 @@
   </form>
 </div>
 {% endif %}
+
+{% if session_summary %}
+<div class="summary">
+  <b>Session summary:</b>
+  {{ session_summary.n_responses }} answer(s) &nbsp;·&nbsp;
+  {{ session_summary.n_help }} help request(s)
+</div>
+{% endif %}
+
+{% if skill_states %}
+<h2>Mastery progress</h2>
+<table>
+  <tr><th>Skill</th><th>Mastery</th><th>%</th></tr>
+  {% for s in skill_states %}
+  {% set pct = (s.p_mastery * 100) | int %}
+  <tr>
+    <td>{{ s.skill_id }}</td>
+    <td><span class="bar-wrap"><span class="bar-fill" style="width:{{ pct }}%;"></span></span></td>
+    <td>{{ pct }}%</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endif %}
+
 {% if escalations %}
 <h2>Safety alerts</h2>
 <table>
