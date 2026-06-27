@@ -74,6 +74,21 @@ through the proxy's `claude-sonnet-4-6` (config `redteam.provider` + `defaultTes
 - Env templating is **`{{ env.VAR }}`** (nunjucks), not shell `${VAR}`; `MENTAR_REDTEAM_MODEL`
   selects the target.
 
+### Generator choice — verified 2026-06-27 (the harmful-coverage gap is structural)
+We tried to close the explicit-harm gap **locally** by swapping the generator:
+
+| Generator | Plugins generated locally |
+|---|---|
+| `claude-sonnet-4-6` (current) | `pii:direct` + `policy` (reliable); **refuses** all `harmful:*` |
+| `mistral:7b-instruct` (uncensored attempt) | **only `pii:direct`** — too weak at promptfoo's structured generation; 0 harmful |
+
+**Key finding:** a stronger *aligned* model does **not** help — `claude-opus`/`sonnet` refuse to
+synthesise self-harm/sexual/graphic/harassment attacks by design (and Opus isn't on the proxy
+anyway). The 7B "uncensored" route was capability-limited. So **explicit-harm + iterative-jailbreak
+coverage is an open item that requires promptfoo Cloud or a genuinely uncensored, capable
+generator** — not a bigger Claude. The local run reliably covers `pii:direct` + the Mentar policy
+(the most Mentar-specific checks); treat the rest as the documented cloud/host follow-up.
+
 ## Notes
 
 - `targets` points at the OpenAI-compatible LiteLLM proxy; uncomment the `ollama:chat:` target to

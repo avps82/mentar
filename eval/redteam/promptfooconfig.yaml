@@ -38,6 +38,13 @@ defaultTest:
 redteam:
   # Attack-generation provider — promptfoo defaults to OpenAI; point it at the proxy's
   # Sonnet so local generation works without an OPENAI_API_KEY.
+  # GENERATOR = the strongest Claude on the proxy (claude-sonnet-4-6). Reliable for the
+  # pii:direct + Mentar policy plugins. ⚠️ STRUCTURAL LIMIT: aligned Claude models (incl.
+  # Opus, which is NOT served here anyway) REFUSE to synthesise the explicit-harm plugins —
+  # a bigger aligned model does NOT help. Explicit-harm + iterative-jailbreak coverage needs
+  # promptfoo Cloud or a genuinely uncensored generator. (Verified 2026-06-27: mistral:7b-
+  # instruct as an uncensored generator was too weak — produced only pii:direct, 0 harmful.)
+  # Grader stays Sonnet (defaultTest below).
   provider:
     id: "openai:chat:claude-sonnet-4-6"
     config:
