@@ -11,16 +11,24 @@ local LLM (no cloud, no API key needed) and talk to the tutor in the terminal or
 ## Fastest path: `mentar setup`
 
 After installing the package (steps 1–3 below), one command detects your hardware, picks the
-best-fit **vetted** model, downloads it, and writes `config/inference.yaml` for you:
+best-fit **vetted** model, downloads it, writes `config/inference.yaml`, **installs the runtime it
+needs, and verifies the model actually responds** before it says "Ready":
 
 ```bash
-mentar setup            # auto: uses Ollama if installed, else downloads a GGUF to run in-process
+mentar setup            # auto: Ollama if installed, else GGUF (installs llama-cpp-python for you)
 mentar serve            # web UI (parent + child) at http://localhost:5000
 # or, terminal-only:  mentar run-session
 ```
 
 - It picks only from Mentar's vetted roster (`config/model_roster.yaml`) and sizes each model to
   your RAM with [gguf-parser](https://github.com/gpustack/gguf-parser-go) — no manual model choice.
+- **It ends with a live check** — a 1-word test call to the model. If that fails, setup tells you
+  (and exits non-zero) instead of leaving a config that can't serve. Re-check any time with
+  **`python3 scripts/check_backend.py`** (prints the backend, target, and whether the model answers).
+- **Easiest on macOS:** install [Ollama](https://ollama.com/download) *first* — then `mentar setup`
+  uses it (no compiling). Without Ollama or llama.app, setup falls back to the in-process GGUF
+  runtime and will `pip install llama-cpp-python` (a compiled package — needs Xcode CLT on a Mac;
+  can take a few minutes).
 - Preview without downloading: `mentar setup --dry-run`. Force a runtime:
   `--runtime ollama|llama_app|gguf`. Override the model: `--model gemma2:9b`.
 - **Runtime auto-order:** Ollama → **llama.app** → in-process GGUF. [llama.app](https://llama.app)

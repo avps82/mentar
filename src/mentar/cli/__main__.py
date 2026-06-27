@@ -140,6 +140,52 @@ def _download_gguf(hf_repo: str, hf_file: str, dest_dir: Path) -> bool:
         return False
 
 
+def _ensure_llama_cpp() -> bool:
+    """Ensure llama-cpp-python (the in-process GGUF runtime) is importable,
+    installing it on demand. Returns True if available afterwards.
+
+    The GGUF in-process runtime needs this compiled package; without it the
+    config writes fine but every model call fails at runtime.
+    """
+    try:
+        import llama_cpp  # noqa: F401
+        return True
+    except ImportError:
+        pass
+    print("\nInstalling llama-cpp-python (in-process GGUF runtime) — may take a few minutes...")
+    rc = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "llama-cpp-python"]
+    ).returncode
+    if rc == 0:
+        try:
+            import llama_cpp  # noqa: F401
+            return True
+        except ImportError:
+            pass
+    print("ERROR: could not install llama-cpp-python.", file=sys.stderr)
+    print("  Install it manually:  pip install llama-cpp-python", file=sys.stderr)
+    print("  Or use Ollama instead (no build):  https://ollama.com/download  then  mentar setup",
+          file=sys.stderr)
+    return False
+
+
+def _verify_backend(cfg: dict) -> tuple[bool, str]:
+    """Best-effort live check that the configured backend actually answers."""
+    from mentar.inference import make_llm_call
+    probe = dict(cfg)
+    gen = dict(cfg.get("generation", {}))
+    gen["max_tokens"] = 16
+    probe["generation"] = gen
+    try:
+        call = make_llm_call(probe)
+        out = call([{"role": "user", "content": "Reply with the single word: ping"}])
+    except Exception as e:  # noqa: BLE001 — report any backend failure plainly
+        return False, f"{type(e).__name__}: {e}"
+    if out and out.strip():
+        return True, f"model replied {out.strip()[:40]!r}"
+    return False, "empty reply (reasoning model? set generation.extra_body.think=false)"
+
+
 def _setup(args) -> int:
     from mentar.inference.autoselect import load_roster, select
     from mentar.inference.backend import write_inference_config
@@ -230,16 +276,28 @@ def _setup(args) -> int:
             print("ERROR: ollama pull failed.", file=sys.stderr)
             return 1
     else:
+        if sel.runtime == "gguf" and not _ensure_llama_cpp():
+            return 1
         if not _download_gguf(m["hf_repo"], m["hf_file"], repo / "models"):
             return 1
 
     write_inference_config(cfg, cfg_path)
     print(f"\n✓ Wrote {cfg_path}")
     if sel.runtime == "llama_app":
+        # The server is started manually, so we can't verify it here.
         print(f"✓ Start the model server:  llama serve -m {model_path} --port 8081")
-        print("  then run:  mentar run-session")
-    else:
-        print("✓ Ready — run:  mentar run-session")
+        print("  then verify:  python3 scripts/check_backend.py   and run:  mentar serve")
+        return 0
+    # Verify the backend actually responds — never claim 'Ready' on a config that
+    # can't serve (the failure this guards: config written, model unreachable).
+    print("\nVerifying the backend responds (the first call may load the model)...")
+    ok, msg = _verify_backend(cfg)
+    if not ok:
+        print(f"✗ Backend did not respond: {msg}", file=sys.stderr)
+        print("  Diagnose:  python3 scripts/check_backend.py", file=sys.stderr)
+        return 1
+    print(f"✓ Backend LIVE — {msg}")
+    print("✓ Ready — run:  mentar serve   (web)   or   mentar run-session   (terminal)")
     return 0
 
 
