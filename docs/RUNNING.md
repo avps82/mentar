@@ -43,6 +43,33 @@ Prefer to do it by hand? The manual steps (4–6) below still work.
 
 ---
 
+## Alternative: point at a remote OpenAI-compatible proxy (LiteLLM / vLLM)
+
+No local model at all — if you already run an OpenAI-compatible endpoint (e.g. a **LiteLLM**
+proxy, or vLLM), just point Mentar at it. This is the same provider path as everything else
+(only `base_url` / `model` / `api_key` differ), so there's nothing to download or compile.
+
+Set `config/inference.yaml`:
+```yaml
+backend: vllm
+vllm:
+  base_url: "http://<host>:4000/v1"      # your LiteLLM/vLLM endpoint (must end in /v1)
+  model: "gemma2:9b"                      # the name the proxy exposes it under
+  api_key: "${MENTAR_VLLM_API_KEY}"       # read from env — NEVER inline the token
+generation: { temperature: 0.3, max_tokens: 512, timeout: 120 }
+```
+Then run (export the token in the **same shell** as `mentar serve`, or the proxy 401s):
+```bash
+export MENTAR_VLLM_API_KEY="sk-...your-token..."
+python3 scripts/check_backend.py        # expect: ✓ Backend LIVE
+mentar serve
+```
+
+> **Gotcha:** a `401` from the proxy almost always means `MENTAR_VLLM_API_KEY` isn't set in the
+> shell/service that runs Mentar. The `${VAR}` in the config is expanded from the environment.
+
+---
+
 ## 1. Prerequisites
 
 | Need | Notes |
