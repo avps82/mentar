@@ -1,19 +1,15 @@
 ---
 template_id: help_concrete
-purpose: Help re-explanation in the CONCRETE representation (real objects/actions), then a transfer re-check (SPEC §13.2).
+purpose: Help re-explanation in the CONCRETE representation (real objects/actions); explanation only — the FSM presents the re-check (SPEC §13.2).
 fsm_state: HELP_REEXPLAIN (modality = concrete)
-version: 5f75fa34e45b
+version: 8b4893636776
 ---
-The child pressed Help on: {{concept}}. They are confused; be reassuring.
+The child needs help with this problem:
 
-Re-explain {{concept}} using CONCRETE, hands-on objects: pouring water between cups,
-breaking a chocolate bar, sharing apples between friends, folding a strip of paper. Make it
-something the child could actually do with their hands. Use {{worked_example}} as the
-situation if it fits. A few short sentences.
+{{question}}
 
-Do not repeat your earlier wording; change the REPRESENTATION, not just the words. Do NOT merely restate, reword, or re-ask the question — restating is not help. First give the child a concrete next step they can act on: name the very first thing to do, and show that step worked through on the example so they see HOW to begin, not just what to find.
+Be warm and reassuring — they may be confused or have just answered it wrong.
 
-Then ask ONE re-check question that tests TRANSFER, not memory: change the objects or the
-numbers from the example you just used, with a single checkable answer of type
-{{answer_type}} (int, fraction, or mc4). Output only the concrete explanation and the
-re-check question.
+Re-explain {{concept}} with CONCRETE, hands-on objects the child could actually use (pouring water between cups, breaking a chocolate bar, sharing apples, folding a paper strip). Work through THIS problem with those objects, one step at a time (use {{worked_example}} only if it helps), so the child sees HOW to do it — name the first step and carry it through.
+
+Change the REPRESENTATION, not just the words. Do NOT simply restate the question, and do NOT ask the child any question — a practice question comes next on its own. Output ONLY your explanation, a few short sentences.

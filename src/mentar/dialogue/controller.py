@@ -704,6 +704,7 @@ class SessionController:
         help_text = self._render_template(
             ctx.current_pattern, node, passage,
             worked_example=self._worked_example_for(ctx.current_node_id),
+            question=ctx.current_question or "",
         )
         explanation = self._llm([
             {"role": "system", "content": system_text},
@@ -935,7 +936,10 @@ class SessionController:
             self._templates[name] = raw
         return self._templates[name]
 
-    def _render_template(self, name: str, node: dict, passage: str, worked_example: str = "") -> str:
+    def _render_template(
+        self, name: str, node: dict, passage: str,
+        worked_example: str = "", question: str = "",
+    ) -> str:
         tmpl = self._load_template(name)
         return (
             tmpl
@@ -943,6 +947,7 @@ class SessionController:
             .replace("{{answer_type}}", node.get("answer_type", "fraction"))
             .replace("{{grounding_passage}}", passage)
             .replace("{{worked_example}}", worked_example)
+            .replace("{{question}}", question or "the question they're working on")
         )
 
     def _worked_example_for(self, node_id: str) -> str:
