@@ -29,6 +29,26 @@ _THINGS = ["stickers", "crayons", "grapes", "marbles", "sweets", "pencils", "app
 _GROUPS = ["children", "friends", "baskets", "boxes", "bags", "plates", "pots"]
 _WHOLES = ["a cake", "a pizza", "a chocolate bar", "a ribbon", "a pie"]
 
+# One simple, kid-friendly emoji per noun — shown ONCE next to the word (not one
+# icon per item; testing note 1). Emoji are plain Unicode, no external assets.
+_THING_EMOJI = {
+    "stickers": "⭐", "crayons": "🖍️", "grapes": "🍇", "marbles": "🔵",
+    "sweets": "🍬", "pencils": "✏️", "apples": "🍎", "cookies": "🍪",
+}
+_WHOLE_EMOJI = {
+    "a cake": "🍰", "a pizza": "🍕", "a chocolate bar": "🍫", "a ribbon": "🎀", "a pie": "🥧",
+}
+
+
+def _thing_with_icon(thing: str) -> str:
+    icon = _THING_EMOJI.get(thing, "")
+    return f"{thing} {icon}".strip()
+
+
+def _whole_with_icon(whole: str) -> str:
+    icon = _WHOLE_EMOJI.get(whole, "")
+    return f"{whole.capitalize()} {icon}".strip()
+
 
 def _gen_whole_number_division(rng: random.Random):
     b = rng.randint(2, 6)          # groups
@@ -36,7 +56,8 @@ def _gen_whole_number_division(rng: random.Random):
     a = b * q                      # total (divisible -> clean int answer)
     thing, who = rng.choice(_THINGS), rng.choice(_GROUPS)
     return ("int", "int_exact",
-            f"Share {a} {thing} equally among {b} {who}. How many {thing} does each get?",
+            f"Share {a} {_thing_with_icon(thing)} equally among {b} {who}. "
+            f"How many {thing} does each get?",
             str(q))
 
 
@@ -44,7 +65,7 @@ def _gen_unit_fractions(rng: random.Random):
     d = rng.randint(2, 10)
     whole = rng.choice(_WHOLES)
     return ("fraction", "fraction_equiv",
-            f"{whole.capitalize()} is split into {d} equal parts. What fraction is ONE part?",
+            f"{_whole_with_icon(whole)} is split into {d} equal parts. What fraction is ONE part?",
             f"1/{d}")
 
 
@@ -53,7 +74,7 @@ def _gen_fraction_as_part_of_whole(rng: random.Random):
     n = rng.randint(1, d - 1)
     whole = rng.choice(_WHOLES)
     return ("fraction", "fraction_equiv",
-            f"{whole.capitalize()} is cut into {d} equal slices and you take {n}. "
+            f"{_whole_with_icon(whole)} is cut into {d} equal slices and you take {n}. "
             f"What fraction did you take?",
             f"{n}/{d}")
 
