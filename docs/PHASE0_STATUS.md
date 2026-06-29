@@ -165,6 +165,17 @@ dialogue controller, web app, eval dataset, FSM caller wiring) has **all shipped
 - **W7.4** — real Vikidia/Simple-WP ZIM download + reader path verification (needs NAS/ZIMs).
 
 ### Known defects (found in testing)
+- **🧮 MODELING DECISION — mastery % rises after wrong answers (2026-06-29).** From the cold-start
+  prior (10%), wrong answers take mastery 10% → 21% → 22% and **plateau ~22%** (verified). This is
+  the **spec'd** BKT (W3.3 / SPEC §11): the learning transition `P(L')=P(L|obs)+(1−P(L|obs))·learns`
+  applies after *every* attempt, so from a low prior the +learns gain outweighs the small wrong
+  penalty. **Not an implementation bug**, and it **never false-masters** (caps ~22% ≪ 85% threshold).
+  But a *rising* % after all-wrong is counterintuitive for the parent-facing number. **Options:**
+  (A) keep classic BKT (learning-opportunity model; maybe reframe the label, UI-deferred);
+  (B) **gate the learning transition on a non-wrong observation** — a wrong *unaided* answer only
+  conditions (drops), no `learns` credit, so wrong → mastery stays low/declines (intuitive, deviates
+  from classic BKT); (C) lower `learns`. **Recommend B** for a kids' parent-facing %. Needs
+  maintainer's call (changes a spec'd model). Ties to [[decision_bkt_pybkt_offline_only]].
 - **🧭 ESSENTIAL GAP — interaction scope too narrow (2026-06-29).** The system recognises only
   4 child intents (answer / help / stop / safety-escalation); **everything else is force-scored as
   an answer**, so natural child inputs — **"I don't know", frustration ("this is hard"), clarifying
