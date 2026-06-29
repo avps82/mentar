@@ -273,6 +273,30 @@ def test_llm_exception_does_not_crash():
     assert result.text.strip()
 
 
+def test_mc_gibberish_asks_for_a_letter_same_question():
+    """On a multiple-choice question, unreadable input asks for a letter and
+    re-asks the SAME question (not a vague 'couldn't read' + a different one)."""
+    import random as _random
+
+    from mentar.engine.itemgen import ItemGenerator
+    from mentar.engine.science_items import SCIENCE_GENERATORS
+    curr = {"classify_animals": {
+        "concept": "Animal groups", "answer_type": "mc4", "checker": "mc_choice",
+        "expected_answer": "", "grounding": {}, "prerequisites": []}}
+    ctrl = SessionController(
+        llm_call=lambda m: "(unused)", prompt_dir=PROMPTS, grounding_cfg={},
+        curriculum=curr, db_store=_FakeStore(), learner_id="t",
+        item_bank=ItemGenerator(generators=SCIENCE_GENERATORS, rng=_random.Random(1)),
+    )
+    ctrl.step(None)
+    question = ctrl._ctx.current_question
+    result = ctrl.step("aaaa")                        # gibberish -> EXTRACT_FAIL
+    assert result.state == FSMState.AWAIT_ANSWER.value
+    assert "A, B, C or D" in result.text             # clear MC guidance
+    assert question in result.text                    # SAME question kept on screen
+    assert ctrl._ctx.last_scored_correct is None      # neither correct nor wrong
+
+
 def test_all_mastered_ends_session():
     """When fringe is empty (all mastered), SESSION_END_COMPLETE is returned."""
     ctrl = _make_controller(
