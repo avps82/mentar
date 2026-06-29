@@ -16,3 +16,5 @@ items to `PHASE0_STATUS.md` (Known defects / Backlog) when they're picked up.
 - Session Log needs addtional column where Who, text is only there. There should be an addtional
   for correct/wrong/help with simple icons and score on the top, like 5 correct out of 7 this is
   in the session summary...
+- Wrong answer is going to the different version of the same question... even after all of it is
+  wrong. First it clearly doen'  *(note appears cut off — awaiting continuation)*
