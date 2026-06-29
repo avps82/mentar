@@ -13,3 +13,6 @@ items to `PHASE0_STATUS.md` (Known defects / Backlog) when they're picked up.
 - In parent view Mastery %  is 85%. Out 4 questions asked. I answered 2 and one question, I asked
   for help. The last question, I went to parent view. But the calculation has taken all question
   including unanswered ones to the %. Needs fixing.
+- Session Log needs addtional column where Who, text is only there. There should be an addtional
+  for correct/wrong/help with simple icons and score on the top, like 5 correct out of 7 this is
+  in the session summary...
