@@ -90,6 +90,10 @@ def _is_stale_mastery(updated_at: str | None, now: datetime | None = None) -> bo
 
 HELP_RETRY_CAP = 3
 PROBE_EVERY_N = 5  # W5.3 pilot default
+# When a proactive probe shows mastery was overestimated (false_confidence /
+# forgetting / slip-after-retry), demote mastery to this so the node returns to
+# normal practice instead of being re-probed endlessly. Below DEFAULT_MASTERY_THRESHOLD.
+PROBE_DEMOTE_MASTERY = 0.6
 
 
 class FSMState(str, Enum):
@@ -938,18 +942,30 @@ class SessionController:
             mastery_is_stale=stale,
         )
         if probe_class is ProbeClass.CLEAN_PASS:
+            # Mastery confirmed -> ADVANCE (NODE_SELECT drops the mastered node from
+            # the fringe). Must NOT return to BRANCH_DECISION: with mastery >= the
+            # threshold, probe_due would re-fire forever (the endless-silent-probe bug).
             self._log_probe_event(ctx.current_node_id, probe_class)
-            ctx.state = FSMState.BRANCH_DECISION
-            return ("", True)
+            ctx.state = FSMState.NODE_SELECT
+            return (random.choice(PRAISE_VARIANTS), True)
         if probe_class is ProbeClass.SLIP_SUSPECT and ctx.probe_variant == 0:
             # One retry allowed before classifying (event written after the retry)
             ctx.probe_variant = 1
             ctx.state = FSMState.PROBE_PRESENT
             return ("", True)
-        # false_confidence / forgetting_suspect / slip after retry -> advance
+        # false_confidence / forgetting_suspect / slip after retry: the probe revealed
+        # mastery was OVERESTIMATED. Demote below threshold so the node returns to
+        # NORMAL practice (with feedback) instead of being re-probed endlessly, then
+        # advance through NODE_SELECT.
         self._log_probe_event(ctx.current_node_id, probe_class)
-        ctx.state = FSMState.BRANCH_DECISION
-        return ("", True)
+        demoted = min(ctx.mastery.get(ctx.current_node_id, P_L0), PROBE_DEMOTE_MASTERY)
+        ctx.mastery[ctx.current_node_id] = demoted
+        try:
+            self._store.update_skill_state(self._learner_id, ctx.current_node_id, demoted)
+        except Exception:
+            logger.warning("probe demote: db persist failed", exc_info=True)
+        ctx.state = FSMState.NODE_SELECT
+        return ("Let's practise that one a bit more.", True)
 
     # ── Parent ack ────────────────────────────────────────────────────────────
 
