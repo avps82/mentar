@@ -101,10 +101,40 @@ def load_inference_config(path: str | Path | None = None) -> dict | None:
 
     import yaml  # local import: only needed when a config file exists
 
+    # Load a gitignored .env next to the config FIRST, so ${VAR} references in the
+    # config resolve from it — secrets persist in a local file, not a shell export.
+    _load_dotenv(cfg_path.parent / ".env")
+
     raw = yaml.safe_load(cfg_path.read_text(encoding="utf-8")) or {}
     if not isinstance(raw, dict):
         raise ValueError(f"inference config must be a mapping, got {type(raw).__name__}")
     return _expand_env(raw)
+
+
+def _load_dotenv(env_path: Path) -> None:
+    """Load ``KEY=VALUE`` lines from a gitignored ``.env`` into the process env.
+
+    Persists secrets (e.g. ``MENTAR_VLLM_API_KEY``) in a local file rather than a
+    shell ``export`` that dies with the terminal. Does NOT override variables that
+    are already set, so a real environment value still wins. Tolerant format:
+    blank lines and ``#`` comments skipped; an optional ``export`` prefix and
+    surrounding quotes are stripped.
+    """
+    if not env_path.exists():
+        return
+    for raw_line in env_path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("export "):
+            line = line[len("export "):]
+        key, sep, val = line.partition("=")
+        if not sep:
+            continue
+        key = key.strip()
+        val = val.strip().strip('"').strip("'")
+        if key:
+            os.environ.setdefault(key, val)
 
 
 # ── Endpoint resolution ───────────────────────────────────────────────────────

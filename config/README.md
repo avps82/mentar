@@ -10,8 +10,18 @@ cp config/inference.example.yaml config/inference.yaml   # gitignored
 # edit config/inference.yaml with your vLLM endpoint / model / keys
 ```
 
-Prefer environment variables for secrets (the example uses `${MENTAR_VLLM_API_KEY}` etc.);
-inline a real key only in `config/inference.yaml`, never in the `.example` file.
+Prefer `${VAR}` references for secrets (the example uses `${MENTAR_VLLM_API_KEY}` etc.).
+Mentar resolves them, on loading `config/inference.yaml`, from **`config/.env` first** (a
+gitignored local file — persists across terminals, no shell `export`), then the process
+environment (a real env var overrides `.env`). So put your token in `config/.env`:
+
+```bash
+# config/.env   (gitignored + caught by the pre-commit secret guard)
+MENTAR_VLLM_API_KEY=sk-...your-token...
+```
+
+Inline a real key directly in `config/inference.yaml` only if you must — never in the
+`.example` file.
 
 ## Secret safeguard (do this once per clone)
 
