@@ -48,3 +48,11 @@ items to `PHASE0_STATUS.md` (Known defects / Backlog) when they're picked up.
   whole_number_division  86%
   ```
   "Wrong pate before" *(verbatim — appears to confirm the same 86% seen earlier)*
+- Bold/markdown formatting shows up literally in the display:
+  ```
+  * **Living:** / 1 (One out of one)
+  * **Non-living:** / 0 (Zero out of one)
+  ```
+  "Bold formatting in dispay is showing up. Add this for future interface work.... Waste to do it
+  now" — i.e. the model emits markdown (`**bold**`, `*` bullets) but the web view renders plain
+  text, so the markup shows raw. **Future interface work; not now.**
