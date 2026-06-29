@@ -31,6 +31,7 @@ from mentar.eval.verify_numeric import CheckResult, check
 from mentar.grounding import resolve_grounding
 from mentar.safety.escalation import (
     HANDOFF_MESSAGE_PRIMARY,
+    Severity,
     classify,
 )
 
@@ -300,18 +301,34 @@ class SessionController:
                 return self._handle_parent_ack(learner_input)
             trigger = classify(learner_input)
             if trigger is not None:
-                ctx.state = FSMState.ESCALATION_FREEZE
-                logger.warning(
-                    "escalation: span=%s class=%s", trigger.matched_span[:80], trigger.trigger_class
-                )
-                # Persist the event for the parent (SAFETY §3.x): full UNTRUNCATED text +
-                # class. Best-effort — a DB failure must never block the safety freeze/handoff.
+                # Log every trigger for the parent (SAFETY §3.x): full UNTRUNCATED
+                # text + class. Best-effort — a DB failure must never block handling.
                 try:
                     self._store.write_escalation(
                         self._learner_id, trigger.trigger_class.value, learner_input
                     )
                 except Exception:
                     logger.warning("escalation: failed to persist escalation_log row", exc_info=True)
+
+                if trigger.severity is Severity.LOW:
+                    # LOW (adversarial_jailbreak): logged-only, NOT frozen (design §4.3).
+                    # A child poking the AI shouldn't trigger the distress handoff or end
+                    # the lesson — gently redirect and carry on with the current question.
+                    logger.info(
+                        "jailbreak (logged, not frozen): span=%s", trigger.matched_span[:80]
+                    )
+                    redirect = "Let's keep going with our maths! 😊"
+                    if ctx.current_question:
+                        redirect = f"{redirect}\n\n{ctx.current_question}"
+                    return TurnResult(
+                        state=ctx.state.value, text=redirect, done=False, escalated=False
+                    )
+
+                # CRITICAL / HIGH: freeze + parent handoff.
+                ctx.state = FSMState.ESCALATION_FREEZE
+                logger.warning(
+                    "escalation: span=%s class=%s", trigger.matched_span[:80], trigger.trigger_class
+                )
                 return TurnResult(
                     state=ctx.state.value,
                     text=HANDOFF_MESSAGE_PRIMARY,
