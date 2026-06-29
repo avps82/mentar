@@ -44,6 +44,21 @@ def test_every_generator_self_validates_many_draws():
             assert oc.result is CheckResult.PASS, (node, it.problem, it.answer, oc.result)
 
 
+def test_division_question_shows_one_noun_emoji():
+    """Generated division questions carry a single kid-friendly emoji (note 1),
+    and the emoji never affects the (verified) answer."""
+    gen = ItemGenerator(rng=random.Random(99))
+    emojis = {"⭐", "🖍️", "🍇", "🔵", "🍬", "✏️", "🍎", "🍪"}
+    seen = False
+    for _ in range(40):
+        it = gen.sample("whole_number_division")
+        assert any(e in it.problem for e in emojis), it.problem
+        # answer stays a bare int (emoji is only in the problem text)
+        assert it.answer.isdigit()
+        seen = True
+    assert seen
+
+
 def test_child_correct_answer_passes():
     # Simulate the child typing exactly the ground-truth answer (with words around it).
     gen = ItemGenerator(rng=random.Random(7))

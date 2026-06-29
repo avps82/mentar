@@ -172,17 +172,18 @@ dialogue controller, web app, eval dataset, FSM caller wiring) has **all shipped
   re-prompts, BKT updates on scored answers (verified: 0.86 → 0.514 on a wrong answer; mastery % is
   BKT `p_mastery`, NOT hardcoded and NOT a question ratio). Action: maintainer must `git pull` +
   re-test. Genuinely-new items promoted below.
-- **🆕 Emoji in questions (note 1).** Author/show emoji for quantities/nouns (e.g. "45 🍇"). Emoji
-  are Unicode — no external repo needed. Approach TBD (author into item bank vs. render-time map vs.
-  LLM-gen). Content/UX, not safety. **Open.**
-- **🆕 Parent session log + score (note 3).** Session log table is only Who/Text; add a
-  correct/wrong/help indicator per answer + a session score header ("5 correct out of 7"). Data
-  exists in `response_log` (scored, hinted) + `help_event`; needs the parent route to surface it.
-  **Open.**
-- **🆕 Wrong answer advances to a new same-concept variant (note 4b) — design.** Currently a wrong
-  answer scores, updates BKT, then `BRANCH_DECISION` presents the *next* item. Maintainer expected a
-  retry / "that's wrong, try again" on the *same* question. Pedagogy decision (retry-same vs.
-  offer-help-on-wrong vs. keep-advance). **Needs maintainer call.**
+- **✅ FIXED — Emoji in questions (note 1).** Generated questions now carry ONE kid-friendly Unicode
+  emoji next to the noun (e.g. "Share 9 sweets 🍬…", "A cake 🍰 is split…") via `_THING_EMOJI` /
+  `_WHOLE_EMOJI` in `engine/itemgen.py` — shown once (not one icon per item), answer/verifier
+  unaffected. Abstract arithmetic gens left plain. (Authored item-bank items not emoji'd — generator
+  covers the templated questions the maintainer saw; bank emoji is a follow-up if wanted.)
+- **✅ FIXED — Parent session log + score (note 3).** Parent view shows "X correct out of Y" +
+  an Answers table (✅/❌ + 🆘 help) sourced from `response_log`. PR #40.
+- **✅ FIXED — Wrong answer now auto-helps instead of advancing (note 4b).** Maintainer chose
+  "offer/auto-help on wrong": a wrong unaided answer now gives feedback (without revealing the
+  answer) and routes into the Help loop (explain + re-check) instead of `BRANCH_DECISION`. BKT still
+  records the unaided wrong; the Help loop self-limits (retry cap / modality exhaustion → LINK_BACK).
+  `dialogue/controller.py` (`_do_bkt_update`, `_answer_feedback`).
 - **✅ FIXED (prompt) — Help reframed the question instead of giving real hints (2026-06-27).**
   All 5 Help templates (`prompts/help_*.md`) now explicitly forbid restating/rewording/re-asking
   the question and require a **concrete next step worked through on the example** before the
