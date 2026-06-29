@@ -555,12 +555,16 @@ class SessionController:
             ground_truth=ground_truth,
         )
         if outcome.result in (CheckResult.SAFE_REJECT, CheckResult.EXTRACT_FAIL):
-            # Couldn't read a checkable answer (blank / gibberish like "jjjd", or
-            # malformed/ambiguous input). Don't penalise or log a scored response —
-            # tell the child and re-present. EXTRACT_FAIL especially must NOT count
-            # as a wrong attempt (it was silently scored wrong before).
-            ctx.state = FSMState.PRESENT
-            return ("Hmm, I couldn't quite read an answer there — let's try another one.", True)
+            # Couldn't read a checkable answer (blank / gibberish / malformed). Don't
+            # penalise or log — re-ask the SAME question with answer-type-aware guidance.
+            # (A vague "couldn't read" + jumping to a NEW question confused testers; this
+            # is neither correct nor wrong, so say what's needed and keep the question.)
+            ctx.state = FSMState.AWAIT_ANSWER
+            if answer_type == "mc4":
+                nudge = "I didn't catch a letter there — please answer with A, B, C or D."
+            else:
+                nudge = "Hmm, I couldn't read a number there — give it another go."
+            return (f"{nudge}\n\n{ctx.current_question}", False)
         ctx.last_scored_correct = (outcome.result is CheckResult.PASS)
         self._log_response(
             ctx.current_node_id, ctx.current_answer,
