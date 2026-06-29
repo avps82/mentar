@@ -22,6 +22,7 @@ def _client():
 
     import mentar.web.app as app_mod
     app_mod = importlib.reload(app_mod)
+    app_mod._llm_call_cached = lambda messages: "stub tutor reply"  # no network in tests
     return app_mod, app_mod.app.test_client()
 
 
@@ -52,6 +53,7 @@ def test_progress_shows_skill_after_answer():
     _app_mod, c = _client()
 
     # Kick off the session and submit one answer so a skill_state row is written.
+    c.post("/choose", data={"subject": "fractions"})
     c.get("/")
     c.post("/answer", data={"answer": "4"})
 
@@ -72,6 +74,7 @@ def test_parent_mastery_table_appears_after_answer():
 
     _app_mod, c = _client()
 
+    c.post("/choose", data={"subject": "fractions"})
     c.get("/")
     c.post("/answer", data={"answer": "4"})
 

@@ -1,0 +1,25 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<title>Mentar — Choose a topic</title>
+<style>
+  body { background:#fffbe6; font-family: 'Segoe UI', Arial, sans-serif;
+         max-width:700px; margin:40px auto; padding:20px; text-align:center; }
+  h1 { color:#4a4a4a; font-size:1.6rem; }
+  p  { color:#555; }
+  .subjects { display:flex; flex-wrap:wrap; gap:16px; justify-content:center; margin-top:24px; }
+  .subject-btn { font-size:1.3rem; padding:22px 28px; background:#fff; color:#333;
+                 border:2px solid #4caf50; border-radius:14px; cursor:pointer;
+                 box-shadow:0 2px 8px rgba(0,0,0,0.08); min-width:180px; }
+  .subject-btn:hover { background:#4caf50; color:#fff; }
+</style>
+</head><body>
+<h1>🍕 Mentar</h1>
+<p>What would you like to learn today?</p>
+<div class="subjects">
+  {% for key, s in subjects.items() %}
+  <form method="POST" action="/choose">
+    <input type="hidden" name="subject" value="{{ key }}">
+    <button class="subject-btn" type="submit">{{ s.label }}</button>
+  </form>
+  {% endfor %}
+</div>
+</body></html>
