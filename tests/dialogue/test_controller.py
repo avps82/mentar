@@ -182,17 +182,21 @@ def test_help_recheck_skip_rejected():
     assert "try" in result.text.lower() or "guess" in result.text.lower()
 
 
-def test_help_explanation_not_swallowed():
-    """A Help turn returns BOTH the explanation and the re-check question (not just the last)."""
+def test_help_explanation_not_swallowed_and_one_question():
+    """A Help turn shows the explanation (not swallowed) and re-tries the SAME
+    question — exactly ONE question to answer, not a new different one."""
     calls = {"n": 0}
     def counting_llm(msgs):
         calls["n"] += 1
         return f"LLM_MSG_{calls['n']}"
     ctrl = _make_controller(llm_fn=counting_llm)
-    ctrl.step(None)                      # present (LLM_MSG_1)
-    result = ctrl.step("?")              # help_explain (LLM_MSG_2) + recheck present (LLM_MSG_3)
+    ctrl.step(None)                      # present (LLM_MSG_1) -> current_question
+    result = ctrl.step("?")              # Q) LLM_MSG_1 + explain (LLM_MSG_2) + "Now you try it!"
     assert result.state == FSMState.HELP_RECHECK_AWAIT.value
-    assert "LLM_MSG_2" in result.text and "LLM_MSG_3" in result.text
+    assert "LLM_MSG_2" in result.text                    # explanation shown, not swallowed
+    assert "Now you try it" in result.text               # re-try the same question
+    # only ONE question presented (the original, shown once as Q) — no second new one.
+    assert result.text.count("Q) ") == 1
 
 
 def test_stop_in_help_recheck_ends_session():
@@ -317,7 +321,7 @@ def _smoke():
     test_escalation_is_absorbing(); print("[smoke] escalation absorbing OK")
     test_help_request_enters_help_loop(); print("[smoke] help loop OK")
     test_help_recheck_skip_rejected(); print("[smoke] skip reject OK")
-    test_help_explanation_not_swallowed(); print("[smoke] help explanation shown OK")
+    test_help_explanation_not_swallowed_and_one_question(); print("[smoke] help explanation shown OK")
     test_stop_in_help_recheck_ends_session(); print("[smoke] stop in help recheck OK")
     test_stop_in_probe_ends_session(); print("[smoke] stop in probe OK")
     test_all_mastered_ends_session(); print("[smoke] all mastered OK")

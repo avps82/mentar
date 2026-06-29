@@ -639,6 +639,20 @@ class SessionController:
         )
 
     @staticmethod
+    def _strip_trailing_questions(text: str) -> str:
+        """Drop trailing question lines a model appends to a Help explanation.
+
+        The FSM owns the single practice question; a tacked-on "… = ?" (often with a
+        trailing emoji, so it doesn't even end in '?') makes it unclear which to
+        answer. Remove trailing blank/question-bearing lines, keeping the prose +
+        completed worked example.
+        """
+        lines = text.rstrip().split("\n")
+        while lines and (not lines[-1].strip() or "?" in lines[-1]):
+            lines.pop()
+        return "\n".join(lines).rstrip()
+
+    @staticmethod
     def _answer_feedback(correct: bool) -> str:
         """Short, warm, deterministic right/wrong feedback for a scored answer.
 
@@ -724,6 +738,10 @@ class SessionController:
             {"role": "system", "content": system_text},
             {"role": "user", "content": help_text},
         ])
+        # Deterministic guard: small models tack a question onto the explanation
+        # (e.g. "10 ÷ 5 = ? ⭐"), which collides with the FSM's single practice
+        # question. Strip trailing question lines so only ONE question is live.
+        explanation = self._strip_trailing_questions(explanation or "")
         if not (explanation and explanation.strip()):
             # LLM unavailable/empty — never leave the child with no hint.
             explanation = self._fallback_hint(ctx.current_node_id)
@@ -735,12 +753,16 @@ class SessionController:
 
     def _do_help_recheck_present(self) -> tuple[str, bool]:
         ctx = self._ctx
-        item = self._sample_item(ctx.current_node_id)
-        if item is not None:
-            ctx.current_item = item
-            ctx.current_question = item.problem
+        # ONE question at a time: re-try the SAME question the child is on (it's
+        # already shown as "Q) …" above), rather than posing a new, different one.
+        if ctx.current_item is not None:
             ctx.state = FSMState.HELP_RECHECK_AWAIT
-            return (item.problem, False)
+            return ("Now you try it! ✏️", False)
+        # No checkable item (LLM-generated question path): re-ask the same question
+        # text if we have it; else generate a transfer question (legacy fallback).
+        if ctx.current_question:
+            ctx.state = FSMState.HELP_RECHECK_AWAIT
+            return ("Now you try it! ✏️", False)
         ctx.current_item = None
         node = self._curriculum[ctx.current_node_id]
         passage = resolve_grounding(node.get("grounding", {}), self._grounding_cfg)
