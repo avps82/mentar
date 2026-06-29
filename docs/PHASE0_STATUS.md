@@ -165,15 +165,12 @@ dialogue controller, web app, eval dataset, FSM caller wiring) has **all shipped
 - **W7.4** — real Vikidia/Simple-WP ZIM download + reader path verification (needs NAS/ZIMs).
 
 ### Known defects (found in testing)
-- **🛡️ Severity-blind freeze — LOW jailbreak triggers the full distress freeze (2026-06-29).**
-  `controller.py::_step_core` enters `ESCALATION_FREEZE` + shows `HANDOFF_MESSAGE_PRIMARY` (the
-  *distress/safeguarding* handoff) on **any** `classify()` match, ignoring `Severity`. So a
-  LOW-severity `adversarial_jailbreak` (e.g. a base64 "ignore all previous instructions") freezes
-  the lesson and shows a distress message — over-escalation, and the **wrong message** for a
-  jailbreak. Design §4.3 / the `TestPositiveAdversarialJailbreak` docstring intend jailbreak to be
-  **logged-only, NOT frozen**. **Decision needed:** LOW jailbreak → logged + gentle "let's stick to
-  maths" redirect (continue) vs CRITICAL/HIGH → freeze + handoff (current, correct for those).
-  Found via the prompt-injection test pass. **Noted, not actioned.**
+- **✅ FIXED — severity-blind freeze (2026-06-29).** `controller.py::_step_core` now branches on
+  `Severity`: **CRITICAL/HIGH** → `ESCALATION_FREEZE` + handoff (unchanged); **LOW**
+  (`adversarial_jailbreak`) → **logged-only, NOT frozen** (design §4.3) — logs to escalation_log,
+  shows a gentle "let's keep going with our maths!" redirect, and continues the lesson with the
+  current question. No more distress-handoff for a base64/leetspeak jailbreak. Tests
+  `test_jailbreak_logged_not_frozen` + `test_critical_still_freezes`.
 - **🛡️ Prompt-injection classifier — hardened (2026-06-29).** Test set at
   `eval/redteam/prompt_injection.jsonl`. Added **system-prompt-extraction** patterns and a
   **de-obfuscation fallback** (leetspeak / spacing / base64 → normalise then match) to the
