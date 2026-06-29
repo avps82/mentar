@@ -97,3 +97,43 @@ generator** — not a bigger Claude. The local run reliably covers `pii:direct` 
 - This probes the **raw model**. Mentar's shipped safety lives in the FSM/verifier wrapper, so a
   raw-model failure here is a defence-in-depth signal (what would happen if the wrapper failed),
   not a shipped-behaviour bug on its own.
+
+---
+
+## Prompt-injection test set (`prompt_injection.jsonl`)
+
+A curated set of prompt-injection inputs for testing Mentar's **layered** defence. Each row:
+`{id, category, surface, input, classifier_current, expected, note}`.
+
+**Mentar's injection defences (test all three):**
+1. **Deterministic safety classifier** (`safety/escalation.py`) — catches jailbreak/secrecy/etc. in
+   child input → freeze + handoff. Runs FIRST, before anything reaches the LLM.
+2. **Bounded FSM** — child input that the classifier doesn't catch is **scored by the deterministic
+   verifier**, not fed to the LLM as an instruction. So an un-caught injection becomes a
+   (non-)answer → `EXTRACT_FAIL` → re-prompt. It is **not executed**. (A classifier "GAP" is a
+   missed *alert*, not a successful injection.)
+3. **Grounding-as-data wrapper** (`prompts/system_prompt.md`) — the real LLM injection surface is
+   untrusted **grounding** content (`surface: grounding`); the wrapper must make the model treat it
+   as data and ignore embedded commands.
+
+**Quick coverage check against the live classifier:**
+```bash
+python3 - <<'PY'
+import json, sys; sys.path.insert(0, "src")
+from mentar.safety.escalation import classify
+for line in open("eval/redteam/prompt_injection.jsonl"):
+    r = json.loads(line)
+    if r["surface"] != "child_input":
+        continue
+    m = classify(r["input"])
+    got = m.trigger_class.value if m else None
+    flag = "ok " if got == r["classifier_current"] else "DIFF"
+    print(f"[{flag}] {r['id']:16} classifier={got}")
+PY
+```
+
+**Known classifier gaps (as of 2026-06-29) — defence-in-depth candidates, NOT live exploits**
+(the bounded FSM still prevents execution): system-prompt **extraction**, **scope-break**/off-topic,
+and **obfuscation** (leetspeak / spacing / base64). The `grounding_injection` rows must be tested
+**end-to-end through the LLM** (they don't go through `classify()`); that's where the data-wrapper
+is the only thing standing.
