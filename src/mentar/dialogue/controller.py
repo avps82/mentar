@@ -45,6 +45,23 @@ STALE_MASTERY_DAYS = 14  # mastery older than this counts as "stale" for forgett
 # both recorded in session.ended_reason. See docs/design/W5.6_decision_prep.md.)
 ASSENT_LINE = "Remember — you can stop anytime, just say 'stop'."
 
+# Deterministic feedback phrasings — varied (not static) so the tutor doesn't sound robotic.
+# Edit/extend these pools to retune the voice; one is chosen at random per turn.
+PRAISE_VARIANTS = [
+    "That's right — nice work!",
+    "Correct! Well done.",
+    "Yes, that's it — great job!",
+    "Spot on — brilliant!",
+    "You got it — awesome!",
+]
+WRONG_VARIANTS = [
+    "Not quite — that's okay, mistakes help us learn. Let's work through it together.",
+    "Good try! That's not quite it — let's figure it out together.",
+    "Not this time — no worries, let's take a look together.",
+    "Close! Let's work through it step by step.",
+    "Hmm, not quite — let's sort it out together.",
+]
+
 
 def _is_stop(text: str) -> bool:
     return text.strip().lower() in STOP_WORDS
@@ -629,15 +646,8 @@ class SessionController:
         BKT_UPDATE) works through it instead.
         """
         if correct:
-            return random.choice([
-                "That's right — nice work!",
-                "Correct! Well done.",
-                "Yes, that's it — great job!",
-            ])
-        return (
-            "Not quite — that's okay, mistakes help us learn. "
-            "Let's work through it together."
-        )
+            return random.choice(PRAISE_VARIANTS)
+        return random.choice(WRONG_VARIANTS)
 
     def _do_bkt_update(self, hinted: bool) -> tuple[str, bool]:
         ctx = self._ctx
@@ -717,6 +727,9 @@ class SessionController:
         if not (explanation and explanation.strip()):
             # LLM unavailable/empty — never leave the child with no hint.
             explanation = self._fallback_hint(ctx.current_node_id)
+        if ctx.current_question:
+            # Show the question being explained first, labelled, for context.
+            explanation = f"Q) {ctx.current_question}\n\n{explanation}"
         ctx.state = FSMState.HELP_RECHECK_PRESENT
         return (explanation, True)
 
