@@ -37,3 +37,4 @@ items to `PHASE0_STATUS.md` (Known defects / Backlog) when they're picked up.
   Child     asrgsdf
   Mentar    Share 30 crayons equally among 5 bags. How many crayons does each get?
   ```
+- Feedback has dies off. For bad ones... is it that no ai is used???
