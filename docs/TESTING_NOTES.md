@@ -41,3 +41,10 @@ items to `PHASE0_STATUS.md` (Known defects / Backlog) when they're picked up.
 - (Same interaction transcript as above re-pasted.) Added observation: "The 86% is constant... is
   this hard coded?" — i.e. the parent-view mastery % does not move across the wrong/gibberish
   answers in the transcript.
+- Parent-view skill table shown:
+
+  ```
+  Skill                  Mastery %
+  whole_number_division  86%
+  ```
+  "Wrong pate before" *(verbatim — appears to confirm the same 86% seen earlier)*
