@@ -268,6 +268,8 @@ llamacpp:
 | Model not found | The `model:` in the config doesn't match a pulled tag — run `ollama list`. |
 | First reply is slow | The model is loading into memory; later turns are faster. |
 | `Illegal instruction` (GGUF path) | Pre-AVX2 CPU — rebuild `llama-cpp-python` from source (see box above). |
+| `mentar: bad interpreter: …/.venv/bin/pythonX.Y: no such file or directory` | The venv's Python was upgraded/removed (e.g. a Homebrew patch bump), so the venv dangles. Recreate it: `rm -rf .venv && python3 -m venv .venv && source .venv/bin/activate && pip install -e ".[web]"` (add `,setup,grounding` only if running a local model / ZIM). |
+| `401` from the proxy (LiteLLM/vLLM) | `MENTAR_VLLM_API_KEY` isn't set in the shell/service running Mentar — `export` it there (the `${VAR}` in the config is read from the environment). |
 
 ## Optional: offline grounding (ZIM)
 
