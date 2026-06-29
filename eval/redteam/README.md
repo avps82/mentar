@@ -132,8 +132,9 @@ for line in open("eval/redteam/prompt_injection.jsonl"):
 PY
 ```
 
-**Known classifier gaps (as of 2026-06-29) — defence-in-depth candidates, NOT live exploits**
-(the bounded FSM still prevents execution): system-prompt **extraction**, **scope-break**/off-topic,
-and **obfuscation** (leetspeak / spacing / base64). The `grounding_injection` rows must be tested
+**Classifier coverage (updated 2026-06-29):** override, persona, secrecy, **extraction**, and
+**obfuscation** (leetspeak / spacing / base64, via a de-obfuscation fallback) are now caught.
+Remaining gaps (defence-in-depth, NOT live exploits — bounded FSM still prevents execution):
+**scope-break**/off-topic and bare "forget you are a tutor". The `grounding_injection` rows must be tested
 **end-to-end through the LLM** (they don't go through `classify()`); that's where the data-wrapper
 is the only thing standing.

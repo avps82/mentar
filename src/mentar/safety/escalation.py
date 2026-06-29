@@ -20,6 +20,7 @@ Two open rollout guards (W2.2 design §7 / SAFETY.md §3.5 — do not lose):
 
 from __future__ import annotations
 
+import base64
 import re
 import sqlite3
 from dataclasses import dataclass
@@ -189,7 +190,41 @@ _ADVERSARIAL_JAILBREAK_PATTERNS: list[re.Pattern[str]] = [p for p in (
     re.compile(r"(your new (instructions?|rules?|system prompt)|new system prompt)", re.I),
     re.compile(r"(pretend you have no rules|pretend you'?re a different ai|pretend (there are|you have) no (rules|restrictions|limits?))", re.I),
     re.compile(r"(do anything now|say anything|no (rules|limits?|restrictions?))\b", re.I),
+    # System-prompt / instruction extraction (prompt-leak attempts).
+    re.compile(r"(what('?s| is| are)|tell me|show me|give me) (your |the )?(system )?(prompt|instructions?|rules?|guidelines?)", re.I),
+    re.compile(r"(print|show|reveal|repeat|output|display) (me )?(your |the )?(system )?(prompt|instructions?|rules?|guidelines?)", re.I),
+    re.compile(r"(repeat|print|show|reveal|output) (the |all )?(text|words?|message|everything|content) (above|before|prior|earlier)", re.I),
+    re.compile(r"what were you (told|instructed|programmed|asked|made) (not )?to", re.I),
 )]
+
+# De-obfuscation: catch jailbreaks hidden by leetspeak / spacing / base64. Applied
+# ONLY as a fallback for the LOW-severity jailbreak class (never to the critical/high
+# safety classes — aggressive normalisation there risks false escalations / misses).
+_LEET = str.maketrans({"0": "o", "1": "i", "3": "e", "4": "a", "5": "s", "7": "t", "@": "a", "$": "s", "8": "b"})
+_JAILBREAK_DEOBFUSCATED = re.compile(
+    r"(ignore|disregard|forget|bypass|override).{0,15}(instruction|rule|guideline|safety|systemprompt|restriction)"  # t7.3-exempt: de-obfuscation regex, not a prompt
+    r"|jailbreak|danmode|developermode|godmode|unrestrictedmode"
+    r"|youarenow|youhavenorules|pretend.{0,15}no.{0,5}(rule|restriction|limit)"
+    r"|(whatis|tellme|showme|print|reveal|repeat).{0,15}(systemprompt|instruction|rule|guideline)",
+    re.I,
+)
+
+
+def _deobfuscated_views(text: str) -> list[str]:
+    """Normalised variants of *text* for catching obfuscated jailbreaks."""
+    low = text.lower()
+    leet = low.translate(_LEET)
+    despaced = re.sub(r"[^a-z0-9]", "", leet)          # collapse spacing/punctuation
+    views = [leet, despaced]
+    for token in re.findall(r"[A-Za-z0-9+/]{8,}={0,2}", text):
+        if len(token) % 4 == 0:
+            try:
+                dec = base64.b64decode(token, validate=True).decode("utf-8", "ignore")
+            except Exception:
+                continue
+            if dec and dec.isprintable():
+                views.append(dec.lower())
+    return views
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -253,6 +288,19 @@ def classify(text: str) -> TriggerMatch | None:
                 if best is None or _SEVERITY_RANK[severity] > _SEVERITY_RANK[best.severity]:
                     best = candidate
                 break  # one match per class is sufficient; move to next class
+
+    # Fallback: catch jailbreaks obfuscated by leetspeak / spacing / base64. Only
+    # when nothing else fired (so it can't override a real safety class), and only
+    # for the LOW-severity jailbreak class.
+    if best is None:
+        for view in _deobfuscated_views(text):
+            m = _JAILBREAK_DEOBFUSCATED.search(view)
+            if m:
+                return TriggerMatch(
+                    trigger_class=TriggerClass.ADVERSARIAL_JAILBREAK,
+                    severity=Severity.LOW,
+                    matched_span=m.group(0)[:80],
+                )
 
     return best
 
