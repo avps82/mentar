@@ -513,7 +513,8 @@ class SessionController:
             ctx.current_item = item
             ctx.current_question = item.problem
             ctx.state = FSMState.AWAIT_ANSWER
-            return (item.problem, False)
+            hint = self._answer_format_hint(item.answer_type)
+            return (f"{item.problem} {hint}".rstrip(), False)
         # Fallback: LLM-generated question (nodes without a bank / legacy callers).
         ctx.current_item = None
         passage = resolve_grounding(node.get("grounding", {}), self._grounding_cfg)
@@ -525,7 +526,8 @@ class SessionController:
         ])
         ctx.current_question = question
         ctx.state = FSMState.AWAIT_ANSWER
-        return (question, False)
+        hint = self._answer_format_hint(node.get("answer_type", ""))
+        return (f"{question} {hint}".rstrip(), False)
 
     # ── Item / answer-spec helpers ──────────────────────────────────────────────
 
@@ -876,7 +878,8 @@ class SessionController:
             ctx.current_item = item
             ctx.current_question = item.problem
             ctx.state = FSMState.PROBE_AWAIT_ANSWER
-            return (item.problem, False)
+            hint = self._answer_format_hint(item.answer_type)
+            return (f"{item.problem} {hint}".rstrip(), False)
         ctx.current_item = None
         node = self._curriculum[ctx.current_node_id]
         passage = resolve_grounding(node.get("grounding", {}), self._grounding_cfg)
@@ -891,7 +894,8 @@ class SessionController:
         ])
         ctx.current_question = probe_q
         ctx.state = FSMState.PROBE_AWAIT_ANSWER
-        return (probe_q, False)
+        hint = self._answer_format_hint(node.get("answer_type", ""))
+        return (f"{probe_q} {hint}".rstrip(), False)
 
     def _do_probe_await_answer(self, inp: str | None) -> tuple[str, bool]:
         ctx = self._ctx

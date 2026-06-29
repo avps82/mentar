@@ -302,6 +302,15 @@ def test_mc_gibberish_asks_for_a_letter_same_question():
     assert ctrl._ctx.last_scored_correct is None      # neither correct nor wrong
 
 
+def test_main_question_shows_answer_format_hint():
+    """The presented (main) question shows the answer-shape hint too, while
+    current_question stays pure (so the Help 'Q)' prefix never doubles it)."""
+    ctrl = _make_controller()                 # unit_fractions (answer_type fraction)
+    r = ctrl.step(None)
+    assert "_/_" in r.text
+    assert "_/_" not in ctrl._ctx.current_question  # stored question stays clean
+
+
 def test_help_recheck_shows_answer_format_hint():
     """'Now you try it!' shows the expected answer SHAPE from the known answer type
     (deterministic, must match the verifier) — '_/_' for fractions, a letter for MC."""
