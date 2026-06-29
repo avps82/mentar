@@ -302,6 +302,23 @@ def test_mc_gibberish_asks_for_a_letter_same_question():
     assert ctrl._ctx.last_scored_correct is None      # neither correct nor wrong
 
 
+def test_mastered_node_advances_not_endless_probe():
+    """Regression: once a node hit mastery, the FSM re-probed it EVERY turn (silent,
+    no feedback, wrong answers slipped through). A probe must resolve + advance.
+    Single-node curriculum: mastering it must COMPLETE the session, not loop."""
+    ctrl = _make_controller()                 # single unit_fractions node, answer 1/3
+    ctrl.step(None)
+    probe_seen = 0
+    for _ in range(15):
+        if ctrl._ctx.state.value == FSMState.PROBE_AWAIT_ANSWER.value:
+            probe_seen += 1
+        r = ctrl.step("1/3")                  # always correct
+        if r.done:
+            break
+    assert ctrl._ctx.state.value == FSMState.SESSION_END_COMPLETE.value
+    assert probe_seen <= 2, f"stuck re-probing ({probe_seen}x)"
+
+
 def test_all_mastered_ends_session():
     """When fringe is empty (all mastered), SESSION_END_COMPLETE is returned."""
     ctrl = _make_controller(
