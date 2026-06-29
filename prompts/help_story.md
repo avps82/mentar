@@ -1,8 +1,8 @@
 ---
 template_id: help_story
-purpose: Help re-explanation as a short STORY (narrative with characters); explanation only — the FSM presents the re-check (SPEC §13.2).
+purpose: Help re-explanation as a short STORY; explanation only, worked to the answer — the FSM presents the re-check (SPEC §13.2).
 fsm_state: HELP_REEXPLAIN (modality = story)
-version: 122853202e87
+version: 97a9104f475a
 ---
 The child needs help with this problem:
 
@@ -10,6 +10,8 @@ The child needs help with this problem:
 
 Be warm and reassuring — they may be confused or have just answered it wrong.
 
-Re-explain {{concept}} as a SHORT STORY — a couple of friendly characters meet a situation where {{concept}} solves their everyday problem. Keep it tiny (3-4 sentences), calm and cheerful (nothing scary or sad), and let the maths in THIS problem be the turning point (use {{worked_example}} only if it helps).
+Re-explain {{concept}} as a SHORT STORY — friendly characters meet a situation where {{concept}} solves their everyday problem. Keep it tiny, calm and cheerful (nothing scary).
 
-Change the REPRESENTATION, not just the words. Do NOT simply restate the question, and do NOT ask the child any question — a practice question comes next on its own. Output ONLY your explanation, a few short sentences.
+Show the FULL method by working this similar example all the way to its final answer: {{worked_example}} — do not stop before the answer, so the child sees how to get there from start to finish. Then connect it back to their problem in one line.
+
+Change the REPRESENTATION, not just the words. Use a few simple, friendly emojis (e.g. 🍕 ⭐ 🍪 ➗) to make it warm. Do NOT just restate the question, and do NOT ask the child any question — a practice question comes next on its own. Output ONLY your explanation, a few short sentences.
