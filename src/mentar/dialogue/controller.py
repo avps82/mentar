@@ -946,7 +946,7 @@ class SessionController:
             .replace("{{concept}}", node.get("concept", "fractions"))
             .replace("{{answer_type}}", node.get("answer_type", "fraction"))
             .replace("{{grounding_passage}}", passage)
-            .replace("{{worked_example}}", worked_example)
+            .replace("{{worked_example}}", worked_example or "a simple example with small numbers")
             .replace("{{question}}", question or "the question they're working on")
         )
 
