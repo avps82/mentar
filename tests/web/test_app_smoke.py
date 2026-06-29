@@ -28,6 +28,9 @@ def _client():
 
     import mentar.web.app as app_mod
     app_mod = importlib.reload(app_mod)
+    # Stub the LLM so tests never hit the network (auto-help on a wrong answer
+    # would otherwise call the backend and hang on retries).
+    app_mod._llm_call_cached = lambda messages: "stub tutor reply"
     return app_mod, app_mod.app.test_client()
 
 
@@ -40,6 +43,13 @@ def test_web_learner_flow():
 
     app_mod, c = _client()
 
+    # No subject chosen yet -> the picker is shown.
+    r = c.get("/")
+    assert r.status_code == 200
+    assert "Choose a topic" in r.get_data(as_text=True) or "learn today" in r.get_data(as_text=True)
+
+    # Choose a subject, then a question is presented.
+    c.post("/choose", data={"subject": "fractions"})
     r = c.get("/")
     assert r.status_code == 200
     assert len(r.get_data(as_text=True)) > 100          # a question rendered
@@ -71,6 +81,7 @@ def test_parent_view_reads_db_and_persists_ack():
     dbp = os.environ["MENTAR_DB_PATH"]
 
     # A normal turn so the transcript + a scored response persist to the DB.
+    c.post("/choose", data={"subject": "fractions"})
     c.get("/")
     c.post("/answer", data={"answer": "4"})
 

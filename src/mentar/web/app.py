@@ -30,7 +30,13 @@ from flask import Flask, redirect, render_template, request, session, url_for
 from mentar.db.store import LearnerStore
 from mentar.dialogue.controller import FSMState, SessionController
 from mentar.engine.itembank import load_item_bank
-from mentar.engine.itemgen import build_item_source
+from mentar.engine.itemgen import (
+    ARITHMETIC_GENERATORS,
+    DEFAULT_GENERATORS,
+    CompositeItemSource,
+    ItemGenerator,
+)
+from mentar.engine.science_items import SCIENCE_GENERATORS
 from mentar.inference import load_inference_config, make_llm_call
 
 app = Flask(__name__, template_folder="templates")
@@ -82,6 +88,34 @@ def _load_curriculum(path: Path) -> dict:
 
 _CURRICULUM = _load_curriculum(CURRICULUM_PATH)
 
+# ── Subjects (multi-topic testing) ──────────────────────────────────────────────
+# Each subject = a curriculum template + its checkable-item source. Fractions keeps
+# the authored bank (Option A); the new subjects are fully generator-driven.
+_TPL = _REPO / "curriculum" / "templates" / "_pilot"
+SUBJECTS: dict[str, dict] = {
+    "fractions": {
+        "label": "Fractions 🍕",
+        "curriculum": CURRICULUM_PATH,
+        "itembank": ITEMBANK_PATH,
+        "generators": DEFAULT_GENERATORS,
+    },
+    "arithmetic": {
+        "label": "Maths: + − × 🔢",
+        "curriculum": _TPL / "arithmetic.md",
+        "itembank": None,
+        "generators": ARITHMETIC_GENERATORS,
+    },
+    "science": {
+        "label": "Science 🔬",
+        "curriculum": _TPL / "science.md",
+        "itembank": None,
+        "generators": SCIENCE_GENERATORS,
+    },
+}
+DEFAULT_SUBJECT = "fractions"
+_SUBJECT_CURRICULA = {k: _load_curriculum(v["curriculum"]) for k, v in SUBJECTS.items()}
+_learner_subject: dict[str, str] = {}   # learner_uuid -> active subject key
+
 # Inference backend: prefer config/inference.yaml (the canonical, backend-agnostic
 # source — llamacpp/vllm/ollama). Fall back to the legacy MENTAR_LLM_* env vars so an
 # existing env-only setup keeps working (treated as an OpenAI-compatible endpoint).
@@ -112,28 +146,42 @@ _stores: dict[str, LearnerStore] = {}
 _db_learner_ids: dict[str, int] = {}        # flask-session learner_uuid -> DB int id
 
 
-def _get_or_create_controller(learner_uuid: str) -> SessionController:
+def _get_or_create_controller(learner_uuid: str, subject: str) -> SessionController:
+    # Switching subject starts a fresh session for that subject (new controller +
+    # turn log + session_id). The DB store/learner is shared (skill_state is keyed
+    # by node id, which is distinct across subjects, so there's no collision).
+    if _learner_subject.get(learner_uuid) != subject:
+        _controllers.pop(learner_uuid, None)
+        _turn_logs[learner_uuid] = []
+        _learner_subject[learner_uuid] = subject
+
     if learner_uuid not in _controllers:
-        store = LearnerStore(DB_PATH)
-        _stores[learner_uuid] = store
-        db_id = store.create_learner(
-            name=f"pilot-{learner_uuid[:8]}",
-            year_level="pilot",
-            country="GB",
-            age_mode="parent_mediated",  # SPEC §6.2 pilot default
+        store = _stores.get(learner_uuid)
+        if store is None:
+            store = LearnerStore(DB_PATH)
+            _stores[learner_uuid] = store
+            _db_learner_ids[learner_uuid] = store.create_learner(
+                name=f"pilot-{learner_uuid[:8]}",
+                year_level="pilot",
+                country="GB",
+                age_mode="parent_mediated",  # SPEC §6.2 pilot default
+            )
+        db_id = _db_learner_ids[learner_uuid]
+        subj = SUBJECTS[subject]
+        bank = (
+            load_item_bank(subj["itembank"])
+            if subj["itembank"] and Path(subj["itembank"]).exists()
+            else None
         )
-        _db_learner_ids[learner_uuid] = db_id
-        bank = load_item_bank(ITEMBANK_PATH) if ITEMBANK_PATH.exists() else None
-        # item_source: composite (default, generator+bank) | generator | bank
-        item_bank = build_item_source(_INFERENCE_CFG.get("item_source", "composite"), bank=bank)
+        item_source = CompositeItemSource(ItemGenerator(generators=subj["generators"]), bank)
         _controllers[learner_uuid] = SessionController(
             llm_call=_llm_call,
             prompt_dir=PROMPT_DIR,
             grounding_cfg=_GROUNDING_CFG,
-            curriculum=_CURRICULUM,
+            curriculum=_SUBJECT_CURRICULA[subject],
             db_store=_DbStoreAdapter(store, db_id),
             learner_id=learner_uuid,
-            item_bank=item_bank,
+            item_bank=item_source,
         )
         _turn_logs[learner_uuid] = []
     return _controllers[learner_uuid]
@@ -212,7 +260,12 @@ def index():
         learner_uuid = str(uuid.uuid4())
         session["learner_uuid"] = learner_uuid
 
-    ctrl = _get_or_create_controller(learner_uuid)
+    subject = session.get("subject")
+    if subject not in SUBJECTS:
+        # No topic chosen yet — show the picker.
+        return render_template("subjects.html", subjects=SUBJECTS)
+
+    ctrl = _get_or_create_controller(learner_uuid, subject)
 
     # Only call step(None) to initialise — subsequent renders just show the last question.
     if ctrl.state == FSMState.SESSION_START.value:
@@ -225,7 +278,20 @@ def index():
 
     # Re-display the last Mentar question from the log (don't call step again).
     question = _last_mentar_text(learner_uuid) or "Ready when you are!"
-    return render_template("learner.html", question=question)
+    return render_template(
+        "learner.html", question=question, subject_label=SUBJECTS[subject]["label"]
+    )
+
+
+@app.route("/choose", methods=["GET", "POST"])
+def choose():
+    """Subject picker: GET shows the topics, POST selects one and starts it."""
+    if request.method == "POST":
+        subject = request.form.get("subject")
+        if subject in SUBJECTS:
+            session["subject"] = subject
+        return redirect(url_for("index"))
+    return render_template("subjects.html", subjects=SUBJECTS)
 
 
 @app.route("/answer", methods=["POST"])

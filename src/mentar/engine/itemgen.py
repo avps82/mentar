@@ -115,6 +115,24 @@ def _gen_comparing_equal_denom(rng: random.Random):
             f"{hi}/{d}")
 
 
+# ── Maths: whole-number arithmetic (subject = mathematics, beyond fractions) ──
+
+def _gen_multiplication(rng: random.Random):
+    a, b = rng.randint(2, 9), rng.randint(2, 9)
+    return ("int", "int_exact", f"What is {a} × {b}?", str(a * b))
+
+
+def _gen_addition(rng: random.Random):
+    a, b = rng.randint(10, 99), rng.randint(10, 99)
+    return ("int", "int_exact", f"What is {a} + {b}?", str(a + b))
+
+
+def _gen_subtraction(rng: random.Random):
+    a = rng.randint(20, 99)
+    b = rng.randint(1, a - 1)          # positive result
+    return ("int", "int_exact", f"What is {a} − {b}?", str(a - b))
+
+
 # Registry — node_id -> generator. Conceptual/visual nodes (equal_vs_unequal_parts) are
 # intentionally absent; CompositeItemSource falls back to the authored bank for those.
 DEFAULT_GENERATORS: dict[str, GenFn] = {
@@ -125,6 +143,13 @@ DEFAULT_GENERATORS: dict[str, GenFn] = {
     "adding_equal_denom": _gen_adding_equal_denom,
     "subtracting_equal_denom": _gen_subtracting_equal_denom,
     "comparing_equal_denom": _gen_comparing_equal_denom,
+}
+
+# Maths arithmetic subject (separate curriculum) — node_id -> generator.
+ARITHMETIC_GENERATORS: dict[str, GenFn] = {
+    "addition": _gen_addition,
+    "subtraction": _gen_subtraction,
+    "multiplication": _gen_multiplication,
 }
 
 
