@@ -38,3 +38,6 @@ items to `PHASE0_STATUS.md` (Known defects / Backlog) when they're picked up.
   Mentar    Share 30 crayons equally among 5 bags. How many crayons does each get?
   ```
 - Feedback has dies off. For bad ones... is it that no ai is used???
+- (Same interaction transcript as above re-pasted.) Added observation: "The 86% is constant... is
+  this hard coded?" — i.e. the parent-view mastery % does not move across the wrong/gibberish
+  answers in the transcript.
