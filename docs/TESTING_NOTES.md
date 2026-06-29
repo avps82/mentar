@@ -18,3 +18,22 @@ items to `PHASE0_STATUS.md` (Known defects / Backlog) when they're picked up.
   in the session summary...
 - Wrong answer is going to the different version of the same question... even after all of it is
   wrong. First it clearly doesn't say if it's wrong.
+- See the below intractions:
+
+  ```
+  Mentar    Great job! Let's keep going. Share 16 cookies equally among 4 bags. How many cookies does each get?
+  Child     4
+  Mentar    Share 45 cookies equally among 5 plates. How many cookies does each get?
+  Child     44
+  Mentar    Share 12 sweets equally among 6 boxes. How many sweets does each get?
+  Child     566
+  Mentar    Share 36 marbles equally among 4 children. How many marbles does each get?
+  Child     45
+  Mentar    Share 24 marbles equally among 3 bags. How many marbles does each get?
+  Child     3456
+  Mentar    Share 6 stickers equally among 3 plates. How many stickers does each get?
+  Child     344556
+  Mentar    Share 36 grapes equally among 4 children. How many grapes does each get?
+  Child     asrgsdf
+  Mentar    Share 30 crayons equally among 5 bags. How many crayons does each get?
+  ```
