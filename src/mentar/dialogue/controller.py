@@ -567,10 +567,10 @@ class SessionController:
             scored=ctx.last_scored_correct, hinted=False, outcome=outcome,
         )
         ctx.state = FSMState.BKT_UPDATE
-        # Deterministic correctness feedback — the child must be told right/wrong
-        # (and the correct answer when wrong), per the system-prompt honesty rule.
-        # Uses the verified ground truth, so it can never tell a child wrong maths.
-        return (self._answer_feedback(ctx.last_scored_correct, ground_truth), True)
+        # Deterministic correctness feedback — the child must be told right/wrong.
+        # On a wrong answer we do NOT reveal the answer here: BKT_UPDATE routes a
+        # wrong unaided answer into the Help loop to work through it (note 4b).
+        return (self._answer_feedback(ctx.last_scored_correct), True)
 
     @staticmethod
     def _make_safe_llm(llm_call):
@@ -618,8 +618,12 @@ class SessionController:
         )
 
     @staticmethod
-    def _answer_feedback(correct: bool, ground_truth: str) -> str:
-        """Short, warm, deterministic right/wrong feedback for a scored answer."""
+    def _answer_feedback(correct: bool) -> str:
+        """Short, warm, deterministic right/wrong feedback for a scored answer.
+
+        On wrong we don't reveal the answer — the Help loop (entered from
+        BKT_UPDATE) works through it instead.
+        """
         if correct:
             return random.choice([
                 "That's right — nice work!",
@@ -627,8 +631,8 @@ class SessionController:
                 "Yes, that's it — great job!",
             ])
         return (
-            f"Not quite — the answer is {ground_truth}. "
-            "That's okay, mistakes are part of learning. Let's try another."
+            "Not quite — that's okay, mistakes help us learn. "
+            "Let's work through it together."
         )
 
     def _do_bkt_update(self, hinted: bool) -> tuple[str, bool]:
@@ -650,6 +654,14 @@ class SessionController:
             logger.warning("bkt_update: db persist failed", exc_info=True)
         if hinted:
             ctx.state = FSMState.HELP_RETRY_DECISION
+        elif not correct:
+            # Auto-help on a WRONG unaided answer: scaffold (explain + re-check)
+            # instead of revealing the answer and advancing. Start a fresh Help
+            # cycle (HELP_MODALITY_SELECT self-limits via the retry cap / modality
+            # exhaustion -> LINK_BACK). Testing note 4b.
+            ctx.help_n = 1
+            ctx.help_modalities_used = []
+            ctx.state = FSMState.HELP_MODALITY_SELECT
         else:
             ctx.state = FSMState.BRANCH_DECISION
         return ("", True)
