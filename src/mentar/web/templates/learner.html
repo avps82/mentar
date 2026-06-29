@@ -15,12 +15,12 @@
   .hint { color:#888; font-size:0.9rem; margin-top:8px; }
 </style>
 </head><body>
-<h1>🍕 Mentar</h1>
+<h1>🍕 Mentar{% if subject_label %} <span style="font-size:1rem;color:#888">· {{ subject_label }}</span>{% endif %}</h1>
 <div class="question">{{ question }}</div>
 <form method="POST" action="/answer">
   <input type="text" name="answer" autofocus placeholder="Type your answer…">
   <button class="btn" type="submit">Send ✓</button>
 </form>
 <p class="hint">Type <b>?</b> or <b>help</b> for a hint &nbsp;·&nbsp; <b>stop</b> to finish.</p>
-<hr><a href="/progress" style="color:#888;font-size:0.85rem">My progress</a> &nbsp;·&nbsp; <a href="/parent" style="color:#888;font-size:0.85rem">Parent view</a>
+<hr><a href="/progress" style="color:#888;font-size:0.85rem">My progress</a> &nbsp;·&nbsp; <a href="/parent" style="color:#888;font-size:0.85rem">Parent view</a> &nbsp;·&nbsp; <a href="/choose" style="color:#888;font-size:0.85rem">Switch topic</a>
 </body></html>
