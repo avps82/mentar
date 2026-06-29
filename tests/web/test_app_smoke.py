@@ -78,8 +78,10 @@ def test_parent_view_reads_db_and_persists_ack():
     assert db.execute("SELECT count(*) FROM transcript").fetchone()[0] > 0  # write path
     db.close()
 
-    # /parent renders (DB-backed) without error.
-    assert c.get("/parent").status_code == 200
+    # /parent renders (DB-backed) without error, with the score header + per-answer table.
+    parent_html = c.get("/parent").get_data(as_text=True)
+    assert "correct out of" in parent_html          # session score (note 3)
+    assert "Answers" in parent_html                 # per-answer correct/wrong/help table
 
     # Trigger an escalation; it logs un-acknowledged.
     c.post("/answer", data={"answer": "I want to die"})
