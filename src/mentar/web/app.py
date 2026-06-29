@@ -277,12 +277,16 @@ def parent():
     session_id = ctrl.session_id if ctrl is not None else None
     skill_states: list[dict] = []
     session_summary: dict = {}
+    answers: list[dict] = []
     if store and db_id is not None and session_id:
         skill_states = [dict(r) for r in store.all_skill_states(db_id)]
         responses = store.session_responses(db_id, session_id)
         help_events = store.session_help_events(db_id, session_id)
+        answers = responses
+        n_correct = sum(1 for r in responses if r.get("scored") == 1)
         session_summary = {
             "n_responses": len(responses),
+            "n_correct": n_correct,
             "n_help": len(help_events),
         }
 
@@ -294,6 +298,7 @@ def parent():
         escalations=_persisted_escalations(learner_uuid),
         skill_states=skill_states,
         session_summary=session_summary,
+        answers=answers,
     )
 
 

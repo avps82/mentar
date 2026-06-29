@@ -34,8 +34,8 @@
 {% if session_summary %}
 <div class="summary">
   <b>Session summary:</b>
-  {{ session_summary.n_responses }} answer(s) &nbsp;·&nbsp;
-  {{ session_summary.n_help }} help request(s)
+  <b>{{ session_summary.n_correct }} correct out of {{ session_summary.n_responses }}</b>
+  answer(s) &nbsp;·&nbsp; {{ session_summary.n_help }} help request(s)
 </div>
 {% endif %}
 
@@ -62,6 +62,21 @@
   <tr><td>{{ e.freeze_started_at }}</td><td>{{ e.trigger_class }}</td>
       <td>{{ e.trigger_text_verbatim }}</td>
       <td>{{ 'yes' if e.parent_ack_at else 'no' }}</td></tr>
+  {% endfor %}
+</table>
+{% endif %}
+{% if answers %}
+<h2>Answers</h2>
+<table>
+  <tr><th>#</th><th>Skill</th><th>Answer</th><th>Result</th><th>With help?</th></tr>
+  {% for a in answers %}
+  <tr>
+    <td>{{ loop.index }}</td>
+    <td>{{ a.skill_id }}</td>
+    <td>{{ a.answer }}</td>
+    <td>{{ '✅ correct' if a.scored == 1 else '❌ wrong' }}</td>
+    <td>{{ '🆘 yes' if a.hinted == 1 else '—' }}</td>
+  </tr>
   {% endfor %}
 </table>
 {% endif %}
