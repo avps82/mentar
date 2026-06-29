@@ -78,12 +78,27 @@ So the scope grows in **recognised categories**, not in conversational freedom.
 
 1. **Which soft intents are in-scope now** vs later (recommend: don't-know + frustration +
    clarify first — they're the BKT-corrupting ones).
-2. **Classification mechanism:**
-   - *Deterministic keywords/regex* (like stop/help) — safe, auditable, brittle to phrasing.
-   - *Small LLM intent-classifier* — robust to phrasing, but puts an LLM in the input path.
-     Acceptable **only** for non-safety routing (safety stays deterministic + first), and worst
-     case is a misrouted *non-safety* intent. Likely a **hybrid**: deterministic for the common
-     forms now, revisit a classifier later.
+2. **Classification mechanism — GUIDANCE (maintainer asked, 2026-06-29):**
+   Safety classification is **deterministic + first**, always (settled; an LLM must never make a
+   safeguarding call). The choice below is only for the *soft, non-safety* intents.
+   - **A. Deterministic keywords** (like stop/help): auditable, instant, no LLM; brittle to
+     paraphrase/typos.
+   - **B. LLM intent-classifier**: robust to phrasing; an LLM call per turn; can mislabel a real
+     answer.
+   - **C. Hybrid (fallback)**: keywords catch common forms; an LLM classifier is consulted **only**
+     when input matches no keyword *and* fails to verify as an answer (the genuinely ambiguous set)
+     — keeps the LLM off the common path.
+
+   **Recommendation: start A, architect for C.** Ship deterministic keywords first (safe, covers
+   the bulk), and shape the input handler so a fallback classifier can slot in for
+   no-keyword-and-unverifiable inputs later. **Why the stakes are low:** a wrong answer now
+   auto-routes to Help, so a *missed* "I don't know" still gets scaffolded — the only harm of a
+   miss is a spurious BKT penalty, not a broken experience. So "good enough to stop honest
+   don't-knows dinging mastery" is the bar, not perfection.
+
+   **Invariant for any approach:** the classifier emits a **label** (routing only), never content
+   or correctness; the verifier still scores answers; on uncertainty the system **defaults to
+   "treat as an answer"** (which auto-helps if wrong). Misrouting cost stays bounded.
 3. **frustration vs severe_distress boundary** — needs the same safeguarding review as W2.2.
 4. **don't-know penalty** — confirm it should NOT count against mastery (recommended).
 
