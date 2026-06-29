@@ -643,6 +643,17 @@ class SessionController:
         )
 
     @staticmethod
+    def _answer_format_hint(answer_type: str) -> str:
+        """A small, kid-friendly cue for the expected answer SHAPE, from the KNOWN
+        answer type (deterministic — not LLM-guessed; it must match the verifier)."""
+        return {
+            "fraction": "(answer like _/_)",
+            "mc4": "(answer with a letter: A, B, C or D)",
+            "int": "(answer with a number)",
+            "decimal": "(answer with a number)",
+        }.get(answer_type, "")
+
+    @staticmethod
     def _strip_trailing_questions(text: str) -> str:
         """Drop trailing question lines a model appends to a Help explanation.
 
@@ -759,14 +770,12 @@ class SessionController:
         ctx = self._ctx
         # ONE question at a time: re-try the SAME question the child is on (it's
         # already shown as "Q) …" above), rather than posing a new, different one.
-        if ctx.current_item is not None:
+        # Show the expected answer SHAPE so the child knows how to reply.
+        answer_type, _, _ = self._answer_spec(self._curriculum[ctx.current_node_id])
+        prompt = f"Now you try it! ✏️ {self._answer_format_hint(answer_type)}".rstrip()
+        if ctx.current_item is not None or ctx.current_question:
             ctx.state = FSMState.HELP_RECHECK_AWAIT
-            return ("Now you try it! ✏️", False)
-        # No checkable item (LLM-generated question path): re-ask the same question
-        # text if we have it; else generate a transfer question (legacy fallback).
-        if ctx.current_question:
-            ctx.state = FSMState.HELP_RECHECK_AWAIT
-            return ("Now you try it! ✏️", False)
+            return (prompt, False)
         ctx.current_item = None
         node = self._curriculum[ctx.current_node_id]
         passage = resolve_grounding(node.get("grounding", {}), self._grounding_cfg)
