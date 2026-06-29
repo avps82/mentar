@@ -99,6 +99,39 @@ def test_load_config_missing(tmp_path=None):
     assert raised
 
 
+def test_dotenv_resolves_config_var(tmp_path):
+    """A gitignored .env next to the config supplies ${VAR} (no shell export)."""
+    os.environ.pop("MENTAR_T_DOTENV_KEY", None)
+    cfg_dir = tmp_path
+    (cfg_dir / ".env").write_text(
+        '# secrets\nexport MENTAR_T_DOTENV_KEY="sk-from-dotenv"\n', encoding="utf-8"
+    )
+    (cfg_dir / "inference.yaml").write_text(
+        'backend: vllm\nvllm:\n  base_url: "http://x/v1"\n  model: "m"\n'
+        '  api_key: "${MENTAR_T_DOTENV_KEY}"\n',
+        encoding="utf-8",
+    )
+    try:
+        cfg = B.load_inference_config(cfg_dir / "inference.yaml")
+        assert cfg["vllm"]["api_key"] == "sk-from-dotenv"
+    finally:
+        os.environ.pop("MENTAR_T_DOTENV_KEY", None)
+
+
+def test_dotenv_does_not_override_real_env(tmp_path):
+    """A real environment value wins over .env (.env is only a fallback)."""
+    os.environ["MENTAR_T_DOTENV_KEY2"] = "from-env"
+    (tmp_path / ".env").write_text("MENTAR_T_DOTENV_KEY2=from-dotenv\n", encoding="utf-8")
+    (tmp_path / "inference.yaml").write_text(
+        'backend: vllm\nvllm:\n  api_key: "${MENTAR_T_DOTENV_KEY2}"\n', encoding="utf-8"
+    )
+    try:
+        cfg = B.load_inference_config(tmp_path / "inference.yaml")
+        assert cfg["vllm"]["api_key"] == "from-env"
+    finally:
+        os.environ.pop("MENTAR_T_DOTENV_KEY2", None)
+
+
 def test_dispatch_vllm(monkeypatch=None):
     _install_fake(monkeypatch)
     fn = B.make_llm_call({"backend": "vllm",

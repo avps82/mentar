@@ -55,18 +55,24 @@ backend: vllm
 vllm:
   base_url: "http://<host>:4000/v1"      # your LiteLLM/vLLM endpoint (must end in /v1)
   model: "gemma2:9b"                      # the name the proxy exposes it under
-  api_key: "${MENTAR_VLLM_API_KEY}"       # read from env — NEVER inline the token
+  api_key: "${MENTAR_VLLM_API_KEY}"       # resolved from config/.env (below) or the environment
 generation: { temperature: 0.3, max_tokens: 512, timeout: 120 }
 ```
-Then run (export the token in the **same shell** as `mentar serve`, or the proxy 401s):
+Put the **token in a local `config/.env`** (gitignored — it persists across terminals, no shell
+`export` needed). Mentar auto-loads it when reading the config:
 ```bash
-export MENTAR_VLLM_API_KEY="sk-...your-token..."
+# config/.env   (NEVER committed — covered by .gitignore + the pre-commit secret guard)
+MENTAR_VLLM_API_KEY=sk-...your-token...
+```
+Then just:
+```bash
 python3 scripts/check_backend.py        # expect: ✓ Backend LIVE
 mentar serve
 ```
 
-> **Gotcha:** a `401` from the proxy almost always means `MENTAR_VLLM_API_KEY` isn't set in the
-> shell/service that runs Mentar. The `${VAR}` in the config is expanded from the environment.
+> **How it resolves:** `${VAR}` in the config is filled from `config/.env` first, then the process
+> environment (a real shell/service env var still wins). A `401` from the proxy means the key is
+> missing/wrong in **both** — check `config/.env`.
 
 ---
 
@@ -269,7 +275,7 @@ llamacpp:
 | First reply is slow | The model is loading into memory; later turns are faster. |
 | `Illegal instruction` (GGUF path) | Pre-AVX2 CPU — rebuild `llama-cpp-python` from source (see box above). |
 | `mentar: bad interpreter: …/.venv/bin/pythonX.Y: no such file or directory` | The venv's Python was upgraded/removed (e.g. a Homebrew patch bump), so the venv dangles. Recreate it: `rm -rf .venv && python3 -m venv .venv && source .venv/bin/activate && pip install -e ".[web]"` (add `,setup,grounding` only if running a local model / ZIM). |
-| `401` from the proxy (LiteLLM/vLLM) | `MENTAR_VLLM_API_KEY` isn't set in the shell/service running Mentar — `export` it there (the `${VAR}` in the config is read from the environment). |
+| `401` from the proxy (LiteLLM/vLLM) | The token is missing/wrong. Put it in `config/.env` as `MENTAR_VLLM_API_KEY=sk-…` (gitignored, auto-loaded) — no shell `export` needed. A real env var still overrides it. |
 
 ## Optional: offline grounding (ZIM)
 
