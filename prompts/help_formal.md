@@ -1,19 +1,15 @@
 ---
 template_id: help_formal
-purpose: Help re-explanation in the FORMAL representation (symbols/notation/steps), then a transfer re-check (SPEC §13.2).
+purpose: Help re-explanation in the FORMAL representation (symbols/notation/steps); explanation only — the FSM presents the re-check (SPEC §13.2).
 fsm_state: HELP_REEXPLAIN (modality = formal)
-version: fc820b39bed5
+version: e9debd673f24
 ---
-The child pressed Help on: {{concept}}. They are confused; be reassuring.
+The child needs help with this problem:
 
-Re-explain {{concept}} in the FORMAL way: show the maths notation and the steps clearly,
-e.g. writing the fractions with numerator over denominator and walking through the
-operation one step at a time. Name each step in plain words next to the symbols. Use
-{{worked_example}} as the worked-through example. Keep it short and tidy.
+{{question}}
 
-Do not repeat your earlier wording; change the REPRESENTATION, not just the words. Do NOT merely restate, reword, or re-ask the question — restating is not help. First give the child a concrete next step they can act on: name the very first thing to do, and show that step worked through on the example so they see HOW to begin, not just what to find. Only use
-formal notation the child has met at Year 4; do not introduce new symbols.
+Be warm and reassuring — they may be confused or have just answered it wrong.
 
-Then ask ONE re-check question that tests TRANSFER, not memory: the same procedure on
-DIFFERENT numbers, single checkable answer of type {{answer_type}} (int, fraction, or mc4).
-Output only the formal explanation and the re-check question.
+Re-explain {{concept}} the FORMAL way — show the notation and the steps clearly (numerator over denominator, one operation at a time), naming each step in plain words next to the symbols. Walk through THIS problem step by step (use {{worked_example}} only if it helps). Use only notation a Year-4 child has met; introduce no new symbols.
+
+Change the REPRESENTATION, not just the words. Do NOT simply restate the question, and do NOT ask the child any question — a practice question comes next on its own. Output ONLY your explanation, a few short sentences.
