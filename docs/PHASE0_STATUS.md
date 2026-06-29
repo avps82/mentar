@@ -165,6 +165,15 @@ dialogue controller, web app, eval dataset, FSM caller wiring) has **all shipped
 - **W7.4** — real Vikidia/Simple-WP ZIM download + reader path verification (needs NAS/ZIMs).
 
 ### Known defects (found in testing)
+- **🧭 ESSENTIAL GAP — interaction scope too narrow (2026-06-29).** The system recognises only
+  4 child intents (answer / help / stop / safety-escalation); **everything else is force-scored as
+  an answer**, so natural child inputs — **"I don't know", frustration ("this is hard"), clarifying
+  questions ("what does X mean?"), off-topic, navigation** — get marked wrong (corrupting BKT) or
+  bounced. This is correctness + pedagogy + safety-adjacent, **not UI** (UI deferred per maintainer).
+  Proposal = a **bounded** child-intent taxonomy routed deterministically (NOT free chat; safety
+  classifier stays first). Full analysis + proposed routing + open decisions in
+  **[design/INTERACTION_SCOPE.md](design/INTERACTION_SCOPE.md)**. **Needs maintainer ratification
+  before build.**
 - **Triage of `docs/TESTING_NOTES.md` (2026-06-29).** Scoring cluster — "no right/wrong feedback",
   "feedback died off", "86% constant / hardcoded?", "mastery counts unanswered", wrong/gibberish
   answers advancing silently — **all trace to answers not being scored on the maintainer's build
