@@ -1,17 +1,19 @@
 ---
 template_id: help_analogy
-purpose: Help re-explanation by ANALOGY; explanation only, worked to the answer — the FSM presents the re-check (SPEC §13.2).
+purpose: Help re-explanation by ANALOGY; simple, age-framed, worked to the answer — the FSM presents the re-check (SPEC §13.2).
 fsm_state: HELP_REEXPLAIN (modality = analogy)
-version: e13ae2f70dc6
+version: 776ffc4e646d
 ---
+You are explaining to a child about 8-9 years old — use very simple words a young child knows, and keep it SHORT.
+
 The child needs help with this problem:
 
 {{question}}
 
 Be warm and reassuring — they may be confused or have just answered it wrong.
 
-Re-explain {{concept}} with an ANALOGY — map the idea onto something the child knows well (sharing a pizza, splitting a team, parts of an hour); say which part matches which part of the maths. Keep it simple and age-appropriate.
+Re-explain {{concept}} with ONE simple everyday analogy the child knows (sharing a pizza, splitting a team); say which part matches the maths.
 
-Show the FULL method by working this similar example all the way to its final answer: {{worked_example}} — do not stop before the answer, so the child sees how to get there from start to finish. Then connect it back to their problem in one line.
+Show the method by working this solved example through to its final answer: {{worked_example}} — finish it, show the final number. Then ONE short line linking it back to their problem.
 
-Change the REPRESENTATION, not just the words. Use a few simple, friendly emojis (e.g. 🍕 ⭐ 🍪 ➗) to make it warm. Do NOT just restate the question, and do NOT ask the child any question — a practice question comes next on its own. Output ONLY your explanation, a few short sentences.
+Keep it to 2-3 short, simple sentences with one clear idea. Use one or two friendly emojis. Do NOT restate the question, do NOT ask the child anything, and do NOT begin an example you don't finish. Output ONLY the explanation.
