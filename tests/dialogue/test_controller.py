@@ -106,18 +106,19 @@ def test_correct_answer_gives_praise():
     assert any(w in low for w in ("right", "correct", "well done", "great job"))
 
 
-def test_wrong_answer_marked_with_correct_answer():
-    """A wrong answer is told it's wrong AND given the correct answer (not silent).
+def test_wrong_answer_is_told_and_enters_help():
+    """A wrong answer is told it's wrong and auto-routed into Help (note 4b).
 
-    Regression: the deterministic verifier scored silently — the child was never
-    told right/wrong and wrong answers just advanced.
+    Regression: the verifier scored silently (no right/wrong feedback), and even
+    after the feedback fix a wrong answer just advanced to a new question. Now a
+    wrong unaided answer scaffolds: feedback -> Help loop (does NOT reveal answer).
     """
-    ctrl = _make_controller(llm_fn=lambda msgs: "Next question text.")
+    ctrl = _make_controller(llm_fn=lambda msgs: "explanation/recheck")
     ctrl.step(None)
     result = ctrl.step("2/5")                 # wrong (expected 1/3)
-    low = result.text.lower()
-    assert "not quite" in low
-    assert "1/3" in result.text               # the verified correct answer
+    assert "not quite" in result.text.lower()         # told it's wrong
+    assert result.state == FSMState.HELP_RECHECK_AWAIT.value  # auto-help, not advanced
+    assert "1/3" not in result.text           # answer NOT revealed — they work to it
 
 
 def test_gibberish_is_reprompted_not_scored():
