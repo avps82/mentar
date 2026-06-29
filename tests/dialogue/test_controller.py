@@ -302,6 +302,33 @@ def test_mc_gibberish_asks_for_a_letter_same_question():
     assert ctrl._ctx.last_scored_correct is None      # neither correct nor wrong
 
 
+def test_help_recheck_shows_answer_format_hint():
+    """'Now you try it!' shows the expected answer SHAPE from the known answer type
+    (deterministic, must match the verifier) — '_/_' for fractions, a letter for MC."""
+    import random as _random
+
+    from mentar.engine.itemgen import ItemGenerator
+    from mentar.engine.science_items import SCIENCE_GENERATORS
+
+    # fraction node -> "_/_"
+    ctrl = _make_controller(llm_fn=lambda m: "expl")  # unit_fractions (answer_type fraction)
+    ctrl.step(None)
+    r = ctrl.step("?")
+    assert "_/_" in r.text
+
+    # mc4 node -> letter guidance
+    curr = {"classify_animals": {
+        "concept": "Animal groups", "answer_type": "mc4", "checker": "mc_choice",
+        "expected_answer": "", "grounding": {}, "prerequisites": []}}
+    ctrl2 = SessionController(
+        llm_call=lambda m: "expl", prompt_dir=PROMPTS, grounding_cfg={}, curriculum=curr,
+        db_store=_FakeStore(), learner_id="t",
+        item_bank=ItemGenerator(generators=SCIENCE_GENERATORS, rng=_random.Random(1)))
+    ctrl2.step(None)
+    r2 = ctrl2.step("?")
+    assert "A, B, C or D" in r2.text
+
+
 def test_mastered_node_advances_not_endless_probe():
     """Regression: once a node hit mastery, the FSM re-probed it EVERY turn (silent,
     no feedback, wrong answers slipped through). A probe must resolve + advance.
