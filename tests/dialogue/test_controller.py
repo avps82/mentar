@@ -99,11 +99,11 @@ def test_correct_answer_advances():
 
 def test_correct_answer_gives_praise():
     """A correct answer is acknowledged (not silently advanced)."""
+    from mentar.dialogue.controller import PRAISE_VARIANTS
     ctrl = _make_controller(llm_fn=lambda msgs: "Next question text.")
     ctrl.step(None)
     result = ctrl.step("1/3")
-    low = result.text.lower()
-    assert any(w in low for w in ("right", "correct", "well done", "great job"))
+    assert any(v in result.text for v in PRAISE_VARIANTS)
 
 
 def test_wrong_answer_is_told_and_enters_help():
@@ -113,10 +113,11 @@ def test_wrong_answer_is_told_and_enters_help():
     after the feedback fix a wrong answer just advanced to a new question. Now a
     wrong unaided answer scaffolds: feedback -> Help loop (does NOT reveal answer).
     """
+    from mentar.dialogue.controller import WRONG_VARIANTS
     ctrl = _make_controller(llm_fn=lambda msgs: "explanation/recheck")
     ctrl.step(None)
     result = ctrl.step("2/5")                 # wrong (expected 1/3)
-    assert "not quite" in result.text.lower()         # told it's wrong
+    assert any(v in result.text for v in WRONG_VARIANTS)      # told it's wrong (any variant)
     assert result.state == FSMState.HELP_RECHECK_AWAIT.value  # auto-help, not advanced
     assert "1/3" not in result.text           # answer NOT revealed — they work to it
 
