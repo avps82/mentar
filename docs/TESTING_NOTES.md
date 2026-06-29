@@ -17,4 +17,4 @@ items to `PHASE0_STATUS.md` (Known defects / Backlog) when they're picked up.
   for correct/wrong/help with simple icons and score on the top, like 5 correct out of 7 this is
   in the session summary...
 - Wrong answer is going to the different version of the same question... even after all of it is
-  wrong. First it clearly doen'  *(note appears cut off — awaiting continuation)*
+  wrong. First it clearly doesn't say if it's wrong.
