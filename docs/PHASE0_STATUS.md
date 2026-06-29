@@ -165,6 +165,24 @@ dialogue controller, web app, eval dataset, FSM caller wiring) has **all shipped
 - **W7.4** — real Vikidia/Simple-WP ZIM download + reader path verification (needs NAS/ZIMs).
 
 ### Known defects (found in testing)
+- **Triage of `docs/TESTING_NOTES.md` (2026-06-29).** Scoring cluster — "no right/wrong feedback",
+  "feedback died off", "86% constant / hardcoded?", "mastery counts unanswered", wrong/gibberish
+  answers advancing silently — **all trace to answers not being scored on the maintainer's build
+  and are ✅ FIXED on `main` (PR #37, `1ac551f`)**: deterministic feedback restored, EXTRACT_FAIL
+  re-prompts, BKT updates on scored answers (verified: 0.86 → 0.514 on a wrong answer; mastery % is
+  BKT `p_mastery`, NOT hardcoded and NOT a question ratio). Action: maintainer must `git pull` +
+  re-test. Genuinely-new items promoted below.
+- **🆕 Emoji in questions (note 1).** Author/show emoji for quantities/nouns (e.g. "45 🍇"). Emoji
+  are Unicode — no external repo needed. Approach TBD (author into item bank vs. render-time map vs.
+  LLM-gen). Content/UX, not safety. **Open.**
+- **🆕 Parent session log + score (note 3).** Session log table is only Who/Text; add a
+  correct/wrong/help indicator per answer + a session score header ("5 correct out of 7"). Data
+  exists in `response_log` (scored, hinted) + `help_event`; needs the parent route to surface it.
+  **Open.**
+- **🆕 Wrong answer advances to a new same-concept variant (note 4b) — design.** Currently a wrong
+  answer scores, updates BKT, then `BRANCH_DECISION` presents the *next* item. Maintainer expected a
+  retry / "that's wrong, try again" on the *same* question. Pedagogy decision (retry-same vs.
+  offer-help-on-wrong vs. keep-advance). **Needs maintainer call.**
 - **✅ FIXED (prompt) — Help reframed the question instead of giving real hints (2026-06-27).**
   All 5 Help templates (`prompts/help_*.md`) now explicitly forbid restating/rewording/re-asking
   the question and require a **concrete next step worked through on the example** before the
