@@ -29,6 +29,7 @@ from mentar.engine.fringe import DEFAULT_MASTERY_THRESHOLD, outer_fringe
 from mentar.engine.probe_classify import ProbeClass, classify_probe
 from mentar.eval.verify_numeric import CheckResult, check
 from mentar.grounding import resolve_grounding
+from mentar.safety.credential_guard import redact_credentials
 from mentar.safety.escalation import (
     HANDOFF_MESSAGE_PRIMARY,
     Severity,
@@ -624,10 +625,16 @@ class SessionController:
         def _safe(messages):
             try:
                 out = llm_call(messages)
-                return out if isinstance(out, str) else ""
+                out = out if isinstance(out, str) else ""
             except Exception:
                 logger.warning("llm_call failed; degrading to empty output", exc_info=True)
                 return ""
+            # Credential-leak guard: scrub any secret-shaped string from model output
+            # before it can reach the child or the transcript/logs (defence-in-depth).
+            redacted = redact_credentials(out)
+            if redacted != out:
+                logger.warning("credential guard: redacted secret-shaped text from LLM output")
+            return redacted
         return _safe
 
     def _fallback_hint(self, node_id: str) -> str:
