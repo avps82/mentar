@@ -45,8 +45,8 @@ hallucination-is-safety-failure component.
 |---|---|
 | **Dependency** | `libzim` only (pin in `pyproject.toml`). `smbprotocol` is an **optional** `[nas]` extra (only for `smb://` ZIMs; mounted NAS needs nothing). OpenZIM MCP (`cameronrye/openzim-mcp`, MIT) = reference code to adapt; **not** a runtime dep. **No MCP server** (wrong shape for our controlled FSM). Hermit-AI (AGPL) = ideas only, clean-room. |
 | **ZIM location** | `zim_dir` accepts a local path, a **mounted NAS/share** path (read directly — no SMB client), or an **`smb://` URL / UNC** (copied once to `zim_cache_dir`, since libzim needs a local file). Resolution + materialization in `sources.py`; cache-hit short-circuits before any SMB copy. |
-| **Retrieval (pilot)** | Deterministic anchor-resolution: open ZIM → resolve node `anchor` → extract passage guided by `passage_hint` → length-bound. No model call. |
-| **Scope guard** | Node `source` enum must match the anchor host **and** the configured ZIM for that source. A `vikidia` node must not resolve out of the vikidia ZIM. No roaming. |
+| **Retrieval (pilot)** | Deterministic anchor-resolution: open ZIM → resolve node `anchor` → extract passage guided by `passage_hint` → length-bound. No model call. **B1 (2026-07-05):** this is the *generic* path (wiki articles at a URL). A small per-source extractor registry (`resolve.py::_SOURCE_EXTRACTORS`) lets a "critical few" sources with a genuinely different ZIM content shape override it — e.g. `khanacademy`, whose lesson pages are video-embed shells (anchor = ZIM-internal hashed path, no external URL; passage = the English subtitle transcript, not the HTML body). Not a general plugin system — generic by default, custom only where the content shape actually demands it. |
+| **Scope guard** | Node `source` enum must match the anchor host **and** the configured ZIM for that source. A `vikidia` node must not resolve out of the vikidia ZIM. No roaming. Sources with no network anchor (`parent_upload`, `builtin`; **B1:** `khanacademy` — its anchor is a ZIM-internal path, not a URL) skip the host check. |
 | **Safety** | Output is DATA destined for `{{grounding_passage}}`. The `<<<GROUNDING_BEGIN/END>>>` markers already live in `system_prompt.md` → the reader returns the **inner text only** (never double-wraps), and never interprets/executes passage content. |
 | **Failure mode** | ZIM missing / anchor not found / empty → return `""`, log a warning, **never raise**, never crash a turn, never leak an error to the child. The system prompt's "you may be given reference material" phrasing + Honesty rules cover an empty slot. |
 | **Cost** | Cache resolved passages by `anchor` (static per ZIM build) → ~zero per-turn after warm. |
@@ -68,8 +68,8 @@ primary path, deps).
 
 | File | Responsibility |
 |---|---|
-| `reader.py` | Thin owned `libzim` reader: `open(zim_path)`, `get_by_url(anchor)` (anchor URL → ZIM entry), `get_section(entry, hint)` → article text. ~100–200 lines over `libzim`. No server/JSON-RPC. Adapt OpenZIM MCP MIT search code as reference, reimplement minimally. |
-| `resolve.py` | Pilot path: node `grounding` block → `reader.get_by_url` → extract passage via `passage_hint` (lead section / heading match; deterministic) → length-bound. |
+| `reader.py` | Thin owned `libzim` reader: `open(zim_path)`, `get_by_url(anchor)` (anchor URL → ZIM entry), `get_section(entry, hint)` → article text. ~100–200 lines over `libzim`. No server/JSON-RPC. Adapt OpenZIM MCP MIT search code as reference, reimplement minimally. **B1:** also `get_by_path(path)` (direct ZIM-internal-path lookup, no URL parsing) + `get_video_narration(html_bytes)` (finds the English `<track>` subtitle path, fetches it, strips WebVTT markup to plain narration text) for Khan Academy-shaped content. |
+| `resolve.py` | Pilot path: node `grounding` block → per-source extractor (`_SOURCE_EXTRACTORS`, default = `reader.get_by_url` + `get_section` via `passage_hint`; **B1:** `khanacademy` → `get_by_path` + `get_video_narration`) → length-bound. |
 | `source_map.py` | `source` enum → configured ZIM **location** (local / mounted-NAS / SMB); anchor-host↔source **scope guard**. |
 | `sources.py` | (1) **Filename resolution** — `build_filename_regex` + `pick_latest` + `list_zim_dir` + `resolve_filename` pick the newest `<project>_<lang>_<selection>_<flavour>_<YYYY-MM>.zim` in `zim_dir` from a structured source spec (latest wins; `pin` overrides; a string spec = exact filename). (2) **Materialization** — local/mounted paths pass through; `smb://`/UNC copied once to `zim_cache_dir` via `smbclient` (optional `[nas]` extra). `is_smb_location`, `smb_url_to_unc`, `join_location`, `materialize_zim`. Never raises → `None` on failure. Shared with `scripts/fetch_zim.py`. |
 | `wrapper.py` | Return inner passage text for `{{grounding_passage}}` (no double-wrap). SAFETY §1.5 contract in docstring. |
@@ -90,6 +90,7 @@ grounding:
   sources:
     vikidia:          { project: vikidia,   lang: en, selection: all,        flavour: nopic }
     wikipedia_simple: { project: wikipedia, lang: en, selection: simple_all, flavour: nopic }
+    khanacademy:      { project: khanacademy, lang: en, selection: all }   # B1: video transcripts, no flavour segment
     # astronomy:      { project: wikipedia, lang: en, selection: astronomy,  flavour: maxi, pin: "2026-02" }
   max_passage_chars: 1200                # length bound for small-model context
   cache: { enabled: true, dir: "${MENTAR_GROUNDING_CACHE:-.cache/grounding}" }   # resolved-passage cache

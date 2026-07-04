@@ -336,30 +336,35 @@ Ordered by the review's priority table.
 
 ## B. Codeable but verify-led  `[O]` + `[G]`
 
-### B1 — Pilot grounding-anchor QA + re-point — ⛔ **BLOCKED 2026-07-05, not started this wave**
-- **Status check (2026-07-05):** the original finding (thin Simple-WP "Fraction" disambiguation,
-  75c) already looks fixed in the current template — `comparing_equal_denom`/
-  `adding_equal_denom`/`subtracting_equal_denom` (and every other fraction node except
-  `whole_number_division`, which anchors a *different* Simple-WP article,
-  `Division_(mathematics)`) already point at `vikidia`/`Fraction`, not `wikipedia_simple`. **Not
-  independently re-verified against a live ZIM this wave** — no Vikidia/Simple-WP ZIM was
-  readable in this sandbox (`/mnt/zim` here holds stackexchange/wikipedia/khanacademy ZIMs, not
-  vikidia/simple-wp; no other readable `zim_dir` found). Per this task's own conditional clause
-  ("log+skip if absent, don't block the wave") — skipped, not attempted blind.
-- **What's genuinely still open — the REVIEW §2.6 addendum:** 7 of the 8 nodes now anchor the
-  *same* Vikidia `Fraction` article with different `passage_hint`s. Whether each hint actually
-  resolves to a distinct section (`get_section` heading match) or all silently fall back to the
-  same generic lead paragraph is a **factual question about live ZIM content** — it cannot be
-  answered without reading the real ZIM, and must NOT be guessed. Whoever picks this up next
-  needs a readable `zim_dir` with the real Vikidia ZIM (SAFETY-adjacent: a wrong extraction
-  report — e.g. asserting distinct sections that are actually the same fallback text — would be
-  worse than leaving this flagged open).
-- **Spec (unchanged, for whoever has ZIM access):** for each of the 8 pilot nodes, run
-  `ZimReader`/`resolve_grounding` against its anchor, capture extracted length + which section
-  `get_section` actually matched; re-point/differentiate any anchor that's thin, a
-  disambiguation stub, or identical to another node's resolved passage. Update the node
-  `grounding: {source, anchor, passage_hint}` blocks in `curriculum/templates/_pilot/fractions.md`
-  accordingly; `validate-template` must still pass afterward.
+### B1 — Pilot grounding-anchor QA + re-point — ✅ **DONE 2026-07-05 (re-pointed to Khan Academy)**
+- **What actually happened:** confirmed empirically (not by filename inspection) that all 8
+  nodes resolved to `""` against the real `/mnt/zim` — no Vikidia/Simple-WP ZIM exists there
+  (only stackexchange/wikipedia/khanacademy/gutenberg/ifixit/mdwiki). Maintainer chose:
+  **re-point to Khan Academy** (`khanacademy_en_all_2023-03.zim`, already mounted — and
+  arguably better-suited math content than a general encyclopaedia anyway).
+- **Real content problem found + solved:** KA lesson-page HTML is a video-embed shell with
+  only a one-line description (would have repeated the exact "thin passage" problem this task
+  exists to fix) — the substantive content is the video's English subtitle (`.vtt`) transcript.
+  Searched the real ZIM (`libzim.search.Searcher`) for all 8 concepts, verified each candidate's
+  transcript by actually fetching and reading it (not guessed): all 8 are genuinely distinct,
+  on-topic, substantive (1081–4023 chars) — this also directly resolves the REVIEW §2.6
+  distinctness addendum (was: 7/8 nodes anchored the identical Vikidia article).
+- **Built:** `grounding/reader.py` gained `get_by_path()` (direct ZIM-internal-path lookup —
+  KA has no recoverable external URL) and `get_video_narration()` (finds the English `<track>`,
+  strips WebVTT markup to plain narration text). `grounding/resolve.py` gained a small
+  per-source extractor registry (`_SOURCE_EXTRACTORS`) — generic wiki-article path by default,
+  `khanacademy` overrides with the video-narration path; not a general plugin system, just a
+  registry for the "critical few" sources whose content shape genuinely differs. `source_map.py`
+  exempts `khanacademy` from the URL-host scope guard (its anchor is a ZIM-internal path, like
+  `parent_upload`/`builtin`). `curriculum/templates/_pilot/fractions.md`'s 8 nodes re-pointed to
+  verified KA anchors. `config/inference.example.yaml` documents the new source shape.
+- **Verified end-to-end** (not just unit-level): `load_curriculum` → `resolve_grounding` → all 8
+  nodes return substantive, distinct passages against the real ZIM; a real `SessionController`
+  Help turn correctly threads a KA transcript into the system prompt's `GROUNDING_BEGIN/END`
+  wrapper. `validate-template` still passes.
+- **Tests:** `tests/fixtures/build_fixture_zim.py` gained a KA-shaped synthetic entry (video
+  HTML shell + `.vtt`, mirroring the real ZIM's shape) for fast CI-safe regression coverage of
+  the new extraction code, independent of the multi-GB real ZIM.
 
 ### B2 — doc-drift sweep (mechanical)  `[G]`
 - **Why:** REVIEW §4 table — 9 factual mismatches (ARCHITECTURE.md missing `grounding/`+`web/`

@@ -4,8 +4,12 @@ Pilot scope (anchor-resolution only):
     node_grounding dict (source, anchor, passage_hint)
         → scope guard (source_map.resolve_zim)
         → cache lookup
-        → ZimReader.get_by_url(anchor)
-        → ZimReader.get_section(html_bytes, passage_hint)
+        → fetch + extract (generic HTML-article path by default; a source in
+          _SOURCE_EXTRACTORS below gets its own custom fetch/extract instead —
+          B1, 2026-07-05: most Kiwix content is plain wiki articles and needs
+          nothing more, but a "critical few" sources have a genuinely different
+          ZIM content shape and earn a small dedicated extractor. Not a general
+          plugin system — just a registry, generic by default.)
         → cache put
         → plain-text passage (or "" on any failure)
 
@@ -21,6 +25,7 @@ Spec: docs/design/W7_grounding_reader.md; SPEC §15 (layer-1 RAG).
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 
 from mentar.grounding import cache as grounding_cache
 from mentar.grounding.reader import ZimReader
@@ -58,6 +63,43 @@ def _get_reader(zim_path) -> ZimReader | None:
 def clear_reader_pool() -> None:
     """Clear the ZimReader pool (useful in tests to force re-open)."""
     _READER_POOL.clear()
+
+
+# ── Per-source extraction stubs ────────────────────────────────────────────────
+# Default (source not listed in _SOURCE_EXTRACTORS) = generic wiki-article path:
+# fetch by external URL, extract a hint-guided section. Covers Vikidia, (Simple)
+# Wikipedia, Wikibooks, and any future plain-article ZIM without new code.
+#
+# Add an entry here ONLY when a source's ZIM content shape genuinely differs from
+# "a wiki article at a URL" — e.g. khanacademy's pages are video-embed shells (the
+# real content is the subtitle transcript, fetched by internal ZIM path, not a
+# URL). Keep each stub small and source-specific; this is a registry, not a
+# framework — most sources should never need one.
+
+def _extract_generic_article(reader: ZimReader, anchor: str, passage_hint: str) -> str | None:
+    html_bytes = reader.get_by_url(anchor)
+    if html_bytes is None:
+        return None
+    return reader.get_section(html_bytes, passage_hint)
+
+
+def _extract_khanacademy_video(reader: ZimReader, anchor: str, passage_hint: str) -> str | None:
+    # anchor is the ZIM-internal hashed entry path (KA has no recoverable external
+    # URL); passage_hint is unused — the whole subtitle transcript is the passage.
+    html_bytes = reader.get_by_path(anchor)
+    if html_bytes is None:
+        return None
+    return reader.get_video_narration(html_bytes)
+
+
+_SOURCE_EXTRACTORS: dict[str, Callable[[ZimReader, str, str], str | None]] = {
+    "khanacademy": _extract_khanacademy_video,
+}
+
+
+def _extract_passage(reader: ZimReader, source: str, anchor: str, passage_hint: str) -> str | None:
+    extractor = _SOURCE_EXTRACTORS.get(source, _extract_generic_article)
+    return extractor(reader, anchor, passage_hint)
 
 
 def resolve_grounding_inner(node_grounding: dict, cfg: dict) -> str:
@@ -108,14 +150,9 @@ def resolve_grounding_inner(node_grounding: dict, cfg: dict) -> str:
     if reader is None:
         return ""
 
-    # ── 5. Fetch article HTML ─────────────────────────────────────────────────
-    html_bytes = reader.get_by_url(anchor)
-    if html_bytes is None:
-        # Logged inside get_by_url
-        return ""
-
-    # ── 6. Extract passage ────────────────────────────────────────────────────
-    passage = reader.get_section(html_bytes, passage_hint)
+    # ── 5+6. Fetch + extract (generic wiki-article path, or a source's custom
+    # extractor — see _SOURCE_EXTRACTORS above) ────────────────────────────────
+    passage = _extract_passage(reader, source, anchor, passage_hint)
     if not passage or not passage.strip():
         logger.warning("resolve: empty passage for anchor=%r passage_hint=%r", anchor, passage_hint)
         return ""
