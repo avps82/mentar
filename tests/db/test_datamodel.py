@@ -7,7 +7,7 @@ Five test cases:
   1. test_full_session_roundtrip        — lossless write/read of a complete session
   2. test_two_learners_isolation        — zero cross-contamination across every table
   3. test_export_copy_opens_independently — file-copy export is independently readable
-  4. test_schema_version_migration_stub — user_version == 1; re-open honours it
+  4. test_schema_version_migration_stub — user_version == 2; v1->v2 migration verified
   5. test_transcript_immutability       — UPDATE/DELETE on transcript rows are rejected
 """
 
@@ -354,7 +354,7 @@ class TestExportCopyOpensIndependently:
         # Open the copy with a FRESH store instance — no shared state
         with LearnerStore(copy_path) as copy_store:
             # schema_version must still be valid
-            assert copy_store.schema_version() == 1
+            assert copy_store.schema_version() == 2
 
             responses = copy_store.session_responses(learner_id, sid)
             assert len(responses) == 1
@@ -382,15 +382,15 @@ class TestExportCopyOpensIndependently:
 # ─────────────────────────────────────────────────────────────────────────────
 
 class TestSchemaVersionMigrationStub:
-    """T3.6 (d): PRAGMA user_version == 1 after first open; re-open honours it
-    (schema not applied twice); migration path is stubbed with a RuntimeError
-    guard for version < 1 (future migrations increment _EXPECTED_VERSION and
-    add ALTER TABLE statements in _apply_schema_if_needed)."""
+    """T3.6 (d): PRAGMA user_version == 2 after first open; re-open honours it
+    (schema not applied twice); a real v1->v2 migration (A3: escalation_log gains
+    severity/session_id/turn_index) runs on an older DB; a version with no
+    registered migration still raises RuntimeError (no silent corruption)."""
 
-    def test_schema_version_is_one(self, tmp_path):
+    def test_schema_version_is_two(self, tmp_path):
         store = _make_store(tmp_path)
-        assert store.schema_version() == 1, (
-            f"Expected user_version 1, got {store.schema_version()}"
+        assert store.schema_version() == 2, (
+            f"Expected user_version 2, got {store.schema_version()}"
         )
         store.close()
 
@@ -401,37 +401,67 @@ class TestSchemaVersionMigrationStub:
         # First open: schema applied
         with LearnerStore(db_path) as s1:
             lid = s1.create_learner("Dave", 3, "CA", "parent_mediated")
-            assert s1.schema_version() == 1
+            assert s1.schema_version() == 2
 
-        # Second open: schema already at version 1; no error, no duplicate tables
+        # Second open: schema already at version 2; no error, no duplicate tables
         with LearnerStore(db_path) as s2:
-            assert s2.schema_version() == 1
+            assert s2.schema_version() == 2
             profile = s2.get_learner(lid)
             assert profile is not None
             assert profile["name"] == "Dave"
 
-    def test_migration_stub_exists_for_future_versions(self, tmp_path):
-        """Sanity: _apply_schema_if_needed raises RuntimeError for version < expected
-        (simulated by directly writing a lower user_version to the DB).
-        This proves the migration hook is present and would guard against
-        a stale DB being opened by a newer binary without a migration path.
-        """
+    def test_v1_to_v2_migration_adds_escalation_columns(self, tmp_path):
+        """A real v1 DB (no severity/session_id/turn_index columns) is migrated
+        to v2 in place on reopen, and the new columns are usable."""
+        db_path = tmp_path / "v1.db"
+
+        # Build a v1 DB by hand: recreate escalation_log exactly as the pre-A3
+        # schema defined it (no severity/session_id/turn_index columns), then
+        # pin user_version to 1 — a faithful stand-in for a real v1 DB.
+        with LearnerStore(db_path) as s:
+            lid = s.create_learner("Eve", "pilot", "GB", "parent_mediated")
+        import sqlite3
+        conn = sqlite3.connect(db_path)
+        conn.execute("DROP TABLE escalation_log")
+        conn.execute("""
+            CREATE TABLE escalation_log (
+                id                      INTEGER PRIMARY KEY AUTOINCREMENT,
+                learner_id              INTEGER NOT NULL REFERENCES learner_profile(id) ON DELETE CASCADE,
+                trigger_class           TEXT    NOT NULL,
+                trigger_text_verbatim   TEXT    NOT NULL,
+                freeze_started_at       TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+                parent_ack_at           TEXT,
+                session_outcome         TEXT    NOT NULL DEFAULT 'frozen'
+            );
+        """)
+        conn.execute("PRAGMA user_version = 1")
+        conn.commit()
+        conn.close()
+
+        # Reopen: migration runs, columns exist, version bumps to 2.
+        with LearnerStore(db_path) as s2:
+            assert s2.schema_version() == 2
+            eid = s2.write_escalation(
+                lid, "harm_to_self", "test", severity="critical",
+                session_id="sess-1", turn_index=3,
+            )
+            row = s2.get_escalation(lid, eid)
+            assert row["severity"] == "critical"
+            assert row["session_id"] == "sess-1"
+            assert row["turn_index"] == 3
+
+    def test_no_migration_path_raises(self, tmp_path):
+        """A version with no registered migration still raises RuntimeError —
+        proves the guard (not just the v1->v2 path) is present."""
         db_path = tmp_path / "oldversion.db"
 
-        # Create a valid v1 DB
         with LearnerStore(db_path):
             pass
 
-        # Manually downgrade user_version to simulate a future binary
-        # opening an older DB (version 0 path is "apply schema", not "migrate";
-        # we test the version-between-0-and-expected path by setting version to
-        # a hypothetical intermediate value — since expected is 1 and minimum is
-        # 0, we verify the guard logic by monkey-patching _EXPECTED_VERSION).
         import mentar.db.store as store_module
         original = store_module._EXPECTED_VERSION
         try:
-            store_module._EXPECTED_VERSION = 2  # simulate newer binary
-            # Reopen: user_version is 1, expected is 2 → RuntimeError
+            store_module._EXPECTED_VERSION = 3  # no migration registered for v2->v3
             with pytest.raises(RuntimeError, match="schema version"):
                 LearnerStore(db_path)
         finally:

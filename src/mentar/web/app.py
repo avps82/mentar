@@ -205,12 +205,25 @@ class _DbStoreAdapter:
             priors_used=True,  # pilot uses cold-start priors (W3.3: fitted only at N>=100)
         )
 
-    def write_escalation(self, learner_id: str, trigger_class: str, trigger_text_verbatim: str) -> int:
+    def write_escalation(
+        self,
+        learner_id: str,
+        trigger_class: str,
+        trigger_text_verbatim: str,
+        severity: str | None = None,
+        session_id: str | None = None,
+        turn_index: int | None = None,
+        session_outcome: str | None = None,
+    ) -> int:
         # Verbatim text stored untruncated (SAFETY §3.3 Step 2).
         return self._store.write_escalation(
             learner_id=self._db_id,
             trigger_class=trigger_class,
             trigger_text_verbatim=trigger_text_verbatim,
+            severity=severity,
+            session_id=session_id,
+            turn_index=turn_index,
+            session_outcome=session_outcome,
         )
 
     # ── Durable session logging (controller calls these best-effort) ──────────

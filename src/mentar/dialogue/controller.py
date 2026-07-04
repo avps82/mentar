@@ -303,10 +303,20 @@ class SessionController:
             trigger = classify(learner_input)
             if trigger is not None:
                 # Log every trigger for the parent (SAFETY §3.x): full UNTRUNCATED
-                # text + class. Best-effort — a DB failure must never block handling.
+                # text + class + severity/session/turn (A3). Best-effort — a DB
+                # failure must never block handling.
+                session_outcome = (
+                    "logged_only" if trigger.severity is Severity.LOW else "frozen"
+                )
                 try:
                     self._store.write_escalation(
-                        self._learner_id, trigger.trigger_class.value, learner_input
+                        self._learner_id,
+                        trigger.trigger_class.value,
+                        learner_input,
+                        severity=trigger.severity.value,
+                        session_id=self._session_id,
+                        turn_index=ctx.turn_index,
+                        session_outcome=session_outcome,
                     )
                 except Exception:
                     logger.warning("escalation: failed to persist escalation_log row", exc_info=True)
