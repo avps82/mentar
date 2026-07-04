@@ -2,7 +2,7 @@
 title: "Mentar — Phase 0 Status"
 version: living-doc
 status: "Active"
-last-updated: 2026-06-26
+last-updated: 2026-07-03
 ---
 
 # Phase 0 — Status
@@ -165,6 +165,79 @@ dialogue controller, web app, eval dataset, FSM caller wiring) has **all shipped
 - **W7.4** — real Vikidia/Simple-WP ZIM download + reader path verification (needs NAS/ZIMs).
 
 ### Known defects (found in testing)
+- **🔴 Escalation logging is best-effort — a DB failure silently drops the verbatim disclosure
+  (2026-07-03, repo review 2nd pass).** `write_escalation` is try/except-swallowed in the
+  controller; the freeze still happens but SAFETY §3.1 "never silently dropped" is violated on
+  any DB error. Needs an append-only file fallback sink. → REVIEW §8.1; task A15.
+- **🟠 Curriculum templates never validated at runtime → false "all mastered" completion
+  (2026-07-03, repo review 2nd pass).** `validate()` runs only via the CLI subcommand;
+  serve/run-session parse YAML directly. Cyclic/bad-prereq template → unsatisfiable nodes →
+  empty fringe → child told "Well done — you've mastered all the concepts!" silently.
+  → REVIEW §8.2; task A16.
+- **🟠 Prompt edits don't invalidate the safety-eval claim (2026-07-03, repo review 2nd
+  pass).** The 20/20 pipeline-safety run (2026-06-27) predates several prompt re-hashes; nothing
+  requires a T1.5 re-run on prompt change, so the headline claim silently ages. Process rule +
+  CI warning needed. → REVIEW §8.4; task A18.
+- **🟡 Layering violation — CLI imports the web module (2026-07-03, repo review 2nd pass).**
+  `cli/__main__.py` imports `_load_curriculum`/`_DbStoreAdapter` from `mentar.web.app`: headless
+  run-session needs Flask + triggers web module-level side effects (app creation, all-subject
+  curriculum load). → REVIEW §8.3; task A17.
+- **🟡 `age_mode` stored but never read (2026-07-03, repo review 2nd pass).** No code branches
+  on parent_mediated vs independent — a load-bearing SPEC §6.2 concept with zero enforcement
+  hook. Pilot fix = startup assertion (parent_mediated only). → REVIEW §8.6; task A19.
+- **🔴 NO OUTPUT-SIDE SAFETY GATE (2026-07-03, repo review follow-up).** SAFETY L2 §2.1/§2.2
+  promise hard-block matches are *discarded + incident-logged* and every output is
+  *scope/age/pedagogy-checked before delivery*; ARCHITECTURE §2 claims all output "passes through
+  the safety layer". Reality: `llm_call → redact_credentials → _strip_trailing_questions → child`
+  — no content/scope check, no discard path, no incident log. Output safety is prompt-only.
+  → REVIEW §1.6; task A13.
+- **🔴 Help explanations never verified — only child answers are (2026-07-03, repo review
+  follow-up).** SAFETY §6.2 Level 2 promises numeric steps *in re-explanations* are verified
+  before serving (discard + regenerate on failure). `verify_numeric.check()` is only called on
+  child answers; a wrong worked step in a Help explanation ships unchecked — against the
+  project's own "hallucination = safety failure" bar. → REVIEW §1.7; task A14.
+- **🔴 SAFETY-AUDIT GAP — escalation_log missing/wrong fields (2026-07-03, repo review).**
+  No `severity` column (SAFETY §3.5 claims it's recorded), no `session_id`/turn number
+  (SAFETY §3.3 Step 2 claims both), and the live write path never sets `session_outcome`,
+  so LOW jailbreaks that did NOT freeze are stored as `'frozen'` (schema comment requires
+  `'logged_only'`). Only the uncalled demo helper `escalation.handle_trigger()` does it right —
+  two write paths, already drifted. → [REVIEW_2026-07-03.md §1.2](../REVIEW_2026-07-03.md);
+  build task REMAINDER_PLAN A3.
+- **🔴 Escalation redirect hands the resume control to the child's screen (2026-07-03, repo
+  review).** On escalation `/answer` redirects the CHILD's browser to `/parent`, which shows the
+  verbatim trigger text (SAFETY §3.3 Step 4 says the alert must NOT carry it) plus the un-gated
+  acknowledge/resume button. Honor-system pilot, but the flow actively navigates the child to the
+  unfreeze control. → REVIEW §1.4; task A8.
+- **🟠 SAFETY.md overstates shipped controls (2026-07-03, repo review).** (1) §1.5.2(2) promises
+  strip/flag of imperative lines in grounding passages — `grounding/wrapper.py` deliberately
+  doesn't (W7 data-wrapping design superseded it; SAFETY.md never updated). (2) §4.6 + SECURITY.md
+  say a rolling retention window "is applied" — zero retention/purge code exists (and the
+  transcript immutability triggers currently make row-level purge impossible — the two designs
+  conflict). (3) §5.5 session-start "I'm a computer helper" statement not implemented (only the
+  reactive system-prompt rule). → REVIEW §1.1/1.3/1.5; tasks A4 + A10 + C retention decision.
+- **🟠 false-confidence `help_pressed` signal corrupted (2026-07-03, repo review).**
+  `_do_probe_classify` uses `len(ctx.help_modalities_used) > 0`: stale across nodes (Help on
+  node A masks false_confidence on node B — SPEC §14.4 requires "no Help pressed *on concept*")
+  and now also set by system-initiated auto-help-on-wrong, conflating declared confusion with
+  scaffolding. Corrupts the pilot's core metric. → REVIEW §2.2; task A5.
+- **🟠 Web learner identity not durable — mastery silently resets on server restart
+  (2026-07-03, repo review).** `_db_learner_ids` is in-memory; the cookie survives a restart, the
+  mapping doesn't → `create_learner()` runs again → new learner row, orphaned history, mastery
+  back to P_L0. Contradicts SAFETY §4.3 retention claims. → REVIEW §2.3; task A6.
+- **🟠 System prompt hardcoded to fractions/Year-4 while the app serves 3 subjects (2026-07-03,
+  repo review).** `prompts/system_prompt.md` scope-locks to fractions; arithmetic + science Help
+  calls run under it → internal scope conflict. → REVIEW §2.1; task A7.
+- **🟡 SESSION_FSM.md conformance test (T3.7) never built + doc drifted (2026-07-03, repo
+  review).** The doc claims `tests/dialogue/test_session_fsm.py` parses its transition table; no
+  test references SESSION_FSM. Controller has undocumented transitions (auto-help, probe→help,
+  LOW-severity continue, probe demote) and a dead unreachable `PARENT_ACK_WAIT` state. → REVIEW
+  §3.1; task A11.
+- **🟡 Legacy LLM-question fallback scores against a question, not an answer (2026-07-03, repo
+  review).** `web/app.py:_load_curriculum` sets `expected_answer = transfer_seeds[0]`; any node
+  without bank/generator coverage silently can never PASS. Also: the SAFE_REJECT/EXTRACT_FAIL
+  re-ask loop has no cap (child can be stuck forever). → REVIEW §2.4/2.5; task A9.
+- **🟡 No CI (2026-07-03, repo review).** No `.github/` — the pytest+ruff gate is convention
+  only; the pre-commit secret hook is opt-in and absent on fresh clones. → REVIEW §3.2; task A12.
 - **✅ FIXED — severity-blind freeze (2026-06-29).** `controller.py::_step_core` now branches on
   `Severity`: **CRITICAL/HIGH** → `ESCALATION_FREEZE` + handoff (unchanged); **LOW**
   (`adversarial_jailbreak`) → **logged-only, NOT frozen** (design §4.3) — logs to escalation_log,
@@ -243,6 +316,10 @@ Cross-cutting "later" items not tied to a single W-task. Add here as they come u
 
 | Item | Status | Notes |
 |---|---|---|
+| **i18n / language-gated safety** (repo review §8.5) | 🔭 post-pilot design | All 61 safety trigger regexes + handoff messages + feedback strings are English-only, while the product claims per-country templates. Design rule needed: loading a template in language X is REFUSED until a vetted trigger bank + handoff wording for X exists. Record as a SAFETY.md scope boundary now (1 para); full design post-pilot. |
+| **`mentar backup` subcommand** (repo review §8.7) | 🔭 | "Export = file copy" needs `wal_checkpoint` first (`store.checkpoint()` exists, nothing user-facing calls it). Thin subcommand: checkpoint → copy → verify. Makes the parent-facing backup story real. |
+| **Dependency lockfile + `.vendor/` PyYAML decision** (repo review §8.7) | 🔭 | Floating `>=` deps, no lock; `.vendor/` PyYAML duplicates the pyproject dep. Add constraints/uv lock alongside CI (A12); document vendor precedence or drop it once CI guarantees installs. |
+| **Seeded per-session RNG** (repo review §8.7) | 🔭 | Controller `random` is unseeded → sessions unreplayable. Seed per session, log the seed — cheap debugging win for pilot analysis. |
 | Injection red-team tooling (Garak et al.) | ✅ Garak scaffolded | **Assessed 2026-06-29; Garak scaffold added at `eval/redteam/garak/` (README + run.example.sh, run-only, NOT in pyproject).** Filter: run-only eval tooling is welcome (never vendored, out of `pyproject.toml`, like promptfoo/MathTutorBench/NIAH); runtime safety is **owned + deterministic** (escalation.py + bounded FSM; LLM never decides safety; child data never leaves device) so runtime guardrail libs are a high bar. **⭐ Adopt run-only: Garak** (NVIDIA, Apache-2.0) — LLM vuln scanner (injection/jailbreak/leakage), best all-rounder; complements promptfoo + `eval/redteam/prompt_injection.jsonl`; runs local against our endpoint (verify no phone-home). **Secondary:** PyRIT (MIT, powerful but heavier/Azure-leaning); Promptbench (robustness benchmarking, overlaps owned harness — low priority). **Do NOT ship (runtime detectors):** Rebuff (LLM+vectorDB; API mode egresses data → never; local heuristics = pattern reference only), LangKit (ML runtime monitor; we own that layer), llm-guard (modular scanners; its *output* PII/toxicity scanners are a possible defence-in-depth **output** check later — evaluate dep shape). All probe the **raw model** → hits are defence-in-depth signals, not shipped-behaviour bugs (FSM wrapper ships). See [[feedback_dependency_philosophy]], [[decision_mathtutorbench_complementary_eval]]. |
 | promptfoo — prompt/red-team eval (run-only) | ✅ scaffolded (PR #6) | **Scaffold built 2026-06-26** (`eval/redteam/`, run-only); live run still needs eval-host creds + Node ≥20.20. Eval tooling, NOT a Mentar dependency. MIT, runs 100% local, no telemetry (OpenAI-acquired but still MIT). **Adopt the same way as MathTutorBench: run-only, never vendored, kept out of `pyproject.toml`.** Use ONLY for what we lack — *generated* adversarial red-teaming (jailbreak / prompt-injection / PII / harmful-content / emergency-signposting gap) to complement the hand-authored `adversarial`+`sycophancy` suites; do NOT replace the owned Python eval harness (`eval/run_candidates.py` + `judge_responses.py` + rubric/misconception/safety scorers). Hits the existing LiteLLM `…:4000/v1` + Ollama endpoints unchanged; Sonnet as grader. Directly advances closing the documented child-safety gaps blocking public release. Scaffold target: `eval/redteam/promptfooconfig.yaml` + README. See [[decision_mathtutorbench_complementary_eval]]. **Spike-verified 2026-06-24** (echo provider, no LLM → **3/3 PASS**): install + config-parse + eval loop + assertions + report all work. Caveats for adoption: (1) **hard Node floor ≥20.20.0 / ≥22** — it *refuses to run* below that (sandbox's `20.19.2` failed; ran via a throwaway `/tmp` Node 22); the eval-host/CI must satisfy this. (2) Bundles **`posthog-node` telemetry** — the "no telemetry" claim is conditional; MUST set `PROMPTFOO_DISABLE_TELEMETRY=1` + verify no phone-home. (3) **Not yet tested:** real-model backend + red-team *generation* — use **local** attack-gen, not promptfoo cloud. Tracked for build in [REMAINDER_PLAN.md](REMAINDER_PLAN.md) Wave 2.2. |
 | AI-ready repo structure (contributor on-ramp) | ✅ built (PR #7) | **Focused subset built 2026-06-26** (`AGENTS.md` + `CONTRIBUTING.md` + slim `CLAUDE.md`; sprawl skipped). Adopt a FOCUSED subset of the "ai-repo-structure" convention (ref `IgniteUI/ai-repo-structure`, MIT): (1) **`AGENTS.md`** as the tool-neutral keystone (cross-tool standard) — move generic guidance out of `CLAUDE.md`, leave CLAUDE.md a thin pointer; (2) **`CONTRIBUTING.md`** (pytest/ruff gate, src-layout, eval flow); (3) an always-on **rules** section hoisting safety guardrails + protected paths (verifier safe-reject, escalation/handoff, KA=NC, `.vendor/` upstream) so any contributor AI reads them first. **SKIP the sprawl** (parallel `.claude/`+`.github/` internal systems, `agents/`/`instructions/`, LEARN course, use/adopt skills) until a 2nd tool/contributor exists — YAGNI. ⚠️ Do NOT collide with the existing `prompts/` (tutor PRODUCT prompts, not agent prompts). Pairs with LICENSE + SECURITY.md. |
@@ -259,6 +336,8 @@ Cross-cutting "later" items not tied to a single W-task. Add here as they come u
 
 | Date | Change |
 |------|--------|
+| 2026-07-03 (2nd pass) | **Repo review — architecture follow-up sweep** (Opus, Cowork session). 5 more defects promoted (escalation-log best-effort drop 🔴; runtime template validation / false-completion 🟠; stale safety-eval-vs-prompt-hash process 🟠; CLI→web layering 🟡; unused `age_mode` 🟡) + 4 backlog rows (i18n language-gated safety, `mentar backup`, lockfile/vendor decision, seeded RNG). Tasks **A15–A19** added to REMAINDER_PLAN; REVIEW §8 holds detail. **New protected invariant recorded in AGENTS.md RULES: child input never reaches the LLM.** DOC_AUDIT updated with a 2026-07-03 stale-doc addendum. |
+| 2026-07-03 | **Independent repo review** (Opus, Cowork session) — full docs+code+schema+hygiene pass. Findings register: **[REVIEW_2026-07-03.md](../REVIEW_2026-07-03.md)** (detail reference — keep). 9 new defects promoted to *Known defects* above (top: escalation_log audit-data gaps; child-facing resume control on escalation redirect; SAFETY.md overstating shipped controls); build tasks added as **REMAINDER_PLAN A3–A12 + B2 + C rows**. Verified clean: `ruff`, tracked-file/secret hygiene (193 files, no leaks). pytest not run in the review sandbox (py3.10 < 3.11 floor). Also confirmed still-good: deterministic safety spine, test discipline, dependency philosophy. |
 | 2026-06-29 | **Credential-leak guard (maintainer-proposed)** (Opus). New `safety/credential_guard.py` (`detect_credential_leak` + `redact_credentials`): scrubs secret-shaped strings (`sk-…`, `Bearer …`, `api_key=…`, `MENTAR_*KEY`, `token/secret/password=…`) from **LLM output** at the single chokepoint `_make_safe_llm`, so an injected/hallucinated key can't reach the child or the transcript/logs. Defence-in-depth (the key is never in a prompt). 5 tests + controller-integration test. **398 pass, ruff clean.** |
 | 2026-06-29 | **Help "Now you try it!" shows the answer-format hint** (Opus, from testing). Both the **main question** and the Help re-try prompt now append a cue for the expected answer SHAPE — `_/_` for fractions, "a letter: A, B, C or D" for MC, "a number" for int/decimal — via `_answer_format_hint(answer_type)`. **Deterministic from the known answer type, NOT LLM-guessed** (it must match the verifier; an LLM guess could mismatch). Also added `docs/design/FLOW.md` (child/parent/subject Mermaid flow diagrams). Test `test_help_recheck_shows_answer_format_hint`. **388 pass, ruff clean.** |
 | 2026-06-29 | **FIX (scoring integrity): endless silent probes after mastery — "all answers accepted regardless"** (Opus, from testing). Once a node's mastery crossed 0.85, `_do_branch_decision` set `probe_due` **every** turn (`mastery >= threshold`), and `_do_probe_classify` returned to `BRANCH_DECISION` → the FSM **re-probed the same node forever**. Probes give no right/wrong feedback and just advance, so after ~2 correct answers (mastery → 0.98) every later question was a silent probe where **wrong answers slipped through**. (Parent-view was coincidental — mastery had just crossed.) Fix: a clean-pass probe → **`NODE_SELECT` (advance**; mastered node leaves the fringe); a not-clean probe → **demote mastery to `PROBE_DEMOTE_MASTERY` (0.6)** + `NODE_SELECT` → node returns to normal feedback practice; both probe exits now also give feedback (praise / "let's practise that one a bit more"). Regression test `test_mastered_node_advances_not_endless_probe`. **387 pass, ruff clean.** `dialogue/controller.py`. |
