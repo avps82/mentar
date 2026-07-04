@@ -254,10 +254,13 @@ dialogue controller, web app, eval dataset, FSM caller wiring) has **all shipped
   yet merged, stacked on Wave 1 + A17/A16): new `ctx.help_by_node: dict[str, bool]` set ONLY at
   the 3 `_is_help_request` call sites (never in `_do_bkt_update`'s auto-help branch);
   `_do_probe_classify` reads `ctx.help_by_node.get(current_node_id, False)`. → REVIEW §2.2.
-- **🟠 Web learner identity not durable — mastery silently resets on server restart
-  (2026-07-03, repo review).** `_db_learner_ids` is in-memory; the cookie survives a restart, the
-  mapping doesn't → `create_learner()` runs again → new learner row, orphaned history, mastery
-  back to P_L0. Contradicts SAFETY §4.3 retention claims. → REVIEW §2.3; task A6.
+- **✅ RESOLVED 2026-07-05 — Web learner identity not durable — mastery silently resets on
+  server restart (2026-07-03, repo review).** Was: `_db_learner_ids` is in-memory; the cookie
+  survives a restart, the mapping doesn't -> `create_learner()` ran again -> new learner row,
+  orphaned history, mastery back to P_L0. Fixed via REMAINDER_PLAN A6 (PR open — awaiting human
+  review, not yet merged, stacked on Wave 1 + A17/A16/A5): new
+  `LearnerStore.get_learner_by_name()`; `_get_or_create_controller` looks up the deterministic
+  `pilot-<uuid8>` name before `create_learner`, reusing the existing row. → REVIEW §2.3.
 - **🟠 System prompt hardcoded to fractions/Year-4 while the app serves 3 subjects (2026-07-03,
   repo review).** `prompts/system_prompt.md` scope-locks to fractions; arithmetic + science Help
   calls run under it → internal scope conflict. → REVIEW §2.1; task A7.

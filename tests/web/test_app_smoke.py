@@ -134,6 +134,58 @@ def test_parent_view_reads_db_and_persists_ack():
     assert outcome == "acknowledged", f"session_outcome={outcome!r}"
 
 
+def test_learner_id_survives_server_restart():
+    """A6: the flask-session cookie survives a server restart, but the in-memory
+    _db_learner_ids map does not. Before the fix, every restart silently created
+    a NEW learner_profile row (mastery/history reset). Simulate a restart by
+    reloading mentar.web.app (fresh in-memory dicts) against the SAME db path
+    and the SAME session cookie, and assert the learner id + mastery persist."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+    import sqlite3
+
+    app_mod, c1 = _client()
+    dbp = os.environ["MENTAR_DB_PATH"]  # fixed for both "processes" below
+
+    c1.post("/choose", data={"subject": "fractions"})
+    c1.get("/")
+    c1.post("/answer", data={"answer": "4"})  # persists a learner + skill_state row
+
+    db = sqlite3.connect(dbp)
+    assert db.execute("SELECT count(*) FROM learner_profile").fetchone()[0] == 1
+    learner_id_before = db.execute("SELECT id FROM learner_profile").fetchone()[0]
+    db.close()
+
+    # Grab the session cookie to carry over to the "restarted" process.
+    session_cookie = c1.get_cookie("session")
+    assert session_cookie is not None
+
+    # Simulate a restart: reload the module (fresh _db_learner_ids/_stores/
+    # _controllers) but keep MENTAR_DB_PATH unchanged (same on-disk DB file).
+    import importlib
+    app_mod = importlib.reload(app_mod)
+    app_mod._llm_call_cached = lambda messages: "stub tutor reply"
+    c2 = app_mod.app.test_client()
+    c2.set_cookie(domain="localhost", key="session", value=session_cookie.value)
+
+    c2.post("/choose", data={"subject": "fractions"})
+    c2.get("/")
+    c2.post("/answer", data={"answer": "4"})
+
+    db = sqlite3.connect(dbp)
+    n_learners = db.execute("SELECT count(*) FROM learner_profile").fetchone()[0]
+    learner_id_after = db.execute("SELECT id FROM learner_profile").fetchone()[0]
+    n_responses = db.execute("SELECT count(*) FROM response_log").fetchone()[0]
+    db.close()
+
+    assert n_learners == 1, f"restart must reuse the learner row, not create a new one (got {n_learners})"
+    assert learner_id_after == learner_id_before
+    assert n_responses >= 2, "both pre- and post-restart answers should be under the same learner"
+
+
 def test_parent_view_shows_degraded_banner_when_fallback_log_present():
     """A15: /parent shows a warning banner when escalation_fallback.log has
     content (a prior escalation failed to persist to the DB) — and not otherwise."""
@@ -166,3 +218,5 @@ if __name__ == "__main__":
     print("  ✓ test_parent_view_reads_db_and_persists_ack")
     test_parent_view_shows_degraded_banner_when_fallback_log_present()
     print("  ✓ test_parent_view_shows_degraded_banner_when_fallback_log_present")
+    test_learner_id_survives_server_restart()
+    print("  ✓ test_learner_id_survives_server_restart")

@@ -156,6 +156,19 @@ class LearnerStore:
             (learner_id,),
         ).fetchone()
 
+    def get_learner_by_name(self, name: str) -> sqlite3.Row | None:
+        """Return the learner_profile row matching *name* exactly, or None.
+
+        A6: lets a caller reuse a deterministic-named learner (e.g. the web app's
+        `pilot-<uuid8>` convention) across process restarts instead of creating a
+        new row every time — name is not unique in the schema, so this returns
+        the first match (oldest id) if duplicates somehow exist.
+        """
+        return self._conn.execute(
+            "SELECT * FROM learner_profile WHERE name = ? ORDER BY id LIMIT 1;",
+            (name,),
+        ).fetchone()
+
     # ── Session ──────────────────────────────────────────────────────────────
 
     def create_session(self, learner_id: int, session_id: str) -> None:
