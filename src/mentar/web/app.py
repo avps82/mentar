@@ -141,8 +141,14 @@ def _get_or_create_controller(learner_uuid: str, subject: str) -> SessionControl
         if store is None:
             store = LearnerStore(DB_PATH)
             _stores[learner_uuid] = store
-            _db_learner_ids[learner_uuid] = store.create_learner(
-                name=f"pilot-{learner_uuid[:8]}",
+            # A6: reuse the existing learner_profile row across server restarts —
+            # _db_learner_ids is in-memory and clears on restart, but the Flask
+            # session cookie (and so learner_uuid) survives; without this, every
+            # restart silently created a new learner and reset mastery/history.
+            learner_name = f"pilot-{learner_uuid[:8]}"
+            existing = store.get_learner_by_name(learner_name)
+            _db_learner_ids[learner_uuid] = existing["id"] if existing else store.create_learner(
+                name=learner_name,
                 year_level="pilot",
                 country="GB",
                 age_mode="parent_mediated",  # SPEC §6.2 pilot default
