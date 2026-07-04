@@ -13,10 +13,10 @@ from __future__ import annotations
 import uuid
 from pathlib import Path
 
+from mentar.db.adapter import _DbStoreAdapter
 from mentar.db.store import LearnerStore
 from mentar.dialogue.controller import SessionController
 from mentar.engine.itembank import Item
-from mentar.web.app import _DbStoreAdapter
 
 _REPO = Path(__file__).resolve().parents[2]
 _PROMPTS = _REPO / "prompts"

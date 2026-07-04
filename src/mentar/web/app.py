@@ -26,11 +26,12 @@ import os
 import uuid
 from pathlib import Path
 
-import yaml
 from flask import Flask, redirect, render_template, request, session, url_for
 
+from mentar.db.adapter import _DbStoreAdapter
 from mentar.db.store import LearnerStore
 from mentar.dialogue.controller import FSMState, SessionController
+from mentar.engine.curriculum import load_curriculum
 from mentar.engine.itembank import load_item_bank
 from mentar.engine.itemgen import (
     ARITHMETIC_GENERATORS,
@@ -64,31 +65,7 @@ ITEMBANK_PATH = Path(os.environ.get(
 
 # ── One-time startup ──────────────────────────────────────────────────────────
 
-def _load_curriculum(path: Path) -> dict:
-    """Convert the pilot fractions.md YAML into the controller's curriculum dict."""
-    # The file is a YAML block followed by Markdown narrative (after a --- divider).
-    # Extract only the first YAML document (everything before the second ---).
-    text = path.read_text(encoding="utf-8")
-    parts = text.split("\n---\n", maxsplit=1)
-    raw = yaml.safe_load(parts[0])
-    curriculum = {}
-    for node in raw.get("concepts", []):
-        nid = node["id"]
-        verifier = node.get("verifier", {})
-        seeds = node.get("transfer_seeds", [])
-        curriculum[nid] = {
-            "concept": node.get("label", nid),
-            "answer_type": verifier.get("answer_type", "free_text"),
-            "checker": verifier.get("checker", "none"),
-            "expected_answer": seeds[0] if seeds else "",
-            "grounding": node.get("grounding", {}),
-            "prerequisites": node.get("prereqs", []),
-            "bkt_priors": node.get("bkt_priors"),
-        }
-    return curriculum
-
-
-_CURRICULUM = _load_curriculum(CURRICULUM_PATH)
+_CURRICULUM = load_curriculum(CURRICULUM_PATH)
 
 # ── Subjects (multi-topic testing) ──────────────────────────────────────────────
 # Each subject = a curriculum template + its checkable-item source. Fractions keeps
@@ -115,7 +92,7 @@ SUBJECTS: dict[str, dict] = {
     },
 }
 DEFAULT_SUBJECT = "fractions"
-_SUBJECT_CURRICULA = {k: _load_curriculum(v["curriculum"]) for k, v in SUBJECTS.items()}
+_SUBJECT_CURRICULA = {k: load_curriculum(v["curriculum"]) for k, v in SUBJECTS.items()}
 _learner_subject: dict[str, str] = {}   # learner_uuid -> active subject key
 
 # Inference backend: prefer config/inference.yaml (the canonical, backend-agnostic
@@ -187,84 +164,6 @@ def _get_or_create_controller(learner_uuid: str, subject: str) -> SessionControl
         )
         _turn_logs[learner_uuid] = []
     return _controllers[learner_uuid]
-
-
-class _DbStoreAdapter:
-    """Adapts LearnerStore (int learner_id) to the controller's expected interface."""
-
-    def __init__(self, store: LearnerStore, db_id: int) -> None:
-        self._store = store
-        self._db_id = db_id
-
-    @property
-    def db_path(self):
-        return self._store.db_path
-
-    def get_skill_state(self, learner_id: str, node_id: str):
-        return self._store.get_skill_state(self._db_id, node_id)
-
-    def update_skill_state(self, learner_id: str, node_id: str, p: float) -> None:
-        self._store.update_skill_state(
-            learner_id=self._db_id,
-            skill_id=node_id,
-            p_mastery=p,
-            priors_used=True,  # pilot uses cold-start priors (W3.3: fitted only at N>=100)
-        )
-
-    def write_escalation(
-        self,
-        learner_id: str,
-        trigger_class: str,
-        trigger_text_verbatim: str,
-        severity: str | None = None,
-        session_id: str | None = None,
-        turn_index: int | None = None,
-        session_outcome: str | None = None,
-    ) -> int:
-        # Verbatim text stored untruncated (SAFETY §3.3 Step 2).
-        return self._store.write_escalation(
-            learner_id=self._db_id,
-            trigger_class=trigger_class,
-            trigger_text_verbatim=trigger_text_verbatim,
-            severity=severity,
-            session_id=session_id,
-            turn_index=turn_index,
-            session_outcome=session_outcome,
-        )
-
-    # ── Durable session logging (controller calls these best-effort) ──────────
-
-    def create_session(self, session_id: str) -> None:
-        self._store.create_session(self._db_id, session_id)
-
-    def end_session(self, session_id: str, ended_reason: str) -> None:
-        self._store.end_session(self._db_id, session_id, ended_reason)
-
-    def write_transcript(self, session_id: str, turn_index: int, role: str, text: str) -> int:
-        return self._store.write_transcript(self._db_id, session_id, turn_index, role, text)
-
-    def write_response(
-        self, session_id: str, skill_id: str, prompt_ref: str, answer: str,
-        scored: int, hinted: int, check_result: str | None,
-    ) -> int:
-        return self._store.write_response(
-            self._db_id, session_id, skill_id, prompt_ref, answer, scored, hinted, check_result,
-        )
-
-    def write_help_event(
-        self, session_id: str, skill_id: str, modality: str, response_log_id: int,
-    ) -> int:
-        return self._store.write_help_event(
-            self._db_id, session_id, skill_id, modality, response_log_id,
-        )
-
-    def write_probe_event(
-        self, session_id: str, skill_id: str, response_log_id: int,
-        retry_response_log_id: int | None, class_: str,
-    ) -> int:
-        return self._store.write_probe_event(
-            self._db_id, session_id, skill_id, response_log_id, retry_response_log_id, class_,
-        )
 
 
 # HTML templates live in src/mentar/web/templates/ (learner.html, done.html, parent.html).
