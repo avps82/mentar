@@ -60,13 +60,29 @@ def load_models(path: Path = MODELS_YAML) -> list[dict]:
 
 
 def build_pipeline_messages(system_prompt_text: str, prompt: str, grounding) -> list[dict]:
-    """System message = system_prompt_text with {{grounding_passage}} filled; then the user turn.
+    """System message = system_prompt_text with its slots filled; then the user turn.
 
     Core substitution drafted by the local model (gemma2:9b) and reviewed/normalised here
     (4-space, typed) as a "local-drafts / reviewer-verifies" experiment.
+
+    A18 finding (2026-07-05, re-run after A7 added {{subject}}/{{scope_line}}): this harness
+    reads the raw prompts/system_prompt.md text and only ever filled {{grounding_passage}} —
+    {{concept}}/{{subject}}/{{scope_line}} leaked through as literal unsubstituted tokens (visible
+    in eval/responses/*.jsonl, e.g. "our lesson about {{concept}}"). Not a production bug (the
+    real controller substitutes all of these) but it degrades the eval signal — the heuristic
+    scorer's on-topic/redirect keyword lists don't match a literal "{{subject}}" token, so a
+    clean redirect gets bucketed as "review" instead of "pass". Fill them with the pilot's real
+    values so the eval reflects what the model actually serves in production.
     """
+    text = (
+        system_prompt_text
+        .replace("{{grounding_passage}}", grounding or "")
+        .replace("{{concept}}", "fractions")
+        .replace("{{subject}}", "mathematics")
+        .replace("{{scope_line}}", "mathematics")
+    )
     return [
-        {"role": "system", "content": system_prompt_text.replace("{{grounding_passage}}", grounding or "")},
+        {"role": "system", "content": text},
         {"role": "user", "content": prompt},
     ]
 
