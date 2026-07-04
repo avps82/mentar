@@ -167,7 +167,6 @@ class FSMState(str, Enum):
     PROBE_SCORE           = "PROBE_SCORE"
     PROBE_CLASSIFY        = "PROBE_CLASSIFY"
     ESCALATION_FREEZE     = "ESCALATION_FREEZE"
-    PARENT_ACK_WAIT       = "PARENT_ACK_WAIT"
     SESSION_END_COMPLETE  = "SESSION_END_COMPLETE"
     SESSION_END_BY_LEARNER = "SESSION_END_BY_LEARNER"
     SESSION_END_BY_PARENT = "SESSION_END_BY_PARENT"
@@ -183,7 +182,6 @@ _AWAIT = {
     FSMState.AWAIT_ANSWER,
     FSMState.HELP_RECHECK_AWAIT,
     FSMState.PROBE_AWAIT_ANSWER,
-    FSMState.PARENT_ACK_WAIT,
     FSMState.ESCALATION_FREEZE,
 }
 
@@ -330,7 +328,7 @@ class SessionController:
         """
         ctx = self._ctx
         self._maybe_create_session()
-        if ctx.state not in (FSMState.ESCALATION_FREEZE, FSMState.PARENT_ACK_WAIT):
+        if ctx.state is not FSMState.ESCALATION_FREEZE:
             # Nothing to acknowledge; report current status with no side effects.
             return TurnResult(
                 state=ctx.state.value, text="",
@@ -369,8 +367,6 @@ class SessionController:
                 return TurnResult(
                     state=ctx.state.value, text="", done=False, escalated=True
                 )
-            if ctx.state is FSMState.PARENT_ACK_WAIT:
-                return self._handle_parent_ack(learner_input)
             trigger = classify(learner_input)
             if trigger is not None:
                 # Log every trigger for the parent (SAFETY §3.x): full UNTRUNCATED
