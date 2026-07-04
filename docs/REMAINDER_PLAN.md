@@ -2,7 +2,107 @@
 title: "Mentar — Remainder Build Plan v2 (post-G0-validation)"
 version: living-doc
 status: "Active"
-updated: 2026-07-03
+updated: 2026-07-04
+---
+
+# Release Wave — pilot-ready main (status as of 2026-07-04)
+
+**Goal:** close every codeable safety/correctness defect from the 2026-07-03 review (A3–A19),
+plus A1/A2/B1/B2 and 2 new ratified tasks (A20/A21), so `main` is pilot-ready. Repo stays
+private; going public is a separate later step. Maintainer-only C-rows (AGPL text paste, token
+rotation, safeguarding review, consent signing) are OUT of this wave.
+
+**Full plan (wave grouping, execution model, key-files map, research checkpoints) is at**
+`<local-plan-file>` **on this machine** — that path is
+NOT repo-tracked, so if it's gone, this section + the task table below is the source of truth;
+re-derive the plan file from the Wave table if you want it back in that format.
+
+## 3 maintainer decisions ratified 2026-07-04 (apply in this wave, not yet built)
+
+1. **BKT Option B** — gate the `learns` transition on non-wrong observations only (a wrong
+   unaided answer conditions/drops mastery, never adds `learns` credit). Fixes the
+   counterintuitive "mastery % rises after wrong answers" behaviour documented in
+   PHASE0_STATUS.md's 2026-06-29 modeling-decision note. Task **A20** below.
+2. **Retention = option (ii)** — pilot retains everything; deletion = delete the `.db` file. No
+   purge mechanism gets built this wave; docs reworded to say this plainly (folds into A4).
+   90-day rolling purge design deferred to Phase 1 (kept as a C-row).
+3. **Interaction-scope v0 (minimal subset)** — deterministic routing for "I don't know"-type
+   input and question-shaped input (child asking a clarifying question) into the existing Help
+   loop, unscored — same guard pattern as `_is_help_request`. The FULL taxonomy in
+   `docs/design/INTERACTION_SCOPE.md` stays deferred/unbuilt; only this narrow slice ships. Task
+   **A21** below.
+
+## Wave order (do NOT reorder without reason — dependencies noted)
+
+| Wave | Tasks | Status | Notes |
+|------|-------|--------|-------|
+| **0 — rails** | A12 | ✅ **DONE** (2026-07-04, PR #54, merged `b544978`) | CI matrix py3.11-3.13 + gitleaks CLI (MIT, pinned v8.30.1 — NOT gitleaks-action, which is commercial-licensed since v2). **Gotcha found + fixed:** `pip install -e ".[dev,web]"` is not enough — grounding tests need `libzim`, which lives behind its own `grounding` extra (spotty cross-platform wheels, so deliberately not in `dev`/`web`). CI installs `.[dev,web,grounding]`; manylinux wheels exist for cp311-313 on ubuntu-latest so this is safe. First run failed on this, second run (483630c) passed. |
+| **1 — safety-critical, Opus-led, in order** | A3 → A15 → A8 → A13 → A14 | ⏳ not started | A3 (schema v2) unblocks A13's incident-row home + A19's session-row rng_seed column — do it first. |
+| **2 — correctness, Gemma-drafted/Opus-verified** | A17 → A16 → A5 → A6 → A9 → A7 → A20 → A21 | ⏳ not started | A17 before A16 (layering clean-up first makes A16's startup hook land in one place). A20/A21 are the new ratified tasks — specs below. |
+| **3 — assent/docs/hygiene** | A1 → A4 → A18 → A19 → A2 → A11 | ⏳ not started | A1 before A4 (same controller preamble). A11 (FSM conformance test) runs **after** waves 1–2 since A9/A14/A21 add new FSM transitions the doc needs to capture. |
+| **4 — QA + doc close-out** | B1 → B2 → close-out | ⏳ not started | B1 is conditional — check `zim_dir` is readable (real ZIMs were downloaded 2026-06-27) before running; log+skip if absent, don't block the wave. B2 (doc-drift sweep) runs LAST so it reflects the post-wave state. |
+
+**Execution model (unchanged from plan):** one branch + PR per task; gate = `pytest tests/ -q`
+green (398 baseline, will grow) + `ruff check .` clean + the task's own Accept criteria (specs
+below / already in this file for A3–A19). `[G]` tasks → `gemma` skill (spec → gemma4:12b drafts →
+Opus reviews); `[O]` tasks → Opus direct (safety-critical). Research checkpoints (don't guess):
+CI tooling / blocklist sourcing / BKT-variant literature / COPPA-GDPR-K wording — verify live via
+WebSearch/Context7 at execution time, not from training-data memory (maintainer directive
+2026-07-04).
+
+**Environment notes for next session:**
+- `eval/.creds.env` holds `MENTAR_VLLM_BASE_URL`/`MENTAR_VLLM_API_KEY` — source it before
+  `tools/llm.sh`/gemma calls; not in the shell env by default.
+- The sandbox's auto-mode permission classifier blocks agent-downloaded-and-executed external
+  binaries (hit this trying to dry-run the gitleaks CLI locally for A12) — such steps must
+  either go through an existing declared dependency/tool or be verified via the actual CI run
+  instead of a local smoke test.
+- `git branch -a` currently shows several stale-looking remote branches unrelated to this wave
+  (`batch-session`, `docs/backlog-*`, `eval/niah-*`, `feat/credential-guard`, `feat/w5.6-assent`)
+  — pre-existing, not touched this session, not this wave's concern unless the maintainer flags
+  them.
+
+## New task specs (A20, A21 — not yet in the A3–A19 table below)
+
+### A20 — BKT Option B: gate `learns` on non-wrong observations `[O]`
+- **Why:** ratified 2026-07-04 (see above). Current recurrence applies `learns` credit after
+  *every* attempt (SPEC §11 / W3.3), so wrong answers from a low prior still raise mastery
+  (verified: 10%→21%→22%, plateaus, never false-masters — but counterintuitive for a
+  parent-facing %). REVIEW/PHASE0_STATUS 2026-06-29 note recommends Option B.
+- **Spec:** in `src/mentar/engine/bkt.py`, apply the learning transition
+  `P(L') = P(L|obs) + (1−P(L|obs))·learns` only when the observation is NOT a bare-wrong
+  (unaided incorrect) attempt; a wrong unaided answer only runs the conditioning step (posterior
+  drops via slip/guess), no `learns` term added. Hinted-win / correct / probe observations still
+  get the `learns` credit as before. Add a literature reference in
+  `docs/design/W3.3_bkt.md` for the "no-learning-on-incorrect" BKT variant (research the term
+  before writing — don't assert a citation from memory). Update SPEC §11 to reflect the deviation
+  from classic BKT.
+- **Files:** `src/mentar/engine/bkt.py`, `docs/design/W3.3_bkt.md`, `docs/SPEC.md` §11,
+  `tests/engine/test_bkt.py`.
+- **Accept:** new invariant test — a wrong-answer streak from cold start never raises mastery
+  above the prior (was: rises then plateaus ~22%; should now: stays flat or drops); existing
+  7 W3.3 invariants still verified; hinted-win / correct-answer paths unchanged (regression).
+
+### A21 — interaction-scope v0: don't-know + question-shaped input → Help, unscored `[G]` draft, `[O]` verify
+- **Why:** ratified 2026-07-04, minimal slice of the deferred `INTERACTION_SCOPE.md` design.
+  Currently every non-answer input is force-scored as an answer (corrupts BKT) unless it matches
+  the narrow `_is_help_request`/`_is_stop` guards. "I don't know" and clarifying questions are
+  common enough child input to warrant a deterministic carve-out now, without building the full
+  taxonomy.
+- **Spec:** add `_is_dont_know(text)` (case-insensitive match on "i don't know", "idk", "no idea",
+  "dunno", "i dont know") and reuse/extend a question-shaped check (starts with
+  what/how/why/when/where/who/can/is/does, OR ends in `?`) as a new guard in the answer-await
+  states (mirrors `_is_help_request`'s wiring — same states, same routing target: the Help loop,
+  unscored, no BKT update). Safety classifier (Bucket D) still runs first, unchanged. Check
+  `docs/design/INTERACTION_SCOPE.md` for any existing phrase inventory before inventing one from
+  scratch. Note in that doc that this v0 slice shipped; full taxonomy still deferred/needs
+  maintainer ratification.
+- **Files:** `src/mentar/dialogue/controller.py`, `tests/dialogue/test_controller.py`,
+  `docs/design/INTERACTION_SCOPE.md` (status note only).
+- **Accept:** "I don't know" and "what does numerator mean?" both route to Help unscored (no
+  response_log row, no BKT update, matches `_is_help_request` test pattern); a genuine numeric
+  answer is unaffected; existing help/stop guards unaffected.
+
 ---
 
 # Remainder Build Plan — v2
