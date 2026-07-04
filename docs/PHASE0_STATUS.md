@@ -201,11 +201,17 @@ dialogue controller, web app, eval dataset, FSM caller wiring) has **all shipped
   child gets a fixed neutral redirect. **Still a v0 keyword/regex heuristic, not a semantic
   classifier** — age-appropriateness and pedagogical-appropriateness checks (§2.2 items 2–3)
   are not yet implemented; SAFETY.md reworded to say so plainly. → REVIEW §1.6.
-- **🔴 Help explanations never verified — only child answers are (2026-07-03, repo review
-  follow-up).** SAFETY §6.2 Level 2 promises numeric steps *in re-explanations* are verified
-  before serving (discard + regenerate on failure). `verify_numeric.check()` is only called on
-  child answers; a wrong worked step in a Help explanation ships unchecked — against the
-  project's own "hallucination = safety failure" bar. → REVIEW §1.7; task A14.
+- **✅ RESOLVED 2026-07-05 (v0) — Help explanations never verified — only child answers are
+  (2026-07-03, repo review follow-up).** Was: SAFETY §6.2 Level 2 promised numeric steps *in
+  re-explanations* are verified before serving (discard + regenerate on failure), but
+  `verify_numeric.check()` was only ever called on child answers — a wrong worked step in a
+  Help explanation shipped unchecked. Fixed via REMAINDER_PLAN A14 (PR open — awaiting human
+  review, not yet merged, stacked on A3/A15/A8/A13): new `engine/explain_check.py` extracts
+  `a <op> b = c` arithmetic claims from Help explanation text and verifies each via
+  `verify_numeric.normalise_fraction`; a verified-wrong claim triggers regeneration (bounded,
+  2 attempts) then falls back to the deterministic hint. **v0 coverage floor** — simple
+  arithmetic claims only (no `/`-as-division, no decimals, no algebraic steps); unparseable
+  claims pass through unchecked, not blocked. → REVIEW §1.7.
 - **✅ RESOLVED 2026-07-05 — SAFETY-AUDIT GAP — escalation_log missing/wrong fields
   (2026-07-03, repo review).** Was: no `severity` column, no `session_id`/turn number, and
   the live write path never set `session_outcome` (LOW jailbreaks stored as `'frozen'`
