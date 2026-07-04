@@ -5,18 +5,27 @@ status: "Active"
 updated: 2026-07-05
 ---
 
-# Release Wave — pilot-ready main (status as of 2026-07-05)
+# Release Wave — pilot-ready main (status as of 2026-07-05, handover checkpoint)
 
-**All 4 waves built** (A3–A21, B2; B1 skipped — no ZIM access this run, not code-blocked). 17
-PRs (#55–#71) + this closing PR, stacked in dependency order, all open on GitHub awaiting
-human review/merge — none auto-merged (the harness's permission classifier blocks
-self-authored-and-merged safety-critical PRs without visible review; every PR here needs a
-maintainer look before landing). See each wave row below for the PR numbers.
+**A1–A21 + B2 are merged to `main`** (PRs #55–#72, all human-reviewed and merged by the
+maintainer). **B1 is done** (re-pointed pilot grounding to Khan Academy — see B1's row below)
+and open as **PR #73**, not yet merged. A small unrelated docs aside (README "Author's Funny
+Thoughts") is open as **PR #74**, not yet merged. Nothing else from this wave is outstanding —
+**#73 and #74 are the only two open PRs; everything else in A1–A21/B2 has already landed.**
 
-**Goal:** close every codeable safety/correctness defect from the 2026-07-03 review (A3–A19),
-plus A1/A2/B1/B2 and 2 new ratified tasks (A20/A21), so `main` is pilot-ready. Repo stays
-private; going public is a separate later step. Maintainer-only C-rows (AGPL text paste, token
-rotation, safeguarding review, consent signing) are OUT of this wave.
+A CI bug was found and fixed mid-wave: a job-level `permissions:` block in `.github/workflows/
+ci.yml` was silently dropping `contents: read` (GitHub Actions `permissions:` *replaces*
+defaults, it doesn't add to them) — fixed by adding `contents: read` alongside the job's
+`pull-requests: write`.
+
+**Goal (met):** close every codeable safety/correctness defect from the 2026-07-03 review
+(A3–A19), plus A1/A2/B1/B2 and 2 new ratified tasks (A20/A21), so `main` is pilot-ready. Repo
+stays private; going public is a separate later step. Maintainer-only C-rows (AGPL text paste,
+token rotation, safeguarding review, consent signing) are OUT of this wave — see section C.
+
+**Next actions for whoever picks this up:** (1) review/merge PR #73 (B1) and PR #74 (README
+aside); (2) after that, this wave's local backlog is exhausted — remaining work is either
+maintainer-only (section C) or post-pilot (see `PHASE0_STATUS.md`'s backlog section).
 
 **Full plan (wave grouping, execution model, key-files map, research checkpoints) is at**
 `<local-plan-file>` **on this machine** — that path is
@@ -387,7 +396,10 @@ Ordered by the review's priority table.
 - **Rotate** the eval-host token.
 - **Safeguarding professional review** — handoff wording + child-facing emergency signposting
   (gates rollout beyond the supervised single-family pilot).
-- Place **Vikidia + Simple-WP** on a *writable* runtime `zim_dir` (the `/mnt/zim` mount is read-only).
+- ~~Place Vikidia + Simple-WP on a writable runtime `zim_dir`~~ — **superseded 2026-07-05 (B1):
+  pilot re-pointed to Khan Academy** (already mounted, read-only is fine). Optional future
+  enhancement only, not a blocker: if Vikidia/Simple-WP are ever placed on a writable `zim_dir`,
+  those sources still work unmodified (`_extract_generic_article` handles them).
 - **Sign `PILOT_CONSENT`** before session 1.
 - **Explicit-harm + iterative-jailbreak red-team** — needs promptfoo Cloud or an uncensored+capable
   generator (the aligned-Claude refusal is structural; the local 7B was too weak). Decision + setup.
