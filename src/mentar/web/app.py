@@ -194,6 +194,10 @@ class _DbStoreAdapter:
         self._store = store
         self._db_id = db_id
 
+    @property
+    def db_path(self):
+        return self._store.db_path
+
     def get_skill_state(self, learner_id: str, node_id: str):
         return self._store.get_skill_state(self._db_id, node_id)
 
@@ -378,7 +382,16 @@ def parent():
         skill_states=skill_states,
         session_summary=session_summary,
         answers=answers,
+        logging_degraded=_escalation_fallback_log_nonempty(),
     )
+
+
+def _escalation_fallback_log_nonempty() -> bool:
+    """A15 — true when the escalation DB-write fallback sink has entries, meaning
+    at least one escalation failed to persist to the DB and was only captured in
+    the append-only escalation_fallback.log next to the DB file."""
+    path = Path(DB_PATH).parent / "escalation_fallback.log"
+    return path.exists() and path.stat().st_size > 0
 
 
 @app.route("/parent/ack", methods=["POST"])
