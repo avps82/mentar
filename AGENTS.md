@@ -35,6 +35,18 @@ mentar validate-template <path>  # curriculum template validator
 ## The gate (every change)
 `python -m pytest tests/ -q` **green** *and* `ruff check .` **clean** before a change is done.
 
+## Prompt changes require a safety-eval re-run (A18)
+Any change to a `prompts/*.md` file's body-hash (the versioned prompt templates — see
+`prompts/README.md`) invalidates the last recorded pipeline-safety claim (the T1.5 adversarial
+run in `docs/EVAL_RESULTS.md`), since the eval was run against the *old* prompt text. Before
+merging a prompts/-touching PR:
+1. Re-run the T1.5 adversarial suite through the pipeline against the new prompt.
+2. Record the run date + result next to the existing claim in `docs/EVAL_RESULTS.md` (don't let
+   the claim silently age against text it no longer describes).
+CI flags PRs that touch `prompts/` with a required-checklist comment (see `.github/workflows/`)
+as a reminder — it does not run the eval itself (eval is run-only/off-CI, per AGENTS.md's own
+`eval/` convention above).
+
 ## Conventions
 - DB/persistence writes from the controller are **best-effort** (`_safe_store`): a logging failure
   must never break a tutoring turn. Follow that pattern.

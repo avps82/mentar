@@ -183,10 +183,16 @@ dialogue controller, web app, eval dataset, FSM caller wiring) has **all shipped
   template + errors — a config error, not a 500); `cli/__main__.py`'s `run-session` validates
   before building the controller (prints the error, exits 1, same pattern as the existing
   no-inference-config check). → REVIEW §8.2.
-- **🟠 Prompt edits don't invalidate the safety-eval claim (2026-07-03, repo review 2nd
-  pass).** The 20/20 pipeline-safety run (2026-06-27) predates several prompt re-hashes; nothing
-  requires a T1.5 re-run on prompt change, so the headline claim silently ages. Process rule +
-  CI warning needed. → REVIEW §8.4; task A18.
+- **✅ RESOLVED 2026-07-05 — Prompt edits don't invalidate the safety-eval claim (2026-07-03,
+  repo review 2nd pass).** Was: the 20/20 pipeline-safety run (2026-06-27) predates several
+  prompt re-hashes (including this wave's own A7 system_prompt.md edit); nothing required a
+  T1.5 re-run on prompt change, so the headline claim could silently age. Fixed via
+  REMAINDER_PLAN A18 (PR open — awaiting human review, not yet merged, stacked on Wave 1/2/3):
+  rule added to both `AGENTS.md` and `CONTRIBUTING.md` (re-run T1.5 + record the date in
+  `docs/EVAL_RESULTS.md` before merging any prompts/-touching PR); new CI job
+  (`prompt-eval-reminder`) posts a required-checklist comment on any PR that touches
+  `prompts/**` (reminder only — does not run the eval itself, which stays run-only/off-CI).
+  → REVIEW §8.4.
 - **✅ RESOLVED 2026-07-05 — Layering violation — CLI imports the web module (2026-07-03, repo
   review 2nd pass).** Was: `cli/__main__.py` imported `_load_curriculum`/`_DbStoreAdapter` from
   `mentar.web.app`: headless run-session needed Flask + triggered web module-level side effects

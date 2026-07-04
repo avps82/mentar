@@ -32,6 +32,12 @@ Model/prompt evaluation lives in `eval/` (dataset, runner, judge, scorers). Run-
 to `pyproject.toml`. Live model runs need the eval-host endpoint via env (`MENTAR_VLLM_BASE_URL` /
 `MENTAR_VLLM_API_KEY`) — never commit those.
 
+**Touching `prompts/*.md`?** A body-hash change invalidates the last recorded safety-eval claim
+(`docs/EVAL_RESULTS.md`'s T1.5 adversarial run) — it was run against the old prompt text. Re-run
+T1.5 through the pipeline against your new prompt and record the run date + result in
+`docs/EVAL_RESULTS.md` before merging (see `AGENTS.md`). CI flags prompts-touching PRs as a
+reminder; it doesn't run the eval itself.
+
 ## Commits & PRs
 - Small, focused PRs off `main`; describe the change and how it was verified.
 - Commit-message trailer: `Co-Authored-By: …` is fine; **do not add a `Claude-Session:` URL
