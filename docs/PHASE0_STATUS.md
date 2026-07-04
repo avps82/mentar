@@ -292,11 +292,17 @@ dialogue controller, web app, eval dataset, FSM caller wiring) has **all shipped
   `engine/curriculum.py::load_template_subject()` reads the template's `subject:` field;
   `SessionController` takes an optional `subject`/`scope_line` (default `"maths"`); web/CLI both
   pass the active template's subject through. → REVIEW §2.1.
-- **🟡 SESSION_FSM.md conformance test (T3.7) never built + doc drifted (2026-07-03, repo
-  review).** The doc claims `tests/dialogue/test_session_fsm.py` parses its transition table; no
-  test references SESSION_FSM. Controller has undocumented transitions (auto-help, probe→help,
-  LOW-severity continue, probe demote) and a dead unreachable `PARENT_ACK_WAIT` state. → REVIEW
-  §3.1; task A11.
+- **✅ RESOLVED 2026-07-05 — SESSION_FSM.md conformance test (T3.7) never built + doc drifted
+  (2026-07-03, repo review).** Was: the doc claimed `tests/dialogue/test_session_fsm.py` parses
+  its transition table; no such test existed. Fixed via REMAINDER_PLAN A11 (PR open — awaiting
+  human review, not yet merged, stacked on Waves 1–3): new `test_session_fsm.py` (AST-derived
+  code-edges vs. doc-edges, both directions). Ran it and fixed what it found: removed the dead
+  `PARENT_ACK_WAIT` state (never wired); corrected two stale edges (`SCORE`'s `safe_reject` ->
+  `AWAIT_ANSWER` not `PRESENT`; `PROBE_CLASSIFY`'s exits -> `NODE_SELECT` not `BRANCH_DECISION`,
+  matching the shipped probe-demote fix); documented the previously-undocumented reachable
+  transitions REVIEW named (auto-help, probe->help via A21, A9's unreadable-streak-cap) plus a
+  pre-existing `stop_request` gap in three `*_AWAIT` states; corrected §4 to stop claiming a
+  `test_session_fsm_invariants.py` fuzz harness exists (it doesn't). → REVIEW §3.1.
 - **✅ RESOLVED 2026-07-05 — Legacy LLM-question fallback scores against a question, not an
   answer (2026-07-03, repo review).** Was: `engine/curriculum.py:load_curriculum` (formerly
   `web/app.py:_load_curriculum`) sets `expected_answer = transfer_seeds[0]`; any node without
