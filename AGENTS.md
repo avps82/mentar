@@ -24,6 +24,7 @@ mentar setup                     # hardware-aware model pick + download
 mentar run-session               # headless tutoring session
 mentar serve                     # localhost web app
 mentar validate-template <path>  # curriculum template validator
+mentar eval                      # T1 eval harness over eval/dataset_v1.jsonl
 ```
 
 ## Project layout

@@ -72,20 +72,20 @@ section supersedes §B/§C above where they conflict.
 dates bumped 2026-07-03; stale sections still present). §C7 is resolved (`license =
 "AGPL-3.0-only"` is in pyproject; the LICENSE *text* paste is still open — REMAINDER_PLAN C).
 
-## F. New stale-doc register (2026-07-03)
-| Doc | Staleness | Fix task |
-|---|---|---|
-| `docs/SAFETY.md` | **Overstates shipped controls** (§1.5.2 strip step; §4.6 retention "applied"; §5.5 start-of-session disclosure; §3.5 "records severity"; §3.3 session-id/turn in escalation log) — worst-in-class because a safeguarding reviewer audits against it | A4, A3, A13, A14 |
-| `SECURITY.md` | Retention "is applied" — unimplemented | A4 |
-| `docs/SESSION_FSM.md` | Claims a conformance test that doesn't exist; transition table missing auto-help, probe→help, LOW-severity continue, probe demote; `PARENT_ACK_WAIT` dead in code | A11 |
-| `docs/ARCHITECTURE.md` | Module map missing `grounding/` + `web/`; phantom `pytest.ini`; CLI list missing `setup`/`run-session`; §2 claim "all output passes through the safety layer" false until A13 | B2 (+A13) |
-| `README.md` | Status section calls E2E loop + model eval "next milestones" (both done, pick made 2026-06-27); tree omits `grounding/`+`web/`; "150+ tests" (398) | B2 |
-| `docs/EVAL_RESULTS.md` | last-updated 2026-06-16, still "front-runner" framing (pick made 2026-06-27); pipeline-safety 20/20 claim now predates several prompt re-hashes — needs run-date stamping | B2, A18 |
-| `AGENTS.md` | Commands list omits `mentar eval` (RULES invariant added 2026-07-03) | B2 |
-| `docs/SPEC.md` | §24 #14 (Cowork filesystem bridge "not running") — resolved, this review ran over it; §22 "connection details to be supplied" — supplied 2026-06-15; Appendix B delivery note stale | B2 (rows only) |
-| `docs/PHASE0_STATUS.md` | "Test suite: 363 tests" section vs 398 in its own changelog; the §C1–C4 stale sections from June are still present | B2 |
-| `pyproject.toml` | Classifiers stop at 3.12 while RUNNING.md recommends 3.13 for libzim | B2 |
-| `compliance/README.md` + `docs/llm-compatibility.md` | Not re-verified this pass — inherit §C8 "verify" status | (verify in B2) |
+## F. New stale-doc register (2026-07-03) — ✅ all rows actioned 2026-07-05 (B2, PR pending)
+| Doc | Staleness | Fix task | Status |
+|---|---|---|---|
+| `docs/SAFETY.md` | **Overstates shipped controls** (§1.5.2 strip step; §4.6 retention "applied"; §5.5 start-of-session disclosure; §3.5 "records severity"; §3.3 session-id/turn in escalation log) — worst-in-class because a safeguarding reviewer audits against it | A4, A3, A13, A14 | ✅ fixed (A3/A4/A13/A14) |
+| `SECURITY.md` | Retention "is applied" — unimplemented | A4 | ✅ fixed (A4) |
+| `docs/SESSION_FSM.md` | Claims a conformance test that doesn't exist; transition table missing auto-help, probe→help, LOW-severity continue, probe demote; `PARENT_ACK_WAIT` dead in code | A11 | ✅ fixed (A11) |
+| `docs/ARCHITECTURE.md` | Module map missing `grounding/` + `web/`; phantom `pytest.ini`; CLI list missing `setup`/`run-session`; §2 claim "all output passes through the safety layer" false until A13 | B2 (+A13) | ✅ fixed (module map + CLI list updated; §2 claim now true post-A13) |
+| `README.md` | Status section calls E2E loop + model eval "next milestones" (both done, pick made 2026-06-27); tree omits `grounding/`+`web/`; "150+ tests" (398) | B2 | ✅ fixed (Status reworded, tree updated, test count -> 450+) |
+| `docs/EVAL_RESULTS.md` | last-updated 2026-06-16, still "front-runner" framing (pick made 2026-06-27); pipeline-safety 20/20 claim now predates several prompt re-hashes — needs run-date stamping | B2, A18 | ✅ fixed (frontmatter reworded; A18's re-run recorded in docs/MODEL.md) |
+| `AGENTS.md` | Commands list omits `mentar eval` (RULES invariant added 2026-07-03) | B2 | ✅ fixed |
+| `docs/SPEC.md` | §24 #14 (Cowork filesystem bridge "not running") — resolved, this review ran over it; §22 "connection details to be supplied" — supplied 2026-06-15; Appendix B delivery note stale | B2 (rows only) | ✅ fixed (all 3 rows) |
+| `docs/PHASE0_STATUS.md` | "Test suite: 363 tests" section vs 398 in its own changelog; the §C1–C4 stale sections from June are still present | B2 | ✅ fixed (test count -> 455; §C1–C4 items already resolved in an earlier pass, confirmed still true) |
+| `pyproject.toml` | Classifiers stop at 3.12 while RUNNING.md recommends 3.13 for libzim | B2 | ✅ fixed (3.13 classifier added) |
+| `compliance/README.md` + `docs/llm-compatibility.md` | Not re-verified this pass — inherit §C8 "verify" status | (verify in B2) | ✅ verified — `compliance/README.md` not stale; `llm-compatibility.md`'s "pick pending" line updated to the actual 2026-06-27 pick |
 
 **Not stale (checked):** `docs/MODEL.md` (post-pick, 2026-06-27), `docs/RUNNING.md` (2026-06-27),
 `docs/CONTENT_LICENSES.md`, `docs/LICENSE_AUDIT.md`, `docs/PILOT_CONSENT.md`, `CONTRIBUTING.md`,

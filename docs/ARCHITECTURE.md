@@ -60,17 +60,18 @@ No network call crosses the data path in the default (local Ollama) backend. All
 | `src/mentar/safety/` | 6-layer safety implementation: input filter, output filter, escalation (`escalation.py`), age-mode enforcement, content-block rules | SPEC §16.0–16.3; W2.1–W2.4 |
 | `src/mentar/inference/` | `generate()` abstraction layer; backend adapters (Ollama default, vLLM, Gemini, Claude opt-in); backend selection via env var / config | SPEC §20, §20.1; W1.5 |
 | `src/mentar/eval/` | Eval harness code: dataset loader, numeric scorer, rubric scorer, safety scorer | SPEC §15; W1.2–W1.3; T1 suite |
-| `src/mentar/db/` | SQLite store (single-file per-learner); schema migrations; query helpers | SPEC §16 L4; W3.6; T3.6 |
+| `src/mentar/db/` | SQLite store (single-file per-learner); schema migrations; query helpers; `adapter.py` (LearnerStore -> SessionController adapter, A17) | SPEC §16 L4; W3.6; T3.6 |
+| `src/mentar/grounding/` | ZIM reader (`reader.py`) + resolver (`resolve.py`) + data-wrapper (`wrapper.py`) for retrieval-grounded re-explanations (RAG, not free recall) | SPEC §15(1), §18.2; W7 |
+| `src/mentar/web/` | `mentar serve`'s Flask app: learner/parent views, session routing, escalation freeze/frozen page, `_get_or_create_controller` wiring | SPEC §23; W6.3 |
 | `src/mentar/tools/` | CLI utilities: `validate_template.py` (DAG/schema validator), helper scripts | W3.1; T3.1 |
-| `src/mentar/cli/` | `mentar` CLI entry point; subcommands: `serve`, `eval`, `validate-template` | PHASE0.md W6.4 |
+| `src/mentar/cli/` | `mentar` CLI entry point; subcommands: `setup`, `run-session`, `serve`, `eval`, `validate-template` | PHASE0.md W6.4 |
 | `curriculum/` | Markdown + YAML curriculum templates (country/grade); community contribution surface; NOT under `src/` (data, not code) | SPEC §9; W3.1–W3.2 |
 | `prompts/` | Versioned prompt template files (≥10 files) + `prompts/README.md` registry with per-file hash; NOT under `src/` (data, version-controlled) | SPEC §12, §13.2; W6.2; T4.6 |
 | `eval/` | Eval DATA directory: `dataset_v1.jsonl`, `schema.json`, `models.yaml`, `responses/`, `scores_*.csv`, `rubric.md`; code lives at `src/mentar/eval/` | W1.2; T1.1–T1.5 |
 | `docs/` | SPEC.md, PHASE0.md, TESTS.md, SAFETY.md, SESSION_FSM.md, ARCHITECTURE.md, prompts/README.md (W6.2 registry), MODEL.md (post-W1.3), HARDWARE.md (W1.6), `research/` | All workstreams |
 | `tests/` | pytest suite; mirrors `src/mentar/` layout (e.g. `tests/test_escalation.py`, `tests/test_session_fsm.py`) | TESTS.md §0; T2–T5 suites |
 | `reports/` | Gitignored runtime output; `reports/<test-id>/result.json` per test; `reports/pilot/` for T6 protocols | TESTS.md §0 |
-| `pyproject.toml` | Package metadata, dependencies, entry-point declarations | — |
-| `pytest.ini` | Test discovery config; points at `tests/`; sets `MENTAR_ROOT` | TESTS.md §0 |
+| `pyproject.toml` | Package metadata, dependencies, entry-point declarations, `[tool.pytest.ini_options]` test discovery config (no separate `pytest.ini` file) | — |
 | `.gitignore` | Excludes: `reports/`, `.venv/`, `__pycache__/`, `*.pyc`, `*.db`, `.DS_Store` | — |
 
 ---
@@ -81,6 +82,8 @@ No network call crosses the data path in the default (local Ollama) backend. All
 
 | Command | What it does |
 |---------|--------------|
+| `mentar setup` | Detect hardware, auto-pick + download the best-fit vetted local model, write `config/inference.yaml` |
+| `mentar run-session` | Drive a full tutoring session headlessly (no Flask) against the configured inference backend |
 | `mentar serve` | Start a pilot tutoring session (spawns session controller, loads curriculum, attaches safety layer and inference backend) |
 | `mentar eval` | Run the T1 eval harness over the dataset in `eval/` against model(s) listed in `eval/models.yaml` |
 | `mentar validate-template <path>` | Run `src/mentar/tools/validate_template.py` against a curriculum template file; exits 0/1, prints cycle paths or unknown-id errors |
