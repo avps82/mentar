@@ -261,9 +261,15 @@ dialogue controller, web app, eval dataset, FSM caller wiring) has **all shipped
   review, not yet merged, stacked on Wave 1 + A17/A16/A5): new
   `LearnerStore.get_learner_by_name()`; `_get_or_create_controller` looks up the deterministic
   `pilot-<uuid8>` name before `create_learner`, reusing the existing row. → REVIEW §2.3.
-- **🟠 System prompt hardcoded to fractions/Year-4 while the app serves 3 subjects (2026-07-03,
-  repo review).** `prompts/system_prompt.md` scope-locks to fractions; arithmetic + science Help
-  calls run under it → internal scope conflict. → REVIEW §2.1; task A7.
+- **✅ RESOLVED 2026-07-05 — System prompt hardcoded to fractions/Year-4 while the app serves 3
+  subjects (2026-07-03, repo review).** Was: `prompts/system_prompt.md` scope-locked to
+  fractions; arithmetic + science Help calls ran under it -> internal scope conflict. Fixed via
+  REMAINDER_PLAN A7 (PR open — awaiting human review, not yet merged, stacked on Wave 1 +
+  A17/A16/A5/A6/A9): `{{subject}}`/`{{scope_line}}` slots added to `system_prompt.md` (hash
+  bumped `29ed98f0b07a` -> `54f902ef0d8e`, README registry updated); new
+  `engine/curriculum.py::load_template_subject()` reads the template's `subject:` field;
+  `SessionController` takes an optional `subject`/`scope_line` (default `"maths"`); web/CLI both
+  pass the active template's subject through. → REVIEW §2.1.
 - **🟡 SESSION_FSM.md conformance test (T3.7) never built + doc drifted (2026-07-03, repo
   review).** The doc claims `tests/dialogue/test_session_fsm.py` parses its transition table; no
   test references SESSION_FSM. Controller has undocumented transitions (auto-help, probe→help,
