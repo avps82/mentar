@@ -160,3 +160,12 @@ hygiene gaps) are fixed pending maintainer review — see `docs/REMAINDER_PLAN.m
 rollout (beyond the single-family pilot) stays gated on two safeguarding-professional
 reviews (handoff wording + emergency-services signposting), not code. Live status tracker:
 [`docs/PHASE0_STATUS.md`](docs/PHASE0_STATUS.md).
+
+---
+
+## Author's Funny Thoughts
+
+Plot twist: this is secretly an LLM training pipeline. The child is the model, the ZIMs are
+the corpus, the curriculum is the training schedule, BKT is the eval harness, and bedtime is
+the compute budget. An LLM built the training rig for a smaller, cuter model. Inception, but
+with more juice boxes.
