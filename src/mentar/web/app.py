@@ -31,7 +31,7 @@ from flask import Flask, redirect, render_template, request, session, url_for
 from mentar.db.adapter import _DbStoreAdapter
 from mentar.db.store import LearnerStore
 from mentar.dialogue.controller import FSMState, SessionController
-from mentar.engine.curriculum import load_curriculum
+from mentar.engine.curriculum import load_curriculum, load_template_subject
 from mentar.engine.itembank import load_item_bank
 from mentar.engine.itemgen import (
     ARITHMETIC_GENERATORS,
@@ -95,6 +95,9 @@ DEFAULT_SUBJECT = "fractions"
 for _subj_key, _subj_cfg in SUBJECTS.items():
     validate_or_raise(_subj_cfg["curriculum"])
 _SUBJECT_CURRICULA = {k: load_curriculum(v["curriculum"]) for k, v in SUBJECTS.items()}
+# A7: each subject's template `subject:` field, fed into the system prompt so a
+# science session doesn't inherit the (formerly hardcoded) "fractions" text.
+_SUBJECT_NAMES = {k: load_template_subject(v["curriculum"]) for k, v in SUBJECTS.items()}
 _learner_subject: dict[str, str] = {}   # learner_uuid -> active subject key
 
 # Inference backend: prefer config/inference.yaml (the canonical, backend-agnostic
@@ -169,6 +172,7 @@ def _get_or_create_controller(learner_uuid: str, subject: str) -> SessionControl
             db_store=_DbStoreAdapter(store, db_id),
             learner_id=learner_uuid,
             item_bank=item_source,
+            subject=_SUBJECT_NAMES[subject],
         )
         _turn_logs[learner_uuid] = []
     return _controllers[learner_uuid]

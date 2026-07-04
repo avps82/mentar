@@ -229,6 +229,8 @@ class SessionController:
         learner_id: str,
         item_bank=None,
         session_id: str | None = None,
+        subject: str = "maths",
+        scope_line: str | None = None,
     ) -> None:
         self._llm = self._make_safe_llm(llm_call)
         self._prompt_dir = Path(prompt_dir)
@@ -236,6 +238,12 @@ class SessionController:
         self._curriculum = curriculum          # node_id -> {concept, answer_type, checker, expected_answer, grounding, prerequisites, bkt_priors?}
         self._store = db_store
         self._learner_id = learner_id
+        # A7: fills the system prompt's {{subject}}/{{scope_line}} slots — the active
+        # curriculum template's `subject:` (e.g. "mathematics", "science"); scope_line
+        # defaults to the same value (a short "stay within X" phrase). Without this the
+        # prompt hardcoded "fractions" regardless of the active subject (REVIEW §2.1).
+        self._subject = subject
+        self._scope_line = scope_line or subject
         # One tutoring session per controller instance. A session row is created lazily
         # on the first step() and closed at a terminal state (both best-effort).
         self._session_id = session_id or uuid.uuid4().hex
@@ -1203,4 +1211,6 @@ class SessionController:
             tmpl
             .replace("{{concept}}", concept)
             .replace("{{grounding_passage}}", passage)
+            .replace("{{subject}}", self._subject)
+            .replace("{{scope_line}}", self._scope_line)
         )
