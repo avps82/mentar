@@ -36,6 +36,7 @@ from mentar.safety.escalation import (
     Severity,
     classify,
 )
+from mentar.safety.output_guard import NEUTRAL_REDIRECT, SEVERITY_BY_CLASS, screen_output
 
 logger = logging.getLogger(__name__)
 
@@ -658,11 +659,15 @@ class SessionController:
         # wrong unaided answer into the Help loop to work through it (note 4b).
         return (self._answer_feedback(ctx.last_scored_correct), True)
 
-    @staticmethod
-    def _make_safe_llm(llm_call):
+    def _make_safe_llm(self, llm_call):
         """Wrap the injected LLM so a backend failure degrades to '' instead of
         crashing the turn (which 500s the web page). Callers handle empty output
-        (item bank covers questions; Help has a deterministic fallback hint)."""
+        (item bank covers questions; Help has a deterministic fallback hint).
+
+        Two safety stages run on every LLM output before it can reach the child:
+        credential-leak redaction, then the output-side content/scope gate (A13).
+        Both live here — the single chokepoint every LLM response passes through.
+        """
         def _safe(messages):
             try:
                 out = llm_call(messages)
@@ -675,7 +680,29 @@ class SessionController:
             redacted = redact_credentials(out)
             if redacted != out:
                 logger.warning("credential guard: redacted secret-shaped text from LLM output")
-            return redacted
+
+            # Output-side safety gate (A13, SAFETY §2.1/§2.2): discard + log + redirect
+            # on a hard content block or off-scope drift. Never lets flagged text through.
+            screened, incident = screen_output(redacted)
+            if incident is not None:
+                logger.warning(
+                    "output guard: blocked class=%s span=%s",
+                    incident.block_class.value, incident.matched_span,
+                )
+                try:
+                    self._store.write_escalation(
+                        self._learner_id,
+                        f"output_blocked:{incident.block_class.value}",
+                        incident.matched_span,
+                        severity=SEVERITY_BY_CLASS[incident.block_class],
+                        session_id=self._session_id,
+                        turn_index=self._ctx.turn_index,
+                        session_outcome="output_blocked",
+                    )
+                except Exception:
+                    logger.warning("output guard: failed to persist incident row", exc_info=True)
+                return NEUTRAL_REDIRECT
+            return screened
         return _safe
 
     def _fallback_hint(self, node_id: str) -> str:

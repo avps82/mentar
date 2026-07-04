@@ -145,6 +145,15 @@ The following blocks are absolute. No framing, context, roleplay request, curric
 
 If the LLM generates output that matches any of the above — regardless of the input that prompted it — the output is discarded, an incident is logged, and the child receives a neutral redirect. The incident is flagged for parent review.
 
+**Implementation status (A13, 2026-07-05):** `safety/output_guard.py` implements this as
+`screen_output()`, wired as the last stage in `SessionController._make_safe_llm` — the single
+chokepoint every LLM response passes through before reaching the child or the transcript. v0 is
+a deterministic keyword/regex blocklist per block class (reusing `escalation_log` for the
+incident row, distinct `trigger_class` values `output_blocked:<class>`, `session_outcome =
+'output_blocked'`, session does NOT freeze). This is a coverage floor, not a semantic classifier
+— it catches the literal phrasings in the blocklist, not paraphrases. Bucket E is expected to
+replace/augment it with a stronger classifier before any rollout beyond the supervised pilot.
+
 ### 2.2 Curriculum Scope Enforcement
 
 The active curriculum template (country + year/grade level) defines the permitted topic space. Every generated output is checked for scope before delivery:
@@ -152,6 +161,13 @@ The active curriculum template (country + year/grade level) defines the permitte
 1. **Topic check:** is the response within the active subject and concept node? Off-topic responses are discarded.
 2. **Age-appropriateness check:** vocabulary, sentence complexity, and conceptual framing are appropriate for the active year-level.
 3. **Pedagogical-appropriateness check:** the explanation is constructive, not shaming; it supports learning rather than undermining confidence.
+
+**Implementation status (A13, 2026-07-05):** only the topic check (1) has a v0 implementation —
+a fixed off-topic keyword deny-list in `output_guard.py` (politics, dating advice, alcohol/drugs
+as a topic), independent of the active subject (the `subject_scope` parameter is reserved for a
+future per-subject allow-list). Age-appropriateness (2) and pedagogical-appropriateness (3) checks
+are **not yet implemented** — no code enforces them; they remain aspirational until a Bucket E
+classifier (or equivalent) lands.
 
 The system does not follow the conversation outside curriculum scope even if the child's input attempts to lead it there (see Layer 1, §1.3).
 
