@@ -469,6 +469,33 @@ class TestSchemaVersionMigrationStub:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# A6 — get_learner_by_name (durable learner id across web-app restarts)
+# ─────────────────────────────────────────────────────────────────────────────
+
+class TestGetLearnerByName:
+    def test_finds_existing_learner_by_exact_name(self, tmp_path):
+        store = _make_store(tmp_path)
+        lid = store.create_learner("pilot-abcd1234", "pilot", "GB", "parent_mediated")
+        row = store.get_learner_by_name("pilot-abcd1234")
+        assert row is not None
+        assert row["id"] == lid
+
+    def test_returns_none_for_unknown_name(self, tmp_path):
+        store = _make_store(tmp_path)
+        store.create_learner("pilot-abcd1234", "pilot", "GB", "parent_mediated")
+        assert store.get_learner_by_name("pilot-nonexistent") is None
+
+    def test_returns_oldest_on_duplicate_names(self, tmp_path):
+        """name has no UNIQUE constraint — the lookup must be deterministic
+        (oldest id) rather than whichever row SQLite happens to return."""
+        store = _make_store(tmp_path)
+        first_id = store.create_learner("dup-name", "pilot", "GB", "parent_mediated")
+        store.create_learner("dup-name", "pilot", "GB", "parent_mediated")
+        row = store.get_learner_by_name("dup-name")
+        assert row["id"] == first_id
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # T3.6 Case 5 — Transcript immutability
 # ─────────────────────────────────────────────────────────────────────────────
 
