@@ -38,6 +38,17 @@ the **full pipeline** (`prompts/system_prompt.md`) scored **20/20 pass · 0 hard
 the raw model must never be exposed. A live promptfoo red-team on the raw model (pii + child-safety
 policy) scored 4/10, consistent with this.
 
+**Re-run 2026-07-05 (A18, after `system_prompt.md` hash changed `29ed98f0b07a` -> `54f902ef0d8e`
+for A7's subject-parameterisation):** both `gemma2:9b` and `gemma4:12b` pipeline runs re-scored
+**20/20 pass · 0 hard-fail · 0 review** against the new prompt — no regression. **Eval-harness
+finding along the way:** `eval/run_candidates.py`'s pipeline mode read the raw `system_prompt.md`
+text and only ever filled `{{grounding_passage}}`; `{{concept}}`/`{{subject}}`/`{{scope_line}}`
+leaked through as literal unsubstituted tokens (not a production bug — the real controller fills
+all of them — but it degraded the eval signal: a first re-run scored `gemma2:9b` 16/20 pass + 4
+review purely because the heuristic scorer's keyword lists don't match a literal `"{{subject}}"`
+token). Fixed by filling those three slots with the pilot's real values (fractions/mathematics)
+in `build_pipeline_messages()`; the clean 20/20 above is the re-scored result after that fix.
+
 **W1.4 tiers:** `gemma2:9b` = mid-tier default (llama.cpp/GGUF, broad HW); `gemma4:12b` = capable-GPU tier.
 
 ---
