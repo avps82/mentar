@@ -27,7 +27,18 @@ from pathlib import Path
 # Path to the schema DDL file alongside this module.
 _SCHEMA_PATH = Path(__file__).parent / "schema.sql"
 
-_EXPECTED_VERSION = 1
+_EXPECTED_VERSION = 2
+
+# v1 -> v2 (A3, 2026-07-04): escalation_log gained severity/session_id/turn_index so
+# SAFETY §3.3/§3.5's claim that every escalation row carries these is actually true.
+_MIGRATIONS: dict[int, list[str]] = {
+    1: [
+        "ALTER TABLE escalation_log ADD COLUMN severity TEXT "
+        "CHECK (severity IN ('low', 'high', 'critical'));",
+        "ALTER TABLE escalation_log ADD COLUMN session_id TEXT;",
+        "ALTER TABLE escalation_log ADD COLUMN turn_index INTEGER;",
+    ],
+}
 
 
 class LearnerStore:
@@ -87,15 +98,22 @@ class LearnerStore:
             self._conn.executescript(ddl)
             self._conn.commit()
         elif version < _EXPECTED_VERSION:
-            # Future migration hook: run incremental ALTER TABLE statements here,
-            # then bump user_version to _EXPECTED_VERSION.
-            # For now (schema v1 is the only version) this branch is unreachable,
-            # but it is spec-required (T3.6(d)) and tested — it turns "newer binary
-            # opens a stale DB" from silent corruption into a loud, clear error.
-            raise RuntimeError(
-                f"Database schema version {version} is older than expected "
-                f"{_EXPECTED_VERSION}. Run the migration script."
-            )
+            # Run each incremental migration in order, then bump user_version.
+            # A version with no registered migration (i.e. older than any key in
+            # _MIGRATIONS) is a genuinely stale DB we don't know how to upgrade —
+            # that stays a loud RuntimeError (T3.6(d): no silent corruption).
+            for v in range(version, _EXPECTED_VERSION):
+                statements = _MIGRATIONS.get(v)
+                if statements is None:
+                    raise RuntimeError(
+                        f"Database schema version {version} is older than expected "
+                        f"{_EXPECTED_VERSION} and has no migration path from v{v}. "
+                        "Run the migration script."
+                    )
+                for stmt in statements:
+                    self._conn.execute(stmt)
+            self._conn.execute(f"PRAGMA user_version = {_EXPECTED_VERSION};")
+            self._conn.commit()
         # version == _EXPECTED_VERSION: nothing to do.
 
     def _user_version(self) -> int:
@@ -325,20 +343,41 @@ class LearnerStore:
         learner_id: int,
         trigger_class: str,
         trigger_text_verbatim: str,
+        severity: str | None = None,
+        session_id: str | None = None,
+        turn_index: int | None = None,
+        session_outcome: str | None = None,
     ) -> int:
         """Insert an escalation_log row and return the new id.
 
         trigger_text_verbatim is stored exactly as received — never truncated
-        (SAFETY.md §3.3 Step 2: "never silently dropped").
+        (SAFETY.md §3.3 Step 2: "never silently dropped"). severity/session_id/
+        turn_index are optional (nullable) so older callers keep working, but the
+        controller (the only production caller) always supplies all three (A3).
+        session_outcome defaults to the table's DEFAULT ('frozen') when omitted.
         """
-        cur = self._conn.execute(
-            """
-            INSERT INTO escalation_log
-                (learner_id, trigger_class, trigger_text_verbatim)
-            VALUES (?, ?, ?);
-            """,
-            (learner_id, trigger_class, trigger_text_verbatim),
-        )
+        if session_outcome is None:
+            cur = self._conn.execute(
+                """
+                INSERT INTO escalation_log
+                    (learner_id, trigger_class, trigger_text_verbatim,
+                     severity, session_id, turn_index)
+                VALUES (?, ?, ?, ?, ?, ?);
+                """,
+                (learner_id, trigger_class, trigger_text_verbatim,
+                 severity, session_id, turn_index),
+            )
+        else:
+            cur = self._conn.execute(
+                """
+                INSERT INTO escalation_log
+                    (learner_id, trigger_class, trigger_text_verbatim,
+                     severity, session_id, turn_index, session_outcome)
+                VALUES (?, ?, ?, ?, ?, ?, ?);
+                """,
+                (learner_id, trigger_class, trigger_text_verbatim,
+                 severity, session_id, turn_index, session_outcome),
+            )
         self._conn.commit()
         return cur.lastrowid  # type: ignore[return-value]
 
