@@ -94,8 +94,20 @@ def test_parent_view_reads_db_and_persists_ack():
     assert "correct out of" in parent_html          # session score (note 3)
     assert "Answers" in parent_html                 # per-answer correct/wrong/help table
 
-    # Trigger an escalation; it logs un-acknowledged.
-    c.post("/answer", data={"answer": "I want to die"})
+    # Trigger an escalation; it logs un-acknowledged, and the CHILD's browser
+    # (the redirect target of /answer) goes to /frozen, not /parent (A8).
+    r = c.post("/answer", data={"answer": "I want to die"}, follow_redirects=True)
+    frozen_html = r.get_data(as_text=True)
+    assert "I want to die" not in frozen_html        # no verbatim trigger text
+    assert "confirm" not in frozen_html.lower()       # no ack control on the child's screen
+
+    # Re-visiting / while still frozen (not just the triggering turn) also
+    # lands on /frozen, never on the last tutoring question or /parent.
+    r2 = c.get("/", follow_redirects=True)
+    r2_html = r2.get_data(as_text=True)
+    assert "I want to die" not in r2_html
+    assert "confirm" not in r2_html.lower()
+
     db = sqlite3.connect(dbp)
     row = db.execute(
         "SELECT id, parent_ack_at, session_outcome FROM escalation_log"
@@ -104,8 +116,15 @@ def test_parent_view_reads_db_and_persists_ack():
     assert row is not None, "escalation not logged"
     assert row[1] is None, "ack should be unset before the parent acks"
 
-    # Parent acknowledges via the parent view.
-    c.post("/parent/ack", data={"action": "end"})
+    # Wrong/missing confirm word is a no-op — no ack persisted.
+    c.post("/parent/ack", data={"action": "end", "confirm": "nope"})
+    db = sqlite3.connect(dbp)
+    ack_at = db.execute("SELECT parent_ack_at FROM escalation_log").fetchone()[0]
+    db.close()
+    assert ack_at is None, "ack must not persist without the correct confirm word"
+
+    # Parent acknowledges via the parent view, typing the confirm word.
+    c.post("/parent/ack", data={"action": "end", "confirm": "RESUME"})
     db = sqlite3.connect(dbp)
     ack_at, outcome = db.execute(
         "SELECT parent_ack_at, session_outcome FROM escalation_log"

@@ -210,11 +210,15 @@ dialogue controller, web app, eval dataset, FSM caller wiring) has **all shipped
   `severity`/`session_id`/`turn_index`/`session_outcome` now flow from the controller
   through `LearnerStore.write_escalation`; `handle_trigger()` (the drifted duplicate)
   deleted. → [REVIEW_2026-07-03.md §1.2](../REVIEW_2026-07-03.md).
-- **🔴 Escalation redirect hands the resume control to the child's screen (2026-07-03, repo
-  review).** On escalation `/answer` redirects the CHILD's browser to `/parent`, which shows the
-  verbatim trigger text (SAFETY §3.3 Step 4 says the alert must NOT carry it) plus the un-gated
-  acknowledge/resume button. Honor-system pilot, but the flow actively navigates the child to the
-  unfreeze control. → REVIEW §1.4; task A8.
+- **✅ RESOLVED 2026-07-05 — Escalation redirect hands the resume control to the child's screen
+  (2026-07-03, repo review).** Was: on escalation `/answer` (and any subsequent `/`) redirected
+  the CHILD's browser to `/parent`, which shows the verbatim trigger text (SAFETY §3.3 Step 4
+  says the alert must NOT carry it) plus the un-gated acknowledge/resume button. Fixed via
+  REMAINDER_PLAN A8 (PR open — awaiting human review, not yet merged, stacked on A3/A15): new
+  `/frozen` view shows ONLY the two fixed handoff messages (checked on every render while
+  ESCALATION_FREEZE, not just the triggering turn); `/parent` is typed-URL-only (never
+  auto-navigated); `/parent/ack` now requires a typed confirm word (`RESUME`) — wrong/missing
+  word is a no-op. PIN gate stays Phase 1. → REVIEW §1.4.
 - **🟠 SAFETY.md overstates shipped controls (2026-07-03, repo review).** (1) §1.5.2(2) promises
   strip/flag of imperative lines in grounding passages — `grounding/wrapper.py` deliberately
   doesn't (W7 data-wrapping design superseded it; SAFETY.md never updated). (2) §4.6 + SECURITY.md
