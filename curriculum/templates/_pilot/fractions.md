@@ -31,9 +31,9 @@ concepts:
     label: "Whole-number division"
     prereqs: []
     grounding:
-      source: wikipedia_simple
-      anchor: "https://simple.wikipedia.org/wiki/Division_(mathematics)"
-      passage_hint: "Definition + 'sharing equally' framing"
+      source: khanacademy
+      anchor: "7c5a60e1c0b05ecc9ac404061f654f4d"  # KA video: "Division as equal groups"
+      passage_hint: "Video transcript — division as splitting into equal groups"
     transfer_seeds:
       - "You have 12 pencils to share equally between 4 friends. How many does each get?"
       - "Six children share 18 strawberries fairly. How many strawberries each?"
@@ -50,9 +50,9 @@ concepts:
     label: "Fraction as a part of a whole"
     prereqs: [whole_number_division]
     grounding:
-      source: vikidia
-      anchor: "https://en.vikidia.org/wiki/Fraction"
-      passage_hint: "Opening section — fraction as part of something"
+      source: khanacademy
+      anchor: "0271936d37625d619042b6c4a45d15f4"  # KA video: "Fraction word problem: pizza"
+      passage_hint: "Video transcript — fraction as part of a whole pie"
     transfer_seeds:
       - "Which picture shows a circle split into parts that ARE fractions of the whole?"
       - "A chocolate bar is broken into pieces. Which arrangement shows the bar split into fractions of the whole?"
@@ -69,9 +69,9 @@ concepts:
     label: "Equal vs. unequal parts"
     prereqs: [fraction_as_part_of_whole]
     grounding:
-      source: vikidia
-      anchor: "https://en.vikidia.org/wiki/Fraction"
-      passage_hint: "Equal parts requirement — why fractions need equal-size pieces"
+      source: khanacademy
+      anchor: "87216407292c566f8ea8f880065a6dcb"  # KA video: "Cutting shapes into equal parts"
+      passage_hint: "Video transcript — why parts must be equal to be fractions"
     transfer_seeds:
       - "Two pizzas are each cut into 4 slices. In one, the slices are the same size; in the other, slices are different sizes. Which one is cut into FRACTIONS?"
       - "A ribbon is cut into 3 pieces of different lengths. Are these pieces thirds? Yes or no?"
@@ -88,9 +88,9 @@ concepts:
     label: "Unit fractions (1/n)"
     prereqs: [equal_vs_unequal_parts]
     grounding:
-      source: vikidia
-      anchor: "https://en.vikidia.org/wiki/Fraction"
-      passage_hint: "Definition — one part of n equal parts"
+      source: khanacademy
+      anchor: "8be24f9a9aba585bac0b90bb413c8630"  # KA video: "Identifying unit fractions word problem"
+      passage_hint: "Video transcript — identifying a unit fraction of a whole"
     transfer_seeds:
       - "A glass is full of juice. You pour ONE of FIVE equal cups from it. What fraction of the juice did you pour?"
       - "A garden is divided into 8 equal beds. One bed has tomatoes. What fraction of the garden is tomatoes?"
@@ -107,9 +107,9 @@ concepts:
     label: "Equivalent fractions (1/2 = 2/4 = 3/6)"
     prereqs: [unit_fractions]
     grounding:
-      source: vikidia
-      anchor: "https://en.vikidia.org/wiki/Fraction"
-      passage_hint: "Equivalent fractions — same amount, different names"
+      source: khanacademy
+      anchor: "2c3b44b1362a5c6499a0081293ebab01"  # KA video: "Equivalent fractions"
+      passage_hint: "Video transcript — same amount, cut into different numbers of pieces"
     transfer_seeds:
       - "Sam ate 2 of 4 slices of a pizza. Mira ate 1 of 2 slices of an identical pizza. Did they eat the same amount?"
       - "Which of these fractions is the same amount as 1/3? (2/6, 2/4, 1/4, 3/9 — multiple may be correct)"
@@ -126,9 +126,9 @@ concepts:
     label: "Comparing fractions with equal denominators"
     prereqs: [equivalent_fractions]
     grounding:
-      source: vikidia
-      anchor: "https://en.vikidia.org/wiki/Fraction"
-      passage_hint: "Comparing fractions with the same bottom number"
+      source: khanacademy
+      anchor: "c34a606bc2775128a20d5c85326c5bc7"  # KA video: "Comparing fractions with the same denominator"
+      passage_hint: "Video transcript — comparing fractions that share a denominator"
     transfer_seeds:
       - "Lia drank 3/7 of her water bottle. Theo drank 5/7 of his (same-size bottle). Who drank more?"
       - "Which is bigger: 2/9 of a chocolate bar, or 4/9 of the same chocolate bar?"
@@ -145,9 +145,9 @@ concepts:
     label: "Adding fractions with equal denominators"
     prereqs: [equivalent_fractions]
     grounding:
-      source: vikidia
-      anchor: "https://en.vikidia.org/wiki/Fraction"
-      passage_hint: "Adding fractions with the same bottom number"
+      source: khanacademy
+      anchor: "4e93cb9937d55fb8a13eb26895259bcf"  # KA video: "Adding fractions with like denominators"
+      passage_hint: "Video transcript — adding fractions that share a denominator"
     transfer_seeds:
       - "You eat 2 of 8 slices of a pizza for lunch and 3 of 8 slices for dinner. What fraction of the pizza did you eat in total?"
       - "Mira walks 1/5 of a kilometre to the park, then 2/5 of a kilometre to the shop. How far has she walked?"
@@ -164,9 +164,9 @@ concepts:
     label: "Subtracting fractions with equal denominators"
     prereqs: [adding_equal_denom]
     grounding:
-      source: vikidia
-      anchor: "https://en.vikidia.org/wiki/Fraction"
-      passage_hint: "Subtracting fractions with the same bottom number"
+      source: khanacademy
+      anchor: "047bea310aee5260add2e910468f33af"  # KA video: "Subtracting fractions with like denominators"
+      passage_hint: "Video transcript — subtracting fractions that share a denominator"
     transfer_seeds:
       - "A jug holds 7/10 of a litre of milk. You pour out 2/10 of a litre. How much milk is left?"
       - "Theo had 5/6 of a chocolate bar. He gave 2/6 of the bar to his sister. What fraction does Theo have now?"

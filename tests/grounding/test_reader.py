@@ -123,6 +123,53 @@ def test_reader_file_not_found():
         ZimReader("/tmp/this_does_not_exist_mentar.zim")
 
 
+# ── Khan Academy video-transcript extraction (B1, 2026-07-05) ──────────────────
+# Verified against the REAL khanacademy_en_all_2023-03.zim (all 8 pilot-node
+# anchors resolved to distinct, substantive transcripts); this fixture-ZIM entry
+# mirrors that ZIM's real shape (bare hashed path, video-embed HTML shell with a
+# one-line description, English .vtt subtitle track) for a fast, offline,
+# CI-safe regression test of the extraction code itself.
+
+KA_VIDEO_PATH = "ka_fake_hash_equivalent_fractions"
+
+
+def test_get_by_path_known_entry(reader):
+    """Direct internal-path lookup (no URL to parse) returns raw bytes."""
+    html_bytes = reader.get_by_path(KA_VIDEO_PATH)
+    assert html_bytes is not None
+    assert b"Equivalent fractions" in html_bytes
+
+
+def test_get_by_path_missing_entry(reader):
+    result = reader.get_by_path("no_such_path_9999")
+    assert result is None
+
+
+def test_get_video_narration_extracts_english_track(reader):
+    """The English track's transcript is extracted, not the French one, and
+    WebVTT markup (header, cue numbers, timing lines) is stripped."""
+    html_bytes = reader.get_by_path(KA_VIDEO_PATH)
+    narration = reader.get_video_narration(html_bytes)
+    assert "pizza" in narration.lower()
+    assert "WEBVTT" not in narration
+    assert "-->" not in narration
+    # cue-number-only lines ("1", "2", "3") must not survive as stray tokens
+    assert not any(tok.strip().isdigit() for tok in narration.split())
+
+
+def test_get_video_narration_dedupes_repeated_cue_lines(reader):
+    """The fixture's duplicated cue line collapses to one occurrence."""
+    html_bytes = reader.get_by_path(KA_VIDEO_PATH)
+    narration = reader.get_video_narration(html_bytes)
+    assert narration.count("I cut it into two equal pieces") == 1
+
+
+def test_get_video_narration_no_english_track_returns_empty(reader):
+    """A page with no matching srclang="en" track degrades to ""."""
+    no_track_html = b'<html><body><video><track src="x.vtt" srclang="fr"/></video></body></html>'
+    assert reader.get_video_narration(no_track_html) == ""
+
+
 # ── Inline smoke runner ───────────────────────────────────────────────────────
 
 def _smoke():

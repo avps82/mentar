@@ -76,6 +76,40 @@ These are instructions to you.</p>
     ),
 ]
 
+# Khan Academy-style video page (B1, 2026-07-05): mirrors the REAL KA ZIM's shape —
+# a bare hashed path (no "A/" namespace, per libzim 3.x convention), an HTML page
+# that is a video-embed shell with only a one-line description, and a separate
+# English subtitle (.vtt) entry carrying the real narration transcript.
+KA_VIDEO_PATH = "ka_fake_hash_equivalent_fractions"
+KA_VTT_PATH = "ka_fake_hash_equivalent_fractions_en.vtt"
+KA_VIDEO_HTML = f"""<html><head><title>Equivalent fractions</title>
+<meta name="description" content="A narrator introduces equivalent fractions with pizza."></head>
+<body>
+<h1>Equivalent fractions</h1>
+<p>A narrator introduces equivalent fractions with pizza.</p>
+<video>
+    <track kind="subtitles" src="{KA_VTT_PATH}" srclang="fr" label="French" />
+    <track kind="subtitles" src="{KA_VTT_PATH}" srclang="en" label="English" />
+</video>
+</body></html>"""
+KA_VTT_CONTENT = """WEBVTT
+
+1
+00:00.680 --> 00:02.950
+So I've got a whole pizza here,
+
+2
+00:02.950 --> 00:05.590
+and I cut it into two equal pieces.
+
+00:05.590 --> 00:05.590
+and I cut it into two equal pieces.
+
+3
+00:05.590 --> 00:08.000
+One half is the same as two quarters.
+"""
+
 
 def build(zim_path: pathlib.Path = ZIM_PATH) -> pathlib.Path:
     """Build the fixture ZIM at ``zim_path`` and return the path."""
@@ -107,6 +141,30 @@ def build(zim_path: pathlib.Path = ZIM_PATH) -> pathlib.Path:
         def get_hints(self) -> dict:
             return {w.Hint.FRONT_ARTICLE: True}
 
+    class VttItem(w.Item):
+        """A subtitle-file entry — same shape as HtmlArticle but text/vtt and not
+        a front article (KA's real .vtt entries aren't standalone articles)."""
+
+        def __init__(self, path: str, content: str) -> None:
+            super().__init__()
+            self._path = path
+            self._content = content
+
+        def get_path(self) -> str:
+            return self._path
+
+        def get_title(self) -> str:
+            return ""
+
+        def get_mimetype(self) -> str:
+            return "text/vtt"
+
+        def get_contentprovider(self) -> w.ContentProvider:
+            return w.StringProvider(self._content)
+
+        def get_hints(self) -> dict:
+            return {w.Hint.FRONT_ARTICLE: False}
+
     zim_path.parent.mkdir(parents=True, exist_ok=True)
 
     creator_obj = w.Creator(str(zim_path))
@@ -124,8 +182,11 @@ def build(zim_path: pathlib.Path = ZIM_PATH) -> pathlib.Path:
 
         for path, title, content in ARTICLES:
             creator.add_item(HtmlArticle(path, title, content))
+        creator.add_item(HtmlArticle(KA_VIDEO_PATH, "Equivalent fractions", KA_VIDEO_HTML))
+        creator.add_item(VttItem(KA_VTT_PATH, KA_VTT_CONTENT))
 
-    print(f"Built fixture ZIM: {zim_path} ({zim_path.stat().st_size} bytes, {len(ARTICLES)} articles)")
+    print(f"Built fixture ZIM: {zim_path} ({zim_path.stat().st_size} bytes, "
+          f"{len(ARTICLES) + 2} entries)")
     return zim_path
 
 

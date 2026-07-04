@@ -108,6 +108,15 @@ grounding:
       lang:      en
       selection: simple_all
       flavour:   nopic
+    khanacademy:                   # Khan Academy math/science videos (CC BY-NC-SA; B1, 2026-07-05)
+      project:   khanacademy       # no flavour segment — the mirrored file is khanacademy_en_all_YYYY-MM.zim
+      lang:      en
+      selection: all
+      # NOTE: KA's ZIM has no recoverable external URL — a curriculum node's `anchor:` for
+      # this source is the ZIM-INTERNAL hashed entry path (not a URL), and the reader
+      # extracts the video's English subtitle transcript, not the HTML content
+      # (grounding/reader.py::get_video_narration) — KA lesson pages are video-embed
+      # shells with only a one-line description in the HTML itself.
     # ── Examples (uncomment / adapt) ──
     # astronomy:                   # a SUBJECT slice of full English Wikipedia, with images
     #   project:   wikipedia       #   anchors are on en.wikipedia.org → needs a scope-guard
