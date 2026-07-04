@@ -182,10 +182,13 @@ dialogue controller, web app, eval dataset, FSM caller wiring) has **all shipped
   pass).** The 20/20 pipeline-safety run (2026-06-27) predates several prompt re-hashes; nothing
   requires a T1.5 re-run on prompt change, so the headline claim silently ages. Process rule +
   CI warning needed. → REVIEW §8.4; task A18.
-- **🟡 Layering violation — CLI imports the web module (2026-07-03, repo review 2nd pass).**
-  `cli/__main__.py` imports `_load_curriculum`/`_DbStoreAdapter` from `mentar.web.app`: headless
-  run-session needs Flask + triggers web module-level side effects (app creation, all-subject
-  curriculum load). → REVIEW §8.3; task A17.
+- **✅ RESOLVED 2026-07-05 — Layering violation — CLI imports the web module (2026-07-03, repo
+  review 2nd pass).** Was: `cli/__main__.py` imported `_load_curriculum`/`_DbStoreAdapter` from
+  `mentar.web.app`: headless run-session needed Flask + triggered web module-level side effects
+  (app creation, all-subject curriculum load). Fixed via REMAINDER_PLAN A17 (PR open — awaiting
+  human review, not yet merged, stacked on Wave 1): moved `load_curriculum` to
+  `engine/curriculum.py` and `_DbStoreAdapter` to `db/adapter.py` (pure move, no behaviour
+  change); `mentar.cli.__main__` now imports cleanly with Flask blocked. → REVIEW §8.3.
 - **🟡 `age_mode` stored but never read (2026-07-03, repo review 2nd pass).** No code branches
   on parent_mediated vs independent — a load-bearing SPEC §6.2 concept with zero enforcement
   hook. Pilot fix = startup assertion (parent_mediated only). → REVIEW §8.6; task A19.
