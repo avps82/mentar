@@ -177,6 +177,10 @@ class _SessionCtx:
     help_modalities_used: list = field(default_factory=list)
     help_answer: str | None = None
     help_scored_correct: bool | None = None
+    # A5: per-node, CHILD-INITIATED help only (never the auto-help branch in
+    # _do_bkt_update) — the false-confidence probe signal must not be polluted by
+    # a previous node's help use or by the system's own auto-help scaffolding.
+    help_by_node: dict = field(default_factory=dict)
     # Probe loop
     probe_variant: int = 0                           # 0 = first, 1 = retry
     probe_first_correct: bool | None = None
@@ -618,6 +622,7 @@ class SessionController:
         if _is_help_request(stripped):
             ctx.help_n = 1
             ctx.help_modalities_used = []
+            ctx.help_by_node[ctx.current_node_id] = True
             ctx.state = FSMState.HELP_MODALITY_SELECT
             return ("", True)
         # Learner wants to stop
@@ -920,6 +925,7 @@ class SessionController:
         # another Help round instead (HELP_MODALITY_SELECT self-limits once all
         # modalities are exhausted -> LINK_BACK).
         if _is_help_request(stripped):
+            ctx.help_by_node[ctx.current_node_id] = True
             ctx.state = FSMState.HELP_MODALITY_SELECT
             return ("", True)
         if not stripped:
@@ -1025,6 +1031,7 @@ class SessionController:
         if _is_help_request(stripped):
             ctx.help_n = 1
             ctx.help_modalities_used = []
+            ctx.help_by_node[ctx.current_node_id] = True
             ctx.state = FSMState.HELP_MODALITY_SELECT
             return ("", True)
         if not stripped:
@@ -1065,7 +1072,9 @@ class SessionController:
             first_correct=ctx.probe_first_correct or False,
             retry_correct=ctx.probe_scored_correct if ctx.probe_variant > 0 else None,
             mastery=mastery,
-            help_pressed=len(ctx.help_modalities_used) > 0,
+            # A5: child-initiated help on THIS node only — not stale from a
+            # previous node, not polluted by the system's own auto-help.
+            help_pressed=ctx.help_by_node.get(ctx.current_node_id, False),
             mastery_is_stale=stale,
         )
         if probe_class is ProbeClass.CLEAN_PASS:
