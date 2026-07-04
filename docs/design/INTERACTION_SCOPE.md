@@ -5,6 +5,16 @@
 recognizes and how it routes it — is foundational. It shapes the FSM, safety, pedagogy, and
 the BKT signal. Getting it wrong silently corrupts mastery and feels broken to a child.
 
+**v0 slice shipped (A21, ratified 2026-07-04, built 2026-07-05):** a narrow, deterministic
+carve-out for **don't-know** and **clarify/vocabulary** (the two intents flagged Essential in
+§2) — `_is_dont_know_or_question()` in `dialogue/controller.py` matches a fixed don't-know
+phrase set ("i don't know", "idk", "no idea", "dunno", "i dont know") OR a question-shaped
+input (starts with what/how/why/when/where/who/can/is/does, or ends in `?`), and routes it
+into the Help loop unscored — same wiring as `_is_help_request` (same guarded states, same
+target, sets `help_by_node` too). **Frustration/mild-affect, off-topic, and meta/navigation
+intents (§2) remain unbuilt** — the full taxonomy proposal below (§3–§6) is still deferred and
+needs maintainer ratification beyond this narrow slice.
+
 ---
 
 ## 1. Current scope (what the system actually recognizes)

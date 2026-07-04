@@ -76,6 +76,25 @@ def _is_help_request(text: str) -> bool:
     return text.strip().lower() in HELP_WORDS
 
 
+_DONT_KNOW_PHRASES = {"i don't know", "idk", "no idea", "dunno", "i dont know"}
+_QUESTION_STARTERS = ("what", "how", "why", "when", "where", "who", "can", "is", "does")
+
+
+def _is_dont_know_or_question(text: str) -> bool:
+    """A21 — interaction-scope v0: deterministic carve-out for two common
+    non-answer child inputs that were previously force-scored (corrupting BKT):
+    a declared "don't know", and a question-shaped clarifying request (e.g.
+    "what does numerator mean?"). Full taxonomy stays deferred
+    (docs/design/INTERACTION_SCOPE.md); this is only the narrow ratified slice.
+    """
+    stripped = text.strip().lower()
+    if stripped in _DONT_KNOW_PHRASES:
+        return True
+    if stripped.endswith("?"):
+        return True
+    return stripped.startswith(_QUESTION_STARTERS)
+
+
 def _is_stale_mastery(updated_at: str | None, now: datetime | None = None) -> bool:
     """True if a skill's mastery timestamp is older than STALE_MASTERY_DAYS.
 
@@ -653,8 +672,9 @@ class SessionController:
         if inp is None:
             return ("", False)
         stripped = inp.strip()
-        # Learner requests help
-        if _is_help_request(stripped):
+        # Learner requests help (explicit, or A21: "I don't know" / a clarifying
+        # question — a declared-confusion signal, not a wrong answer to score).
+        if _is_help_request(stripped) or _is_dont_know_or_question(stripped):
             ctx.help_n = 1
             ctx.help_modalities_used = []
             ctx.help_by_node[ctx.current_node_id] = True
@@ -971,8 +991,9 @@ class SessionController:
             return ("OK, see you next time!", False)
         # A help request at the re-check must NOT be scored as an answer — give
         # another Help round instead (HELP_MODALITY_SELECT self-limits once all
-        # modalities are exhausted -> LINK_BACK).
-        if _is_help_request(stripped):
+        # modalities are exhausted -> LINK_BACK). A21: "I don't know" / a
+        # clarifying question are treated the same way.
+        if _is_help_request(stripped) or _is_dont_know_or_question(stripped):
             ctx.help_by_node[ctx.current_node_id] = True
             ctx.state = FSMState.HELP_MODALITY_SELECT
             return ("", True)
@@ -1075,8 +1096,9 @@ class SessionController:
             return ("OK, see you next time!", False)
         # Child wants help on the probe — GIVE it (enter the Help loop) rather than
         # dead-ending with a re-prompt. The probe is abandoned, but a child needing
-        # help is itself useful signal, and help must never be refused.
-        if _is_help_request(stripped):
+        # help is itself useful signal, and help must never be refused. A21: "I
+        # don't know" / a clarifying question route the same way.
+        if _is_help_request(stripped) or _is_dont_know_or_question(stripped):
             ctx.help_n = 1
             ctx.help_modalities_used = []
             ctx.help_by_node[ctx.current_node_id] = True
