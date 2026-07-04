@@ -95,5 +95,15 @@ def bkt_update(
         guess_eff = params.guess + (1.0 - params.guess) * HINT_DISCOUNT
 
     p_cond = _posterior_given_obs(p, correct, guess_eff, params.slip)
+    if not correct and not hinted:
+        # A20 (BKT Option B, ratified 2026-07-05): a bare-wrong (unaided incorrect)
+        # attempt only conditions the posterior — no learns credit. Without this,
+        # mastery could rise on a wrong-answer streak from cold start (a symptom of
+        # the well-documented "model degeneracy" critique of vanilla BKT: Baker,
+        # R.S.J.d., Corbett, A.T., & Aleven, V. (2008), "More Accurate Student
+        # Modeling through Contextual Estimation of Slip and Guess Probabilities
+        # in Bayesian Knowledge Tracing," ITS 2008, doi:10.1007/978-3-540-69132-7_44).
+        # Hinted-win / correct observations are unaffected.
+        return p_cond
     # learning transition (within-session; forgets unused in v0)
     return p_cond + (1.0 - p_cond) * params.learns
