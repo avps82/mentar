@@ -1,8 +1,8 @@
 ---
 title: "Mentar — Session State Machine"
-version: v0.1
+version: v0.2
 status: "Draft — Pilot Pending"
-last-updated: 2026-06-13
+last-updated: 2026-07-05
 sources: "PHASE0.md W6.1; SPEC.md §13-14; SAFETY.md L3 (escalation absorbing state)"
 ---
 
@@ -56,11 +56,10 @@ stateDiagram-v2
         PROBE_SCORE --> PROBE_CLASSIFY: scored
         PROBE_CLASSIFY --> [*]: classified
     }
-    PROBE --> BRANCH_DECISION: exit
+    PROBE --> NODE_SELECT: exit
 
-    ESCALATION_FREEZE --> PARENT_ACK_WAIT: alert_sent
-    PARENT_ACK_WAIT --> SESSION_END_BY_PARENT: parent_ack_end
-    PARENT_ACK_WAIT --> NODE_SELECT: parent_ack_resume
+    ESCALATION_FREEZE --> SESSION_END_BY_PARENT: parent_ack_end (parent control plane)
+    ESCALATION_FREEZE --> NODE_SELECT: parent_ack_resume (parent control plane)
 
     SESSION_END_COMPLETE --> [*]
     SESSION_END_BY_LEARNER --> [*]
@@ -107,8 +106,7 @@ Both pre-empts are encoded as **transitions on every non-terminal state** in §3
 | P1 | `PROBE_AWAIT_ANSWER` | **yes** | Block on learner input. Skip-attempt rejection same as H3. |
 | P2 | `PROBE_SCORE` | no | Verifier runs. |
 | P3 | `PROBE_CLASSIFY` | no | Apply [W3.4] false-confidence decision table; if first probe failed AND retry-window not yet exhausted, re-enter `PROBE_PRESENT` with a second transfer variant before final classification. |
-| E0 | `ESCALATION_FREEZE` | **yes** | **Absorbing.** No tutoring turns generated. The fixed approved handoff message (SAFETY.md §3.4) is rendered exactly once on entry. |
-| E1 | `PARENT_ACK_WAIT` | **yes** | Wait for parent acknowledgment. Parent chooses: end the session OR resume from `NODE_SELECT`. |
+| E0 | `ESCALATION_FREEZE` | **yes** | **Absorbing** for child input (SAFETY §3.x) — the freeze is lifted only by the parent control plane (`parent_acknowledge()`, not child-facing `step()`), never by anything the child types. The fixed approved handoff message (SAFETY.md §3.4) is rendered exactly once on entry. |
 | T1 | `SESSION_END_COMPLETE` | terminal | All in-template fringe nodes mastered OR parent-defined completion criteria met. |
 | T2 | `SESSION_END_BY_LEARNER` | terminal | Learner requested stop. |
 | T3 | `SESSION_END_BY_PARENT` | terminal | Parent ended after escalation. |
@@ -130,6 +128,13 @@ Global pre-empts (apply at every non-terminal state row marked "non-terminal"; l
 
 State-specific transitions:
 
+Rows where a state's own input simply leaves it unchanged (e.g. a skip-attempt rejected, or
+absorbing ESCALATION_FREEZE) are **not** listed as edges here — "staying put" isn't a
+transition, so the T3.7 test doesn't model it as one; see §4 Invariants for that behaviour
+instead. `BKT_UPDATE`/`HELP_RECHECK_BKT_UPDATE` share one implementation
+(`_do_bkt_update(hinted=...)`) — both list the full destination set the shared function can
+reach, since T3.7 checks per-handler, not per-`hinted`-value.
+
 | From | Event | To | Side effects |
 |------|-------|-----|--------------|
 | `SESSION_START` | `enter` (no pending resume) | `NODE_SELECT` | Load profile, BKT priors, template. |
@@ -139,52 +144,66 @@ State-specific transitions:
 | `PATTERN_SELECT` | `enter` | `PRESENT` | Chosen pattern id recorded. |
 | `PRESENT` | `rendered` | `AWAIT_ANSWER` | Prompt text + template id + version hash logged (per T4.6). |
 | `AWAIT_ANSWER` | `learner_answer` | `SCORE` | Answer text + timestamp logged. |
-| `AWAIT_ANSWER` | `learner_help_press` | `HELP_MODALITY_SELECT` | Help retry counter `n` initialised to 1; help_event row written. |
-| `AWAIT_ANSWER` | `session_resume` (from persisted) | `AWAIT_ANSWER` | Re-enter same state; pending prompt re-rendered. |
+| `AWAIT_ANSWER` | `learner_help_press` (or A21: don't-know / clarifying question) | `HELP_MODALITY_SELECT` | Help retry counter `n` initialised to 1; help_event row written; `help_by_node` set (A5). |
+| `AWAIT_ANSWER` | `stop_request` | `SESSION_END_BY_LEARNER` | Learner ended explicitly. |
 | `SCORE` | `scored` | `BKT_UPDATE` | CheckOutcome attached to response_log row. |
-| `SCORE` | `safe_reject` | `PRESENT` | Regenerate the question; do NOT count as learner failure; do NOT BKT-update. |
-| `BKT_UPDATE` | `enter` | `BRANCH_DECISION` | `skill_state` row updated. |
+| `SCORE` | `safe_reject` (< A9's streak cap) | `AWAIT_ANSWER` | Re-ask the SAME question with answer-type-aware guidance; NOT a learner failure; NOT BKT-updated. **Corrected 2026-07-05** — was documented as re-presenting a NEW question (`PRESENT`); the shipped behaviour keeps the same question. |
+| `SCORE` | `safe_reject_streak_exhausted` (A9: 3 consecutive on the same question) | `HELP_MODALITY_SELECT` | Routes into the Help loop, unscored — the re-ask loop otherwise has no exit. `help_by_node` NOT set (system-routed, not child-initiated). |
+| `BKT_UPDATE` | `enter` (correct) | `BRANCH_DECISION` | `skill_state` row updated. |
+| `BKT_UPDATE` | `enter` (wrong, unaided) | `HELP_MODALITY_SELECT` | **Auto-help.** `skill_state` updated (A20: no `learns` credit on this observation); scaffolds instead of revealing the answer. `help_by_node` NOT set (system-routed). |
+| `BKT_UPDATE` | *(over-approximation — see note above)* | `HELP_RETRY_DECISION` | Not actually reachable from `BKT_UPDATE` (only from `HELP_RECHECK_BKT_UPDATE`'s `hinted=True` call) — listed because both share `_do_bkt_update` and T3.7 checks per-handler. |
 | `BRANCH_DECISION` | `advance` | `NODE_SELECT` | — |
 | `BRANCH_DECISION` | `probe_due` | `PROBE_PRESENT` | Probe trigger rule fired per W5.3. |
-| `BRANCH_DECISION` | `stop_request` | `SESSION_END_BY_LEARNER` | Learner ended explicitly. |
 | `HELP_MODALITY_SELECT` | `chosen` | `HELP_EXPLAIN` | Modality recorded; must differ from prior modalities in this Help chain. |
-| `HELP_EXPLAIN` | `rendered` | `HELP_RECHECK_PRESENT` | Re-explanation logged. |
+| `HELP_MODALITY_SELECT` | `modalities_exhausted` | `LINK_BACK` | All 5 modalities already used in this Help chain. |
+| `HELP_EXPLAIN` | `rendered` | `HELP_RECHECK_PRESENT` | Re-explanation logged; A14: arithmetic claims verified, regenerated (bounded) or replaced with the deterministic fallback hint on a verified-wrong claim. |
 | `HELP_RECHECK_PRESENT` | `rendered` | `HELP_RECHECK_AWAIT` | Transfer-test question logged; numeric-literal overlap with re-explanation checked < threshold (T4.4). |
 | `HELP_RECHECK_AWAIT` | `learner_answer` | `HELP_RECHECK_SCORE` | Answer logged with `hinted=1`. |
-| `HELP_RECHECK_AWAIT` | `learner_skip_attempt` | `HELP_RECHECK_AWAIT` | Skip rejected; gentle re-prompt; state unchanged (T4.3). |
-| `HELP_RECHECK_AWAIT` | `session_resume` | `HELP_RECHECK_AWAIT` | Restore pending re-check from persistence (T4.3 reopen case). |
+| `HELP_RECHECK_AWAIT` | `learner_help_press` (or A21: don't-know / clarifying question) | `HELP_MODALITY_SELECT` | Another Help round instead of scoring it as an answer; `help_by_node` set (A5). |
+| `HELP_RECHECK_AWAIT` | `stop_request` | `SESSION_END_BY_LEARNER` | Learner ended explicitly. |
 | `HELP_RECHECK_SCORE` | `scored` | `HELP_RECHECK_BKT_UPDATE` | — |
-| `HELP_RECHECK_BKT_UPDATE` | `enter` | `HELP_RETRY_DECISION` | BKT update with hinted-win discount applied (T4.5). |
+| `HELP_RECHECK_BKT_UPDATE` | `enter` (recheck passed) | `BRANCH_DECISION` | BKT update with hinted-win discount applied (T4.5); exits the Help loop. |
+| `HELP_RECHECK_BKT_UPDATE` | *(over-approximation — see note above)* | `HELP_MODALITY_SELECT` | Not actually reachable from `HELP_RECHECK_BKT_UPDATE` (only from `BKT_UPDATE`'s `hinted=False`+wrong call) — listed because both share `_do_bkt_update` and T3.7 checks per-handler. |
+| `HELP_RECHECK_BKT_UPDATE` | `enter` (recheck failed) | `HELP_RETRY_DECISION` | BKT updated (A20: no `learns` credit); routed to the retry/modality-exhaustion decision. |
 | `HELP_RETRY_DECISION` | `recheck_passed` | `BRANCH_DECISION` | Exit Help loop. |
 | `HELP_RETRY_DECISION` | `retry_under_cap` (n < 3, failed) | `HELP_MODALITY_SELECT` | n += 1; pick a different unused modality. |
 | `HELP_RETRY_DECISION` | `retry_cap_hit` (n = 3, failed) | `LINK_BACK` | — |
 | `LINK_BACK` | `enter` | `BRANCH_DECISION` | Grounded reference rendered; concept flagged `sticking_point`; parent-alert row written; BKT untouched. |
 | `PROBE_PRESENT` | `rendered` | `PROBE_AWAIT_ANSWER` | Probe text logged. |
 | `PROBE_AWAIT_ANSWER` | `learner_answer` | `PROBE_SCORE` | — |
-| `PROBE_AWAIT_ANSWER` | `learner_skip_attempt` | `PROBE_AWAIT_ANSWER` | Skip rejected (T5.1: non-skippable). |
-| `PROBE_AWAIT_ANSWER` | `session_resume` | `PROBE_AWAIT_ANSWER` | Restore pending probe. |
+| `PROBE_AWAIT_ANSWER` | `learner_help_press` (or A21: don't-know / clarifying question) | `HELP_MODALITY_SELECT` | The probe is abandoned; a child needing help is itself useful signal and help must never be refused. `help_by_node` set (A5). |
+| `PROBE_AWAIT_ANSWER` | `stop_request` | `SESSION_END_BY_LEARNER` | Learner ended explicitly. |
 | `PROBE_SCORE` | `scored` | `PROBE_CLASSIFY` | — |
-| `PROBE_CLASSIFY` | `clean_pass` | `BRANCH_DECISION` | `probe_event` row with class=`clean_pass`. |
+| `PROBE_CLASSIFY` | `clean_pass` | `NODE_SELECT` | `probe_event` row with class=`clean_pass`; must NOT return to `BRANCH_DECISION` (with mastery ≥ threshold, `probe_due` would re-fire forever). **Corrected 2026-07-05** — was documented as `BRANCH_DECISION`. |
 | `PROBE_CLASSIFY` | `retry_needed` (first failure, no retry yet) | `PROBE_PRESENT` | Render second transfer variant before classifying (W3.4 decision table). |
-| `PROBE_CLASSIFY` | `classified_as_class` | `BRANCH_DECISION` | `probe_event` row with class ∈ {`false_confidence`, `slip_suspect`, `forgetting_suspect`}. |
-| `ESCALATION_FREEZE` | (any event other than parent_ack) | `ESCALATION_FREEZE` | **Absorbing.** Input ignored; logged as `freeze_held`. |
-| `ESCALATION_FREEZE` | `alert_sent` | `PARENT_ACK_WAIT` | Parent alert row written; UI surfaces alert flag. |
-| `PARENT_ACK_WAIT` | `parent_ack_end` | `SESSION_END_BY_PARENT` | `escalation_log.parent_ack_at` set; outcome=`ended_by_parent`. |
-| `PARENT_ACK_WAIT` | `parent_ack_resume` | `NODE_SELECT` | `escalation_log.parent_ack_at` set; outcome=`resumed`. |
-| `PARENT_ACK_WAIT` | (any non-ack event) | `PARENT_ACK_WAIT` | Tutoring stays frozen until ack. |
+| `PROBE_CLASSIFY` | `classified_as_class` (final, after any retry) | `NODE_SELECT` | `probe_event` row with class ∈ {`false_confidence`, `slip_suspect`, `forgetting_suspect`}; mastery demoted (probe-demote) so the node returns to normal practice instead of being re-probed endlessly. **Corrected 2026-07-05** — was documented as `BRANCH_DECISION`. |
+| `ESCALATION_FREEZE` | `alert_sent_and_acked_resume` (parent control plane, not child input) | `NODE_SELECT` | `escalation_log.parent_ack_at` set; outcome=`resumed`. |
+| `ESCALATION_FREEZE` | `alert_sent_and_acked_end` (parent control plane) | `SESSION_END_BY_PARENT` | `escalation_log.parent_ack_at` set; outcome=`ended_by_parent`. |
 
 Terminal states (`SESSION_END_COMPLETE`, `SESSION_END_BY_LEARNER`, `SESSION_END_BY_PARENT`) have NO outgoing transitions. They emit a session-summary row and the process exits.
+
+**`PARENT_ACK_WAIT` removed (2026-07-05, A11).** An earlier design had the parent acknowledgment
+flow pass through a dedicated `PARENT_ACK_WAIT` state. The shipped implementation never wires
+this — `SessionController.parent_acknowledge()` (the `/parent/ack` control-plane method, distinct
+from child-facing `step()`) drives resume/end directly out of `ESCALATION_FREEZE`. The state
+lingered in the enum and this doc as dead, unreachable documentation; both are now in sync.
 
 ---
 
 ## 4. Invariants
 
-These are checked statically by T3.7 and dynamically by `tests/dialogue/test_session_fsm_invariants.py`:
+**Status (2026-07-05, A11):** only #1 is currently automated, by
+`tests/dialogue/test_session_fsm.py` (T3.7, static — an AST-derived transition-edge check, not
+a runtime fuzzer). #2–#7 are design invariants verified by inspection/targeted unit tests
+elsewhere in `tests/dialogue/`, not by a dedicated property-based/fuzz harness — the
+`test_session_fsm_invariants.py` file this section previously claimed tests them dynamically
+was never built (the exact kind of doc/code drift T3.7 exists to catch). Building that harness
+is a legitimate follow-up, not done in this pass.
 
-1. **Total documentation.** Every transition implemented in `src/mentar/dialogue/controller.py` corresponds to a row in §3. Every row in §3 is implemented in code. (Bi-directional — drift in either direction = test failure.)
-2. **Absorbing escalation.** From `ESCALATION_FREEZE`, no event except `alert_sent` (internal) or `parent_ack_*` advances state. Property-tested with a fuzzed event stream.
-3. **Persistence completeness.** Every state marked "persisted" in §2 must be re-enterable from `SESSION_START` after a `session_close` checkpoint, with the pending input and counters intact. Tested via close-and-reopen scenarios (T4.3 for help; T3.7.4 for the general case).
-4. **Help retry cap.** The Help chain length from `HELP_MODALITY_SELECT` entries to `LINK_BACK` is ≤ 3 (SPEC §13.1, W5.3 pilot default N=3).
+1. **Total documentation.** Every transition implemented in `src/mentar/dialogue/controller.py` corresponds to a row in §3. Every row in §3 is implemented in code. (Bi-directional — drift in either direction = test failure.) **Automated: `test_session_fsm.py`.**
+2. **Absorbing escalation.** From `ESCALATION_FREEZE`, no child-input event advances state — only the parent control plane (`parent_acknowledge()`) can. Covered by `tests/dialogue/test_escalation_resume.py` (fixed scenarios, not a fuzzer).
+3. **Persistence completeness.** Every state marked "persisted" in §2 must be re-enterable from `SESSION_START` after a `session_close` checkpoint, with the pending input and counters intact. **Not automated** — no `session_resume` code path exists yet (persisted rows exist for parent review; mid-session process-restart resume is not implemented).
+4. **Help retry cap.** The Help chain length from `HELP_MODALITY_SELECT` entries to `LINK_BACK` is ≤ 3 (SPEC §13.1, W5.3 pilot default N=3). Covered by `tests/dialogue/test_controller.py`'s Help-loop tests.
 5. **Probe non-skippability.** From both `HELP_RECHECK_AWAIT` and `PROBE_AWAIT_ANSWER`, `learner_skip_attempt` is a self-loop only — never advances to a downstream tutoring state without a scoreable answer.
 6. **Modality diversity.** `HELP_MODALITY_SELECT` MUST pick a modality not already used in the current Help chain; if all 5 are exhausted before retry cap is hit, force `LINK_BACK` early.
 7. **Safety pre-empt completeness.** Every non-terminal state honours `safety_trigger`. A property test injects `safety_trigger` from each state and asserts `ESCALATION_FREEZE` is reached within one transition.
@@ -230,3 +249,4 @@ These flow alongside the FSM and are NOT modeled as separate FSM states (they wo
 | Date | Version | Change |
 |------|---------|--------|
 | 2026-06-13 | v0.1 | Initial draft (Opus) — owns PHASE0 W6.1. |
+| 2026-07-05 | v0.2 | **A11 (T3.7 built).** New `tests/dialogue/test_session_fsm.py` parses §3 mechanically (AST-derived code edges vs. doc edges) — the drift-detector this doc had claimed since v0.1 but never had. Fixing what it found: removed dead `PARENT_ACK_WAIT` state (never wired — `parent_acknowledge()` drives resume/end directly from `ESCALATION_FREEZE`); corrected `SCORE`'s `safe_reject` target (`PRESENT` → `AWAIT_ANSWER`, matches shipped same-question re-ask behaviour) and `PROBE_CLASSIFY`'s two exit targets (`BRANCH_DECISION` → `NODE_SELECT`, matches the probe-demote fix); documented previously-undocumented reachable transitions: auto-help (`BKT_UPDATE`/`SCORE` → `HELP_MODALITY_SELECT`), A21's don't-know/question routing (three `*_AWAIT` states → `HELP_MODALITY_SELECT`), A9's unreadable-streak-cap (`SCORE` → `HELP_MODALITY_SELECT`), and the pre-existing `stop_request` gap in three `*_AWAIT` states. §4 corrected to stop claiming a `test_session_fsm_invariants.py` dynamic/fuzz harness exists (it doesn't — only §4's invariant #1 is currently automated). |
