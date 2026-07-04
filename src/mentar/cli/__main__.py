@@ -39,6 +39,7 @@ def _build_controller(args):
     from mentar.engine.itembank import load_item_bank
     from mentar.engine.itemgen import build_item_source
     from mentar.inference import load_inference_config, make_llm_call
+    from mentar.tools.validate_template import validate_or_raise
 
     repo = _repo_root()
     curriculum_path = Path(args.curriculum) if args.curriculum else (
@@ -53,6 +54,14 @@ def _build_controller(args):
             "(copy config/inference.example.yaml) or pass --config.",
             file=sys.stderr,
         )
+        return None, None
+
+    # A16: validate before loading — a cyclic/bad-prereq template silently produces
+    # an empty fringe and a false "you've mastered everything!" completion.
+    try:
+        validate_or_raise(curriculum_path)
+    except RuntimeError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
         return None, None
 
     llm_call = make_llm_call(cfg)
