@@ -124,6 +124,11 @@ class LearnerStore:
         """Return the current PRAGMA user_version of the database."""
         return self._user_version()
 
+    @property
+    def db_path(self) -> Path:
+        """Path to this store's .db file (A15: lets callers place a fallback log alongside it)."""
+        return self._path
+
     # ── Learner profile ──────────────────────────────────────────────────────
 
     def create_learner(

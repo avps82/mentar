@@ -9,6 +9,8 @@
   .btn-danger { background:#e53935; }
   .alert { background:#fde8e8; border:2px solid #e53935; border-radius:10px;
             padding:20px; margin-bottom:20px; }
+  .banner-warn { background:#fff3cd; border:2px solid #e0a800; border-radius:10px;
+            padding:14px 20px; margin-bottom:20px; font-size:0.95rem; }
   table { width:100%; border-collapse:collapse; margin-top:16px; }
   th, td { padding:8px 12px; border:1px solid #ddd; text-align:left; font-size:0.95rem; }
   th { background:#f5f5f5; }
@@ -20,6 +22,13 @@
 </style>
 </head><body>
 <h1>Parent / carer view</h1>
+{% if logging_degraded %}
+<div class="banner-warn">
+  <b>Durable logging degraded.</b> At least one safety alert could not be saved to the
+  main log and was recorded in a backup log file (<code>escalation_fallback.log</code>)
+  next to the database instead. Please check that file directly.
+</div>
+{% endif %}
 {% if escalated %}
 <div class="alert">
   <b>The session is paused.</b> Mentar noticed something that needs your attention.<br><br>

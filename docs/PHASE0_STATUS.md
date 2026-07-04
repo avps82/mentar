@@ -165,10 +165,14 @@ dialogue controller, web app, eval dataset, FSM caller wiring) has **all shipped
 - **W7.4** — real Vikidia/Simple-WP ZIM download + reader path verification (needs NAS/ZIMs).
 
 ### Known defects (found in testing)
-- **🔴 Escalation logging is best-effort — a DB failure silently drops the verbatim disclosure
-  (2026-07-03, repo review 2nd pass).** `write_escalation` is try/except-swallowed in the
-  controller; the freeze still happens but SAFETY §3.1 "never silently dropped" is violated on
-  any DB error. Needs an append-only file fallback sink. → REVIEW §8.1; task A15.
+- **✅ RESOLVED 2026-07-05 — Escalation logging is best-effort — a DB failure silently drops
+  the verbatim disclosure (2026-07-03, repo review 2nd pass).** Was: `write_escalation` try/except-
+  swallowed in the controller with no fallback; the freeze still happened but SAFETY §3.1 "never
+  silently dropped" was violated on any DB error. Fixed via REMAINDER_PLAN A15 (PR open —
+  awaiting human review, not yet merged, stacked on #55/A3): a DB-write failure now also appends
+  one JSON line (`iso_ts`, `trigger_class`, `severity`, `verbatim_text`) to
+  `escalation_fallback.log` next to the DB file; `/parent` shows a "durable logging degraded"
+  banner when that file is non-empty. → REVIEW §8.1.
 - **🟠 Curriculum templates never validated at runtime → false "all mastered" completion
   (2026-07-03, repo review 2nd pass).** `validate()` runs only via the CLI subcommand;
   serve/run-session parse YAML directly. Cyclic/bad-prereq template → unsatisfiable nodes →
