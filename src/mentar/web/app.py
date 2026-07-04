@@ -157,6 +157,9 @@ def _get_or_create_controller(learner_uuid: str, subject: str) -> SessionControl
                 age_mode="parent_mediated",  # SPEC §6.2 pilot default
             )
         db_id = _db_learner_ids[learner_uuid]
+        # A19: pilot scope is parent_mediated only — a clear error, not a silent
+        # unsupervised session, if a learner row is ever anything else.
+        store.assert_parent_mediated(db_id)
         subj = SUBJECTS[subject]
         bank = (
             load_item_bank(subj["itembank"])

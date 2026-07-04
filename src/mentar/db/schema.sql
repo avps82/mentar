@@ -18,7 +18,7 @@
 --     than a FK to session, because the session may be ended/deleted independently of
 --     the escalation record (escalation_log is intentionally harder to purge).
 
-PRAGMA user_version = 2;
+PRAGMA user_version = 3;
 PRAGMA foreign_keys = ON;
 
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -38,13 +38,17 @@ CREATE TABLE IF NOT EXISTS learner_profile (
 -- 2.  session
 --     Groups response_log, help_event, probe_event, transcript rows into one
 --     tutoring session.  session_id is a UUID/opaque string owned by the caller.
+--     rng_seed (v3, A19): the seed SessionController's internal RNG was constructed
+--     with, so a session's non-deterministic choices (pattern/modality/praise-variant
+--     selection) can be replayed exactly given the same seed.
 -- ─────────────────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS session (
     id           TEXT    PRIMARY KEY,          -- caller-supplied UUID or slug
     learner_id   INTEGER NOT NULL REFERENCES learner_profile(id) ON DELETE CASCADE,
     started_at   TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
     ended_at     TEXT,                         -- NULL while session is live
-    ended_reason TEXT                          -- 'completed'|'abandoned'|'escalation_freeze'|…
+    ended_reason TEXT,                         -- 'completed'|'abandoned'|'escalation_freeze'|…
+    rng_seed     INTEGER
 );
 
 CREATE INDEX IF NOT EXISTS idx_session_learner ON session(learner_id);
