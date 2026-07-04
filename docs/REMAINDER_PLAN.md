@@ -39,7 +39,7 @@ re-derive the plan file from the Wave table if you want it back in that format.
 | **0 — rails** | A12 | ✅ **DONE** (2026-07-04, PR #54, merged `b544978`) | CI matrix py3.11-3.13 + gitleaks CLI (MIT, pinned v8.30.1 — NOT gitleaks-action, which is commercial-licensed since v2). **Gotcha found + fixed:** `pip install -e ".[dev,web]"` is not enough — grounding tests need `libzim`, which lives behind its own `grounding` extra (spotty cross-platform wheels, so deliberately not in `dev`/`web`). CI installs `.[dev,web,grounding]`; manylinux wheels exist for cp311-313 on ubuntu-latest so this is safe. First run failed on this, second run (483630c) passed. |
 | **1 — safety-critical, Opus-led, in order** | A3 → A15 → A8 → A13 → A14 | ✅ **Wave 1 ALL DONE** (2026-07-05) — A3 (#55), A15 (#56), A8 (#57), A13 (#58), A14 (PR pending), all open, awaiting human review | A3 (schema v2) unblocks A13's incident-row home + A19's session-row rng_seed column — do it first. **2026-07-05 note:** auto-merge is blocked by the harness's permission classifier for safety-critical PRs authored+merged by the same agent with no visible review — every Wave-1 PR lands open, not merged, until the maintainer reviews. Branches are stacked (same files touched across tasks) — merge in stack order: #55 (A3), #56 (A15), #57 (A8), #58 (A13), then A14. |
 | **2 — correctness, Gemma-drafted/Opus-verified** | A17 → A16 → A5 → A6 → A9 → A7 → A20 → A21 | ✅ **Wave 2 ALL DONE** (2026-07-05) — A17 (#60), A16 (#61), A5 (#62), A6 (#63), A9 (#64), A7 (#65), A20 (#66), A21 (PR pending), all open, awaiting human review | A17 before A16 (layering clean-up first makes A16's startup hook land in one place). A20/A21 are the new ratified tasks — specs below. |
-| **3 — assent/docs/hygiene** | A1 → A4 → A18 → A19 → A2 → A11 | ⏳ not started | A1 before A4 (same controller preamble). A11 (FSM conformance test) runs **after** waves 1–2 since A9/A14/A21 add new FSM transitions the doc needs to capture. |
+| **3 — assent/docs/hygiene** | A1 → A4 → A18 → A19 → A2 → A11 | 🔶 A1 found **already shipped** (commit `e664658`, pre-dates this review — doc drift, corrected 2026-07-05) + A4 done (PR pending); A18/A19/A2/A11 not started | A1 before A4 (same controller preamble). A11 (FSM conformance test) runs **after** waves 1–2 since A9/A14/A21 add new FSM transitions the doc needs to capture. |
 | **4 — QA + doc close-out** | B1 → B2 → close-out | ⏳ not started | B1 is conditional — check `zim_dir` is readable (real ZIMs were downloaded 2026-06-27) before running; log+skip if absent, don't block the wave. B2 (doc-drift sweep) runs LAST so it reflects the post-wave state. |
 
 **Execution model (unchanged from plan):** one branch + PR per task; gate = `pytest tests/ -q`
@@ -369,11 +369,10 @@ Ordered by the review's priority table.
 - **Sign `PILOT_CONSENT`** before session 1.
 - **Explicit-harm + iterative-jailbreak red-team** — needs promptfoo Cloud or an uncensored+capable
   generator (the aligned-Claude refusal is structural; the local 7B was too weak). Decision + setup.
-- **Retention mechanism decision (repo review 2026-07-03, REVIEW §1.3)** — the documented 90-day
-  rolling purge and the transcript immutability triggers are mutually exclusive as designed.
-  Ratify one: (i) purge path designed alongside immutability (time-boxed trigger exception,
-  schema v2+), or (ii) pilot retains everything + deletion = delete the .db file (docs reworded
-  by A4). Compliance-weighted — verify wording against COPPA 2025 / GDPR-K before public docs.
+- ~~Retention mechanism decision~~ — **ratified 2026-07-04 (option ii: pilot retains
+  everything, deletion = delete the `.db` file), docs reworded 2026-07-05 as task A4.** Compliance
+  wording (COPPA 2025 / GDPR-K) against public docs still a separate future check — the
+  documents no longer overclaim, but a formal compliance-language pass hasn't been done.
 - ~~BKT rising-mastery-on-wrong call~~ — **ratified 2026-07-04 (Option B), built 2026-07-05 as
   task A20** (PR open, awaiting review). No longer a pending C-row.
 - Run the **pilot** (P1–P5).

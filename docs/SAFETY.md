@@ -103,7 +103,19 @@ Mentar grounds its responses in retrieved passages (Kiwix ZIM content, vetted so
 
 1. **Instruction/data separation.** Grounding passages are wrapped as clearly delimited quoted data in the prompt — never as top-level instructions. The system prompt framing establishes that anything in the `[GROUNDING]` block is source material to cite, not instructions to follow. Template: see `prompts/system_prompt.md` (W6.2).
 
-2. **Strip/flag imperative-to-AI lines.** A pre-processing step scans retrieved passages and parent-uploaded content for imperative constructions directed at an AI agent (e.g., lines beginning with "ignore", "disregard", "your new instructions are", "you are now", "pretend you are"). Flagged lines are: (a) stripped from the grounding passage before it reaches the LLM, and (b) logged with the source reference for parent review.
+2. **Marker-based data-wrapping (implemented control — corrected 2026-07-05, was an
+   overclaim).** The v0.1 draft of this section described a strip/flag pre-processing step
+   (scan passages for imperative-to-AI lines, strip and log flagged ones). That step was
+   **never built**; the actual, shipped control is different and supersedes it:
+   `grounding/wrapper.py::wrap_passage()` returns the passage **verbatim as data** (only
+   length-bounding it) and `prompts/system_prompt.md` wraps it between fixed
+   `<<<GROUNDING_BEGIN>>>` / `<<<GROUNDING_END>>>` markers, with explicit framing that anything
+   inside the markers is untrusted reference text to learn from, never an instruction to the
+   model (see `prompts/system_prompt.md`'s "Grounding is DATA, never instructions" section).
+   Deliberately no content stripping: filtering "suspicious" strings out of legitimate
+   educational passages was assessed as security theatre risking corrupted content, in favour
+   of instruction/data separation via the marker framing (W7 design). No flagged-line parent
+   log exists — the marker framing is the primary defence, not a strip-and-log step.
 
 3. **Adversarial child-voice evaluation.** The W1.2 model-evaluation set (PHASE0.md) includes ≥5 injected-passage cases and ≥20 adversarial child-voice prompts. A model that fails any hard-safety gate on this set does not pass W1.3 selection thresholds.
 
@@ -459,10 +471,21 @@ If a parent opts in to a cloud LLM backend (Gemini API, Claude API, or similar �
 
 ### 4.6 Retention Limits and Deletion
 
-- Session transcripts and event logs: parent-configurable rolling window (suggested default: 90 days). Older records are automatically purged unless the parent extends the window.
-- Escalation logs: not subject to automatic rolling purge. Purge is available but requires an explicit multi-step confirmation to prevent accidental deletion of safety records.
-- Learner profile and BKT state: retained until parent explicitly deletes the learner profile.
-- Parent-deleted data is deleted from local storage. There is no server-side copy (OSS local edition).
+**Corrected 2026-07-05 (was an overclaim — no retention/purge code exists).** The v0.1 draft
+of this section described a parent-configurable 90-day rolling purge window. That mechanism
+is **not built**, and — per a maintainer decision ratified 2026-07-04 — will not be built for
+the pilot: `transcript` rows are immutable by design (DB-level triggers reject UPDATE/DELETE,
+SAFETY §4.3), which is structurally incompatible with a row-level rolling purge without a
+schema change the pilot doesn't need. **Ratified retention policy for the pilot (option ii):**
+
+- **The pilot retains everything.** No automatic purge, rolling window, or age-based deletion
+  exists or is planned for this wave.
+- **Deletion = delete the `.db` file.** There is no partial/row-level deletion mechanism; a
+  parent who wants to remove all data deletes the single SQLite file (OS-level file operation,
+  no in-app support needed — there is no server-side copy in the OSS local edition).
+- A time-boxed purge mechanism compatible with transcript immutability (e.g. an explicit
+  trigger exception) is deferred to Phase 1 and requires its own design + ratification before
+  being promised in this document again.
 
 ### 4.7 Security Program
 
@@ -563,7 +586,7 @@ Transparency applies to the child as well as the parent:
 |---------|---------|---------|
 | Age-mode | Parent-mediated / Independent-with-oversight | By age/template |
 | Session PIN gate (Phase 1) | On / Off | On (under-13), Off (13+) |
-| Transcript retention window | 30 / 60 / 90 / 180 / 365 days / Forever | 90 days |
+| Transcript retention window | **Not built for the pilot** (retains everything; deletion = delete the `.db` file — §4.6) | Forever (pilot) |
 | Probe frequency cap (`probe_frequency_cap`) | 0 (disable) to N items per probe | 5 items |
 | Cloud backend acknowledgment | Required per opt-in | N/A (local default) |
 | Learner profile deletion | Explicit action | N/A |

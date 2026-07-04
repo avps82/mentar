@@ -31,8 +31,9 @@ This is a children's product, so we state the **known safety gaps openly** (full
   device by design.
 - **Immutable transcript:** session transcripts are append-only (enforced by DB triggers) for
   parental review.
-- **Retention:** a rolling retention window is applied at the application layer (see SAFETY.md
-  §4.6). Escalation records are intentionally harder to purge.
+- **Retention:** the pilot retains all data — no automatic purge/rolling-window mechanism
+  exists. Deletion = delete the `.db` file (see SAFETY.md §4.6 for the ratified rationale and
+  the transcript-immutability constraint that motivates it).
 
 ## Content licensing note
 
