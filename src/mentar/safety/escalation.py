@@ -5,8 +5,12 @@ Tests: tests/safety/test_escalation.py (T2.1) — 20 positive + 20 negative fixt
 
 This module is PURE: no DB writes, no FSM transitions, no LLM calls. The caller
 (session loop / FSM driver) is responsible for logging, freeze, and handoff once
-`classify()` returns a non-None match. See design §4 and `handle_trigger()` below
-for the thin caller-side helper that demonstrates the end-to-end flow.
+`classify()` returns a non-None match. The real (only, since A3) caller is
+`SessionController._step_core` in dialogue/controller.py, which logs via
+`LearnerStore.write_escalation` — see design §4 for the flow: classify (here) ->
+LOG (write_escalation, full untruncated verbatim text; adversarial_jailbreak =
+'logged_only', all others = 'frozen') -> HANDOFF (HANDOFF_MESSAGE_PRIMARY/SUPPORT
+below) -> FREEZE + WAIT + RESUMPTION GATE (FSM responsibilities, not this module).
 
 Two open rollout guards (W2.2 design §7 / SAFETY.md §3.5 — do not lose):
   1. Handoff wording (HANDOFF_MESSAGE_PRIMARY/SUPPORT) has NOT been reviewed by a
@@ -22,7 +26,6 @@ from __future__ import annotations
 
 import base64
 import re
-import sqlite3
 from dataclasses import dataclass
 from enum import Enum
 
@@ -303,59 +306,3 @@ def classify(text: str) -> TriggerMatch | None:
                 )
 
     return best
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Thin caller helper — demonstrates the §4 flow end-to-end
-# (classify stays pure/separate; this is the caller side)
-# ─────────────────────────────────────────────────────────────────────────────
-
-def handle_trigger(
-    text: str,
-    learner_id: int,
-    conn: sqlite3.Connection,
-) -> TriggerMatch | None:
-    """Run the §4 flow for one child turn against a live SQLite connection.
-
-    Returns the TriggerMatch if triggered (caller should enter ESCALATION_FREEZE
-    for all classes except adversarial_jailbreak per §4.3), or None if no match.
-
-    Steps performed (design §4):
-      1. classify() — pure; no side effects.
-      2. LOG — insert escalation_log row with full untruncated verbatim text.
-         For adversarial_jailbreak: session_outcome='logged_only' (design §4.3).
-         For all others: session_outcome='frozen'.
-      3. HANDOFF — render HANDOFF_MESSAGE_PRIMARY + _SUPPORT (returned in log
-         row comment; caller is responsible for display).
-      4. ALERT — on-screen flag + log row (pilot: log row already written above;
-         alert carries trigger_class only, NOT verbatim text per §4 Step 4).
-      FREEZE + WAIT + RESUMPTION GATE are FSM responsibilities (not this helper).
-
-    Note: adversarial_jailbreak is logged_only — do NOT enter ESCALATION_FREEZE.
-    """
-    match = classify(text)
-    if match is None:
-        return None
-
-    # §4.3 — adversarial_jailbreak is logged-only, not frozen
-    if match.trigger_class == TriggerClass.ADVERSARIAL_JAILBREAK:
-        session_outcome = "logged_only"
-    else:
-        session_outcome = "frozen"
-
-    # §4 Step 2 — LOG: full verbatim text, never truncated
-    conn.execute(
-        """
-        INSERT INTO escalation_log
-            (learner_id, trigger_class, trigger_text_verbatim, session_outcome)
-        VALUES (?, ?, ?, ?)
-        """,
-        (learner_id, match.trigger_class.value, text, session_outcome),
-    )
-    conn.commit()
-
-    # §4 Step 3 — HANDOFF (caller renders these; we return the match so caller knows)
-    # §4 Step 4 — ALERT: the log row IS the pilot alert (on-screen flag in parent view)
-    #             The alert surfaces trigger_class + timestamp ONLY — never verbatim text.
-
-    return match

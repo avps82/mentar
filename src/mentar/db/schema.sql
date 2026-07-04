@@ -18,7 +18,7 @@
 --     than a FK to session, because the session may be ended/deleted independently of
 --     the escalation record (escalation_log is intentionally harder to purge).
 
-PRAGMA user_version = 1;
+PRAGMA user_version = 2;
 PRAGMA foreign_keys = ON;
 
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -154,12 +154,18 @@ CREATE INDEX IF NOT EXISTS idx_probe_event_session ON probe_event(learner_id, se
 --     Special value 'logged_only' is used for adversarial_jailbreak class (design §4.3):
 --     the trigger is logged for audit but the session is NOT frozen — Layer 1 §1.4 already
 --     blocks the input inline. All other trigger classes use 'frozen' as the initial value.
+--     v2 (A3, 2026-07-04): added severity/session_id/turn_index so SAFETY §3.3/§3.5's claim
+--     that every escalation row carries these is actually true. session_id/turn_index are
+--     TEXT/INTEGER (not FKs) — an escalation row must survive session deletion (see above).
 -- ─────────────────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS escalation_log (
     id                      INTEGER PRIMARY KEY AUTOINCREMENT,
     learner_id              INTEGER NOT NULL REFERENCES learner_profile(id) ON DELETE CASCADE,
     trigger_class           TEXT    NOT NULL,   -- e.g. 'harm_to_self', 'abuse_disclosure'
     trigger_text_verbatim   TEXT    NOT NULL,   -- exact child input; never truncated
+    severity                TEXT    CHECK (severity IN ('low', 'high', 'critical')),
+    session_id              TEXT,               -- the tutoring session the trigger fired in
+    turn_index              INTEGER,            -- 0-based turn within that session
     freeze_started_at       TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
     parent_ack_at           TEXT,               -- NULL until acknowledged
     session_outcome         TEXT    NOT NULL DEFAULT 'frozen'

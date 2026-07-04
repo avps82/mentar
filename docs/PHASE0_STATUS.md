@@ -196,13 +196,16 @@ dialogue controller, web app, eval dataset, FSM caller wiring) has **all shipped
   before serving (discard + regenerate on failure). `verify_numeric.check()` is only called on
   child answers; a wrong worked step in a Help explanation ships unchecked — against the
   project's own "hallucination = safety failure" bar. → REVIEW §1.7; task A14.
-- **🔴 SAFETY-AUDIT GAP — escalation_log missing/wrong fields (2026-07-03, repo review).**
-  No `severity` column (SAFETY §3.5 claims it's recorded), no `session_id`/turn number
-  (SAFETY §3.3 Step 2 claims both), and the live write path never sets `session_outcome`,
-  so LOW jailbreaks that did NOT freeze are stored as `'frozen'` (schema comment requires
-  `'logged_only'`). Only the uncalled demo helper `escalation.handle_trigger()` does it right —
-  two write paths, already drifted. → [REVIEW_2026-07-03.md §1.2](../REVIEW_2026-07-03.md);
-  build task REMAINDER_PLAN A3.
+- **✅ RESOLVED 2026-07-05 — SAFETY-AUDIT GAP — escalation_log missing/wrong fields
+  (2026-07-03, repo review).** Was: no `severity` column, no `session_id`/turn number, and
+  the live write path never set `session_outcome` (LOW jailbreaks stored as `'frozen'`
+  instead of `'logged_only'`); a second uncalled write path (`escalation.handle_trigger()`)
+  had already drifted from the real one. Fixed via REMAINDER_PLAN A3 (PR #55, branch
+  `feat/a3-escalation-schema-v2`, **open — awaiting human review, not yet merged**):
+  schema migrated to `user_version=2` (real v1->v2 `ALTER TABLE` migration, not a stub);
+  `severity`/`session_id`/`turn_index`/`session_outcome` now flow from the controller
+  through `LearnerStore.write_escalation`; `handle_trigger()` (the drifted duplicate)
+  deleted. → [REVIEW_2026-07-03.md §1.2](../REVIEW_2026-07-03.md).
 - **🔴 Escalation redirect hands the resume control to the child's screen (2026-07-03, repo
   review).** On escalation `/answer` redirects the CHILD's browser to `/parent`, which shows the
   verbatim trigger text (SAFETY §3.3 Step 4 says the alert must NOT carry it) plus the un-gated
