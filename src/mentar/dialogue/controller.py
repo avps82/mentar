@@ -93,7 +93,30 @@ def _is_stale_mastery(updated_at: str | None, now: datetime | None = None) -> bo
     now = now or datetime.now(UTC)
     return (now - ts).days > STALE_MASTERY_DAYS
 
+
+def _raise_on_uncovered_nodes(curriculum: dict, item_bank) -> None:
+    """A9: a node with a real checker (checker != 'none') but no item-source
+    coverage falls back to _do_present's LLM-generated-question path, which
+    scores against node['expected_answer'] — but that field is a transfer-seed
+    QUESTION string (see engine/curriculum.py), not a real answer. That's a
+    guaranteed FAIL/SAFE_REJECT, silently. Refuse loudly at construction time
+    instead (only checked when an item_bank is actually wired — a bare
+    item_bank=None is the deliberate legacy/test fallback, not a misconfigured
+    production subject)."""
+    uncovered = [
+        nid for nid, node in curriculum.items()
+        if node.get("checker", "none") != "none" and not item_bank.has(nid)
+    ]
+    if uncovered:
+        raise RuntimeError(
+            f"Curriculum node(s) {uncovered} have a checker but no item-bank/generator "
+            "coverage — scoring would silently fall back to expected_answer, which is "
+            "a transfer-seed QUESTION, not a real answer. Add coverage or checker: none."
+        )
+
+
 HELP_RETRY_CAP = 3
+UNREADABLE_STREAK_CAP = 3  # A9: consecutive SAFE_REJECT/EXTRACT_FAIL before routing to Help
 PROBE_EVERY_N = 5  # W5.3 pilot default
 # When a proactive probe shows mastery was overestimated (false_confidence /
 # forgetting / slip-after-retry), demote mastery to this so the node returns to
@@ -172,6 +195,7 @@ class _SessionCtx:
     current_answer: str | None = None             # child's latest answer
     last_scored_correct: bool | None = None
     items_since_probe: int = 0
+    unreadable_streak: int = 0     # A9: consecutive SAFE_REJECT/EXTRACT_FAIL on this question
     # Help loop
     help_n: int = 0                                  # retry counter (1-indexed)
     help_modalities_used: list = field(default_factory=list)
@@ -221,6 +245,8 @@ class SessionController:
         # verifier scores against the item's ground truth).  When None, fall back to the
         # legacy LLM-generated question + node["expected_answer"] path.
         self._item_bank = item_bank
+        if self._item_bank is not None:
+            _raise_on_uncovered_nodes(self._curriculum, self._item_bank)
         self._templates: dict[str, str] = {}  # loaded lazily
         self._assent_shown = False             # W5.6: assent line shown once, first turn
         self._ctx = _SessionCtx()
@@ -571,6 +597,7 @@ class SessionController:
 
     def _do_present(self) -> tuple[str, bool]:
         ctx = self._ctx
+        ctx.unreadable_streak = 0  # A9: fresh question, fresh streak
         node = self._curriculum[ctx.current_node_id]
         item = self._sample_item(ctx.current_node_id)
         if item is not None:
@@ -644,6 +671,19 @@ class SessionController:
             ground_truth=ground_truth,
         )
         if outcome.result in (CheckResult.SAFE_REJECT, CheckResult.EXTRACT_FAIL):
+            ctx.unreadable_streak += 1
+            if ctx.unreadable_streak >= UNREADABLE_STREAK_CAP:
+                # A9: 3 unreadable answers in a row on the SAME question has no exit
+                # otherwise — a child who genuinely can't produce the expected shape
+                # (keyboard trouble, misunderstanding "_/_") gets stuck nudging forever.
+                # Route into the Help loop, unscored — nothing logged as scored (mirrors
+                # the auto-help-on-wrong branch in _do_bkt_update; NOT child-initiated,
+                # so help_by_node is deliberately NOT set here — A5).
+                ctx.unreadable_streak = 0
+                ctx.help_n = 1
+                ctx.help_modalities_used = []
+                ctx.state = FSMState.HELP_MODALITY_SELECT
+                return ("", True)
             # Couldn't read a checkable answer (blank / gibberish / malformed). Don't
             # penalise or log — re-ask the SAME question with answer-type-aware guidance.
             # (A vague "couldn't read" + jumping to a NEW question confused testers; this

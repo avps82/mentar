@@ -132,6 +132,22 @@ def test_gibberish_is_reprompted_not_scored():
     assert ctrl._ctx.last_scored_correct is None   # never scored
 
 
+def test_third_consecutive_gibberish_routes_to_help_unscored():
+    """A9: the re-ask loop has an exit — 3 unreadable answers in a row on the
+    SAME question route into the Help loop, unscored (nothing logged as scored,
+    matches the auto-help-on-wrong routing target)."""
+    ctrl = _make_controller(llm_fn=lambda msgs: "An explanation.")
+    ctrl.step(None)
+    r1 = ctrl.step("jjjd")
+    assert r1.state == FSMState.AWAIT_ANSWER.value          # 1st: still re-asking
+    r2 = ctrl.step("kkke")
+    assert r2.state == FSMState.AWAIT_ANSWER.value          # 2nd: still re-asking
+    r3 = ctrl.step("llld")                                   # 3rd: exits to Help
+    assert r3.state == FSMState.HELP_RECHECK_AWAIT.value
+    assert ctrl._ctx.last_scored_correct is None             # never scored as an answer
+    assert not ctrl._ctx.help_by_node.get("unit_fractions")  # system-routed, not child-initiated (A5)
+
+
 def test_stop_ends_session():
     """Typing 'stop' in AWAIT_ANSWER transitions to SESSION_END_BY_LEARNER."""
     ctrl = _make_controller()
