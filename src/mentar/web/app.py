@@ -1,7 +1,9 @@
 """Mentar pilot web app — minimal Flask, 4 views, localhost-only.
 
 Spec: docs/design/W6.3_pilot_interface.md; SPEC §23.
-Views: / (learner question) · /parent (log + escalation ack) · /parent/ack (POST).
+Views: / (learner question) · /frozen (child-facing handoff during escalation) ·
+       /parent (log + escalation ack; typed-URL only, never auto-navigated) ·
+       /parent/ack (POST, requires a typed confirm word).
 
 Run:
     MENTAR_LLM_BASE_URL=http://localhost:11434/v1 \
@@ -284,6 +286,11 @@ def index():
 
     ctrl = _get_or_create_controller(learner_uuid, subject)
 
+    if ctrl.state == FSMState.ESCALATION_FREEZE.value:
+        # Absorbing state — every child-facing render goes to the frozen page,
+        # not just the turn that triggered it (A8).
+        return redirect(url_for("frozen"))
+
     # Only call step(None) to initialise — subsequent renders just show the last question.
     if ctrl.state == FSMState.SESSION_START.value:
         result = ctrl.step(None)
@@ -291,7 +298,7 @@ def index():
         if result.done:
             return render_template("done.html", message=result.text or "All done!")
         if result.escalated:
-            return redirect(url_for("parent"))
+            return redirect(url_for("frozen"))
 
     # Re-display the last Mentar question from the log (don't call step again).
     question = _last_mentar_text(learner_uuid) or "Ready when you are!"
@@ -326,10 +333,29 @@ def answer():
         _log_turn(learner_uuid, "Mentar", result.text)
 
     if result.escalated:
-        return redirect(url_for("parent"))
+        return redirect(url_for("frozen"))
     if result.done:
         return render_template("done.html", message=result.text or "Well done — session complete!")
     return redirect(url_for("index"))
+
+
+@app.route("/frozen")
+def frozen():
+    """Child-facing view during ESCALATION_FREEZE (A8): the two fixed handoff
+    messages ONLY — no verbatim trigger text, no resume/ack control. The parent
+    resumes via /parent (typed URL only, never auto-navigated here) + /parent/ack
+    (gated behind a typed confirm word)."""
+    from mentar.safety.escalation import HANDOFF_MESSAGE_PRIMARY, HANDOFF_MESSAGE_SUPPORT
+
+    learner_uuid = session.get("learner_uuid", "")
+    ctrl = _controllers.get(learner_uuid)
+    if ctrl is None or ctrl.state != FSMState.ESCALATION_FREEZE.value:
+        return redirect(url_for("index"))
+    return render_template(
+        "frozen.html",
+        handoff_primary=HANDOFF_MESSAGE_PRIMARY,
+        handoff_support=HANDOFF_MESSAGE_SUPPORT,
+    )
 
 
 @app.route("/progress")
@@ -394,10 +420,19 @@ def _escalation_fallback_log_nonempty() -> bool:
     return path.exists() and path.stat().st_size > 0
 
 
+# A8: the parent must type this word to acknowledge/resume — an honor-system-compatible
+# minimum gate against an un-gated resume button (PIN gate is Phase 1, out of pilot scope).
+PARENT_ACK_CONFIRM_WORD = "RESUME"
+
+
 @app.route("/parent/ack", methods=["POST"])
 def parent_ack():
     learner_uuid = session.get("learner_uuid", "")
     action = request.form.get("action", "resume")  # "resume" or "end"
+    confirm = request.form.get("confirm", "").strip().upper()
+    if confirm != PARENT_ACK_CONFIRM_WORD:
+        # No-op: wrong/missing confirm word acknowledges nothing and changes no state.
+        return redirect(url_for("parent"))
     # Persist the parent's acknowledgement against the latest open escalation
     # (SAFETY.md §3.3 Step 6) before resuming/ending the session.
     _ack_latest_escalation(learner_uuid)
