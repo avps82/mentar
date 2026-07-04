@@ -305,17 +305,21 @@ dialogue controller, web app, eval dataset, FSM caller wiring) has **all shipped
   LLM surface = grounding content** (`surface: grounding` rows) — must be tested end-to-end against
   the system-prompt data-wrapper. The de-obfuscation fallback runs only when no other class fired
   (can't override a real safety match) and is LOW severity. Tests in `tests/safety/test_escalation.py`.
-- **🧮 MODELING DECISION — mastery % rises after wrong answers (2026-06-29).** From the cold-start
-  prior (10%), wrong answers take mastery 10% → 21% → 22% and **plateau ~22%** (verified). This is
-  the **spec'd** BKT (W3.3 / SPEC §11): the learning transition `P(L')=P(L|obs)+(1−P(L|obs))·learns`
-  applies after *every* attempt, so from a low prior the +learns gain outweighs the small wrong
-  penalty. **Not an implementation bug**, and it **never false-masters** (caps ~22% ≪ 85% threshold).
-  But a *rising* % after all-wrong is counterintuitive for the parent-facing number. **Options:**
-  (A) keep classic BKT (learning-opportunity model; maybe reframe the label, UI-deferred);
-  (B) **gate the learning transition on a non-wrong observation** — a wrong *unaided* answer only
-  conditions (drops), no `learns` credit, so wrong → mastery stays low/declines (intuitive, deviates
-  from classic BKT); (C) lower `learns`. **Recommend B** for a kids' parent-facing %. Needs
-  maintainer's call (changes a spec'd model). Ties to [[decision_bkt_pybkt_offline_only]].
+- **✅ RESOLVED 2026-07-05 — MODELING DECISION — mastery % rises after wrong answers
+  (2026-06-29).** Was: from the cold-start prior (10%), wrong answers took mastery 10% → 21%
+  → 22% and plateaued (~22%) — spec'd classic BKT applies the learning transition after
+  *every* attempt, so from a low prior the +learns gain outweighed the small wrong penalty.
+  Never false-mastered, but counterintuitive for the parent-facing %. **Maintainer ratified
+  Option B 2026-07-04** (see REMAINDER_PLAN.md's ratified-decisions section). Fixed via
+  REMAINDER_PLAN A20 (PR open — awaiting human review, not yet merged, stacked on Wave 1 +
+  Wave 2): `bkt_update` now gates the learning transition on non-wrong observations only — a
+  bare-wrong (unaided incorrect) attempt only conditions the posterior, no `learns` credit;
+  hinted-win/correct paths unaffected. Literature reference + full rationale in
+  `docs/design/W3.3_bkt.md` §3.2 (Baker, Corbett & Aleven 2008, "model degeneracy" — the
+  closest documented critique found; no specific named "no-learning-on-incorrect" variant was
+  found in the literature search, so this is Mentar's own targeted mitigation, not an adopted
+  named technique). SPEC §11 updated to note the deviation from classic BKT.
+  Ties to [[decision_bkt_pybkt_offline_only]].
 - **🧭 ESSENTIAL GAP — interaction scope too narrow (2026-06-29).** The system recognises only
   4 child intents (answer / help / stop / safety-escalation); **everything else is force-scored as
   an answer**, so natural child inputs — **"I don't know", frustration ("this is hard"), clarifying
