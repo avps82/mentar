@@ -1,9 +1,9 @@
 ---
 title: "Mentar — Model Evaluation Results (W1.2)"
-status: "In progress — first results. NOT the final model pick (that is W1.3)."
-last-updated: 2026-06-16
+status: "W1.3 pick made 2026-06-27: gemma2:9b. This page is the evaluation record that led to it — see docs/MODEL.md for the pick + roster."
+last-updated: 2026-07-05
 owner: Opus
-see-also: docs/MODEL.md (roster + run plan), docs/TESTS.md (T1.x test specs), eval/ (the tooling)
+see-also: docs/MODEL.md (roster + run plan + pick), docs/TESTS.md (T1.x test specs), eval/ (the tooling)
 ---
 
 # Mentar — Model Evaluation Results
