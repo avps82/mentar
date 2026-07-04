@@ -1,0 +1,42 @@
+# Pinned dependency versions from a verified-green environment (A19, 2026-07-05).
+# Regenerate after a deliberate dependency bump:
+#   python3 -m venv /tmp/v && /tmp/v/bin/pip install -e ".[dev,web,grounding]" \
+#     && /tmp/v/bin/pip freeze | grep -v "^-e \|^mentar" > constraints.txt
+#   (then re-run the full suite against the new pins before committing)
+# CI installs with `pip install -c constraints.txt -e ".[dev,web,grounding]"` so a
+# transitive dependency can't silently float to a breaking version between runs.
+annotated-types==0.7.0
+anyio==4.14.1
+blinker==1.9.0
+certifi==2026.6.17
+click==8.4.2
+coverage==7.15.0
+distro==1.9.0
+Flask==3.1.3
+h11==0.16.0
+httpcore==1.0.9
+httpx==0.28.1
+hypothesis==6.156.1
+idna==3.18
+iniconfig==2.3.0
+itsdangerous==2.2.0
+Jinja2==3.1.6
+jiter==0.16.0
+libzim==3.10.0
+MarkupSafe==3.0.3
+openai==2.44.0
+packaging==26.2
+pluggy==1.6.0
+pydantic==2.13.4
+pydantic_core==2.46.4
+Pygments==2.20.0
+pytest==9.1.1
+pytest-cov==7.1.0
+PyYAML==6.0.3
+ruff==0.15.20
+sniffio==1.3.1
+sortedcontainers==2.4.0
+tqdm==4.68.3
+typing-inspection==0.4.2
+typing_extensions==4.16.0
+Werkzeug==3.1.8
