@@ -239,13 +239,19 @@ dialogue controller, web app, eval dataset, FSM caller wiring) has **all shipped
   ESCALATION_FREEZE, not just the triggering turn); `/parent` is typed-URL-only (never
   auto-navigated); `/parent/ack` now requires a typed confirm word (`RESUME`) — wrong/missing
   word is a no-op. PIN gate stays Phase 1. → REVIEW §1.4.
-- **🟠 SAFETY.md overstates shipped controls (2026-07-03, repo review).** (1) §1.5.2(2) promises
-  strip/flag of imperative lines in grounding passages — `grounding/wrapper.py` deliberately
-  doesn't (W7 data-wrapping design superseded it; SAFETY.md never updated). (2) §4.6 + SECURITY.md
-  say a rolling retention window "is applied" — zero retention/purge code exists (and the
-  transcript immutability triggers currently make row-level purge impossible — the two designs
-  conflict). (3) §5.5 session-start "I'm a computer helper" statement not implemented (only the
-  reactive system-prompt rule). → REVIEW §1.1/1.3/1.5; tasks A4 + A10 + C retention decision.
+- **✅ RESOLVED 2026-07-05 — SAFETY.md overstates shipped controls (2026-07-03, repo review).**
+  Was: (1) §1.5.2(2) promised strip/flag of imperative lines in grounding passages —
+  `grounding/wrapper.py` deliberately doesn't (W7 data-wrapping design superseded it, SAFETY.md
+  never updated). (2) §4.6 + SECURITY.md said a rolling retention window "is applied" — zero
+  retention/purge code existed (and transcript immutability triggers make row-level purge
+  impossible — the two designs conflicted). (3) §5.5 session-start "I'm a computer helper"
+  statement wasn't implemented (only the reactive system-prompt rule). Fixed via REMAINDER_PLAN
+  A4 (PR open — awaiting human review, not yet merged, stacked on Wave 1/2 + A1): (1) reworded
+  to describe the actual marker-data-wrapping control; (2) reworded to the ratified "pilot
+  retains everything, deletion = delete the .db file" policy (§5.6 table + SECURITY.md updated
+  to match); (3) new `TRANSPARENCY_LINE` constant, shown once alongside `ASSENT_LINE` on the
+  first child-facing turn. → REVIEW §1.1/1.3/1.5. C-row retention decision folded in (ratified
+  2026-07-04, option ii — see REMAINDER_PLAN.md's ratified-decisions section).
 - **✅ RESOLVED 2026-07-05 — false-confidence `help_pressed` signal corrupted (2026-07-03, repo
   review).** Was: `_do_probe_classify` used `len(ctx.help_modalities_used) > 0` — stale across
   nodes (Help on node A masked false_confidence on node B — SPEC §14.4 requires "no Help pressed

@@ -49,6 +49,8 @@ STALE_MASTERY_DAYS = 14  # mastery older than this counts as "stale" for forgett
 # (A learner 'stop' = self-withdrawal; a parent 'end' via /parent/ack = parent-withdrawal —
 # both recorded in session.ended_reason. See docs/design/W5.6_decision_prep.md.)
 ASSENT_LINE = "Remember — you can stop anytime, just say 'stop'."
+# A4 / SAFETY.md §5.5: child-friendly AI transparency, shown ONCE alongside the assent line.
+TRANSPARENCY_LINE = "I'm Mentar, a computer learning helper — not a person."
 
 # Deterministic feedback phrasings — varied (not static) so the tutor doesn't sound robotic.
 # Edit/extend these pools to retune the voice; one is chosen at random per turn.
@@ -297,10 +299,12 @@ class SessionController:
             self._log_transcript("learner", learner_input)
         result = self._step_core(learner_input)
         if result.text and not self._assent_shown:
-            # W5.6: prepend the continuous-assent line to the very first child-facing turn.
+            # W5.6 assent + A4/SAFETY §5.5 AI-transparency: prepend both, once, to
+            # the very first child-facing turn.
             self._assent_shown = True
             result = TurnResult(
-                state=result.state, text=f"{ASSENT_LINE}\n\n{result.text}",
+                state=result.state,
+                text=f"{ASSENT_LINE}\n\n{TRANSPARENCY_LINE}\n\n{result.text}",
                 done=result.done, escalated=result.escalated,
             )
         if result.text:
