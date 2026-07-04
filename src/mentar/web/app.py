@@ -41,6 +41,7 @@ from mentar.engine.itemgen import (
 )
 from mentar.engine.science_items import SCIENCE_GENERATORS
 from mentar.inference import load_inference_config, make_llm_call
+from mentar.tools.validate_template import validate_or_raise
 
 app = Flask(__name__, template_folder="templates")
 app.secret_key = os.environ.get("SECRET_KEY", "mentar-dev-insecure-change-in-prod")
@@ -62,10 +63,6 @@ ITEMBANK_PATH = Path(os.environ.get(
     "MENTAR_ITEMBANK",
     str(_REPO / "curriculum" / "itembank" / "pilot_fractions.jsonl"),
 ))
-
-# ── One-time startup ──────────────────────────────────────────────────────────
-
-_CURRICULUM = load_curriculum(CURRICULUM_PATH)
 
 # ── Subjects (multi-topic testing) ──────────────────────────────────────────────
 # Each subject = a curriculum template + its checkable-item source. Fractions keeps
@@ -92,6 +89,11 @@ SUBJECTS: dict[str, dict] = {
     },
 }
 DEFAULT_SUBJECT = "fractions"
+# A16: validate every subject's template before loading — a cyclic/bad-prereq
+# template silently produces an empty fringe and a false "you've mastered
+# everything!" completion for the child. Fail loud at startup instead.
+for _subj_key, _subj_cfg in SUBJECTS.items():
+    validate_or_raise(_subj_cfg["curriculum"])
 _SUBJECT_CURRICULA = {k: load_curriculum(v["curriculum"]) for k, v in SUBJECTS.items()}
 _learner_subject: dict[str, str] = {}   # learner_uuid -> active subject key
 

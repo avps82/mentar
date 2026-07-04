@@ -173,11 +173,16 @@ dialogue controller, web app, eval dataset, FSM caller wiring) has **all shipped
   one JSON line (`iso_ts`, `trigger_class`, `severity`, `verbatim_text`) to
   `escalation_fallback.log` next to the DB file; `/parent` shows a "durable logging degraded"
   banner when that file is non-empty. → REVIEW §8.1.
-- **🟠 Curriculum templates never validated at runtime → false "all mastered" completion
-  (2026-07-03, repo review 2nd pass).** `validate()` runs only via the CLI subcommand;
-  serve/run-session parse YAML directly. Cyclic/bad-prereq template → unsatisfiable nodes →
-  empty fringe → child told "Well done — you've mastered all the concepts!" silently.
-  → REVIEW §8.2; task A16.
+- **✅ RESOLVED 2026-07-05 — Curriculum templates never validated at runtime → false "all
+  mastered" completion (2026-07-03, repo review 2nd pass).** Was: `validate()` ran only via the
+  CLI subcommand; serve/run-session parsed YAML directly — a cyclic/bad-prereq template ->
+  unsatisfiable nodes -> empty fringe -> child told "Well done — you've mastered all the
+  concepts!" silently. Fixed via REMAINDER_PLAN A16 (PR open — awaiting human review, not yet
+  merged, stacked on Wave 1 + A17): new `validate_template.validate_or_raise()`; `web/app.py`
+  validates every `SUBJECTS` template at import time (raises `RuntimeError` naming the
+  template + errors — a config error, not a 500); `cli/__main__.py`'s `run-session` validates
+  before building the controller (prints the error, exits 1, same pattern as the existing
+  no-inference-config check). → REVIEW §8.2.
 - **🟠 Prompt edits don't invalidate the safety-eval claim (2026-07-03, repo review 2nd
   pass).** The 20/20 pipeline-safety run (2026-06-27) predates several prompt re-hashes; nothing
   requires a T1.5 re-run on prompt change, so the headline claim silently ages. Process rule +
