@@ -34,6 +34,8 @@
   <b>The session is paused.</b> Mentar noticed something that needs your attention.<br><br>
   <i>{{ handoff_msg }}</i><br><br>
   <form method="POST" action="/parent/ack">
+    <label for="confirm">Type <b>RESUME</b> to continue:</label><br>
+    <input type="text" id="confirm" name="confirm" required autocomplete="off"><br><br>
     <button class="btn" name="action" value="resume" type="submit">Resume the lesson</button>
     <button class="btn btn-danger" name="action" value="end" type="submit">End the session</button>
   </form>
