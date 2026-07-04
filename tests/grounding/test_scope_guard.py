@@ -68,6 +68,12 @@ def test_builtin_no_host_check():
     check_scope("builtin", "https://anything.example.org/page")  # must not raise
 
 
+def test_khanacademy_no_host_check():
+    """khanacademy (B1) has no network anchor — its anchor is a ZIM-internal
+    hashed path, not a URL, so the host check is relaxed like parent_upload/builtin."""
+    check_scope("khanacademy", "ka_fake_hash_equivalent_fractions")  # must not raise
+
+
 def test_resolve_zim_scope_violation_returns_none(tmp_path):
     """resolve_zim returns None (not ScopeError) on scope violation."""
     cfg = {

@@ -45,6 +45,7 @@ def _make_cfg(zim_path, max_chars=1200) -> dict:
         "sources": {
             "vikidia": zim_path.name,
             "wikipedia_simple": zim_path.name,
+            "khanacademy": zim_path.name,
         },
         "max_passage_chars": max_chars,
         "cache": {"enabled": False},
@@ -94,6 +95,32 @@ def test_resolve_wikipedia_simple_division():
     result = resolve_grounding_inner(node_grounding, cfg)
     assert isinstance(result, str)
     assert len(result) > 10
+
+
+def test_resolve_khanacademy_video_transcript():
+    """A khanacademy grounding block (B1, 2026-07-05) uses the custom
+    video-narration extractor — anchor is a ZIM-internal path, not a URL, and
+    the returned passage is the subtitle transcript, not the HTML shell."""
+    from mentar.grounding.resolve import resolve_grounding_inner
+    zim = _ensure_fixture()
+    cfg = _make_cfg(zim)
+    node_grounding = {
+        "source": "khanacademy",
+        "anchor": "ka_fake_hash_equivalent_fractions",
+        "passage_hint": "ignored for khanacademy — whole transcript is the passage",
+    }
+    result = resolve_grounding_inner(node_grounding, cfg)
+    assert "pizza" in result.lower()
+    assert "<html>" not in result
+    assert "WEBVTT" not in result
+
+
+def test_resolve_khanacademy_missing_anchor_degrades_empty():
+    from mentar.grounding.resolve import resolve_grounding_inner
+    zim = _ensure_fixture()
+    cfg = _make_cfg(zim)
+    node_grounding = {"source": "khanacademy", "anchor": "no_such_path", "passage_hint": ""}
+    assert resolve_grounding_inner(node_grounding, cfg) == ""
 
 
 def test_passage_hint_selects_section():

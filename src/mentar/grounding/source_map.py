@@ -28,6 +28,9 @@ _SOURCE_HOST_SUFFIXES: dict[str, tuple[str, ...]] = {
     # parent_upload and builtin have no network anchor — guard is relaxed for them.
     "parent_upload": (),
     "builtin": (),
+    # khanacademy (B1, 2026-07-05): KA's ZIM has no recoverable external URL — the
+    # anchor IS the ZIM-internal hashed path (see grounding/reader.py's get_by_path).
+    "khanacademy": (),
 }
 
 

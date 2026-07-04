@@ -4,6 +4,11 @@ Responsibilities:
     - open(zim_path) → ZimReader context
     - get_by_url(anchor_url) → raw HTML bytes or None
     - get_section(html_bytes, passage_hint) → plain text, hint-guided
+    - get_by_path(zim_path) / get_video_narration(html_bytes) — Khan Academy content (B1,
+      2026-07-05): KA's ZIM has no recoverable external URL (opaque hashed internal paths,
+      no canonical-URL metadata), and its HTML lesson pages are video-embed shells with only
+      a one-line description — the substantive content is the English subtitle (.vtt) track,
+      the video's full narration transcript. See docs/design/W7_grounding_reader.md addendum.
 
 Design notes:
     - Uses libzim (runtime dep, pinned in pyproject.toml).  No MCP server, no JSON-RPC.
@@ -54,6 +59,46 @@ def _strip_html(raw: str) -> str:
     text = re.sub(r" *\n *", "\n", text)
     text = _MULTI_BLANK_RE.sub("\n\n", text)
     return text.strip()
+
+
+# ── WebVTT narration extraction (Khan Academy video transcripts) ───────────────
+_VTT_CUE_NUMBER_RE = re.compile(r"^\d+$")
+_VTT_TIMING_RE = re.compile(r"-->")
+
+
+def _vtt_to_text(vtt_bytes: bytes) -> str:
+    """Extract plain narration text from a WebVTT subtitle file's raw bytes.
+
+    Strips the ``WEBVTT`` header, cue-number lines, and timing lines
+    (``HH:MM:SS.mmm --> HH:MM:SS.mmm``); joins the remaining caption lines into
+    flowing prose. Collapses immediately-repeated lines (some caption tracks
+    repeat a line across adjacent cues). Never raises — malformed input just
+    yields whatever plain-text lines survive the filter (or "").
+    """
+    text = vtt_bytes.decode("utf-8", errors="replace")
+    kept: list[str] = []
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        if not line or line == "WEBVTT":
+            continue
+        if _VTT_TIMING_RE.search(line):
+            continue
+        if _VTT_CUE_NUMBER_RE.match(line):
+            continue
+        if not kept or kept[-1] != line:
+            kept.append(line)
+    return " ".join(kept)
+
+
+_ENGLISH_TRACK_RE = re.compile(
+    r'src="([^"]+\.vtt)"\s+srclang="en"', re.IGNORECASE
+)
+
+
+def _find_english_vtt_path(html_content: str) -> str | None:
+    """Return the English subtitle track's ZIM path from a KA video page's HTML, or None."""
+    m = _ENGLISH_TRACK_RE.search(html_content)
+    return m.group(1) if m else None
 
 
 _NOISE_BLOCK_RE = re.compile(r"<(script|style|table)\b[^>]*>.*?</\1>", re.IGNORECASE | re.DOTALL)
@@ -272,6 +317,41 @@ class ZimReader:
         if passage_hint.strip():
             return _extract_section_by_hint(html_content, passage_hint)
         return _extract_lead_section(html_content)
+
+    def get_by_path(self, zim_path: str) -> bytes | None:
+        """Direct ZIM-internal-path lookup (Khan Academy, B1): KA's ZIM has no
+        recoverable external URL to parse via :meth:`get_by_url` — its own
+        internal hashed path IS the anchor. Follows redirects like get_by_url.
+
+        Returns raw bytes of whatever the entry contains (HTML page, .vtt
+        subtitle file, etc.), or ``None`` if not found.
+        """
+        entry = self._lookup_path(zim_path)
+        if entry is None:
+            logger.warning("get_by_path: %r not found in %s", zim_path, self._zim_path.name)
+            return None
+        while entry.is_redirect:
+            entry = entry.get_redirect_entry()
+        return bytes(entry.get_item().content)
+
+    def get_video_narration(self, html_bytes: bytes) -> str:
+        """Extract a Khan Academy video's full English narration transcript (B1).
+
+        KA lesson pages are video-embed shells with only a one-line description
+        in the HTML itself — the substantive content is the English subtitle
+        (.vtt) track. Finds that track's path in the HTML, fetches it via
+        :meth:`get_by_path`, and strips WebVTT markup down to plain narration
+        text. Returns "" (never raises) if no English track is found/readable.
+        """
+        html_content = html_bytes.decode("utf-8", errors="replace")
+        vtt_path = _find_english_vtt_path(html_content)
+        if vtt_path is None:
+            logger.warning("get_video_narration: no English subtitle track found")
+            return ""
+        vtt_bytes = self.get_by_path(vtt_path)
+        if vtt_bytes is None:
+            return ""
+        return _vtt_to_text(vtt_bytes)
 
     # ── Internal helpers ──────────────────────────────────────────────────────
 
