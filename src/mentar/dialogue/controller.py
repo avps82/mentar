@@ -26,6 +26,7 @@ from enum import Enum
 from pathlib import Path
 
 from mentar.engine.bkt import P_L0, bkt_update, params_for
+from mentar.engine.explain_check import has_verified_failure
 from mentar.engine.fringe import DEFAULT_MASTERY_THRESHOLD, outer_fringe
 from mentar.engine.probe_classify import ProbeClass, classify_probe
 from mentar.eval.verify_numeric import CheckResult, check
@@ -833,6 +834,8 @@ class SessionController:
         ctx.state = FSMState.HELP_EXPLAIN
         return ("", True)
 
+    _MAX_EXPLAIN_ATTEMPTS = 2  # A14: bounded regeneration on a verified-wrong claim
+
     def _do_help_explain(self) -> tuple[str, bool]:
         ctx = self._ctx
         node = self._curriculum[ctx.current_node_id]
@@ -843,16 +846,35 @@ class SessionController:
             worked_example=self._worked_example_for(ctx.current_node_id),
             question=ctx.current_question or "",
         )
-        explanation = self._llm([
+        messages = [
             {"role": "system", "content": system_text},
             {"role": "user", "content": help_text},
-        ])
-        # Deterministic guard: small models tack a question onto the explanation
-        # (e.g. "10 ÷ 5 = ? ⭐"), which collides with the FSM's single practice
-        # question. Strip trailing question lines so only ONE question is live.
-        explanation = self._strip_trailing_questions(explanation or "")
+        ]
+
+        explanation = ""
+        for attempt in range(self._MAX_EXPLAIN_ATTEMPTS):
+            candidate = self._llm(messages)
+            # Deterministic guard: small models tack a question onto the explanation
+            # (e.g. "10 ÷ 5 = ? ⭐"), which collides with the FSM's single practice
+            # question. Strip trailing question lines so only ONE question is live.
+            candidate = self._strip_trailing_questions(candidate or "")
+            if not (candidate and candidate.strip()):
+                break  # empty/unavailable — no point retrying, go to fallback
+            # A14 / SAFETY §6.2 Level 2: verify arithmetic claims in the explanation
+            # before it can reach the child — discard + regenerate on a verified FAIL.
+            # SAFE_REJECT/EXTRACT_FAIL (unparseable) is not a failure — prose passes.
+            if has_verified_failure(candidate):
+                logger.warning(
+                    "help explanation: discarded a verified-wrong arithmetic claim (attempt %d)",
+                    attempt + 1,
+                )
+                continue
+            explanation = candidate
+            break
+
         if not (explanation and explanation.strip()):
-            # LLM unavailable/empty — never leave the child with no hint.
+            # LLM unavailable/empty, or every attempt had a verified-wrong claim —
+            # never leave the child with no hint, and never with a wrong one.
             explanation = self._fallback_hint(ctx.current_node_id)
         if ctx.current_question:
             # Show the question being explained first, labelled, for context.
