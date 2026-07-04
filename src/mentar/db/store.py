@@ -27,16 +27,21 @@ from pathlib import Path
 # Path to the schema DDL file alongside this module.
 _SCHEMA_PATH = Path(__file__).parent / "schema.sql"
 
-_EXPECTED_VERSION = 2
+_EXPECTED_VERSION = 3
 
 # v1 -> v2 (A3, 2026-07-04): escalation_log gained severity/session_id/turn_index so
 # SAFETY §3.3/§3.5's claim that every escalation row carries these is actually true.
+# v2 -> v3 (A19, 2026-07-05): session gained rng_seed, so a session's non-deterministic
+# choices (pattern/modality/praise-variant selection) can be replayed given the same seed.
 _MIGRATIONS: dict[int, list[str]] = {
     1: [
         "ALTER TABLE escalation_log ADD COLUMN severity TEXT "
         "CHECK (severity IN ('low', 'high', 'critical'));",
         "ALTER TABLE escalation_log ADD COLUMN session_id TEXT;",
         "ALTER TABLE escalation_log ADD COLUMN turn_index INTEGER;",
+    ],
+    2: [
+        "ALTER TABLE session ADD COLUMN rng_seed INTEGER;",
     ],
 }
 
@@ -169,13 +174,34 @@ class LearnerStore:
             (name,),
         ).fetchone()
 
+    def assert_parent_mediated(self, learner_id: int) -> None:
+        """A19: pilot scope is parent_mediated only. Raise a clear error if a
+        learner's age_mode is anything else (e.g. 'independent') — independent/
+        unsupervised mode needs the W2.2 safeguarding closures (SAFETY §3.5)
+        before it's safe to run. age_mode is stored on every learner row but was
+        previously never read/enforced anywhere.
+        """
+        row = self.get_learner(learner_id)
+        if row is not None and row["age_mode"] != "parent_mediated":
+            raise RuntimeError(
+                f"learner {learner_id} has age_mode={row['age_mode']!r}; only "
+                "'parent_mediated' is supported this pilot (SAFETY §3.5)."
+            )
+
     # ── Session ──────────────────────────────────────────────────────────────
 
-    def create_session(self, learner_id: int, session_id: str) -> None:
-        """Insert a session row.  session_id is caller-supplied (e.g. UUID)."""
+    def create_session(
+        self, learner_id: int, session_id: str, rng_seed: int | None = None,
+    ) -> None:
+        """Insert a session row.  session_id is caller-supplied (e.g. UUID).
+
+        rng_seed (A19) is the seed SessionController's internal RNG was
+        constructed with — recorded so a session's non-deterministic choices
+        can be replayed exactly given the same seed.
+        """
         self._conn.execute(
-            "INSERT INTO session (id, learner_id) VALUES (?, ?);",
-            (session_id, learner_id),
+            "INSERT INTO session (id, learner_id, rng_seed) VALUES (?, ?, ?);",
+            (session_id, learner_id, rng_seed),
         )
         self._conn.commit()
 

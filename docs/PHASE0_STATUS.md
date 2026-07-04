@@ -200,9 +200,19 @@ dialogue controller, web app, eval dataset, FSM caller wiring) has **all shipped
   human review, not yet merged, stacked on Wave 1): moved `load_curriculum` to
   `engine/curriculum.py` and `_DbStoreAdapter` to `db/adapter.py` (pure move, no behaviour
   change); `mentar.cli.__main__` now imports cleanly with Flask blocked. → REVIEW §8.3.
-- **🟡 `age_mode` stored but never read (2026-07-03, repo review 2nd pass).** No code branches
-  on parent_mediated vs independent — a load-bearing SPEC §6.2 concept with zero enforcement
-  hook. Pilot fix = startup assertion (parent_mediated only). → REVIEW §8.6; task A19.
+- **✅ RESOLVED 2026-07-05 — `age_mode` stored but never read + floating deps + unreplayable
+  sessions (2026-07-03, repo review 2nd pass, §8.6/§8.7).** Fixed via REMAINDER_PLAN A19 (PR
+  open — awaiting human review, not yet merged, stacked on Wave 1/2/3): (1) new
+  `LearnerStore.assert_parent_mediated()`, called from both `web/app.py` and `cli/__main__.py`
+  right after the learner id is known — raises a clear `RuntimeError` if a learner's
+  `age_mode` is ever anything but `'parent_mediated'` (independent mode needs the W2.2
+  safeguarding closures first); (2) new `constraints.txt` (generated from a clean venv install
+  of `.[dev,web,grounding]`, all 452 tests verified green against it), referenced by CI via
+  `pip install -c constraints.txt -e ...`; (3) schema v3 (`session.rng_seed`) +
+  `SessionController(rng_seed=...)` — a per-instance seeded `random.Random` (not the global
+  `random` module) drives every non-deterministic choice (pattern/modality/praise-variant
+  selection), default a fresh random seed logged at session start; same seed replays the
+  identical session. → REVIEW §8.6/§8.7.
 - **✅ RESOLVED 2026-07-05 (v0) — NO OUTPUT-SIDE SAFETY GATE (2026-07-03, repo review
   follow-up).** Was: SAFETY L2 §2.1/§2.2 promised hard-block matches are discarded +
   incident-logged and every output is scope/age/pedagogy-checked, but the real chain was
