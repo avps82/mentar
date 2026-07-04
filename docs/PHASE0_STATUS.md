@@ -269,10 +269,18 @@ dialogue controller, web app, eval dataset, FSM caller wiring) has **all shipped
   test references SESSION_FSM. Controller has undocumented transitions (auto-help, probe→help,
   LOW-severity continue, probe demote) and a dead unreachable `PARENT_ACK_WAIT` state. → REVIEW
   §3.1; task A11.
-- **🟡 Legacy LLM-question fallback scores against a question, not an answer (2026-07-03, repo
-  review).** `web/app.py:_load_curriculum` sets `expected_answer = transfer_seeds[0]`; any node
-  without bank/generator coverage silently can never PASS. Also: the SAFE_REJECT/EXTRACT_FAIL
-  re-ask loop has no cap (child can be stuck forever). → REVIEW §2.4/2.5; task A9.
+- **✅ RESOLVED 2026-07-05 — Legacy LLM-question fallback scores against a question, not an
+  answer (2026-07-03, repo review).** Was: `engine/curriculum.py:load_curriculum` (formerly
+  `web/app.py:_load_curriculum`) sets `expected_answer = transfer_seeds[0]`; any node without
+  bank/generator coverage silently could never PASS. Also: the SAFE_REJECT/EXTRACT_FAIL re-ask
+  loop had no cap. Fixed via REMAINDER_PLAN A9 (PR open — awaiting human review, not yet merged,
+  stacked on Wave 1 + A17/A16/A5/A6): `SessionController.__init__` raises `RuntimeError` naming
+  every node with a real checker but no item-bank/generator coverage (only checked when an
+  `item_bank` is actually wired — `item_bank=None` is the deliberate legacy/test fallback, not a
+  misconfigured production subject, and both real entry points always pass a real item source);
+  `_do_score` now caps consecutive SAFE_REJECT/EXTRACT_FAIL at 3, then routes into the Help loop
+  unscored (system-routed, not child-initiated, so A5's `help_by_node` is correctly not set).
+  → REVIEW §2.4/2.5.
 - **🟡 No CI (2026-07-03, repo review).** No `.github/` — the pytest+ruff gate is convention
   only; the pre-commit secret hook is opt-in and absent on fresh clones. → REVIEW §3.2; task A12.
 - **✅ FIXED — severity-blind freeze (2026-06-29).** `controller.py::_step_core` now branches on
