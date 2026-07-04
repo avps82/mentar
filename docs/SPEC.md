@@ -523,7 +523,7 @@ in-process via `llama-cpp-python`. Either mode is config + env only (no code cha
 3. **Model abstraction layer v0** — build + test the interface above against ≥2 backends. → W1.5.
 
 ### 20.3 Eval environment *(decision, 2026-06-11 — closes W1.1)*
-Model evaluation runs on **a local AI test PC (10GB vRAM), serving models via vLLM**, already configured and reachable. the build host (2-core/16GB, no GPU) remains the build host and cannot run eval. Box connection details to be supplied at eval time. 10GB vRAM is sufficient for the ≤14B-class candidates in scope.
+Model evaluation runs on **a local AI test PC (10GB vRAM), serving models via vLLM**, already configured and reachable. The build host (2-core/16GB, no GPU) remains the build host and cannot run eval. **Connection details supplied 2026-06-15** — eval-host access is live (see `docs/MODEL.md`). 10GB vRAM is sufficient for the ≤14B-class candidates in scope.
 
 **Note (session):** the chosen backend must also serve Help-loop re-explanations, transfer-question generation, and (Phase 2) the LLM-as-judge layer. Model quality directly gates pedagogical quality (15) and is the project's biggest infrastructure dependency.
 
@@ -618,7 +618,7 @@ Whole-number division
 | 11 | Transfer-test question generation strategy | Open | session | Authored vs generated-and-verified vs grounded |
 | 12 | Kolibri vs ZIM for Khan content | Verify | session | Format/integration path |
 | 13 | GitHub / npm name availability for "Mentar" | ✅ **Resolved 2026-06-11** (W4.1b) | memory | Clear on GitHub/npm/PyPI; keep Mentar. ⏳ Namespace reservation (npm + PyPI placeholder publish) still pending — the maintainer to run |
-| 14 | Cowork local filesystem setup | TODO | memory | The maintainer wants research docs written directly to local folder via Cowork; local filesystem MCP bridge not yet running. Files delivered as chat downloads until resolved. |
+| 14 | Cowork local filesystem setup | ✅ **Resolved** (2026-07-03 repo review confirmed this over-ran the finding) | memory | Files are written directly to the local working tree in every session since; the chat-download workaround is no longer needed. |
 | 15 | Safety research Buckets C–H | TODO | memory | C: chatbot harm cases; D: safeguarding/disclosure; E: content standards; F: guardrail tooling; G: over-reliance/developmental; H: kid-safe patterns. Full roadmap 17.5 |
 | 16 | **Data-flywheel tension** (local-first vs learning-from-usage) | **DECIDED 2026-06-15 → (c) per-child / per-household** | W5.7 (the maintainer) | OSS local edition learns **per child only**; no shared/aggregated flywheel. Cross-learner features (DAKS graph inference §10, shared vetted-variant bank §15) are NOT promised for the local edition — if ever pursued they live in the **hosted tier** (option (a) describes that later home). Keeps the OSS edition data-light; no reopening of the §17 compliance posture. Any "improves from usage" claim is per-household, not collective. §10/§15 caveats resolved to this. |
 | 17 | Core design artifacts undrafted (session state machine, prompt set, pilot interface, repo sketch) | Open → **owned by W6** (26) | review 2026-06-12 | The dialogue 'pipeline/controller' that T4/T5 tests assume has no design doc; prompt templates must be versioned files (T7 gates on prompt changes); pilot UI surface undecided |
@@ -695,7 +695,7 @@ test and is itself a kill condition.
 | Artifact | Description | Intended Repo Location | Status |
 |----------|-------------|----------------------|--------|
 | `mentar-safety-research-findings.md` | Consolidated safety research: Buckets A+B findings, regulatory exposure analysis, design requirements, open questions, pending threads, sources. Living doc — append a Part as each Bucket C–H closes. | `docs/research/` | Created 2026-06; Buckets C–H pending |
-| `SAFETY.md` | Kid-safety spec — 6-layer structure (16.0), drafted from 16 + findings doc | `docs/` | Pending — to be written |
-| README compliance-coverage doc | Maps major legal/compliance frameworks (COPPA, GDPR-K, EU AI Act, UK AADC); signals OSS contribution gaps | repo root or `docs/compliance/` | Pending (TODO #5) |
+| `SAFETY.md` | Kid-safety spec — 6-layer structure (16.0), drafted from 16 + findings doc | `docs/` | ✅ Written and shipped |
+| README compliance-coverage doc | Maps major legal/compliance frameworks (COPPA, GDPR-K, EU AI Act, UK AADC); signals OSS contribution gaps | `compliance/README.md` | ✅ Written and shipped |
 
-*Delivery note (as of 2026-06): until the Cowork local-filesystem MCP bridge is operational (TODO #14), files are delivered as chat downloads.*
+*Delivery note: files are written directly to the local working tree (TODO #14 resolved, 2026-07-05).*

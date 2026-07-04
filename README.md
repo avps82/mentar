@@ -28,7 +28,7 @@ Mentar is an open-source tutoring framework that lets parents run an AI tutor on
 Mentar is, candidly, **AI-built software**. The great majority of the code, tests, and docs in this
 repo are written by AI agents working under a human maintainer's direction, decisions, and review —
 **not hand-written by a person**. In that sense it is close to "vibe coding," even though it follows
-deliberate engineering discipline: spec-first design, test-driven development (150+ tests gating
+deliberate engineering discipline: spec-first design, test-driven development (450+ tests gating
 changes), design docs before code, versioned prompts, and code review. Those principles raise the
 quality bar — but they don't change that underlying fact, and we'd rather be upfront about it.
 
@@ -74,12 +74,14 @@ mentar/
 ├── src/mentar/              # Python package (src-layout)
 │   ├── engine/              # Concept graph (KST), BKT mastery, fringe, probe classifier
 │   ├── dialogue/            # Turn-loop controller (session state machine)
-│   ├── safety/              # Safety-layer implementation (escalation, filters)
+│   ├── safety/              # Safety-layer implementation (escalation, output guard, filters)
+│   ├── grounding/           # ZIM reader + resolver + data-wrapper (retrieval grounding)
 │   ├── inference/           # LLM abstraction layer (swappable backends)
 │   ├── eval/                # Deterministic verifiers + model-eval harness
-│   ├── db/                  # Local SQLite store (schema + access)
+│   ├── db/                  # Local SQLite store (schema + access + adapter)
 │   ├── tools/               # Template validator, etc.
-│   └── cli/                 # Command-line entry points
+│   ├── cli/                 # Command-line entry points
+│   └── web/                 # `mentar serve`'s Flask app (learner + parent views)
 ├── tests/                   # Mirrors the src/ layout
 ├── docs/                    # SPEC, PHASE0(+_STATUS), SAFETY, SESSION_FSM, ARCHITECTURE,
 │                            #   TESTS, CONTENT_LICENSES, PILOT_CONSENT, design/, research/
@@ -151,8 +153,10 @@ Full index: **[`docs/README.md`](docs/README.md)**. Highlights:
 
 ## Status
 
-Early-stage, in active **Phase 0** (a single-subject fractions pilot). The architecture,
-safety spec, session state machine, learner data model, and core engine pieces (concept
-graph, BKT mastery, verifiers, escalation, prompt registry) are in place; the end-to-end
-dialogue loop and the local model evaluation are the next milestones. Live status tracker:
+**Phase 0 pilot-ready** (single-family, supervised): the end-to-end dialogue loop, local
+model evaluation + pick (`gemma2:9b`), safety pipeline, and learner data model are all built
+and green. A 2026-07-03 independent repo review's codeable findings (safety/correctness/
+hygiene gaps) are fixed pending maintainer review — see `docs/REMAINDER_PLAN.md`. Broader
+rollout (beyond the single-family pilot) stays gated on two safeguarding-professional
+reviews (handoff wording + emergency-services signposting), not code. Live status tracker:
 [`docs/PHASE0_STATUS.md`](docs/PHASE0_STATUS.md).
