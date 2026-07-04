@@ -115,8 +115,35 @@ def test_parent_view_reads_db_and_persists_ack():
     assert outcome == "acknowledged", f"session_outcome={outcome!r}"
 
 
+def test_parent_view_shows_degraded_banner_when_fallback_log_present():
+    """A15: /parent shows a warning banner when escalation_fallback.log has
+    content (a prior escalation failed to persist to the DB) — and not otherwise."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+
+    app_mod, c = _client()
+    dbp = os.environ["MENTAR_DB_PATH"]
+
+    c.post("/choose", data={"subject": "fractions"})
+    c.get("/")
+
+    # No fallback file yet -> no banner.
+    assert "Durable logging degraded" not in c.get("/parent").get_data(as_text=True)
+
+    fallback = pathlib.Path(dbp).parent / "escalation_fallback.log"
+    fallback.write_text('{"iso_ts": "t", "trigger_class": "harm_to_self", '
+                         '"severity": "critical", "verbatim_text": "x"}\n')
+
+    assert "Durable logging degraded" in c.get("/parent").get_data(as_text=True)
+
+
 if __name__ == "__main__":
     test_web_learner_flow()
     print("  ✓ test_web_learner_flow")
     test_parent_view_reads_db_and_persists_ack()
     print("  ✓ test_parent_view_reads_db_and_persists_ack")
+    test_parent_view_shows_degraded_banner_when_fallback_log_present()
+    print("  ✓ test_parent_view_shows_degraded_banner_when_fallback_log_present")

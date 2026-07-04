@@ -15,6 +15,7 @@ vLLM / any OpenAI-compatible endpoint).  The controller itself has no network I/
 
 from __future__ import annotations
 
+import json
 import logging
 import random
 import uuid
@@ -320,6 +321,9 @@ class SessionController:
                     )
                 except Exception:
                     logger.warning("escalation: failed to persist escalation_log row", exc_info=True)
+                    self._write_escalation_fallback(
+                        trigger.trigger_class.value, trigger.severity.value, learner_input
+                    )
 
                 if trigger.severity is Severity.LOW:
                     # LOW (adversarial_jailbreak): logged-only, NOT frozen (design §4.3).
@@ -401,6 +405,33 @@ class SessionController:
         except Exception:
             logger.warning("store.%s failed", method, exc_info=True)
             return None
+
+    def _write_escalation_fallback(
+        self, trigger_class: str, severity: str, trigger_text_verbatim: str
+    ) -> None:
+        """A3/A15 — durable escalation logging is safety-critical (SAFETY §3.1);
+        `write_escalation` failing must never silently drop the disclosure. Append
+        one JSON line to escalation_fallback.log next to the DB file, so a parent
+        reading the log directly (or the parent view's degraded banner) can still
+        recover it. Best-effort: if even this fails, we've done what we can.
+        """
+        db_path = getattr(self._store, "db_path", None)
+        fallback_path = (
+            Path(db_path).parent / "escalation_fallback.log" if db_path else None
+        )
+        if fallback_path is None:
+            return
+        line = json.dumps({
+            "iso_ts": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "trigger_class": trigger_class,
+            "severity": severity,
+            "verbatim_text": trigger_text_verbatim,
+        })
+        try:
+            with open(fallback_path, "a", encoding="utf-8") as f:
+                f.write(line + "\n")
+        except OSError:
+            logger.error("escalation: fallback log write also failed", exc_info=True)
 
     def _maybe_create_session(self) -> None:
         if not self._session_created:
