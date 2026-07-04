@@ -320,15 +320,17 @@ dialogue controller, web app, eval dataset, FSM caller wiring) has **all shipped
   found in the literature search, so this is Mentar's own targeted mitigation, not an adopted
   named technique). SPEC §11 updated to note the deviation from classic BKT.
   Ties to [[decision_bkt_pybkt_offline_only]].
-- **🧭 ESSENTIAL GAP — interaction scope too narrow (2026-06-29).** The system recognises only
-  4 child intents (answer / help / stop / safety-escalation); **everything else is force-scored as
-  an answer**, so natural child inputs — **"I don't know", frustration ("this is hard"), clarifying
-  questions ("what does X mean?"), off-topic, navigation** — get marked wrong (corrupting BKT) or
-  bounced. This is correctness + pedagogy + safety-adjacent, **not UI** (UI deferred per maintainer).
-  Proposal = a **bounded** child-intent taxonomy routed deterministically (NOT free chat; safety
-  classifier stays first). Full analysis + proposed routing + open decisions in
-  **[design/INTERACTION_SCOPE.md](design/INTERACTION_SCOPE.md)**. **Needs maintainer ratification
-  before build.**
+- **🔶 PARTIALLY RESOLVED 2026-07-05 (v0 slice) — ESSENTIAL GAP — interaction scope too narrow
+  (2026-06-29).** Was: the system recognised only 4 child intents (answer / help / stop /
+  safety-escalation); everything else — "I don't know", frustration, clarifying questions,
+  off-topic, navigation — was force-scored as an answer (corrupting BKT). **Maintainer ratified
+  a narrow v0 slice 2026-07-04** (don't-know + clarify/vocabulary only — the two intents that
+  actively corrupt the BKT signal); built as REMAINDER_PLAN A21 (PR open — awaiting human
+  review, not yet merged, stacked on Wave 1 + Wave 2): `_is_dont_know_or_question()` routes
+  both into the Help loop unscored, mirroring `_is_help_request`'s wiring exactly. **Still
+  open/deferred:** frustration/mild-affect, off-topic, and meta/navigation intents — the full
+  taxonomy proposal in **[design/INTERACTION_SCOPE.md](design/INTERACTION_SCOPE.md)** still
+  needs maintainer ratification beyond this slice.
 - **Triage of `docs/TESTING_NOTES.md` (2026-06-29).** Scoring cluster — "no right/wrong feedback",
   "feedback died off", "86% constant / hardcoded?", "mastery counts unanswered", wrong/gibberish
   answers advancing silently — **all trace to answers not being scored on the maintainer's build

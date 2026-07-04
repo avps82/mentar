@@ -208,6 +208,35 @@ def test_help_request_enters_help_loop():
     assert not result.done
 
 
+def test_dont_know_routes_to_help_unscored():
+    """A21: "I don't know" is not force-scored as a wrong answer — it enters
+    the Help loop, same as an explicit '?' (matches _is_help_request pattern)."""
+    ctrl = _make_controller(llm_fn=lambda msgs: "Here is an explanation.")
+    ctrl.step(None)
+    result = ctrl.step("I don't know")
+    assert result.state == FSMState.HELP_RECHECK_AWAIT.value
+    assert ctrl._ctx.last_scored_correct is None    # never scored as an answer
+
+
+def test_clarifying_question_routes_to_help_unscored():
+    """A21: a question-shaped input ("what does numerator mean?") is not
+    force-scored as a wrong answer — it enters the Help loop."""
+    ctrl = _make_controller(llm_fn=lambda msgs: "A numerator is the top number.")
+    ctrl.step(None)
+    result = ctrl.step("what does numerator mean?")
+    assert result.state == FSMState.HELP_RECHECK_AWAIT.value
+    assert ctrl._ctx.last_scored_correct is None
+
+
+def test_genuine_answer_unaffected_by_dont_know_guard():
+    """A21's new guard must not swallow a genuine numeric/fraction answer."""
+    ctrl = _make_controller(llm_fn=lambda msgs: "Next question.")
+    ctrl.step(None)
+    result = ctrl.step("1/3")
+    assert result.state != FSMState.HELP_RECHECK_AWAIT.value
+    assert ctrl._ctx.last_scored_correct is not None  # was actually scored
+
+
 def test_help_recheck_skip_rejected():
     """Empty input in HELP_RECHECK_AWAIT is rejected (state unchanged)."""
     ctrl = _make_controller(llm_fn=lambda msgs: "explanation or recheck")
