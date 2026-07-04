@@ -2,7 +2,7 @@
 title: "Mentar — Phase 0 Status"
 version: living-doc
 status: "Active"
-last-updated: 2026-07-03
+last-updated: 2026-07-05
 ---
 
 # Phase 0 — Status
@@ -145,8 +145,9 @@ B1–B5.**
 ## Test suite
 
 The full suite runs via `python -m pytest tests/` — the root `conftest.py` puts `src/` + `.vendor/`
-on `sys.path`, so no editable install is needed. **363 tests pass and `ruff check .` is clean** as of
-2026-06-26. Each test file also carries an inline `python3`-runnable smoke runner (project convention).
+on `sys.path`, so no editable install is needed. **455 tests pass and `ruff check .` is clean** as of
+2026-07-05 (branch tip, PRs #55–#71, not yet merged — see REMAINDER_PLAN.md). Each test file also
+carries an inline `python3`-runnable smoke runner (project convention).
 
 ---
 

@@ -753,8 +753,8 @@ This table provides the reviewer audit trail — every requirement in SPEC §16.
 | `SPEC.md §16` | Primary source for this document; all §16.1–16.3 requirements transcribed and mapped here |
 | `SPEC.md §17` | Regulatory posture; informs Layer 4 data/privacy principles |
 | `PHASE0.md §W2.1–W2.6` | Workstream tasks this document satisfies; W2.2–W2.4 content integrated into Layers 1, 2, 3 |
-| `safety/age-modes.md` | Prior draft; content folded into Layer 5 §5.2. Original file retained pending formal retirement |
-| `safety/guardrails.md` | Prior draft; content folded into Layers 1 and 2. Original file retained pending formal retirement |
+| `docs/_legacy/safety_age-modes_v0.md` | Prior draft; content folded into Layer 5 §5.2. Moved to `docs/_legacy/` (2026-07-05: corrected — was documented under a `safety/` path that never existed). |
+| `docs/_legacy/safety_guardrails_v0.md` | Prior draft; content folded into Layers 1 and 2. Moved to `docs/_legacy/` (2026-07-05: corrected — was documented under a `safety/` path that never existed). |
 | `docs/SESSION_FSM.md` | Escalation freeze state must be defined in the session state machine (W6.1) |
 | `prompts/system_prompt.md` | Instruction/data separation framing referenced in Layer 1 §1.5.2 (W6.2) |
 

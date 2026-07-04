@@ -2,10 +2,16 @@
 title: "Mentar — Remainder Build Plan v2 (post-G0-validation)"
 version: living-doc
 status: "Active"
-updated: 2026-07-04
+updated: 2026-07-05
 ---
 
-# Release Wave — pilot-ready main (status as of 2026-07-04)
+# Release Wave — pilot-ready main (status as of 2026-07-05)
+
+**All 4 waves built** (A3–A21, B2; B1 skipped — no ZIM access this run, not code-blocked). 17
+PRs (#55–#71) + this closing PR, stacked in dependency order, all open on GitHub awaiting
+human review/merge — none auto-merged (the harness's permission classifier blocks
+self-authored-and-merged safety-critical PRs without visible review; every PR here needs a
+maintainer look before landing). See each wave row below for the PR numbers.
 
 **Goal:** close every codeable safety/correctness defect from the 2026-07-03 review (A3–A19),
 plus A1/A2/B1/B2 and 2 new ratified tasks (A20/A21), so `main` is pilot-ready. Repo stays
@@ -40,7 +46,7 @@ re-derive the plan file from the Wave table if you want it back in that format.
 | **1 — safety-critical, Opus-led, in order** | A3 → A15 → A8 → A13 → A14 | ✅ **Wave 1 ALL DONE** (2026-07-05) — A3 (#55), A15 (#56), A8 (#57), A13 (#58), A14 (PR pending), all open, awaiting human review | A3 (schema v2) unblocks A13's incident-row home + A19's session-row rng_seed column — do it first. **2026-07-05 note:** auto-merge is blocked by the harness's permission classifier for safety-critical PRs authored+merged by the same agent with no visible review — every Wave-1 PR lands open, not merged, until the maintainer reviews. Branches are stacked (same files touched across tasks) — merge in stack order: #55 (A3), #56 (A15), #57 (A8), #58 (A13), then A14. |
 | **2 — correctness, Gemma-drafted/Opus-verified** | A17 → A16 → A5 → A6 → A9 → A7 → A20 → A21 | ✅ **Wave 2 ALL DONE** (2026-07-05) — A17 (#60), A16 (#61), A5 (#62), A6 (#63), A9 (#64), A7 (#65), A20 (#66), A21 (PR pending), all open, awaiting human review | A17 before A16 (layering clean-up first makes A16's startup hook land in one place). A20/A21 are the new ratified tasks — specs below. |
 | **3 — assent/docs/hygiene** | A1 → A4 → A18 → A19 → A2 → A11 | ✅ **Wave 3 ALL DONE** (2026-07-05) — A1 + A2 found **already shipped** (`e664658` / `a277b73`, doc drift corrected), A4 (#68), A18 (#69), A19 (#70), A11 all done, all open, awaiting human review | A1 before A4 (same controller preamble). A11 (FSM conformance test) runs **after** waves 1–2 since A9/A14/A21 add new FSM transitions the doc needs to capture. A18's own re-run caught + fixed a real eval-harness bug (see docs/MODEL.md 2026-07-05 note) — the A7 prompt change itself was confirmed safe (20/20, no regression). A19 bumped schema to v3 (`session.rng_seed`). A2's `run.example.yaml` re-verified `--dry-run` clean on this host. A11 removed the dead `PARENT_ACK_WAIT` state and fixed 2 stale transition-table edges the new T3.7 test caught. |
-| **4 — QA + doc close-out** | B1 → B2 → close-out | ⏳ not started | B1 is conditional — check `zim_dir` is readable (real ZIMs were downloaded 2026-06-27) before running; log+skip if absent, don't block the wave. B2 (doc-drift sweep) runs LAST so it reflects the post-wave state. |
+| **4 — QA + doc close-out** | B1 → B2 → close-out | 🔶 B1 **skipped** (no readable Vikidia/Simple-WP `zim_dir` in this sandbox — logged, not blocking, per its own conditional clause); B2 done (PR pending) | B1 is conditional — check `zim_dir` is readable before running; log+skip if absent, don't block the wave. B2 (doc-drift sweep) runs LAST so it reflects the post-wave state — done last, after all of A3–A21/B1. **Every A/B task in this backlog is now built except B1** (blocked on ZIM access, not on code). |
 
 **Execution model (unchanged from plan):** one branch + PR per task; gate = `pytest tests/ -q`
 green (398 baseline, will grow) + `ruff check .` clean + the task's own Accept criteria (specs
@@ -330,24 +336,30 @@ Ordered by the review's priority table.
 
 ## B. Codeable but verify-led  `[O]` + `[G]`
 
-### B1 — Pilot grounding-anchor QA + re-point
-- **Why:** verification found Simple-WP "Fraction" is a **thin disambiguation (75c)**; several nodes
-  (`comparing_equal_denom`, `adding_equal_denom`, `subtracting_equal_denom`) point at
-  `wikipedia_simple` "Fraction" → poor grounding. Vikidia's Fraction is substantive (216c).
-- **Spec:** for each of the 8 pilot nodes, run `ZimReader`/`resolve_grounding` against its anchor
-  (zim_dir holding Vikidia + Simple-WP), capture extracted length; **re-point any anchor whose
-  extract is thin/disambiguation (< ~150c) to the best available source** (prefer Vikidia for
-  fractions). Update the node `grounding: {source, anchor}` blocks.
-- **Files:** `curriculum/templates/_pilot/fractions.md`.
-- **Accept:** every node's anchor extracts substantive verbatim (no disambiguation stubs);
-  `validate-template` still passes.
-- **Owner:** Opus produces the per-node extraction report (needs the ZIMs on a readable `zim_dir`);
-  Gemma/mechanical applies the anchor edits.
-- **Addendum (repo review 2026-07-03, REVIEW §2.6):** the report must also check **distinctness**,
-  not just length — 7 of 8 nodes anchor the same Vikidia `Fraction` article; log which section each
-  `passage_hint` actually resolved to (`get_section` heading match vs. lead fallback). Where hints
-  don't hit a heading, author per-node passage text in the template or split anchors across
-  articles. Accept: no two nodes ground to an identical passage unless explicitly waived.
+### B1 — Pilot grounding-anchor QA + re-point — ⛔ **BLOCKED 2026-07-05, not started this wave**
+- **Status check (2026-07-05):** the original finding (thin Simple-WP "Fraction" disambiguation,
+  75c) already looks fixed in the current template — `comparing_equal_denom`/
+  `adding_equal_denom`/`subtracting_equal_denom` (and every other fraction node except
+  `whole_number_division`, which anchors a *different* Simple-WP article,
+  `Division_(mathematics)`) already point at `vikidia`/`Fraction`, not `wikipedia_simple`. **Not
+  independently re-verified against a live ZIM this wave** — no Vikidia/Simple-WP ZIM was
+  readable in this sandbox (`/mnt/zim` here holds stackexchange/wikipedia/khanacademy ZIMs, not
+  vikidia/simple-wp; no other readable `zim_dir` found). Per this task's own conditional clause
+  ("log+skip if absent, don't block the wave") — skipped, not attempted blind.
+- **What's genuinely still open — the REVIEW §2.6 addendum:** 7 of the 8 nodes now anchor the
+  *same* Vikidia `Fraction` article with different `passage_hint`s. Whether each hint actually
+  resolves to a distinct section (`get_section` heading match) or all silently fall back to the
+  same generic lead paragraph is a **factual question about live ZIM content** — it cannot be
+  answered without reading the real ZIM, and must NOT be guessed. Whoever picks this up next
+  needs a readable `zim_dir` with the real Vikidia ZIM (SAFETY-adjacent: a wrong extraction
+  report — e.g. asserting distinct sections that are actually the same fallback text — would be
+  worse than leaving this flagged open).
+- **Spec (unchanged, for whoever has ZIM access):** for each of the 8 pilot nodes, run
+  `ZimReader`/`resolve_grounding` against its anchor, capture extracted length + which section
+  `get_section` actually matched; re-point/differentiate any anchor that's thin, a
+  disambiguation stub, or identical to another node's resolved passage. Update the node
+  `grounding: {source, anchor, passage_hint}` blocks in `curriculum/templates/_pilot/fractions.md`
+  accordingly; `validate-template` must still pass afterward.
 
 ### B2 — doc-drift sweep (mechanical)  `[G]`
 - **Why:** REVIEW §4 table — 9 factual mismatches (ARCHITECTURE.md missing `grounding/`+`web/`
@@ -357,6 +369,11 @@ Ordered by the review's priority table.
 - **Files:** `docs/ARCHITECTURE.md`, `README.md`, `AGENTS.md`, `docs/EVAL_RESULTS.md`,
   `docs/SAFETY.md` (App. C only), `pyproject.toml`, `docs/DOC_AUDIT.md` (mark actioned).
 - **Accept:** every row of REVIEW §4 either fixed or explicitly waived inline; ruff/pytest green.
+- **✅ DONE 2026-07-05** (PR pending, stacked, last in the wave): all 9 REVIEW §4 rows + all 11
+  DOC_AUDIT §F rows actioned — see `docs/DOC_AUDIT.md` §F for the per-row status. Also picked up
+  `docs/SPEC.md` (Cowork bridge TODO resolved, eval-host connection details supplied,
+  Appendix B delivery note) and `docs/llm-compatibility.md`'s stale "pick pending" line while
+  in the neighbourhood.
 
 ---
 
