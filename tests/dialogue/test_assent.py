@@ -1,4 +1,5 @@
 """W5.6 — the continuous-assent line shows once on the first turn, never repeated.
+A4 — the AI-transparency line (SAFETY §5.5) shows alongside it, same pattern.
 
 Inline smoke: python3 tests/dialogue/test_assent.py
 """
@@ -6,7 +7,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from mentar.dialogue.controller import ASSENT_LINE, SessionController
+from mentar.dialogue.controller import ASSENT_LINE, TRANSPARENCY_LINE, SessionController
 from mentar.engine.itembank import Item
 
 _PROMPTS = Path(__file__).resolve().parents[2] / "prompts"
@@ -54,6 +55,18 @@ def test_assent_line_shown_once_on_first_turn():
     assert ASSENT_LINE not in (r2.text or ""), "assent line wrongly repeated on a later turn"
 
 
+def test_transparency_line_shown_once_on_first_turn():
+    """A4: the AI-transparency line appears exactly once, on the first turn."""
+    c = _ctrl()
+    r1 = c.step(None)
+    assert TRANSPARENCY_LINE in r1.text, "transparency line missing from the first turn"
+    assert r1.text.count(TRANSPARENCY_LINE) == 1
+    r2 = c.step("2")
+    assert TRANSPARENCY_LINE not in (r2.text or ""), "transparency line wrongly repeated"
+
+
 if __name__ == "__main__":
     test_assent_line_shown_once_on_first_turn()
     print("  ✓ assent line shown once on first turn")
+    test_transparency_line_shown_once_on_first_turn()
+    print("  ✓ transparency line shown once on first turn")
