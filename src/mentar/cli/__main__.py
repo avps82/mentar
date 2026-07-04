@@ -35,7 +35,7 @@ def _build_controller(args):
     from mentar.db.adapter import _DbStoreAdapter
     from mentar.db.store import LearnerStore
     from mentar.dialogue.controller import SessionController
-    from mentar.engine.curriculum import load_curriculum
+    from mentar.engine.curriculum import load_curriculum, load_template_subject
     from mentar.engine.itembank import load_item_bank
     from mentar.engine.itemgen import build_item_source
     from mentar.inference import load_inference_config, make_llm_call
@@ -90,6 +90,7 @@ def _build_controller(args):
         db_store=_DbStoreAdapter(store, db_id),
         learner_id=learner_uuid,
         item_bank=item_bank,
+        subject=load_template_subject(curriculum_path),
     )
     return ctrl, cfg
 
