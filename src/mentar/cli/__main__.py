@@ -81,6 +81,9 @@ def _build_controller(args):
         country="GB",
         age_mode="parent_mediated",  # SPEC §6.2 pilot default
     )
+    # A19: pilot scope is parent_mediated only — a clear error, not a silent
+    # unsupervised session, if a learner row is ever anything else.
+    store.assert_parent_mediated(db_id)
 
     ctrl = SessionController(
         llm_call=llm_call,

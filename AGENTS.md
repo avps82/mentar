@@ -13,6 +13,8 @@ lives in `docs/` — **`docs/PHASE0_STATUS.md` is the canonical task ledger**, a
 ```bash
 pip install -e ".[dev,web]"     # dev tools + the Flask web extra
 ```
+CI installs `.[dev,web,grounding]` pinned against `constraints.txt` (A19) — regenerate it after
+a deliberate dependency bump (see the comment at the top of that file).
 
 ## Commands
 ```bash

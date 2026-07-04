@@ -252,6 +252,7 @@ class SessionController:
         session_id: str | None = None,
         subject: str = "maths",
         scope_line: str | None = None,
+        rng_seed: int | None = None,
     ) -> None:
         self._llm = self._make_safe_llm(llm_call)
         self._prompt_dir = Path(prompt_dir)
@@ -278,6 +279,12 @@ class SessionController:
             _raise_on_uncovered_nodes(self._curriculum, self._item_bank)
         self._templates: dict[str, str] = {}  # loaded lazily
         self._assent_shown = False             # W5.6: assent line shown once, first turn
+        # A19: a per-instance seeded RNG (not the global `random` module) so a session's
+        # non-deterministic choices (pattern/modality/praise-variant selection) can be
+        # replayed exactly given the same seed. Default: a fresh random seed, logged.
+        self._rng_seed = rng_seed if rng_seed is not None else random.SystemRandom().randrange(2**32)
+        self._rng = random.Random(self._rng_seed)
+        logger.info("session %s: rng_seed=%d", self._session_id, self._rng_seed)
         self._ctx = _SessionCtx()
 
     # ── Public API ────────────────────────────────────────────────────────────
@@ -450,6 +457,13 @@ class SessionController:
         """The id of this controller's tutoring session (for durable-log reads)."""
         return self._session_id
 
+    @property
+    def rng_seed(self) -> int:
+        """A19: the seed this session's internal RNG was constructed with — pass
+        this back into a new SessionController's rng_seed= to replay the same
+        non-deterministic choices (pattern/modality/praise-variant selection)."""
+        return self._rng_seed
+
     # ── Durable logging (best-effort) ─────────────────────────────────────────
 
     def _safe_store(self, method: str, *args):
@@ -499,7 +513,7 @@ class SessionController:
     def _maybe_create_session(self) -> None:
         if not self._session_created:
             self._session_created = True
-            self._safe_store("create_session", self._session_id)
+            self._safe_store("create_session", self._session_id, self._rng_seed)
 
     def _maybe_end_session(self, state: FSMState) -> None:
         if not self._session_ended:
@@ -622,7 +636,7 @@ class SessionController:
     def _do_pattern_select(self) -> tuple[str, bool]:
         ctx = self._ctx
         patterns = ["pattern_problem_first", "pattern_read_then_question", "pattern_state_and_challenge"]
-        ctx.current_pattern = random.choice(patterns)
+        ctx.current_pattern = self._rng.choice(patterns)
         ctx.state = FSMState.PRESENT
         return ("", True)
 
@@ -839,16 +853,15 @@ class SessionController:
             lines.pop()
         return "\n".join(lines).rstrip()
 
-    @staticmethod
-    def _answer_feedback(correct: bool) -> str:
+    def _answer_feedback(self, correct: bool) -> str:
         """Short, warm, deterministic right/wrong feedback for a scored answer.
 
         On wrong we don't reveal the answer — the Help loop (entered from
         BKT_UPDATE) works through it instead.
         """
         if correct:
-            return random.choice(PRAISE_VARIANTS)
-        return random.choice(WRONG_VARIANTS)
+            return self._rng.choice(PRAISE_VARIANTS)
+        return self._rng.choice(WRONG_VARIANTS)
 
     def _do_bkt_update(self, hinted: bool) -> tuple[str, bool]:
         ctx = self._ctx
@@ -905,7 +918,7 @@ class SessionController:
         if not available:
             ctx.state = FSMState.LINK_BACK
             return ("", True)
-        modality = random.choice(available)
+        modality = self._rng.choice(available)
         ctx.help_modalities_used.append(modality)
         ctx.current_pattern = f"help_{modality}"
         ctx.state = FSMState.HELP_EXPLAIN
@@ -1157,7 +1170,7 @@ class SessionController:
             # threshold, probe_due would re-fire forever (the endless-silent-probe bug).
             self._log_probe_event(ctx.current_node_id, probe_class)
             ctx.state = FSMState.NODE_SELECT
-            return (random.choice(PRAISE_VARIANTS), True)
+            return (self._rng.choice(PRAISE_VARIANTS), True)
         if probe_class is ProbeClass.SLIP_SUSPECT and ctx.probe_variant == 0:
             # One retry allowed before classifying (event written after the retry)
             ctx.probe_variant = 1

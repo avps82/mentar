@@ -7,7 +7,7 @@ Five test cases:
   1. test_full_session_roundtrip        — lossless write/read of a complete session
   2. test_two_learners_isolation        — zero cross-contamination across every table
   3. test_export_copy_opens_independently — file-copy export is independently readable
-  4. test_schema_version_migration_stub — user_version == 2; v1->v2 migration verified
+  4. test_schema_version_migration_stub — user_version == 3; v1->current migration verified
   5. test_transcript_immutability       — UPDATE/DELETE on transcript rows are rejected
 """
 
@@ -354,7 +354,7 @@ class TestExportCopyOpensIndependently:
         # Open the copy with a FRESH store instance — no shared state
         with LearnerStore(copy_path) as copy_store:
             # schema_version must still be valid
-            assert copy_store.schema_version() == 2
+            assert copy_store.schema_version() == 3
 
             responses = copy_store.session_responses(learner_id, sid)
             assert len(responses) == 1
@@ -382,15 +382,16 @@ class TestExportCopyOpensIndependently:
 # ─────────────────────────────────────────────────────────────────────────────
 
 class TestSchemaVersionMigrationStub:
-    """T3.6 (d): PRAGMA user_version == 2 after first open; re-open honours it
-    (schema not applied twice); a real v1->v2 migration (A3: escalation_log gains
-    severity/session_id/turn_index) runs on an older DB; a version with no
-    registered migration still raises RuntimeError (no silent corruption)."""
+    """T3.6 (d): PRAGMA user_version == 3 after first open; re-open honours it
+    (schema not applied twice); real v1->v2 (A3: escalation_log gains severity/
+    session_id/turn_index) and v2->v3 (A19: session gains rng_seed) migrations run
+    on an older DB; a version with no registered migration still raises
+    RuntimeError (no silent corruption)."""
 
-    def test_schema_version_is_two(self, tmp_path):
+    def test_schema_version_is_current(self, tmp_path):
         store = _make_store(tmp_path)
-        assert store.schema_version() == 2, (
-            f"Expected user_version 2, got {store.schema_version()}"
+        assert store.schema_version() == 3, (
+            f"Expected user_version 3, got {store.schema_version()}"
         )
         store.close()
 
@@ -401,23 +402,23 @@ class TestSchemaVersionMigrationStub:
         # First open: schema applied
         with LearnerStore(db_path) as s1:
             lid = s1.create_learner("Dave", 3, "CA", "parent_mediated")
-            assert s1.schema_version() == 2
+            assert s1.schema_version() == 3
 
-        # Second open: schema already at version 2; no error, no duplicate tables
+        # Second open: schema already current; no error, no duplicate tables
         with LearnerStore(db_path) as s2:
-            assert s2.schema_version() == 2
+            assert s2.schema_version() == 3
             profile = s2.get_learner(lid)
             assert profile is not None
             assert profile["name"] == "Dave"
 
-    def test_v1_to_v2_migration_adds_escalation_columns(self, tmp_path):
-        """A real v1 DB (no severity/session_id/turn_index columns) is migrated
-        to v2 in place on reopen, and the new columns are usable."""
+    def test_v1_to_current_migration_adds_new_columns(self, tmp_path):
+        """A real v1 DB (no A3/A19 columns at all) is migrated all the way to
+        the current version in place on reopen, and the new columns are usable."""
         db_path = tmp_path / "v1.db"
 
-        # Build a v1 DB by hand: recreate escalation_log exactly as the pre-A3
-        # schema defined it (no severity/session_id/turn_index columns), then
-        # pin user_version to 1 — a faithful stand-in for a real v1 DB.
+        # Build a v1 DB by hand: recreate escalation_log and session exactly as
+        # the pre-A3/pre-A19 schema defined them, then pin user_version to 1 —
+        # a faithful stand-in for a real v1 DB.
         with LearnerStore(db_path) as s:
             lid = s.create_learner("Eve", "pilot", "GB", "parent_mediated")
         import sqlite3
@@ -434,13 +435,23 @@ class TestSchemaVersionMigrationStub:
                 session_outcome         TEXT    NOT NULL DEFAULT 'frozen'
             );
         """)
+        conn.execute("DROP TABLE session")
+        conn.execute("""
+            CREATE TABLE session (
+                id           TEXT    PRIMARY KEY,
+                learner_id   INTEGER NOT NULL REFERENCES learner_profile(id) ON DELETE CASCADE,
+                started_at   TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+                ended_at     TEXT,
+                ended_reason TEXT
+            );
+        """)
         conn.execute("PRAGMA user_version = 1")
         conn.commit()
         conn.close()
 
-        # Reopen: migration runs, columns exist, version bumps to 2.
+        # Reopen: both migrations run, columns exist, version bumps to current.
         with LearnerStore(db_path) as s2:
-            assert s2.schema_version() == 2
+            assert s2.schema_version() == 3
             eid = s2.write_escalation(
                 lid, "harm_to_self", "test", severity="critical",
                 session_id="sess-1", turn_index=3,
@@ -449,10 +460,11 @@ class TestSchemaVersionMigrationStub:
             assert row["severity"] == "critical"
             assert row["session_id"] == "sess-1"
             assert row["turn_index"] == 3
+            s2.create_session(lid, "sess-2", rng_seed=42)  # column usable post-migration
 
     def test_no_migration_path_raises(self, tmp_path):
         """A version with no registered migration still raises RuntimeError —
-        proves the guard (not just the v1->v2 path) is present."""
+        proves the guard (not just the registered v1->v3 path) is present."""
         db_path = tmp_path / "oldversion.db"
 
         with LearnerStore(db_path):
@@ -461,7 +473,7 @@ class TestSchemaVersionMigrationStub:
         import mentar.db.store as store_module
         original = store_module._EXPECTED_VERSION
         try:
-            store_module._EXPECTED_VERSION = 3  # no migration registered for v2->v3
+            store_module._EXPECTED_VERSION = 4  # no migration registered for v3->v4
             with pytest.raises(RuntimeError, match="schema version"):
                 LearnerStore(db_path)
         finally:
@@ -493,6 +505,43 @@ class TestGetLearnerByName:
         store.create_learner("dup-name", "pilot", "GB", "parent_mediated")
         row = store.get_learner_by_name("dup-name")
         assert row["id"] == first_id
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# A19 — assert_parent_mediated (pilot scope guard) + rng_seed column
+# ─────────────────────────────────────────────────────────────────────────────
+
+class TestAssertParentMediated:
+    def test_parent_mediated_learner_does_not_raise(self, tmp_path):
+        store = _make_store(tmp_path)
+        lid = store.create_learner("Amy", "pilot", "GB", "parent_mediated")
+        store.assert_parent_mediated(lid)  # no raise
+
+    def test_independent_learner_refuses_with_clear_message(self, tmp_path):
+        store = _make_store(tmp_path)
+        lid = store.create_learner("Ben", "pilot", "GB", "independent")
+        with pytest.raises(RuntimeError, match="parent_mediated"):
+            store.assert_parent_mediated(lid)
+
+
+class TestSessionRngSeed:
+    def test_create_session_stores_rng_seed(self, tmp_path):
+        store = _make_store(tmp_path)
+        lid = store.create_learner("Cal", "pilot", "GB", "parent_mediated")
+        store.create_session(lid, "sess-1", rng_seed=12345)
+        row = store._conn.execute(
+            "SELECT rng_seed FROM session WHERE id = ?;", ("sess-1",)
+        ).fetchone()
+        assert row["rng_seed"] == 12345
+
+    def test_create_session_without_seed_stores_null(self, tmp_path):
+        store = _make_store(tmp_path)
+        lid = store.create_learner("Cal", "pilot", "GB", "parent_mediated")
+        store.create_session(lid, "sess-2")
+        row = store._conn.execute(
+            "SELECT rng_seed FROM session WHERE id = ?;", ("sess-2",)
+        ).fetchone()
+        assert row["rng_seed"] is None
 
 
 # ─────────────────────────────────────────────────────────────────────────────

@@ -55,8 +55,8 @@ class _DbStoreAdapter:
 
     # ── Durable session logging (controller calls these best-effort) ──────────
 
-    def create_session(self, session_id: str) -> None:
-        self._store.create_session(self._db_id, session_id)
+    def create_session(self, session_id: str, rng_seed: int | None = None) -> None:
+        self._store.create_session(self._db_id, session_id, rng_seed=rng_seed)
 
     def end_session(self, session_id: str, ended_reason: str) -> None:
         self._store.end_session(self._db_id, session_id, ended_reason)
