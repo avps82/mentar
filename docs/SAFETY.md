@@ -612,6 +612,15 @@ For any re-explanation containing a numeric computation or worked algebraic step
 
 This layer is applicable to STEM content with checkable outputs. It is not applicable to open-ended explanations in non-STEM domains.
 
+**Implementation status (A14, 2026-07-05):** implemented in `engine/explain_check.py`
+(`find_claims()` / `has_verified_failure()`), wired into `SessionController._do_help_explain`.
+v0 recognises `a <op> b = c` claims (integers, fractions, mixed numbers; `+ - × x *`) via regex,
+reusing `verify_numeric.normalise_fraction` for parsing (same decimal-safe-reject behaviour). A
+verified-wrong claim triggers regeneration, bounded at 2 attempts total, before falling back to
+the deterministic grounding-passage/worked-example hint. An unparseable claim (e.g. one using
+`/` as division, or a decimal) is **not** treated as a failure — prose passes through unchecked;
+this is a coverage floor (simple arithmetic claims only), not a full algebraic-step verifier.
+
 #### Level 3 — Vetted variant bank
 
 For high-traffic concept nodes, the builder and parents can pre-approve alternative explanations ("vetted variants") that bypass live LLM generation. The dialogue controller serves a vetted variant when available and falls back to live generation only for the long tail.
