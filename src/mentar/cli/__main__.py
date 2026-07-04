@@ -28,15 +28,17 @@ def _repo_root() -> Path:
 def _build_controller(args):
     """Construct a SessionController wired to the configured inference backend.
 
-    Reuses the web app's curriculum loader and DB adapter so CLI and web exercise
-    the exact same turn loop.
+    Reuses the same curriculum loader (engine/curriculum.py) and DB adapter
+    (db/adapter.py) as the web app (A17: moved out of web/ so this headless path
+    no longer has to import Flask) — CLI and web exercise the exact same turn loop.
     """
+    from mentar.db.adapter import _DbStoreAdapter
     from mentar.db.store import LearnerStore
     from mentar.dialogue.controller import SessionController
+    from mentar.engine.curriculum import load_curriculum
     from mentar.engine.itembank import load_item_bank
     from mentar.engine.itemgen import build_item_source
     from mentar.inference import load_inference_config, make_llm_call
-    from mentar.web.app import _DbStoreAdapter, _load_curriculum
 
     repo = _repo_root()
     curriculum_path = Path(args.curriculum) if args.curriculum else (
@@ -54,7 +56,7 @@ def _build_controller(args):
         return None, None
 
     llm_call = make_llm_call(cfg)
-    curriculum = _load_curriculum(curriculum_path)
+    curriculum = load_curriculum(curriculum_path)
     itembank_path = Path(args.itembank) if args.itembank else (
         repo / "curriculum" / "itembank" / "pilot_fractions.jsonl"
     )
