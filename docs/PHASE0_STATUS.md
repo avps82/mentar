@@ -189,12 +189,18 @@ dialogue controller, web app, eval dataset, FSM caller wiring) has **all shipped
 - **🟡 `age_mode` stored but never read (2026-07-03, repo review 2nd pass).** No code branches
   on parent_mediated vs independent — a load-bearing SPEC §6.2 concept with zero enforcement
   hook. Pilot fix = startup assertion (parent_mediated only). → REVIEW §8.6; task A19.
-- **🔴 NO OUTPUT-SIDE SAFETY GATE (2026-07-03, repo review follow-up).** SAFETY L2 §2.1/§2.2
-  promise hard-block matches are *discarded + incident-logged* and every output is
-  *scope/age/pedagogy-checked before delivery*; ARCHITECTURE §2 claims all output "passes through
-  the safety layer". Reality: `llm_call → redact_credentials → _strip_trailing_questions → child`
-  — no content/scope check, no discard path, no incident log. Output safety is prompt-only.
-  → REVIEW §1.6; task A13.
+- **✅ RESOLVED 2026-07-05 (v0) — NO OUTPUT-SIDE SAFETY GATE (2026-07-03, repo review
+  follow-up).** Was: SAFETY L2 §2.1/§2.2 promised hard-block matches are discarded +
+  incident-logged and every output is scope/age/pedagogy-checked, but the real chain was
+  `llm_call -> redact_credentials -> _strip_trailing_questions -> child` — no content/scope
+  check, no discard path, no incident log. Fixed via REMAINDER_PLAN A13 (PR open — awaiting
+  human review, not yet merged, stacked on A3/A15/A8): new `safety/output_guard.py`
+  (`screen_output()`) wired as a second stage in `_make_safe_llm`; on a hard-content or
+  off-scope match the output is discarded, an incident row is written (reusing
+  `escalation_log`, `trigger_class=output_blocked:<class>`, session does NOT freeze), and the
+  child gets a fixed neutral redirect. **Still a v0 keyword/regex heuristic, not a semantic
+  classifier** — age-appropriateness and pedagogical-appropriateness checks (§2.2 items 2–3)
+  are not yet implemented; SAFETY.md reworded to say so plainly. → REVIEW §1.6.
 - **🔴 Help explanations never verified — only child answers are (2026-07-03, repo review
   follow-up).** SAFETY §6.2 Level 2 promises numeric steps *in re-explanations* are verified
   before serving (discard + regenerate on failure). `verify_numeric.check()` is only called on
