@@ -13,7 +13,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from mentar.tools.validate_template import validate
+import pytest
+
+from mentar.tools.validate_template import validate, validate_or_raise
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -121,6 +123,32 @@ def test_cycle_detected(tmp_path):
     all_errors = " ".join(result.errors)
     assert "concept_a" in all_errors, f"Expected concept_a in errors; got: {result.errors}"
     assert "concept_b" in all_errors, f"Expected concept_b in errors; got: {result.errors}"
+
+
+# ---------------------------------------------------------------------------
+# A16 — validate_or_raise: startup loud-fail wrapper
+# ---------------------------------------------------------------------------
+
+def test_validate_or_raise_raises_naming_template_and_error(tmp_path):
+    """A16: an invalid template raises RuntimeError naming the path + the error(s),
+    instead of silently producing a broken (empty-fringe) curriculum dict."""
+    concepts_yaml = "\n".join([
+        _write_minimal_concept("concept_a", "Concept A", ["concept_b"]),
+        _write_minimal_concept("concept_b", "Concept B", ["concept_a"]),
+    ])
+    path = _write_template(tmp_path, concepts_yaml)
+
+    with pytest.raises(RuntimeError) as exc_info:
+        validate_or_raise(path)
+    msg = str(exc_info.value)
+    assert str(path) in msg
+    assert "cycle" in msg.lower()
+
+
+def test_validate_or_raise_passes_valid_template():
+    fractions_path = Path(__file__).parents[2] / "curriculum" / "templates" / "_pilot" / "fractions.md"
+    result = validate_or_raise(fractions_path)
+    assert result.ok is True
 
 
 # ---------------------------------------------------------------------------
