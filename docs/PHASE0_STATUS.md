@@ -246,11 +246,14 @@ dialogue controller, web app, eval dataset, FSM caller wiring) has **all shipped
   transcript immutability triggers currently make row-level purge impossible — the two designs
   conflict). (3) §5.5 session-start "I'm a computer helper" statement not implemented (only the
   reactive system-prompt rule). → REVIEW §1.1/1.3/1.5; tasks A4 + A10 + C retention decision.
-- **🟠 false-confidence `help_pressed` signal corrupted (2026-07-03, repo review).**
-  `_do_probe_classify` uses `len(ctx.help_modalities_used) > 0`: stale across nodes (Help on
-  node A masks false_confidence on node B — SPEC §14.4 requires "no Help pressed *on concept*")
-  and now also set by system-initiated auto-help-on-wrong, conflating declared confusion with
-  scaffolding. Corrupts the pilot's core metric. → REVIEW §2.2; task A5.
+- **✅ RESOLVED 2026-07-05 — false-confidence `help_pressed` signal corrupted (2026-07-03, repo
+  review).** Was: `_do_probe_classify` used `len(ctx.help_modalities_used) > 0` — stale across
+  nodes (Help on node A masked false_confidence on node B — SPEC §14.4 requires "no Help pressed
+  *on concept*") and also set by system-initiated auto-help-on-wrong, conflating declared
+  confusion with scaffolding. Fixed via REMAINDER_PLAN A5 (PR open — awaiting human review, not
+  yet merged, stacked on Wave 1 + A17/A16): new `ctx.help_by_node: dict[str, bool]` set ONLY at
+  the 3 `_is_help_request` call sites (never in `_do_bkt_update`'s auto-help branch);
+  `_do_probe_classify` reads `ctx.help_by_node.get(current_node_id, False)`. → REVIEW §2.2.
 - **🟠 Web learner identity not durable — mastery silently resets on server restart
   (2026-07-03, repo review).** `_db_learner_ids` is in-memory; the cookie survives a restart, the
   mapping doesn't → `create_learner()` runs again → new learner row, orphaned history, mastery
