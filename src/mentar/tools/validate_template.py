@@ -273,6 +273,18 @@ def validate(path: str) -> ValidationResult:
     )
 
 
+def validate_or_raise(path: str | Path) -> ValidationResult:
+    """Validate *path* and raise RuntimeError naming the template + every error
+    if invalid (A16 — loud-fail at startup instead of a silently-broken fringe
+    producing a false "you've mastered everything!" completion). Warnings do
+    not raise. Returns the ValidationResult on success."""
+    result = validate(str(path))
+    if not result.ok:
+        detail = "; ".join(result.errors)
+        raise RuntimeError(f"Invalid curriculum template {path}: {detail}")
+    return result
+
+
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
