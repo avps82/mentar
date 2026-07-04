@@ -43,6 +43,11 @@ mentar validate-template <path>  # curriculum template validator
   wrong-shape framework-server ⚠️).
 
 ## RULES — protected paths (do not weaken without explicit sign-off)
+- **Child input NEVER reaches the LLM.** The controller routes/scores child text
+  deterministically only (verifier + FSM); no child-typed text is ever placed in an LLM prompt.
+  This is why child-driven prompt injection is structurally dead here. Any change that relaxes
+  it (e.g. the INTERACTION_SCOPE proposal) needs explicit safety review first.
+  (Repo review 2026-07-03, REVIEW §8.8.)
 - **`src/mentar/eval/verify_numeric.py`** — the decimal `SAFE_REJECT` is safety-critical. Don't
   regress it.
 - **`src/mentar/safety/escalation.py`** — escalation/freeze + the fixed handoff wording. Changes
