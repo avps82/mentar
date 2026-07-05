@@ -186,7 +186,7 @@ _SECRECY_REQUEST_PATTERNS: list[re.Pattern[str]] = [p for p in (
 # Patterns for jailbreak / safety-override attempts (Layer 1 §1.4 already blocks
 # inline; this class ensures they reach the escalation log for audit).
 _ADVERSARIAL_JAILBREAK_PATTERNS: list[re.Pattern[str]] = [p for p in (
-    re.compile(r"(ignore|disregard|forget|bypass|override) (your |all )?(previous |your |the )?(instructions?|rules?|guidelines?|safety|system prompt|restrictions?)", re.I),
+    re.compile(r"(ignore|disregard|forget|bypass|override) (?:your |all |previous |the |above ){0,2}(instructions?|rules?|guidelines?|safety|(?:system )?prompt\b|restrictions?)", re.I),
     re.compile(r"(pretend|act|behave|imagine) (like |as if )?(you (are|have) no |you don'?t have |you'?re |you are )(a different|rules?|restrictions?|guidelines?|an? (uncensored|unrestricted|free|evil|jailbroken))", re.I),
     re.compile(r"(you are now|you'?re now|from now on (you are|you'?re|act as)) (a |an )?(?!a tutor|helping|assisting)", re.I),
     re.compile(r"(jailbreak|dan mode|developer mode|god mode|unrestricted mode)", re.I),

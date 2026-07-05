@@ -3,21 +3,27 @@
 A simple getting-started guide to run the Mentar tutor on your own machine. You'll run a
 local LLM (no cloud, no API key needed) and talk to the tutor in the terminal or a browser.
 
-> **TL;DR:** install Python → `pip install -e ".[web,setup]"` → **`mentar setup`** → `mentar serve`
-> (web UI at http://localhost:5000). For a quick terminal-only session instead: `mentar run-session`.
+> **TL;DR (macOS/Linux):** install Python → `git clone` → `./scripts/bootstrap.sh` →
+> **`./mentar setup`** → `./mentar serve` (web UI at http://localhost:5000). For a quick
+> terminal-only session instead: `./mentar run-session`. (Windows: see step 3.)
+>
+> Modern Python installs (Homebrew, Debian/Ubuntu system Python) refuse a bare `pip install`
+> (PEP 668 `externally-managed-environment`) — always install into the venv `bootstrap.sh` creates,
+> never system-wide.
 
 ---
 
-## Fastest path: `mentar setup`
+## Fastest path: `./mentar setup`
 
 After installing the package (steps 1–3 below), one command detects your hardware, picks the
 best-fit **vetted** model, downloads it, writes `config/inference.yaml`, **installs the runtime it
-needs, and verifies the model actually responds** before it says "Ready":
+needs, and verifies the model actually responds** before it says "Ready". (Windows: drop the `./`
+prefix — activate the venv first, per step 3.)
 
 ```bash
-mentar setup            # auto: Ollama if installed, else GGUF (installs llama-cpp-python for you)
-mentar serve            # web UI (parent + child) at http://localhost:5000
-# or, terminal-only:  mentar run-session
+./mentar setup            # auto: Ollama if installed, else GGUF (installs llama-cpp-python for you)
+./mentar serve             # web UI (parent + child) at http://localhost:5000
+# or, terminal-only:  ./mentar run-session
 ```
 
 - It picks only from Mentar's vetted roster (`config/model_roster.yaml`) and sizes each model to
@@ -25,16 +31,16 @@ mentar serve            # web UI (parent + child) at http://localhost:5000
 - **It ends with a live check** — a 1-word test call to the model. If that fails, setup tells you
   (and exits non-zero) instead of leaving a config that can't serve. Re-check any time with
   **`python3 scripts/check_backend.py`** (prints the backend, target, and whether the model answers).
-- **Easiest on macOS:** install [Ollama](https://ollama.com/download) *first* — then `mentar setup`
+- **Easiest on macOS:** install [Ollama](https://ollama.com/download) *first* — then `./mentar setup`
   uses it (no compiling). Without Ollama or llama.app, setup falls back to the in-process GGUF
   runtime and will `pip install llama-cpp-python` (a compiled package — needs Xcode CLT on a Mac;
   can take a few minutes).
-- Preview without downloading: `mentar setup --dry-run`. Force a runtime:
+- Preview without downloading: `./mentar setup --dry-run`. Force a runtime:
   `--runtime ollama|llama_app|gguf`. Override the model: `--model gemma2:9b`.
 - **Runtime auto-order:** Ollama → **llama.app** → in-process GGUF. [llama.app](https://llama.app)
   is the official llama.cpp distro (`curl -LsSf https://llama.app/install.sh | sh`); its installer
   auto-picks a prebuilt binary matched to your **CPU instruction set + GPU**, so it Just Works on
-  older (pre-AVX2) CPUs with no source build. `mentar setup --runtime llama_app` downloads the
+  older (pre-AVX2) CPUs with no source build. `./mentar setup --runtime llama_app` downloads the
   GGUF and writes the config to talk to `llama serve` (it then prints the `llama serve …` command
   to start). On very old CPUs the portable prebuilt is slower than a native source build — see the
   GGUF section below for the perf path.
@@ -67,7 +73,7 @@ MENTAR_VLLM_API_KEY=sk-...your-token...
 Then just:
 ```bash
 python3 scripts/check_backend.py        # expect: ✓ Backend LIVE
-mentar serve
+./mentar serve
 ```
 
 > **How it resolves:** `${VAR}` in the config is filled from `config/.env` first, then the process
@@ -99,10 +105,14 @@ cd mentar
 
 **macOS / Linux**
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e ".[web]"
+./scripts/bootstrap.sh
 ```
+Creates `.venv` and installs the package into it (`dev` + `web` extras). Modern Python installs
+(Homebrew, Debian/Ubuntu system Python) refuse a bare system-wide `pip install` (PEP 668
+`externally-managed-environment`) — this is why the venv step isn't optional. Use the repo-root
+`./mentar` wrapper afterwards (step 6) and you never need to `source .venv/bin/activate` just to
+run the CLI — it execs `.venv/bin/mentar` directly. (You still need to activate, or prefix with
+`.venv/bin/`, to run `pytest`/`ruff` in the same shell.)
 
 **Windows (PowerShell)**
 ```powershell
@@ -110,9 +120,8 @@ py -m venv .venv
 .\.venv\Scripts\Activate.ps1      # if blocked: Set-ExecutionPolicy -Scope Process RemoteSigned
 pip install -e ".[web]"
 ```
-
-This installs the `mentar` command. (`.[web]` adds the Flask web app; add `.[dev]` too if you
-want to run the tests.)
+This installs the `mentar` command (no `./mentar` wrapper on Windows — it's a bash script).
+Add `.[dev]` too if you want to run the tests.
 
 ## 4. Install a local model with Ollama
 
@@ -170,14 +179,17 @@ generation:
 
 ## 6. Run it
 
+macOS/Linux: `./mentar` (no activation needed). Windows, or if you've activated `.venv` yourself:
+drop the `./` — plain `mentar`.
+
 **Web app** — the full product (child tutor + parent oversight). Then open http://localhost:5000:
 ```bash
-mentar serve            # child: / and /progress ; parent: /parent
+./mentar serve            # child: / and /progress ; parent: /parent
 ```
 
 **Terminal session** — headless, quick dev/testing (no parent UI):
 ```bash
-mentar run-session
+./mentar run-session
 ```
 Type answers when prompted; type `?` for help, `stop` to end.
 
@@ -196,7 +208,7 @@ install doesn't pull it — it's lazy + degrades gracefully). On **Apple Silicon
 `libzim`'s prebuilt arm64 wheel only exists for cp313/macOS ≥13; on 3.11/3.12 there's no wheel and
 the source build usually fails (or `brew install libzim` first).
 ```bash
-pip install -e ".[web,setup,grounding]"
+.venv/bin/pip install -e ".[web,setup,grounding]"
 ```
 
 **1. Get the two pilot ZIMs onto a persistent, writable dir** (the read-only NAS mount won't do):
@@ -204,24 +216,24 @@ pip install -e ".[web,setup,grounding]"
 python3 scripts/fetch_zim.py --preset vikidia --preset wikipedia_simple --dest /path/to/zims
 ```
 
-**2. Run `mentar setup` with the ZIM dir exported.** It **auto-picks the best-fit vetted model for
+**2. Run `./mentar setup` with the ZIM dir exported.** It **auto-picks the best-fit vetted model for
 your machine's RAM** (gguf-parser sizing — no manual model choice), picks the runtime (Ollama →
 llama.app → in-process GGUF, all llama.cpp under the hood), and writes the **complete**
 `config/inference.yaml` including the full `grounding` block (zim_dir **+** the pilot `sources`):
 ```bash
-MENTAR_ZIM_DIR=/path/to/zims mentar setup       # auto-picks a model sized to your RAM
-mentar serve            # → http://127.0.0.1:5000   (child: / and /progress ; parent: /parent)
+MENTAR_ZIM_DIR=/path/to/zims ./mentar setup       # auto-picks a model sized to your RAM
+./mentar serve            # → http://127.0.0.1:5000   (child: / and /progress ; parent: /parent)
 ```
 
-That's the whole flow — no hand-editing. `mentar setup` writes the `grounding.sources` block for
+That's the whole flow — no hand-editing. `./mentar setup` writes the `grounding.sources` block for
 you (a config with only `zim_dir` resolves every passage to `""` silently, so setup never emits a
-partial block). Preview the pick without downloading: `mentar setup --dry-run`.
+partial block). Preview the pick without downloading: `./mentar setup --dry-run`.
 
 > **Want to reproduce the exact pilot pick?** `gemma2:9b` is the W1.3 pilot model. To make your
 > test results match what the pilot ships, **pin it** (needs ≥16 GB RAM; on smaller machines drop
 > the flag and let auto-pick size a model that fits):
 > ```bash
-> MENTAR_ZIM_DIR=/path/to/zims mentar setup --model gemma2:9b
+> MENTAR_ZIM_DIR=/path/to/zims ./mentar setup --model gemma2:9b
 > ```
 
 ---
@@ -274,8 +286,9 @@ llamacpp:
 | Model not found | The `model:` in the config doesn't match a pulled tag — run `ollama list`. |
 | First reply is slow | The model is loading into memory; later turns are faster. |
 | `Illegal instruction` (GGUF path) | Pre-AVX2 CPU — rebuild `llama-cpp-python` from source (see box above). |
-| `mentar: bad interpreter: …/.venv/bin/pythonX.Y: no such file or directory` | The venv's Python was upgraded/removed (e.g. a Homebrew patch bump), so the venv dangles. Recreate it: `rm -rf .venv && python3 -m venv .venv && source .venv/bin/activate && pip install -e ".[web]"` (add `,setup,grounding` only if running a local model / ZIM). |
+| `mentar: bad interpreter: …/.venv/bin/pythonX.Y: no such file or directory` | The venv's Python was upgraded/removed (e.g. a Homebrew patch bump), so the venv dangles. Recreate it: `rm -rf .venv && ./scripts/bootstrap.sh` (installs `grounding` too if you add it to the extras in that script, or run `.venv/bin/pip install -e ".[web,setup,grounding]"` after). |
 | `401` from the proxy (LiteLLM/vLLM) | The token is missing/wrong. Put it in `config/.env` as `MENTAR_VLLM_API_KEY=sk-…` (gitignored, auto-loaded) — no shell `export` needed. A real env var still overrides it. |
+| `command not found: mentar` / `externally-managed-environment` | You ran bare `mentar`/`pip install` without a venv. Use `./scripts/bootstrap.sh` then `./mentar ...` (macOS/Linux) — see step 3. |
 
 ## Optional: offline grounding (ZIM)
 
