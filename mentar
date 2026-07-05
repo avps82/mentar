@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Runs the venv's mentar directly — no `source .venv/bin/activate` needed.
+# ponytail: this is the wrap; if .venv is missing it tells you to run bootstrap.sh, not silently fails.
+set -euo pipefail
+here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+venv_bin="$here/.venv/bin/mentar"
+
+if [ ! -x "$venv_bin" ]; then
+  echo "No .venv found — run ./scripts/bootstrap.sh first." >&2
+  exit 1
+fi
+
+exec "$venv_bin" "$@"

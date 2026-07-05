@@ -11,20 +11,34 @@ lives in `docs/` — **`docs/PHASE0_STATUS.md` is the canonical task ledger**, a
 
 ## Setup
 ```bash
-pip install -e ".[dev,web]"     # dev tools + the Flask web extra
+./scripts/bootstrap.sh          # creates .venv, installs dev+web extra into it
 ```
-CI installs `.[dev,web,grounding]` pinned against `constraints.txt` (A19) — regenerate it after
-a deliberate dependency bump (see the comment at the top of that file).
+Modern Python installs (Homebrew, Debian/Ubuntu system Python) refuse global `pip install`
+(PEP 668 `externally-managed-environment`) — the venv is required, not optional.
+
+Base principle: everything runs from `.venv`, always. Use the repo-root `./mentar` wrapper —
+it execs `.venv/bin/mentar` directly, so you never need `source .venv/bin/activate` just to run
+the CLI (a subprocess can't activate a venv for its parent shell, so this sidesteps that instead
+of fighting it):
+```bash
+./mentar serve                   # same for setup / run-session / eval / validate-template
+```
+`source .venv/bin/activate` is still needed for non-`mentar` tools in the same shell (`pytest`,
+`ruff`) — or prefix those too: `.venv/bin/python -m pytest`, `.venv/bin/ruff check .`.
+
+If you manage your own venv/tooling, the raw install is `pip install -e ".[dev,web]"`. CI installs
+`.[dev,web,grounding]` pinned against `constraints.txt` (A19) — regenerate it after a deliberate
+dependency bump (see the comment at the top of that file).
 
 ## Commands
 ```bash
-python -m pytest tests/ -q       # full test suite
-ruff check .                     # lint (must be clean)
-mentar setup                     # hardware-aware model pick + download
-mentar run-session               # headless tutoring session
-mentar serve                     # localhost web app
-mentar validate-template <path>  # curriculum template validator
-mentar eval                      # T1 eval harness over eval/dataset_v1.jsonl
+.venv/bin/python -m pytest tests/ -q   # full test suite
+.venv/bin/ruff check .                 # lint (must be clean)
+./mentar setup                         # hardware-aware model pick + download
+./mentar run-session                   # headless tutoring session
+./mentar serve                         # localhost web app
+./mentar validate-template <path>      # curriculum template validator
+./mentar eval                          # T1 eval harness over eval/dataset_v1.jsonl
 ```
 
 ## Project layout
