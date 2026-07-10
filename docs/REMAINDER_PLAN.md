@@ -283,8 +283,48 @@ Accept criteria; one commit per task.
   fraction composes server-side, letter answers score) still pass unchanged through the
   registry path; int questions now render `type="number"`; full suite + ruff green.
 
-**R2 execution order: R2.1 → R2.3 → R2.2** (R2.3 folds R2.1's hint-suppression into the
-mode registry; R2.2's audio depends on R2.1's stem).
+## R2.4 — concept-map node labels truncate mid-word ("Equivalent fra")  `[G]`
+
+- **Why (maintainer finding, /progress):** node labels on the concept-graph SVG are
+  hard-cut at 14 characters with no ellipsis (`progress.html:15` —
+  `{{ n.label | truncate(14, True, "") }}`), so the longer AU labels render as
+  "Place value to" and "Equivalent fra". SVG `<text>` does not wrap on its own.
+- **Design:** word-wrap the label into multiple lines in `_compute_graph_layout()`
+  (pure Python, same testable-layout pattern as the rest of that function) and render one
+  `<tspan>` per line. Never cut mid-word; the full label stays available as the hover
+  `<title>` tooltip (already rendered).
+- **Spec:**
+  1. `src/mentar/web/app.py` — new module-level pure helper
+     `_wrap_label(label: str, max_chars: int = 16, max_lines: int = 3) -> list[str]`:
+     greedy word-wrap (split on spaces; a word longer than max_chars gets its own line,
+     kept WHOLE — never sliced); if words remain after max_lines, drop them and append
+     "…" to the last line. In `_compute_graph_layout`, each node dict gains
+     `"label_lines": _wrap_label(node_label)` (keep `"label"` unchanged — the tooltip
+     uses it). Bump the per-level height constant from 22 to 26 (`"height":
+     max(n_levels * 26, 26)`) so up-to-3-line labels don't collide with the next row's
+     circles.
+  2. `src/mentar/web/templates/progress.html` — replace the single truncated `<text>`
+     with:
+     ```html
+     <text x="{{ n.x }}" y="{{ n.y + 8 }}" text-anchor="middle" class="graph-node-label">
+       {% for line in n.label_lines %}<tspan x="{{ n.x }}" {% if not loop.first %}dy="4"{% endif %}>{{ line }}</tspan>{% endfor %}
+     </text>
+     ```
+     (first line sits at the existing y+8; subsequent lines step down 4 units — the label
+     font is 3.1px in a 100-unit viewBox, so 4 units ≈ 1.3 line-height.)
+- **Files:** `src/mentar/web/app.py`, `src/mentar/web/templates/progress.html`,
+  `tests/web/test_progress.py`.
+- **Accept (hand-write tests):** `_wrap_label("Equivalent fractions")` ==
+  `["Equivalent", "fractions"]` (no mid-word cut); `_wrap_label` of a long AU label
+  ("Division facts from the times tables") stays ≤3 lines with "…" only when words were
+  dropped; a short label stays one line; live `/progress` for `au_year4_maths` contains
+  the complete word "fractions" inside a `<tspan>` and does NOT contain the string
+  "Equivalent fra<" (the old cut); node `"label"` (tooltip) still carries the full text;
+  full suite + ruff green.
+
+**R2 execution order: R2.1 → R2.3 → R2.2, R2.4 anytime** (R2.4 is independent of the
+other three; R2.3 folds R2.1's hint-suppression into the mode registry; R2.2's audio
+depends on R2.1's stem).
 
 ---
 

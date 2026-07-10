@@ -360,11 +360,16 @@ screenshots.
   (`web/answer_modes.py`: answer_type → widget / hint policy / form-compose fn) so new
   answering modes (mixed numbers, decimals-later, …) are one entry + one template branch.
 
-**Tight `[G]` specs for all three live in `docs/REMAINDER_PLAN.md` → "UI review round 2
+- **R2-4: concept-map labels truncate mid-word** (/progress) — the SVG node labels were
+  hard-cut at 14 chars ("Place value to", "Equivalent fra"), exposed by the longer AU
+  labels. Fix direction: word-wrapped multi-line labels (`<tspan>` per line) computed in
+  the pure layout function; never cut mid-word; full label stays as the hover tooltip.
+
+**Tight `[G]` specs for all four live in `docs/REMAINDER_PLAN.md` → "UI review round 2
 (R2)"** (maintainer asked for plan-first so gemma/Sonnet can execute). Execution order:
-**R2.1 → R2.3 → R2.2** (R2.3 folds R2.1's hint-suppression into the registry; R2.2's audio
-depends on R2.1's stem). R2.2 carries a manual hands-on checklist since audio isn't
-verifiable in the build sandbox.
+**R2.1 → R2.3 → R2.2, R2.4 anytime** (R2.3 folds R2.1's hint-suppression into the
+registry; R2.2's audio depends on R2.1's stem; R2.4 is independent). R2.2 carries a
+manual hands-on checklist since audio isn't verifiable in the build sandbox.
 
 ## Changelog
 
