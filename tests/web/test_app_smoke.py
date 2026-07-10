@@ -186,6 +186,56 @@ def test_learner_id_survives_server_restart():
     assert n_responses >= 2, "both pre- and post-restart answers should be under the same learner"
 
 
+def test_answer_fetch_header_returns_json_question():
+    """U-90 plumbing: static/turn.js sends X-Requested-With: fetch to get a JSON
+    fragment (no page reload) instead of the default redirect. Header absent =
+    unchanged behaviour (covered by test_web_learner_flow)."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+
+    app_mod, c = _client()  # noqa: F841
+    c.post("/choose", data={"subject": "fractions"})
+    c.get("/")
+
+    r = c.post(
+        "/answer",
+        data={"answer": "4"},
+        headers={"X-Requested-With": "fetch"},
+    )
+    assert r.status_code == 200
+    assert r.content_type.startswith("application/json")
+    body = r.get_json()
+    assert isinstance(body.get("question"), str) and body["question"]
+
+
+def test_answer_fetch_header_on_escalation_returns_redirect_json():
+    """Escalated fetch turns get a JSON redirect to /frozen, never the verbatim
+    trigger text or trigger content in the JSON payload (mirrors A8)."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+
+    app_mod, c = _client()  # noqa: F841
+    c.post("/choose", data={"subject": "fractions"})
+    c.get("/")
+
+    r = c.post(
+        "/answer",
+        data={"answer": "I want to die"},
+        headers={"X-Requested-With": "fetch"},
+    )
+    assert r.status_code == 200
+    assert r.content_type.startswith("application/json")
+    body = r.get_json()
+    assert body.get("redirect") == "/frozen"
+    assert "die" not in str(body)
+
+
 def test_parent_view_shows_degraded_banner_when_fallback_log_present():
     """A15: /parent shows a warning banner when escalation_fallback.log has
     content (a prior escalation failed to persist to the DB) — and not otherwise."""
@@ -216,6 +266,10 @@ if __name__ == "__main__":
     print("  ✓ test_web_learner_flow")
     test_parent_view_reads_db_and_persists_ack()
     print("  ✓ test_parent_view_reads_db_and_persists_ack")
+    test_answer_fetch_header_returns_json_question()
+    print("  ✓ test_answer_fetch_header_returns_json_question")
+    test_answer_fetch_header_on_escalation_returns_redirect_json()
+    print("  ✓ test_answer_fetch_header_on_escalation_returns_redirect_json")
     test_parent_view_shows_degraded_banner_when_fallback_log_present()
     print("  ✓ test_parent_view_shows_degraded_banner_when_fallback_log_present")
     test_learner_id_survives_server_restart()

@@ -184,15 +184,28 @@ does the same.
 
 ## 7. Open decisions for the maintainer (block the *design* phase, not this doc)
 
-- **U-90** htmx (vendored) vs zero-dep owned JS snippet (§5). Both satisfy U-80/U-81; htmx
-  is less code to own, the snippet is zero third-party.
+- **U-90 RESOLVED 2026-07-10 — zero-dep owned snippet, shipped.** Maintainer initially
+  chose to vendor htmx; the harness's own permission classifier then blocked the agent
+  from fetching third-party code from an external CDN on the maintainer's verbal say-so —
+  by design, an external-code fetch has to be typed/run by a human, not authorized via
+  chat, and the maintainer was away from a terminal. This is a **real-world instance of
+  the exact U-81 "auditable JS" trust boundary** the requirements were already guarding,
+  now enforced by tooling instead of just policy. Pivoted to the zero-dep path: built
+  `src/mentar/web/static/turn.js` (~35 lines, no deps) + a matching `/answer` JSON-fragment
+  branch (`X-Requested-With: fetch` header opt-in; absent header = unchanged full-reload
+  behaviour, so U-14/routes and progressive enhancement both hold). Tests:
+  `tests/web/test_app_smoke.py::test_answer_fetch_header_returns_json_question` +
+  `::test_answer_fetch_header_on_escalation_returns_redirect_json`. htmx remains available
+  as a future swap-in (the maintainer can vendor it at a terminal later) — the server-side
+  fragment contract doesn't change either way.
 - **U-91** Brand direction: keep 🍕-style playful emoji identity vs a drawn mascot/wordmark
-  (a mascot needs an artist or generated asset + licence decision).
+  (a mascot needs an artist or generated asset + licence decision). Still open.
 - **U-92** Palette preference (current warm cream/green vs something else) — pure taste,
-  cheap to decide now, expensive to churn later.
+  cheap to decide now, expensive to churn later. Still open.
 
 ## Changelog
 
 | Date | Change |
 |------|--------|
 | 2026-07-10 | v0.1 — requirements drafted + ratified by the maintainer (audiences, no-landing, U-2a screenshot gate). Design phase not started. |
+| 2026-07-10 | U-90 resolved + shipped: owned zero-dep `turn.js` fragment-swap plumbing (`web/static/turn.js`, `/answer` JSON branch), 467 tests green. htmx vendoring blocked by the harness's own external-code permission boundary — documents a real instance of U-81. |

@@ -26,7 +26,7 @@ import os
 import uuid
 from pathlib import Path
 
-from flask import Flask, redirect, render_template, request, session, url_for
+from flask import Flask, jsonify, redirect, render_template, request, session, url_for
 
 from mentar.db.adapter import _DbStoreAdapter
 from mentar.db.store import LearnerStore
@@ -234,8 +234,16 @@ def choose():
 
 @app.route("/answer", methods=["POST"])
 def answer():
+    # U-90: static/turn.js sends this header to opt into a JSON fragment reply
+    # (no page reload) instead of the redirect/full-page response below. Absent
+    # header = today's behaviour, unchanged (progressive enhancement: JS off
+    # still works identically).
+    is_fetch = request.headers.get("X-Requested-With") == "fetch"
+
     learner_uuid = session.get("learner_uuid")
     if not learner_uuid or learner_uuid not in _controllers:
+        if is_fetch:
+            return jsonify(redirect=url_for("index"))
         return redirect(url_for("index"))
 
     answer_text = request.form.get("answer", "").strip()
@@ -247,9 +255,16 @@ def answer():
         _log_turn(learner_uuid, "Mentar", result.text)
 
     if result.escalated:
+        if is_fetch:
+            return jsonify(redirect=url_for("frozen"))
         return redirect(url_for("frozen"))
     if result.done:
-        return render_template("done.html", message=result.text or "Well done — session complete!")
+        html = render_template("done.html", message=result.text or "Well done — session complete!")
+        if is_fetch:
+            return jsonify(full_html=html)
+        return html
+    if is_fetch:
+        return jsonify(question=_last_mentar_text(learner_uuid) or "Ready when you are!")
     return redirect(url_for("index"))
 
 
