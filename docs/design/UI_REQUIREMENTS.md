@@ -365,11 +365,19 @@ screenshots.
   labels. Fix direction: word-wrapped multi-line labels (`<tspan>` per line) computed in
   the pure layout function; never cut mid-word; full label stays as the hover tooltip.
 
-**Tight `[G]` specs for all four live in `docs/REMAINDER_PLAN.md` → "UI review round 2
-(R2)"** (maintainer asked for plan-first so gemma/Sonnet can execute). Execution order:
-**R2.1 → R2.3 → R2.2, R2.4 anytime** (R2.3 folds R2.1's hint-suppression into the
-registry; R2.2's audio depends on R2.1's stem; R2.4 is independent). R2.2 carries a
-manual hands-on checklist since audio isn't verifiable in the build sandbox.
+- **R3 (new IA, not a bug): Year → Subject → parts** — maintainer direction for the
+  picker and progress page, plus derive the year/subject catalog instead of hand-
+  registering it. Decision: server-side front-matter scan of `curriculum/templates/`
+  (templates are the source of truth; JS-disabled parity; no client fetch), with item
+  sources referenced BY NAME via a registry (generators are code). Also fixes a real
+  defect: /progress's star cards currently mix ALL subjects' skill rows into one list.
+
+**Tight `[G]` specs live in `docs/REMAINDER_PLAN.md`** — "UI review round 2 (R2)" (four
+tasks) and "R3 — Year > Subject information architecture" (two tasks). Execution order:
+**R2.1 → R2.3 → R2.2, R2.4 anytime; then R3.1 → R3.2** (R2.3 folds R2.1's
+hint-suppression into the registry; R2.2's audio depends on R2.1's stem; R2.4 is
+independent; R3.2 renders what R3.1 discovers). R2.2 carries a manual hands-on checklist
+since audio isn't verifiable in the build sandbox.
 
 ## Changelog
 

@@ -328,6 +328,89 @@ depends on R2.1's stem).
 
 ---
 
+# R3 — Year > Subject information architecture (maintainer ask, 2026-07-10)
+
+Maintainer direction: the picker and the progress page should read **Year → Subject →
+parts of the subject** (concept nodes), and the year/subject catalog should be *derived*,
+not hand-registered. Design decision (recorded here so gemma doesn't relitigate it): the
+catalog is derived **server-side at startup by scanning template front matter** — the
+template files are the source of truth (`country`/`year_level`/`subject` are already in
+every front matter), it works with JS disabled, and it keeps the offline/no-SPA posture
+(U-80/U-81). No client-side fetch "script"; the front end renders a grouped structure the
+server already computed. Generators are code, so templates reference their item source BY
+NAME (`item_source:` front-matter key → a named registry in engine code) — adding a new
+year/template becomes: drop a `.md` file in, reference an existing generator set (or add
+one to the registry).
+
+**Also fixes a real defect:** `/progress`'s star-card list currently pulls ALL of a
+learner's `skill_state` rows regardless of subject — with the AU templates added, pilot
+fractions/science and AU Year 3/4 nodes mix into one undifferentiated list.
+
+**Execute in order R3.1 → R3.2** (R3.2 renders what R3.1 discovers). Both `[G]`.
+
+## R3.1 — template catalog auto-discovery + named item-source registry  `[G]`
+
+- **Spec:**
+  1. `src/mentar/engine/curriculum.py` — new `load_template_meta(path) -> dict` returning
+     `{"template_id", "country", "year_level", "subject", "label", "icon",
+     "description", "item_source"}` from the front matter (reuse the existing
+     split-on-`\n---\n` + `yaml.safe_load` pattern of `load_template_subject`; missing
+     keys → None). New optional front-matter keys `label:`, `icon:`, `description:`,
+     `item_source:` — add them to all 5 existing templates (values = exactly what the
+     `SUBJECTS` dict hardcodes today; `item_source` names: `pilot_fractions`,
+     `arithmetic`, `science`, `au_year3`, `au_year4`).
+  2. New `src/mentar/engine/item_sources.py` — `ITEM_SOURCE_REGISTRY: dict[str, dict]`
+     mapping those names → `{"generators": <registry dict>, "itembank": <Path or None>}`
+     (pilot_fractions carries the bank path; the module docstring documents "adding a new
+     template" = drop the .md in + reference a registered name).
+  3. `src/mentar/web/app.py` — `SUBJECTS` is BUILT by scanning
+     `curriculum/templates/**/*.md` (skip `_template.md`/underscore-prefixed non-pilot
+     scaffolding; keep the `_pilot/` dir included) via `load_template_meta` +
+     `ITEM_SOURCE_REGISTRY[meta["item_source"]]`. Subject key = `template_id` with
+     dashes→underscores (KEEP the current keys stable for existing session cookies:
+     verify the 5 derived keys equal today's literals — if any differs, add an explicit
+     `subject_key:` front-matter override to that template rather than breaking
+     sessions). A template naming an unregistered `item_source` → startup `RuntimeError`
+     naming template + name (same fail-loud pattern as A16 validation, which stays).
+  4. Group metadata for R3.2: `SUBJECT_GROUPS: list[(group_label, [subject_keys])]`
+     computed from the scan — group by `year_level` (sorted: real years ascending, then
+     `"pilot"` last as "Try-out topics"); group label = `f"{year_level} ({country})"`
+     when country is set, else the year_level/pilot label.
+- **Files:** `engine/curriculum.py`, `engine/item_sources.py` (new), `web/app.py`, all 5
+  templates' front matter, `tests/engine/` (new `test_template_catalog.py`),
+  `tests/web/test_app_smoke.py`.
+- **Accept (hand-write tests):** the scan discovers all 5 templates with the same keys /
+  labels / generators the hardcoded dict has today (assert equality against a literal
+  snapshot); unregistered `item_source` fails loudly at startup naming the template; all
+  existing web tests pass unchanged (keys stable); full suite + ruff green.
+
+## R3.2 — picker + progress grouped Year → Subject → parts  `[G]`
+
+- **Spec:**
+  1. `subjects.html` — render `SUBJECT_GROUPS` as year sections (an `<h3>` per group,
+     e.g. "Year 3 (AU)", "Year 4 (AU)", "Try-out topics"), each containing its subject
+     cards (card contents unchanged).
+  2. `/progress` — three levels on one page: (a) a year/subject switcher at the top
+     (simple links `?subject=<key>`, current one highlighted; grouped by the same
+     `SUBJECT_GROUPS`; default = the session's active subject); (b) the concept-graph map
+     for the SELECTED subject (already per-subject today); (c) the star-card list
+     **filtered to the selected subject's node ids only** (`skill_id in
+     _SUBJECT_CURRICULA[selected]`) — fixes the all-subjects mixing defect. Per-subject
+     mastered/total counts shown next to each switcher link (reuse
+     `_subjects_progress()`).
+  3. No new JS: plain links + server render (htmx not needed here; a full reload on a
+     progress-page subject switch is fine).
+- **Files:** `web/app.py` (`/progress` route), `web/templates/subjects.html`,
+  `web/templates/progress.html`, `tests/web/test_progress.py`.
+- **Accept (hand-write tests):** picker HTML contains the year group headings with the AU
+  subjects under their years and pilot topics under the try-out group; `/progress?subject=
+  au_year3_maths` shows only au3_* skill cards (a learner with fractions AND au3 history
+  sees NO fractions rows there — build both histories in the test); the graph renders the
+  selected subject's node count; the switcher shows per-subject mastered counts; default
+  (no query param) = active session subject; full suite + ruff green.
+
+---
+
 # Remainder Build Plan — v2
 
 Most of v1 shipped; **G0 is essentially validated** (model pick, safety, retrieval, E2E,
