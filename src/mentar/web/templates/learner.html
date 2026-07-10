@@ -1,32 +1,38 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
-<title>Mentar</title>
-<style>
-  body { background:#fffbe6; font-family: 'Segoe UI', Arial, sans-serif;
-         max-width:700px; margin:40px auto; padding:20px; }
-  h1 { color:#4a4a4a; font-size:1.6rem; }
-  .question { background:#fff; border-radius:12px; padding:24px;
-              font-size:1.3rem; line-height:1.6; margin-bottom:20px;
-              white-space:pre-wrap;        /* keep line breaks: hint vs question, feedback vs next */
-              box-shadow:0 2px 8px rgba(0,0,0,0.08); }
-  input[type=text] { font-size:1.2rem; padding:10px 16px; width:60%;
-                     border:2px solid #ccc; border-radius:8px; }
-  .btn { font-size:1.1rem; padding:10px 24px; background:#4caf50; color:#fff;
-          border:none; border-radius:8px; cursor:pointer; margin-left:8px; }
-  .hint { color:#888; font-size:0.9rem; margin-top:8px; }
-</style>
-<script src="/static/htmx.min.js" defer></script>
-</head><body>
-<h1>🍕 Mentar{% if subject_label %} <span style="font-size:1rem;color:#888">· {{ subject_label }}</span>{% endif %}</h1>
-<div class="question">{{ question }}</div>
+{% extends "_base.html" %}
+{% block extra_head %}<script src="/static/htmx.min.js" defer></script>{% endblock %}
+{% block content %}
+{% if current_mastery %}
+<div class="hint" style="margin-bottom:6px">
+  {{ current_mastery.skill_id | replace("_", " ") | title }}
+  <span class="bar-wrap"><span class="bar-fill" style="width:{{ current_mastery.pct }}%;"></span></span>
+  {{ current_mastery.pct }}%
+</div>
+{% endif %}
 <!-- U-90: htmx (vendored, static/htmx.min.js) swaps .question in place on
      submit -- no owned JS. JS disabled -> plain form POST, same routes/
-     responses either way (see /answer in web/app.py). -->
+     responses either way (see /answer in web/app.py). U-30: this block is the
+     stable question target and is never itself removed from the DOM. -->
+<div class="question{% if is_first_turn %} first-turn{% endif %}">{{ question_html | safe }}</div>
 <form method="POST" action="/answer"
       hx-post="/answer" hx-target=".question" hx-swap="innerHTML"
       hx-on::after-request="this.reset()">
   <input type="text" name="answer" autofocus placeholder="Type your answer…">
   <button class="btn" type="submit">Send ✓</button>
 </form>
+<div class="quick-actions" style="margin-top:8px">
+  <form method="POST" action="/answer" hx-post="/answer" hx-target=".question" hx-swap="innerHTML" style="display:inline-block">
+    <input type="hidden" name="answer" value="help">
+    <button class="btn btn-quiet" type="submit">🆘 Help</button>
+  </form>
+  <form method="POST" action="/answer" hx-post="/answer" hx-target=".question" hx-swap="innerHTML" style="display:inline-block">
+    <input type="hidden" name="answer" value="stop">
+    <button class="btn btn-quiet" type="submit">🛑 Stop</button>
+  </form>
+</div>
 <p class="hint">Type <b>?</b> or <b>help</b> for a hint &nbsp;·&nbsp; <b>stop</b> to finish.</p>
-<hr><a href="/progress" style="color:#888;font-size:0.85rem">My progress</a> &nbsp;·&nbsp; <a href="/parent" style="color:#888;font-size:0.85rem">Parent view</a> &nbsp;·&nbsp; <a href="/choose" style="color:#888;font-size:0.85rem">Switch topic</a>
-</body></html>
+{% endblock %}
+{% block footer %}
+<div class="footer-nav">
+  <a href="/progress">My progress</a> &nbsp;·&nbsp; <a href="/parent">Parent view</a> &nbsp;·&nbsp; <a href="/choose">Switch topic</a>
+</div>
+{% endblock %}

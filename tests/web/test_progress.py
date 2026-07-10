@@ -64,6 +64,26 @@ def test_progress_shows_skill_after_answer():
     assert "⭐" in body, "Expected at least one star rating in the progress view"
 
 
+def test_progress_shows_concept_graph_for_pilot_curriculum():
+    """U-40/U-41: /progress renders an owned SVG concept-graph map with one
+    node per curriculum node (8 for the pilot fractions template) -- built
+    from _compute_graph_layout, no graph library."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+
+    _app_mod, c = _client()
+    c.post("/choose", data={"subject": "fractions"})
+    c.get("/")
+
+    body = c.get("/progress").get_data(as_text=True)
+    assert "<svg" in body
+    assert body.count("<circle") == 8
+    assert "graph-node" in body
+
+
 def test_parent_mastery_table_appears_after_answer():
     """GET /parent includes the mastery table and session summary after one answer."""
     try:

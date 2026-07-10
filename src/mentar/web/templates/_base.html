@@ -1,0 +1,17 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Mentar{% endblock %}</title>
+<link rel="stylesheet" href="/static/style.css">
+<script src="/static/theme.js"></script>
+{% block extra_head %}{% endblock %}
+</head><body>
+{% block header %}
+<div class="site-header">
+  <a href="/" class="brand">🍕 Mentar{% if subject_label %} <span class="subject-label">· {{ subject_label }}</span>{% endif %}</a>
+  <button class="theme-toggle" type="button" aria-label="Toggle dark mode">🌙 Dark</button>
+</div>
+<p class="trust-strip">Runs entirely on this device · no cloud · no accounts</p>
+{% endblock %}
+{% block content %}{% endblock %}
+{% block footer %}{% endblock %}
+</body></html>

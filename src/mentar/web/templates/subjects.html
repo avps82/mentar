@@ -1,25 +1,22 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
-<title>Mentar — Choose a topic</title>
-<style>
-  body { background:#fffbe6; font-family: 'Segoe UI', Arial, sans-serif;
-         max-width:700px; margin:40px auto; padding:20px; text-align:center; }
-  h1 { color:#4a4a4a; font-size:1.6rem; }
-  p  { color:#555; }
-  .subjects { display:flex; flex-wrap:wrap; gap:16px; justify-content:center; margin-top:24px; }
-  .subject-btn { font-size:1.3rem; padding:22px 28px; background:#fff; color:#333;
-                 border:2px solid #4caf50; border-radius:14px; cursor:pointer;
-                 box-shadow:0 2px 8px rgba(0,0,0,0.08); min-width:180px; }
-  .subject-btn:hover { background:#4caf50; color:#fff; }
-</style>
-</head><body>
-<h1>🍕 Mentar</h1>
-<p>What would you like to learn today?</p>
-<div class="subjects">
+{% extends "_base.html" %}
+{% block title %}Mentar — Choose a topic{% endblock %}
+{% block content %}
+<p style="text-align:center;color:var(--text-muted);max-width:480px;margin:0 auto 8px">
+  Your private learning helper — everything stays on this computer.
+</p>
+<h2 style="text-align:center;color:var(--text)">What would you like to learn today?</h2>
+<div class="subject-grid">
   {% for key, s in subjects.items() %}
   <form method="POST" action="/choose">
     <input type="hidden" name="subject" value="{{ key }}">
-    <button class="subject-btn" type="submit">{{ s.label }}</button>
+    <button class="subject-card" type="submit">
+      <span class="subject-icon">{{ s.icon }}</span>
+      {{ s.label }}
+      {% if s.description %}<div class="subject-desc">{{ s.description }}</div>{% endif %}
+      {% set p = subjects_progress.get(key) %}
+      {% if p %}<div class="subject-progress">{{ p.mastered }} of {{ p.total }} skills mastered</div>{% endif %}
+    </button>
   </form>
   {% endfor %}
 </div>
-</body></html>
+{% endblock %}

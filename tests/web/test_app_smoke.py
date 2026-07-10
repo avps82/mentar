@@ -34,6 +34,23 @@ def _client():
     return app_mod, app_mod.app.test_client()
 
 
+def test_trust_strip_on_child_and_parent_screens():
+    """U-11: the offline/no-accounts trust strip is present on both the child-
+    facing lesson screen and the parent dashboard."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+
+    app_mod, c = _client()  # noqa: F841
+    c.post("/choose", data={"subject": "fractions"})
+    learner_html = c.get("/").get_data(as_text=True)
+    parent_html = c.get("/parent").get_data(as_text=True)
+    assert "Runs entirely on this device" in learner_html
+    assert "Runs entirely on this device" in parent_html
+
+
 def test_web_learner_flow():
     try:
         import flask  # noqa: F401
@@ -100,6 +117,8 @@ def test_parent_view_reads_db_and_persists_ack():
     frozen_html = r.get_data(as_text=True)
     assert "I want to die" not in frozen_html        # no verbatim trigger text
     assert "confirm" not in frozen_html.lower()       # no ack control on the child's screen
+    assert "<a " not in frozen_html                  # U-60: zero navigation on the frozen screen
+    assert "theme-toggle" not in frozen_html          # U-60: zero chrome, not just zero nav
 
     # Re-visiting / while still frozen (not just the triggering turn) also
     # lands on /frozen, never on the last tutoring question or /parent.
@@ -238,6 +257,39 @@ def test_answer_hx_fragment_escapes_html():
     assert "&lt;script&gt;" in body
 
 
+def test_markdown_lite_renders_bold_italic_and_bullets():
+    """U-32: the owned markdown-lite subset actually renders bold/italic/
+    bullets (not just escapes) -- and stays safe on a mixed malicious+markdown
+    input. Checked directly against _render_markdown_lite, and once through
+    the live /answer fragment path for the wiring."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+
+    app_mod, c = _client()
+
+    md = app_mod._render_markdown_lite
+    assert md("**Great job!**") == "<strong>Great job!</strong>"
+    assert md("Try *this* next") == "Try <em>this</em> next"
+    assert md("* first\n* second") == "<ul><li>first</li><li>second</li></ul>"
+    # Bold consumed before italic: no stray single-star <em> inside a **bold** span.
+    assert md("**bold**") == "<strong>bold</strong>"
+    # Escaping still wins over markdown syntax embedded in unsafe input.
+    mixed = md("**<script>alert(1)</script>**")
+    assert "<script>" not in mixed
+    assert mixed == "<strong>&lt;script&gt;alert(1)&lt;/script&gt;</strong>"
+
+    c.post("/choose", data={"subject": "fractions"})
+    c.get("/")
+    app_mod._last_mentar_text = lambda learner_uuid: "**Nice work!**\n* Step one\n* Step two"
+    r = c.post("/answer", data={"answer": "4"}, headers={"HX-Request": "true"})
+    body = r.get_data(as_text=True)
+    assert "<strong>Nice work!</strong>" in body
+    assert "<li>Step one</li>" in body
+
+
 def test_answer_hx_request_on_escalation_sends_hx_redirect():
     """Escalated htmx turns get an HX-Redirect to /frozen (empty body), never
     the verbatim trigger text anywhere in the response (mirrors A8)."""
@@ -298,6 +350,36 @@ def test_done_route_shows_final_message_and_is_directly_navigable():
     assert "Great work today" in r3.get_data(as_text=True)
 
 
+def test_done_recap_shows_questions_and_skills():
+    """U-70: the done screen's recap reflects the session's real responses
+    (question count, skills touched), sourced the same way /parent already
+    reads them -- no new store methods, no controller change."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+
+    from mentar.dialogue.controller import TurnResult
+
+    app_mod, c = _client()
+    c.post("/choose", data={"subject": "fractions"})
+    c.get("/")
+    c.post("/answer", data={"answer": "4"})  # a real scored response first
+
+    with c.session_transaction() as sess:
+        learner_uuid = sess["learner_uuid"]
+    ctrl = app_mod._controllers[learner_uuid]
+    ctrl.step = lambda answer_text: TurnResult(
+        state=ctrl.state, text="All done!", done=True, escalated=False
+    )
+    c.post("/answer", data={"answer": "4"})
+
+    body = c.get("/done").get_data(as_text=True)
+    assert "correct out of" in body
+    assert "See my progress map" in body
+
+
 def test_parent_view_shows_degraded_banner_when_fallback_log_present():
     """A15: /parent shows a warning banner when escalation_fallback.log has
     content (a prior escalation failed to persist to the DB) — and not otherwise."""
@@ -324,6 +406,8 @@ def test_parent_view_shows_degraded_banner_when_fallback_log_present():
 
 
 if __name__ == "__main__":
+    test_trust_strip_on_child_and_parent_screens()
+    print("  ✓ test_trust_strip_on_child_and_parent_screens")
     test_web_learner_flow()
     print("  ✓ test_web_learner_flow")
     test_parent_view_reads_db_and_persists_ack()
@@ -332,10 +416,14 @@ if __name__ == "__main__":
     print("  ✓ test_answer_hx_request_returns_question_fragment")
     test_answer_hx_fragment_escapes_html()
     print("  ✓ test_answer_hx_fragment_escapes_html")
+    test_markdown_lite_renders_bold_italic_and_bullets()
+    print("  ✓ test_markdown_lite_renders_bold_italic_and_bullets")
     test_answer_hx_request_on_escalation_sends_hx_redirect()
     print("  ✓ test_answer_hx_request_on_escalation_sends_hx_redirect")
     test_done_route_shows_final_message_and_is_directly_navigable()
     print("  ✓ test_done_route_shows_final_message_and_is_directly_navigable")
+    test_done_recap_shows_questions_and_skills()
+    print("  ✓ test_done_recap_shows_questions_and_skills")
     test_parent_view_shows_degraded_banner_when_fallback_log_present()
     print("  ✓ test_parent_view_shows_degraded_banner_when_fallback_log_present")
     test_learner_id_survives_server_restart()

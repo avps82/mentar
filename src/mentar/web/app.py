@@ -23,6 +23,7 @@ Config via environment (never commit values):
 from __future__ import annotations
 
 import os
+import re
 import uuid
 from pathlib import Path
 
@@ -72,18 +73,24 @@ _TPL = _REPO / "curriculum" / "templates" / "_pilot"
 SUBJECTS: dict[str, dict] = {
     "fractions": {
         "label": "Fractions 🍕",
+        "icon": "🍕",
+        "description": "Slices, halves, and sharing things fairly.",
         "curriculum": CURRICULUM_PATH,
         "itembank": ITEMBANK_PATH,
         "generators": DEFAULT_GENERATORS,
     },
     "arithmetic": {
         "label": "Maths: + − × 🔢",
+        "icon": "🔢",
+        "description": "Adding, subtracting, and multiplying numbers.",
         "curriculum": _TPL / "arithmetic.md",
         "itembank": None,
         "generators": ARITHMETIC_GENERATORS,
     },
     "science": {
         "label": "Science 🔬",
+        "icon": "🔬",
+        "description": "How the world around us works.",
         "curriculum": _TPL / "science.md",
         "itembank": None,
         "generators": SCIENCE_GENERATORS,
@@ -198,7 +205,9 @@ def index():
     subject = session.get("subject")
     if subject not in SUBJECTS:
         # No topic chosen yet — show the picker.
-        return render_template("subjects.html", subjects=SUBJECTS)
+        return render_template(
+            "subjects.html", subjects=SUBJECTS, subjects_progress=_subjects_progress(learner_uuid)
+        )
 
     ctrl = _get_or_create_controller(learner_uuid, subject)
 
@@ -207,8 +216,13 @@ def index():
         # not just the turn that triggered it (A8).
         return redirect(url_for("frozen"))
 
+    # U-35: the assent/transparency lines only ever appear on this first turn
+    # (session.py bundles them into the SESSION_START->PRESENT text) -- flag it
+    # so the template can give them distinct visual treatment.
+    is_first_turn = ctrl.state == FSMState.SESSION_START.value
+
     # Only call step(None) to initialise — subsequent renders just show the last question.
-    if ctrl.state == FSMState.SESSION_START.value:
+    if is_first_turn:
         result = ctrl.step(None)
         _log_turn(learner_uuid, "Mentar", result.text)
         if result.done:
@@ -220,7 +234,9 @@ def index():
     # Re-display the last Mentar question from the log (don't call step again).
     question = _last_mentar_text(learner_uuid) or "Ready when you are!"
     return render_template(
-        "learner.html", question=question, subject_label=SUBJECTS[subject]["label"]
+        "learner.html", question_html=_render_markdown_lite(question),
+        subject_label=SUBJECTS[subject]["label"],
+        current_mastery=_current_node_mastery(learner_uuid, ctrl), is_first_turn=is_first_turn,
     )
 
 
@@ -232,7 +248,10 @@ def choose():
         if subject in SUBJECTS:
             session["subject"] = subject
         return redirect(url_for("index"))
-    return render_template("subjects.html", subjects=SUBJECTS)
+    return render_template(
+        "subjects.html", subjects=SUBJECTS,
+        subjects_progress=_subjects_progress(session.get("learner_uuid", "")),
+    )
 
 
 @app.route("/answer", methods=["POST"])
@@ -269,20 +288,35 @@ def answer():
 
     # Advancing: htmx swaps this fragment straight into hx-target=".question"
     # (no page reload); a non-JS browser gets the usual full redirect+reload.
-    # escape() matches the autoescaping Jinja already applies to {{ question }}
-    # in learner.html -- child-facing model/generator text must never be
-    # inserted unescaped into an innerHTML swap target (U-32).
+    # _render_markdown_lite escapes first (U-32 security property) then
+    # renders the same owned markdown subset index() uses for the full-page
+    # path, so the two never visually disagree.
     question = _last_mentar_text(learner_uuid) or "Ready when you are!"
     if hx:
-        return str(escape(question))
+        return _render_markdown_lite(question)
     return redirect(url_for("index"))
 
 
 @app.route("/done")
 def done():
+    """U-70: celebration + a simple recap (questions tried, skills touched).
+    Same store/session_responses shape already used by /parent -- no new
+    store methods, no controller changes."""
     learner_uuid = session.get("learner_uuid", "")
     message = _done_messages.get(learner_uuid, "All done!")
-    return render_template("done.html", message=message)
+    ctrl = _controllers.get(learner_uuid)
+    store, db_id = _store_and_id(learner_uuid)
+    recap = None
+    if store and db_id is not None and ctrl is not None:
+        responses = store.session_responses(db_id, ctrl.session_id)
+        help_events = store.session_help_events(db_id, ctrl.session_id)
+        recap = {
+            "n_responses": len(responses),
+            "n_correct": sum(1 for r in responses if r.get("scored") == 1),
+            "n_help": len(help_events),
+            "skills_touched": sorted({r["skill_id"] for r in responses}),
+        }
+    return render_template("done.html", message=message, recap=recap)
 
 
 @app.route("/frozen")
@@ -304,6 +338,114 @@ def frozen():
     )
 
 
+_MD_BOLD_RE = re.compile(r"\*\*(.+?)\*\*")
+_MD_ITALIC_RE = re.compile(r"\*(.+?)\*")
+
+
+def _render_markdown_lite(text: str) -> str:
+    """U-32: HTML-escape first (the security property), then insert ONLY 4
+    whitelisted tags (<strong>/<em>/<ul>/<li>) over the now-safe text -- no
+    third-party markdown lib, no other tag ever gets emitted. Bullet markers
+    are stripped line-by-line BEFORE the bold/italic regexes run so a leading
+    "* " (bullet) is never mistaken for an italic delimiter; bold (**x**) is
+    substituted before italic (*x*) so a bold span's stars are consumed first.
+    Segments are joined WITHOUT a "\\n" between block tags (<ul>/<li>/</ul>) --
+    .question uses white-space:pre-wrap, so a raw newline next to a block
+    element would render as a stray visible gap; "\\n" is only kept between
+    two genuine prose lines, to preserve intentional line breaks.
+    Safe to mark `| safe` in Jinja: every character that reaches an HTML tag
+    boundary either came from escape() or from a literal string in this
+    function, never from unescaped model/generator output."""
+    escaped = str(escape(text))
+    segments: list[tuple[bool, str]] = []  # (is_block_markup, content)
+    in_list = False
+    for line in escaped.split("\n"):
+        stripped = line.strip()
+        is_bullet = stripped.startswith("* ") or stripped.startswith("- ")
+        content = stripped[2:] if is_bullet else line
+        content = _MD_BOLD_RE.sub(r"<strong>\1</strong>", content)
+        content = _MD_ITALIC_RE.sub(r"<em>\1</em>", content)
+        if is_bullet:
+            if not in_list:
+                segments.append((True, "<ul>"))
+                in_list = True
+            segments.append((True, f"<li>{content}</li>"))
+        else:
+            if in_list:
+                segments.append((True, "</ul>"))
+                in_list = False
+            segments.append((False, content))
+    if in_list:
+        segments.append((True, "</ul>"))
+
+    result = ""
+    prev_is_block = None
+    for is_block, s in segments:
+        if result and not is_block and prev_is_block is False:
+            result += "\n"
+        result += s
+        prev_is_block = is_block
+    return result
+
+
+def _compute_graph_layout(curriculum: dict, node_pct: dict[str, int]) -> dict:
+    """U-40/U-41: an owned layered layout for the concept-graph map -- no
+    graph library. Works for any curriculum (node count/edges not hardcoded):
+    level(n) = 0 if no prereqs, else 1 + max(level(prereq)); nodes in the same
+    level are spread evenly across a 0-100 x-axis so the SVG (viewBox 0 0 100
+    H) scales responsively. Percentage coordinates keep this pure/testable."""
+    levels: dict[str, int] = {}
+
+    def _level(nid: str, seen: frozenset[str] = frozenset()) -> int:
+        if nid in levels:
+            return levels[nid]
+        if nid in seen:  # a cycle would infinite-loop; validate_or_raise already
+            return 0     # rejects cyclic templates at startup, this is a safety net
+        prereqs = [p for p in curriculum.get(nid, {}).get("prerequisites", []) if p in curriculum]
+        lvl = 0 if not prereqs else 1 + max(_level(p, seen | {nid}) for p in prereqs)
+        levels[nid] = lvl
+        return lvl
+
+    for node_id in curriculum:
+        _level(node_id)
+
+    by_level: dict[int, list[str]] = {}
+    for node_id, lvl in levels.items():
+        by_level.setdefault(lvl, []).append(node_id)
+    for row in by_level.values():
+        row.sort()
+
+    n_levels = max(by_level, default=0) + 1
+    row_height = 100 / max(n_levels, 1)
+    pos: dict[str, tuple[float, float]] = {}
+    nodes = []
+    for lvl in sorted(by_level):
+        row = by_level[lvl]
+        for i, node_id in enumerate(row):
+            x = (i + 1) / (len(row) + 1) * 100
+            y = lvl * row_height + row_height / 2
+            pos[node_id] = (x, y)
+            pct = node_pct.get(node_id)
+            status = "not_started" if pct is None else ("mastered" if pct >= 85 else "learning")
+            nodes.append({
+                "id": node_id,
+                "label": curriculum[node_id].get("concept", node_id),
+                "x": round(x, 1), "y": round(y, 1),
+                "pct": pct or 0, "status": status,
+            })
+
+    edges = []
+    for node_id, node in curriculum.items():
+        x2, y2 = pos[node_id]
+        for prereq in node.get("prerequisites", []):
+            if prereq not in pos:
+                continue
+            x1, y1 = pos[prereq]
+            edges.append({"x1": round(x1, 1), "y1": round(y1, 1), "x2": round(x2, 1), "y2": round(y2, 1)})
+
+    return {"nodes": nodes, "edges": edges, "height": max(n_levels * 22, 22)}
+
+
 @app.route("/progress")
 def progress():
     learner_uuid = session.get("learner_uuid", "")
@@ -311,7 +453,11 @@ def progress():
     skill_states = store.all_skill_states(db_id) if (store and db_id is not None) else []
     # Convert sqlite3.Row to plain dicts for the template.
     skills = [dict(r) for r in skill_states]
-    return render_template("progress.html", skills=skills)
+    node_pct = {s["skill_id"]: int(s["p_mastery"] * 100) for s in skills}
+    subject = session.get("subject") or DEFAULT_SUBJECT
+    curriculum = _SUBJECT_CURRICULA.get(subject, {})
+    graph = _compute_graph_layout(curriculum, node_pct) if curriculum else None
+    return render_template("progress.html", skills=skills, graph=graph)
 
 
 @app.route("/parent")
@@ -402,6 +548,40 @@ _ROLE_DISPLAY = {"learner": "Child", "tutor": "Mentar", "system": "System"}
 
 def _store_and_id(learner_uuid: str) -> tuple[LearnerStore | None, int | None]:
     return _stores.get(learner_uuid), _db_learner_ids.get(learner_uuid)
+
+
+def _current_node_mastery(learner_uuid: str, ctrl: SessionController) -> dict | None:
+    """U-34: a small per-skill mastery cue during the lesson (current node
+    only). None before the first PRESENT or when there's nothing scored yet."""
+    node_id = ctrl.current_node_id
+    if not node_id:
+        return None
+    store, db_id = _store_and_id(learner_uuid)
+    if store is None or db_id is None:
+        return {"skill_id": node_id, "pct": 0}
+    for row in store.all_skill_states(db_id):
+        if row["skill_id"] == node_id:
+            return {"skill_id": node_id, "pct": int(row["p_mastery"] * 100)}
+    return {"skill_id": node_id, "pct": 0}
+
+
+def _subjects_progress(learner_uuid: str) -> dict[str, dict]:
+    """U-20 progress cue on the subject picker: {subject_key: {mastered, total}},
+    only for subjects with an existing store (a learner who has played before
+    this server process started up) -- never triggers a fresh DB connection
+    just to render the picker."""
+    store, db_id = _store_and_id(learner_uuid)
+    if store is None or db_id is None:
+        return {}
+    mastered_ids = {
+        r["skill_id"] for r in store.all_skill_states(db_id) if r["p_mastery"] >= 0.85
+    }
+    out = {}
+    for key, curriculum in _SUBJECT_CURRICULA.items():
+        total = len(curriculum)
+        if total:
+            out[key] = {"mastered": len(mastered_ids & curriculum.keys()), "total": total}
+    return out
 
 
 def _persisted_turns(learner_uuid: str) -> list[dict] | None:

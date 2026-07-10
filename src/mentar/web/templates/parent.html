@@ -1,27 +1,11 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
-<title>Mentar — Parent view</title>
-<style>
-  body { background:#fffbe6; font-family: 'Segoe UI', Arial, sans-serif;
-         max-width:700px; margin:40px auto; padding:20px; }
-  h1 { color:#4a4a4a; font-size:1.6rem; }
-  .btn { font-size:1.1rem; padding:10px 24px; background:#4caf50; color:#fff;
-          border:none; border-radius:8px; cursor:pointer; margin-left:8px; }
-  .btn-danger { background:#e53935; }
-  .alert { background:#fde8e8; border:2px solid #e53935; border-radius:10px;
-            padding:20px; margin-bottom:20px; }
-  .banner-warn { background:#fff3cd; border:2px solid #e0a800; border-radius:10px;
-            padding:14px 20px; margin-bottom:20px; font-size:0.95rem; }
-  table { width:100%; border-collapse:collapse; margin-top:16px; }
-  th, td { padding:8px 12px; border:1px solid #ddd; text-align:left; font-size:0.95rem; }
-  th { background:#f5f5f5; }
-  .bar-wrap { background:#eee; border-radius:4px; height:12px; width:120px; display:inline-block; vertical-align:middle; }
-  .bar-fill { background:#4caf50; border-radius:4px; height:12px; }
-  .summary { background:#fff; border-radius:10px; padding:14px 18px;
-             margin-bottom:20px; font-size:0.95rem; color:#444;
-             box-shadow:0 1px 4px rgba(0,0,0,0.07); }
-</style>
-</head><body>
-<h1>Parent / carer view</h1>
+{% extends "_base.html" %}
+{% block title %}Mentar — Parent view{% endblock %}
+{% block header %}{# Parent view: no theme toggle chrome noise, keep it minimal/serious #}
+<div class="site-header"><a href="/" class="brand">Mentar <span class="subject-label">· Parent / carer view</span></a></div>
+<p class="trust-strip">Runs entirely on this device · no cloud · no accounts</p>
+{% endblock %}
+{% block content %}
+{# U-50: safety first, then session summary, then mastery, then answers, then full transcript (collapsed). #}
 {% if logging_degraded %}
 <div class="banner-warn">
   <b>Durable logging degraded.</b> At least one safety alert could not be saved to the
@@ -41,9 +25,22 @@
   </form>
 </div>
 {% endif %}
+{% if escalations %}
+<div class="card">
+  <h2 style="margin-top:0;font-size:1.1rem">Safety alerts</h2>
+  <table>
+    <tr><th>When</th><th>Type</th><th>What the child wrote</th><th>Acknowledged</th></tr>
+    {% for e in escalations %}
+    <tr><td>{{ e.freeze_started_at }}</td><td>{{ e.trigger_class }}</td>
+        <td>{{ e.trigger_text_verbatim }}</td>
+        <td>{{ 'yes' if e.parent_ack_at else 'no' }}</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endif %}
 
 {% if session_summary %}
-<div class="summary">
+<div class="card">
   <b>Session summary:</b>
   <b>{{ session_summary.n_correct }} correct out of {{ session_summary.n_responses }}</b>
   answer(s) &nbsp;·&nbsp; {{ session_summary.n_help }} help request(s)
@@ -51,52 +48,50 @@
 {% endif %}
 
 {% if skill_states %}
-<h2>Mastery progress</h2>
-<table>
-  <tr><th>Skill</th><th>Mastery</th><th>%</th></tr>
-  {% for s in skill_states %}
-  {% set pct = (s.p_mastery * 100) | int %}
-  <tr>
-    <td>{{ s.skill_id }}</td>
-    <td><span class="bar-wrap"><span class="bar-fill" style="width:{{ pct }}%;"></span></span></td>
-    <td>{{ pct }}%</td>
-  </tr>
-  {% endfor %}
-</table>
+<div class="card">
+  <h2 style="margin-top:0;font-size:1.1rem">Mastery progress</h2>
+  <table>
+    <tr><th>Skill</th><th>Mastery</th><th>%</th></tr>
+    {% for s in skill_states %}
+    {% set pct = (s.p_mastery * 100) | int %}
+    <tr>
+      <td>{{ s.skill_id }}</td>
+      <td><span class="bar-wrap"><span class="bar-fill" style="width:{{ pct }}%;"></span></span></td>
+      <td>{{ pct }}%</td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
 {% endif %}
 
-{% if escalations %}
-<h2>Safety alerts</h2>
-<table>
-  <tr><th>When</th><th>Type</th><th>What the child wrote</th><th>Acknowledged</th></tr>
-  {% for e in escalations %}
-  <tr><td>{{ e.freeze_started_at }}</td><td>{{ e.trigger_class }}</td>
-      <td>{{ e.trigger_text_verbatim }}</td>
-      <td>{{ 'yes' if e.parent_ack_at else 'no' }}</td></tr>
-  {% endfor %}
-</table>
-{% endif %}
 {% if answers %}
-<h2>Answers</h2>
-<table>
-  <tr><th>#</th><th>Skill</th><th>Answer</th><th>Result</th><th>With help?</th></tr>
-  {% for a in answers %}
-  <tr>
-    <td>{{ loop.index }}</td>
-    <td>{{ a.skill_id }}</td>
-    <td>{{ a.answer }}</td>
-    <td>{{ '✅ correct' if a.scored == 1 else '❌ wrong' }}</td>
-    <td>{{ '🆘 yes' if a.hinted == 1 else '—' }}</td>
-  </tr>
-  {% endfor %}
-</table>
+<div class="card">
+  <h2 style="margin-top:0;font-size:1.1rem">Answers</h2>
+  <table>
+    <tr><th>#</th><th>Skill</th><th>Answer</th><th>Result</th><th>With help?</th></tr>
+    {% for a in answers %}
+    <tr>
+      <td>{{ loop.index }}</td>
+      <td>{{ a.skill_id }}</td>
+      <td>{{ a.answer }}</td>
+      <td>{{ '✅ correct' if a.scored == 1 else '❌ wrong' }}</td>
+      <td>{{ '🆘 yes' if a.hinted == 1 else '—' }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
 {% endif %}
-<h2>Session log</h2>
-<table>
-  <tr><th>Who</th><th>Text</th></tr>
-  {% for t in turns %}
-  <tr><td>{{ t.role }}</td><td>{{ t.text }}</td></tr>
-  {% endfor %}
-</table>
-<p><a href="/">Back to lesson</a></p>
-</body></html>
+
+<details class="card">
+  <summary style="cursor:pointer;font-weight:bold">Session log (full transcript)</summary>
+  <table>
+    <tr><th>Who</th><th>Text</th></tr>
+    {% for t in turns %}
+    <tr><td>{{ t.role }}</td><td>{{ t.text }}</td></tr>
+    {% endfor %}
+  </table>
+</details>
+{% endblock %}
+{% block footer %}
+<div class="footer-nav"><a href="/">Back to lesson</a></div>
+{% endblock %}

@@ -449,6 +449,13 @@ class SessionController:
         return self._ctx.state.value
 
     @property
+    def current_node_id(self) -> str | None:
+        """The curriculum node the learner is currently on, or None before the
+        first PRESENT (read-only display accessor -- e.g. a per-skill mastery
+        cue in the web UI)."""
+        return self._ctx.current_node_id
+
+    @property
     def session_id(self) -> str:
         """The id of this controller's tutoring session (for durable-log reads)."""
         return self._session_id

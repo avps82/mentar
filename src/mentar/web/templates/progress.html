@@ -1,22 +1,30 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
-<title>Mentar — My Progress</title>
-<style>
-  body { background:#fffbe6; font-family: 'Segoe UI', Arial, sans-serif;
-         max-width:700px; margin:40px auto; padding:20px; }
-  h1 { color:#4a4a4a; font-size:1.6rem; }
-  h2 { color:#4a4a4a; font-size:1.2rem; margin-top:28px; }
-  .skill-card { background:#fff; border-radius:12px; padding:18px 22px;
-                margin-bottom:14px; box-shadow:0 2px 8px rgba(0,0,0,0.08); }
-  .skill-name { font-size:1.1rem; font-weight:bold; color:#333; margin-bottom:6px; }
-  .stars { font-size:1.5rem; letter-spacing:2px; }
-  .label { font-size:0.9rem; color:#555; margin-top:4px; }
-  .no-skills { color:#888; font-size:1rem; }
-  .back { color:#888; font-size:0.85rem; }
-</style>
-</head><body>
-<h1>My Progress</h1>
+{% extends "_base.html" %}
+{% block title %}Mentar — My Progress{% endblock %}
+{% block content %}
+<h1 style="font-size:1.4rem">My Progress</h1>
+{% if graph and graph.nodes %}
+<div class="graph-wrap">
+  <svg viewBox="0 0 100 {{ graph.height }}" role="img" aria-label="Concept map showing which skills are mastered, in progress, or not started yet" style="width:100%;height:auto;display:block">
+    {% for e in graph.edges %}
+    <line x1="{{ e.x1 }}" y1="{{ e.y1 }}" x2="{{ e.x2 }}" y2="{{ e.y2 }}" class="graph-edge" />
+    {% endfor %}
+    {% for n in graph.nodes %}
+    <g>
+      <title>{{ n.label }} — {{ n.status | replace("_", " ") }} ({{ n.pct }}%)</title>
+      <circle cx="{{ n.x }}" cy="{{ n.y }}" r="4" class="graph-node node-{{ n.status }}" />
+      <text x="{{ n.x }}" y="{{ n.y + 8 }}" text-anchor="middle" class="graph-node-label">{{ n.label | truncate(14, True, "") }}</text>
+    </g>
+    {% endfor %}
+  </svg>
+  <div class="graph-legend">
+    <span><span class="dot" style="background:var(--mastered)"></span>Mastered</span>
+    <span><span class="dot" style="background:var(--learning)"></span>Learning</span>
+    <span><span class="dot" style="background:var(--not-started)"></span>Not started yet</span>
+  </div>
+</div>
+{% endif %}
 {% if skills %}
-<h2>How you are doing with each topic:</h2>
+<h2 style="font-size:1.15rem;margin-top:24px">How you are doing with each topic:</h2>
 {% for s in skills %}
 {% set pct = (s.p_mastery * 100) | int %}
 {% if pct >= 80 %}
@@ -42,8 +50,9 @@
 </div>
 {% endfor %}
 {% else %}
-<p class="no-skills">No topics yet — come back after your first lesson!</p>
+<p class="hint">No topics yet — come back after your first lesson!</p>
 {% endif %}
-<hr>
-<p><a href="/" class="back">Back to lesson</a></p>
-</body></html>
+{% endblock %}
+{% block footer %}
+<div class="footer-nav"><a href="/">Back to lesson</a></div>
+{% endblock %}

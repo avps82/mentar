@@ -1,17 +1,18 @@
 ---
 title: "UI Rebuild — Requirements"
-version: v0.1
-status: "Requirements ratified 2026-07-10; design + per-screen specs = next phase (not started)"
+version: v1.0
+status: "Requirements ratified 2026-07-10; BUILT same session (all 6 flows) — see §8 build log. Maintainer review + screenshots (U-2a) still pending."
 last-updated: 2026-07-10
-owner: maintainer (ratified) / Opus (drafted)
+owner: maintainer (ratified) / Opus (drafted + built)
 sources: "docs/design/W6.3_pilot_interface.md (supersedes its 4-view minimalism for look-and-feel only); SESSION_FSM.md; SAFETY.md L2/L5; AGENTS.md RULES; PHASE0_STATUS backlog (web display row)"
 ---
 
 # UI Rebuild — Requirements
 
-Requirements only — no visual design, no implementation in this doc. The next phase
-(mockups + per-screen tight specs for gemma4:12b, one spec per screen tracing to the U-IDs
-below) starts only after the open decisions in §7 are made.
+Originally scoped as requirements-only, with mockups + per-screen gemma specs as a later
+phase. The maintainer directed a live, autonomous build the same session (once U-90/U-91/U-92
+were decided) rather than the phased mockup→spec→gemma path — see §8 for exactly what shipped,
+what deviated from the letter of a requirement and why, and what's still open.
 
 **Why.** The current web UI is six minimal Jinja templates (~230 lines, inline CSS). It
 works, but looks like a scaffold: nothing on screen says what Mentar *is* — local, private,
@@ -209,10 +210,92 @@ does the same.
   question_fragment`, `::test_answer_hx_fragment_escapes_html`, `::test_answer_hx_request_
   on_escalation_sends_hx_redirect`, `::test_done_route_shows_final_message_and_is_directly_
   navigable`. 469 tests green, ruff clean.
-- **U-91** Brand direction: keep 🍕-style playful emoji identity vs a drawn mascot/wordmark
-  (a mascot needs an artist or generated asset + licence decision). Still open.
-- **U-92** Palette preference (current warm cream/green vs something else) — pure taste,
-  cheap to decide now, expensive to churn later. Still open.
+- **U-91 RESOLVED 2026-07-10** — kept the 🍕-style emoji identity (maintainer's explicit
+  pick, the recommended option: zero new assets, zero licensing, buildable autonomously).
+  No mascot work done or planned.
+- **U-92 RESOLVED 2026-07-10** — maintainer wanted "something between" the Calm & Trustworthy
+  (teal/amber) and Bright & Modern (indigo/pink) preview options, **plus a light/dark toggle**
+  as a nice-to-have. Shipped as CSS custom properties in `static/style.css`: primary `#2F8F9D`
+  (a blended teal — more saturated than the calm option, less purple than the bright one),
+  accent `#FF7F50` (coral, between amber and pink-coral), background `#F9FAFC`. Dark variant
+  under `[data-theme="dark"]` with contrast-adjusted equivalents (primary `#5FC9D6`, accent
+  `#FF9776`, bg `#16202A`). Toggle: `static/theme.js` (~20 lines, owned, no deps) — reads
+  `prefers-color-scheme` for the initial value, persists an explicit user choice in
+  `localStorage`, flips a `data-theme` attribute on `<html>`.
+
+## §8 — Build log (2026-07-10, all 6 flows, same session as requirements ratification)
+
+Built directly against this doc's U-IDs once U-90/91/92 were decided; maintainer directed a
+live autonomous build ("do the rest... until all is completed") rather than the phased
+mockup→spec→gemma path originally scoped. Architecture: one shared `templates/_base.html`
+(header/trust-strip/theme-toggle/footer blocks) all 6 page templates now `{% extends %}`,
+one shared `static/style.css` (CSS custom properties, no per-template inline styles — U-10).
+472 tests green (was 463 pre-session), ruff clean, end-to-end content-level verification run
+against a live Flask test client for every screen (no rendered-pixel screenshot — see the gap
+note below). Per-screen:
+
+- **Subjects (U-20/U-21):** cards gained `icon`/`description` fields (added to the `SUBJECTS`
+  dict in `web/app.py`, presentation metadata only) + a per-subject "N of M skills mastered"
+  cue via new `_subjects_progress()` helper — only shown when a store already exists for that
+  learner (never triggers a fresh DB connection just to render the picker). Product one-liner
+  added per U-21.
+- **Learner/lesson (U-30–U-36):** htmx fragment-swap (already shipped, U-90) now targets a
+  `.question` block that also carries a `first-turn` class + distinct border when the
+  assent/transparency lines are present (U-35) — detected via `is_first_turn` computed from
+  `ctrl.state == SESSION_START` before calling `step()`, not string-matching the rendered
+  text. Visible Help/Stop buttons added (U-33) as two small satellite forms hitting the same
+  `/answer` route with the identical recognized strings (`"help"`/`"stop"`) — no new intents,
+  typed input still works. Per-skill mastery bar (U-34) added via a new
+  `SessionController.current_node_id` read-only property (small, additive, no FSM behaviour
+  change) + `_current_node_mastery()` helper.
+  **U-32 RESOLVED (fully, not just escaping):** the first htmx pass only escaped model/
+  generator text; added `_render_markdown_lite()` after re-checking against the requirement
+  text — escapes first (the security property, tested against a `<script>` payload), then
+  substitutes ONLY 4 whitelisted tags (`<strong>`/`<em>`/`<ul>`/`<li>`) for `**bold**`,
+  `*italic*`, and `* `/`- ` bullet lines; bold is substituted before italic so a bold span's
+  stars are consumed first; bullet markers are stripped per-line before the italic regex runs
+  so a leading `* ` is never misread as an emphasis delimiter. Wired into BOTH the htmx
+  fragment path and the full-page path (`index()` now passes `question_html` through the same
+  function, rendered via `{{ question_html | safe }}`) so they never visually disagree — this
+  was checked explicitly with a live full-page-load test after the first fragment-only version
+  shipped. Segment joining avoids inserting a raw `\n` next to `<ul>`/`<li>` tags (the
+  `.question` block is `white-space:pre-wrap`, so a stray newline next to a block element would
+  render as a visible gap) — caught by tracing the join logic by hand before shipping, not by
+  a failing test. Tests: `test_markdown_lite_renders_bold_italic_and_bullets`.
+  **Deviation — U-31 (visually distinct feedback vs. question area): NOT fully implemented.**
+  The controller bundles feedback and the next question into one `TurnResult.text` string;
+  splitting them visually would need a data-contract change (two fields, not one), which is a
+  controller change, not presentation — out of scope per U-82 ("goes back to the maintainer").
+  Flagging as a real gap, not silently dropping it.
+- **Progress/concept map (U-40–U-42):** new `_compute_graph_layout()` in `web/app.py` — a
+  pure, owned layered-DAG layout (level = 1 + max(prereq levels), percentage coordinates, no
+  graph library) rendered as an SVG in `progress.html`. Verified against the real 8-node
+  pilot fractions curriculum: 8 nodes, 7 edges, correct branch shape. Works for any curriculum
+  (arithmetic/science templates too — node count isn't hardcoded). The old star-card list
+  stays underneath as a supplementary "how you're doing in detail" view (kept, not replaced —
+  it was already tested and working; U-40 says the graph becomes the *centrepiece*, not the
+  *only* view).
+- **Parent dashboard (U-50–U-52):** reordered into safety-alerts → session-summary → mastery →
+  answers → full transcript (U-50); every literal string the safety tests assert on (`"correct
+  out of"`, `"Mastery progress"`, `"RESUME"`, confirm-word no-op, `"Durable logging degraded"`)
+  preserved byte-for-byte — only wrapped in `.card` styling and reordered. Transcript now a
+  `<details>` element, collapsed by default. Header block overridden to drop the theme-toggle/
+  brand-emoji chrome (keeps the trust strip) for a more serious tone on this screen.
+- **Frozen (U-60):** header/footer blocks emptied entirely — no brand link, no theme toggle,
+  no nav of any kind, verified via a new test (`<a ` and `theme-toggle` both absent from the
+  rendered HTML) in addition to the pre-existing trigger-text/confirm-word absence checks.
+- **Done (U-70):** new recap (questions answered, correct count, help count, skills touched)
+  sourced through the exact same `store.session_responses`/`session_help_events` calls already
+  used by `/parent` — no new store methods. Added a "See my progress map" link alongside
+  "Start again".
+- **Verification gap (be explicit, per CLAUDE.md's UI-testing instruction):** no headless
+  browser/screenshot tool is available in this sandbox (checked: no Playwright, no Chromium/
+  Firefox binary, no wkhtmltoimage/cutycapt, no project run-skill for this app) and installing
+  one would very likely hit the same external-fetch permission boundary documented under
+  U-90. Verification here is therefore full content/structural assertions against a real
+  Flask test client (every screen's HTML actually rendered and inspected, not just routes
+  hit) — not a rendered-pixel check. This lines up with U-2a anyway: the maintainer reviews
+  the actual running app before any screenshot is taken, which is the real visual QA step.
 
 ## Changelog
 
@@ -220,3 +303,4 @@ does the same.
 |------|--------|
 | 2026-07-10 | v0.1 — requirements drafted + ratified by the maintainer (audiences, no-landing, U-2a screenshot gate). Design phase not started. |
 | 2026-07-10 | U-90 resolved: htmx vendored + cleanly wired (no hybrid) after the maintainer typed the fetch command directly. New `GET /done` route; `X-Requested-With`/JSON contract replaced by native `HX-Request`/`HX-Redirect`; fragment responses HTML-escaped (U-32 pulled forward). 469 tests green. htmx `LICENSE` text still pending (same external-fetch boundary). |
+| 2026-07-10 | U-91/U-92 resolved (kept emoji identity; blended teal/coral palette + light/dark toggle) and all 6 flows built same session per maintainer direction — see §8. U-32 completed properly (full markdown-lite render, not just escaping) after re-checking the requirement text against the first pass. 473 tests green, ruff clean. Known gap: U-31 (feedback/question visual split) needs a controller data-contract change, out of scope; flagged not silently dropped. No screenshot/pixel verification available in-sandbox — content-level Flask-test-client verification only, real visual QA is the maintainer's pending review (U-2a). |

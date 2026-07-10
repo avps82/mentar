@@ -1,16 +1,21 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
-<title>Mentar — Done</title>
-<style>
-  body { background:#fffbe6; font-family: 'Segoe UI', Arial, sans-serif;
-         max-width:700px; margin:40px auto; padding:20px; }
-  h1 { color:#4a4a4a; font-size:1.6rem; }
-  .btn { font-size:1.1rem; padding:10px 24px; background:#4caf50; color:#fff;
-          border:none; border-radius:8px; cursor:pointer; text-decoration:none; }
-  .done-box { background:#e8f5e9; border-radius:12px; padding:30px; text-align:center;
-              font-size:1.3rem; }
-</style>
-</head><body>
-<h1>Mentar</h1>
-<div class="done-box">{{ message }}<br><br>
-<a href="/" class="btn">Start again</a></div>
-</body></html>
+{% extends "_base.html" %}
+{% block title %}Mentar — Done{% endblock %}
+{% block content %}
+<div class="done-box">
+  🎉 {{ message }}
+  {% if recap %}
+  <div class="done-recap">
+    <b>{{ recap.n_correct }}</b> correct out of <b>{{ recap.n_responses }}</b> question(s)
+    &nbsp;·&nbsp; {{ recap.n_help }} help request(s)
+    {% if recap.skills_touched %}
+    <div style="margin-top:8px">Skills practised today:
+      {{ recap.skills_touched | map('replace', '_', ' ') | map('title') | join(', ') }}
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+  <br><br>
+  <a href="/" class="btn">Start again</a>
+  <a href="/progress" class="btn btn-quiet">See my progress map</a>
+</div>
+{% endblock %}
