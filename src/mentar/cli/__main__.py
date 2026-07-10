@@ -6,6 +6,7 @@ Subcommands:
   serve             — Start the pilot web app (mentar.web.app).
   eval              — Generate (local model) + judge (Sonnet) over the eval dataset.
   validate-template — Validate a curriculum template against the W3.1 schema.
+  backup            — Checkpoint + copy the DB file, then verify the copy is intact.
 """
 
 from __future__ import annotations
@@ -335,6 +336,69 @@ def _eval(args, repo) -> int:
     return subprocess.run(cmd2).returncode
 
 
+def _backup(args) -> int:
+    """Checkpoint the WAL, copy the DB file, then verify the copy is intact.
+
+    D6: "export = file copy" isn't safe on its own with WAL mode -- the copy
+    can be mid-write. store.checkpoint() (already exists, nothing user-facing
+    called it) flushes+truncates the WAL first so the copy is consistent.
+    """
+    import sqlite3
+    from datetime import UTC, datetime
+
+    from mentar.db.store import LearnerStore
+
+    repo = _repo_root()
+    source_path = Path(args.db or str(repo / "mentar_pilot.db"))
+
+    if not source_path.exists():
+        print(f"ERROR: no database found at {source_path}", file=sys.stderr)
+        return 1
+
+    if args.dest:
+        dest_path = Path(args.dest)
+    else:
+        timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+        dest_path = source_path.with_suffix(f"{source_path.suffix}.backup-{timestamp}")
+
+    if dest_path.exists():
+        print(f"ERROR: destination already exists: {dest_path} (refusing to overwrite)", file=sys.stderr)
+        return 1
+
+    store = LearnerStore(str(source_path))
+    try:
+        try:
+            store.checkpoint()
+        except sqlite3.Error as e:
+            print(f"ERROR: failed to checkpoint {source_path}: {e}", file=sys.stderr)
+            return 1
+    finally:
+        store.close()
+
+    try:
+        shutil.copy2(source_path, dest_path)
+    except OSError as e:
+        print(f"ERROR: failed to copy {source_path} -> {dest_path}: {e}", file=sys.stderr)
+        return 1
+
+    try:
+        conn = sqlite3.connect(str(dest_path))
+        try:
+            result = conn.execute("PRAGMA integrity_check").fetchone()[0]
+            if result.lower() != "ok":
+                print(f"ERROR: backup integrity check failed: {result}", file=sys.stderr)
+                return 1
+            n_sessions = conn.execute("SELECT count(*) FROM session").fetchone()[0]
+        finally:
+            conn.close()
+    except sqlite3.Error as e:
+        print(f"ERROR: could not verify backup: {e}", file=sys.stderr)
+        return 1
+
+    print(f"Backup OK: {source_path} -> {dest_path} ({n_sessions} session row(s), integrity check passed)")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="mentar")
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -368,6 +432,10 @@ def main(argv: list[str] | None = None) -> int:
     )
     vt.add_argument("path", help="Path to curriculum template Markdown file.")
 
+    bk = sub.add_parser("backup", help="Checkpoint + copy the DB file, then verify the copy.")
+    bk.add_argument("--db", help="SQLite path (default: mentar_pilot.db).")
+    bk.add_argument("--dest", help="Backup destination (default: <db>.backup-<UTC timestamp>).")
+
     args = parser.parse_args(argv)
 
     if args.cmd == "setup":
@@ -388,6 +456,9 @@ def main(argv: list[str] | None = None) -> int:
         from mentar.tools.validate_template import report, validate
 
         return report(validate(args.path), args.path)
+
+    if args.cmd == "backup":
+        return _backup(args)
 
     # stubs
     print(f"mentar: '{args.cmd}' not implemented yet (stub).", file=sys.stderr)

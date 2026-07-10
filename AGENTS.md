@@ -39,6 +39,7 @@ dependency bump (see the comment at the top of that file).
 ./mentar serve                         # localhost web app
 ./mentar validate-template <path>      # curriculum template validator
 ./mentar eval                          # T1 eval harness over eval/dataset_v1.jsonl
+./mentar backup                        # checkpoint + copy the DB, then verify the copy
 ```
 
 ## Project layout
