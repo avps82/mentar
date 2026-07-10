@@ -519,6 +519,17 @@ class SessionController:
         return list(choices) if choices else None
 
     @property
+    def current_question_stem(self) -> str | None:
+        """R2.1: the live mc4 question WITHOUT inline "A) ..." options, or None
+        when no question is awaiting / the item has no structured stem. The web
+        view shows this + current_choices as radios instead of the full inline
+        text (which still exists on the item for CLI/transcript surfaces)."""
+        if self._ctx.state not in _QUESTION_AWAIT:
+            return None
+        item = self._ctx.current_item
+        return getattr(item, "stem", None)
+
+    @property
     def session_id(self) -> str:
         """The id of this controller's tutoring session (for durable-log reads)."""
         return self._session_id

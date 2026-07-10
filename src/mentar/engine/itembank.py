@@ -37,6 +37,11 @@ class Item:
     # string). None for non-choice items; the problem text may still carry the
     # inline "A) … B) …" form for the CLI/transcript.
     choices: tuple[str, ...] | None = None
+    # mc4 only: the question WITHOUT the inline "A) … B) …" options (R2.1) — the
+    # web view renders this + the radio choices, so the options never appear
+    # twice. None for non-choice items; `problem` keeps the full inline form for
+    # CLI/transcript surfaces that have no radios.
+    stem: str | None = None
 
 
 class ItemBank:
@@ -104,5 +109,6 @@ def load_item_bank(path: str | Path, rng: random.Random | None = None) -> ItemBa
             answer_type=d.get("answer_type", "free_text"),
             checker=d.get("checker", "none"),
             choices=tuple(d["choices"]) if d.get("choices") else None,
+            stem=d.get("stem"),
         ))
     return ItemBank(items, rng=rng)

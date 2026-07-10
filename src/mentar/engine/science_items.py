@@ -36,11 +36,12 @@ def _mc_which_is(rng: random.Random, prompt: str, classes: dict[str, list[str]])
     options = [*distractors, correct]
     rng.shuffle(options)
     letter = _LETTERS[options.index(correct)]
-    opts = "  ".join(f"{ltr}) {opt}" for ltr, opt in zip(_LETTERS, options, strict=True))
-    problem = f"{prompt.format(label=target)} {opts}. Answer with the letter."
-    # 5th element: structured choices (A/B/C/D order) — the web view renders these
-    # as radio buttons; the inline "A) …" text stays for the CLI/transcript.
-    return ("mc4", "mc_choice", problem, letter, options)
+    stem = prompt.format(label=target)
+    # 3rd element is the STEM (no inline "A) ..." options — R2.1: the web view
+    # shows stem + radios, the inline form is composed centrally for CLI/
+    # transcript by ItemGenerator._make via itemgen.compose_mc_problem).
+    # 5th element: structured choices (A/B/C/D order) for the radio buttons.
+    return ("mc4", "mc_choice", stem, letter, options)
 
 
 # ── Curated fact tables (the ground truth) — Year-4 friendly, disjoint classes ──

@@ -17,7 +17,11 @@ import sys
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
-from mentar.engine.itemgen import ARITHMETIC_GENERATORS, ItemGenerator  # noqa: E402
+from mentar.engine.itemgen import (  # noqa: E402
+    ARITHMETIC_GENERATORS,
+    ItemGenerator,
+    compose_mc_problem,
+)
 from mentar.engine.science_items import (  # noqa: E402
     SCIENCE_GENERATORS,
     _mc_which_is,
@@ -56,10 +60,11 @@ def test_mc_answer_letter_points_to_a_real_member():
     rng = random.Random(0)
     letters = "ABCD"
     for _ in range(100):
-        _, _, problem, letter, choices = _mc_which_is(rng, "Which is {label}?", classes)
-        opts = dict(re.findall(r"([A-D])\)\s*(\S+)", problem))
-        assert opts[letter].rstrip(".") in members
-        # Structured choices (5th element) must agree with the answer letter.
+        _, _, stem, letter, choices = _mc_which_is(rng, "Which is {label}?", classes)
+        # R2.1: the 3rd element is the STEM only -- no inline "A) ..." options
+        # (the web view shows stem + radios; CLI/transcript gets the composed
+        # inline form via itemgen.compose_mc_problem, tested separately).
+        assert not re.search(r"[A-D]\)\s", stem)
         assert choices[letters.index(letter)] in members
 
 
@@ -72,6 +77,9 @@ def test_science_mc_has_four_distinct_options():
     # Structured choices carried on the Item, in the same A/B/C/D order as the text.
     assert it.choices is not None and len(it.choices) == 4
     assert list(it.choices) == opts
+    # R2.1: stem carries no inline options; problem = compose_mc_problem(stem, choices).
+    assert it.stem is not None and "A)" not in it.stem
+    assert it.problem == compose_mc_problem(it.stem, it.choices)
 
 
 if __name__ == "__main__":

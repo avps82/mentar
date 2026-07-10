@@ -617,8 +617,12 @@ def _turn_context(learner_uuid: str, ctrl: SessionController, is_first_turn: boo
     prose), both rendered through the same markdown-lite (U-32), plus the
     answer-widget metadata (mc4 radio choices / fraction inputs)."""
     message = _last_messages.get(learner_uuid, "")
-    question = ctrl.question_display or "Ready when you are!"
     choices = ctrl.current_choices
+    # R2.1: an mc4 item with a structured stem shows JUST the stem (no inline
+    # "A) ..." options, no format hint -- the radios make the answer shape
+    # obvious). Anything else keeps the full question_display (unchanged).
+    stem = ctrl.current_question_stem
+    question = (stem if (choices and stem) else ctrl.question_display) or "Ready when you are!"
     return {
         "message_html": _render_markdown_lite(message) if message else "",
         "question_html": _render_markdown_lite(question),

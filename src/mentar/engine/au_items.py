@@ -31,11 +31,11 @@ _LETTERS = "ABCD"
 
 
 def _mc(problem_stem: str, options: list[str], correct_index: int):
-    """Assemble an mc4 tuple: inline "A) …" text for the CLI/transcript + the
-    structured choices list for the web radio buttons."""
-    opts_text = "  ".join(f"{ltr}) {opt}" for ltr, opt in zip(_LETTERS, options, strict=True))
-    problem = f"{problem_stem} {opts_text}. Answer with the letter."
-    return ("mc4", "mc_choice", problem, _LETTERS[correct_index], options)
+    """An mc4 tuple carrying the STEM (no inline "A) ..." options -- R2.1: the
+    web view shows stem + radios; ItemGenerator._make composes the inline
+    "A) ..." form centrally for CLI/transcript surfaces) + the structured
+    choices list for the web radio buttons."""
+    return ("mc4", "mc_choice", problem_stem, _LETTERS[correct_index], options)
 
 
 # ── Year 3 (AC9M3N01, AC9M3N02, AC9M3N03, AC9M3N04 alignment) ─────────────────

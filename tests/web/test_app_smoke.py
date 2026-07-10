@@ -347,6 +347,33 @@ def test_mc4_choices_render_as_radio_buttons():
         assert 'name="answer"' in body  # int/free-text fall back to the text input
 
 
+def test_mc4_question_box_shows_stem_only_not_options_thrice():
+    """R2.1: an mc4 question used to render its options THREE times (inline
+    "A) ... B) ..." text, the "(answer with a letter...)" format hint, AND the
+    radios) -- and TTS read them twice. The question box must now show only
+    the stem; the options appear exactly once, as radios."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+
+    app_mod, c = _client()
+    c.post("/choose", data={"subject": "science"})
+    html = c.get("/").get_data(as_text=True)
+    q_text = html.split('<div class="question-text">')[1].split("</div>")[0]
+
+    assert "A)" not in q_text and "B)" not in q_text
+    assert "answer with a letter" not in q_text.lower()
+    assert html.count('type="radio"') == 4  # options appear exactly once, as radios
+
+    # The full inline "A) ..." form still exists for surfaces without radios
+    # (CLI/transcript) -- composed centrally, not lost.
+    c.post("/answer", data={"answer": "A"})
+    parent_html = c.get("/parent").get_data(as_text=True)
+    assert "A)" in parent_html and "Answer with the letter" in parent_html
+
+
 def test_fraction_inputs_compose_server_side():
     """POST /answer with answer_num/answer_den (and no answer field) composes
     "n/d" server-side -- verified through the real controller scoring path."""

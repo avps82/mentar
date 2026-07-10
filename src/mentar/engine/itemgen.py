@@ -23,7 +23,21 @@ from collections.abc import Callable
 from mentar.engine.itembank import Item
 
 # A generator: rng -> (answer_type, checker, problem, answer)
+# mc4 generators may return a 5-tuple instead: (answer_type, checker, STEM,
+# answer, choices) -- the 3rd element is the question WITHOUT inline "A) ..."
+# options (R2.1); compose_mc_problem() builds the full inline form centrally,
+# once, for CLI/transcript surfaces (the web view shows the stem + radios).
 GenFn = Callable[[random.Random], "tuple[str, str, str, str]"]
+
+_LETTERS = "ABCD"
+
+
+def compose_mc_problem(stem: str, choices: tuple[str, ...] | list[str]) -> str:
+    """The single place that builds inline "A) … B) …" mc problem text — used
+    by every mc generator via ItemGenerator._make, so CLI/transcript output
+    (which has no radio buttons) still gets the full readable question."""
+    opts = "  ".join(f"{ltr}) {opt}" for ltr, opt in zip(_LETTERS, choices, strict=True))
+    return f"{stem} {opts}. Answer with the letter."
 
 _THINGS = ["stickers", "crayons", "grapes", "marbles", "sweets", "pencils", "apples", "cookies"]
 _GROUPS = ["children", "friends", "baskets", "boxes", "bags", "plates", "pots"]
@@ -169,14 +183,17 @@ class ItemGenerator:
         if gen is None:
             return None
         result = gen(self._rng)
-        answer_type, checker, problem, answer = result[:4]
-        # mc generators may return a 5th element: the structured choice texts in
-        # A/B/C/D order (drives the web radio buttons); 4-tuples stay valid.
+        answer_type, checker, third, answer = result[:4]
+        # mc generators return a 5th element (the structured choice texts, A/B/C/D
+        # order) -- when present, `third` is the STEM (no inline options) and the
+        # full inline problem is composed centrally (R2.1); 4-tuples are unaffected.
         choices = tuple(result[4]) if len(result) > 4 and result[4] else None
+        stem = third if choices else None
+        problem = compose_mc_problem(third, choices) if choices else third
         return Item(
             id=f"gen-{node_id}-{self._rng.randrange(10 ** 9)}",
             node=node_id, problem=problem, answer=answer,
-            answer_type=answer_type, checker=checker, choices=choices,
+            answer_type=answer_type, checker=checker, choices=choices, stem=stem,
         )
 
     def sample(self, node_id: str) -> Item | None:
