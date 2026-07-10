@@ -342,6 +342,23 @@ response, same session:
 Still pending from U-2a: the maintainer's approval of the overall look → then README
 screenshots.
 
+### Review round 2 (2026-07-10, after round 1 shipped) — findings, specs written, NOT yet built
+
+- **R2-1: MCQ options rendered three times** — inline in the question text ("A) a tree
+  B) …"), again in the format hint ("answer with a letter: A, B, C or D"), again as
+  radios; TTS reads the options twice. Fix direction (maintainer: "maybe this needs to be
+  redone"): generators return the question STEM separately; one central composer builds
+  the inline text for CLI/transcript surfaces; web shows stem + radios only, no hint.
+- **R2-2: TTS restarts instead of pausing** — clicking 🔊 mid-read restarts the sentence.
+  Fix direction (maintainer): three-state button — 🔊 idle → ⏸ speaking → ▶️ paused —
+  via `speechSynthesis.pause()/resume()`, plus cancel-on-htmx-swap so a new question
+  never plays over stale audio.
+
+**Tight `[G]` specs for both live in `docs/REMAINDER_PLAN.md` → "UI review round 2 (R2)"**
+(maintainer asked for plan-first so gemma/Sonnet can execute). Order: R2.1 before R2.2
+(the stem change alters what TTS reads). R2.2 carries a manual hands-on checklist since
+audio isn't verifiable in the build sandbox.
+
 ## Changelog
 
 | Date | Change |

@@ -121,6 +121,107 @@ WebSearch/Context7 at execution time, not from training-data memory (maintainer 
 
 ---
 
+# UI review round 2 (R2) — tight specs, gemma-executable
+
+Maintainer's second hands-on review (2026-07-10, after review round 1 shipped). Two
+findings, both `[G]` (route through the `gemma` skill: spec → gemma4:12b drafts → Sonnet/Opus
+verifies; needs `MENTAR_VLLM_*` from `eval/.creds.env`; remember `think:false` is handled by
+`tools/llm.sh`). **Do R2.1 first** — it changes what the TTS reads, so R2.2's audio behaviour
+depends on it. Per-task gate unchanged: `pytest tests/ -q` green + `ruff check .` clean +
+Accept criteria; one commit per task.
+
+## R2.1 — MCQ shows its options THREE times; web should show stem + radios only  `[G]`
+
+- **Why (maintainer finding, verbatim symptom):** an mc4 question renders as
+  *"Which of these is a non-living thing? A) a tree  B) a flower  C) a fish  D) a spoon.
+  Answer with the letter. (answer with a letter: A, B, C or D)"* **and** the same four
+  options again as radio buttons — the options appear in the inline text, the format hint
+  repeats the letters, and the radios repeat the options. The TTS also reads the options
+  twice (once from the question text, once from the radio labels).
+- **Design (structure at the source, same principle as the R1 turn-payload fix — never
+  string-strip the options back out):** mc generators return the question **stem** and the
+  options separately; ONE central place composes the inline "A) …" text for surfaces that
+  need plain text (CLI, transcript, parent view); the web learner view renders stem + radios
+  only, with **no format hint** (the radios make the answer shape obvious).
+- **Spec:**
+  1. `src/mentar/engine/itembank.py` — `Item` gains `stem: str | None = None` (after
+     `choices`; same comment style: the question WITHOUT the inline options, for surfaces
+     that render choices structurally). `load_item_bank` reads `stem=d.get("stem")`.
+  2. `src/mentar/engine/itemgen.py` — new module-level helper:
+     `def compose_mc_problem(stem: str, choices: Sequence[str]) -> str` returning
+     `f"{stem} " + "  ".join(f"{L}) {c}" ...) + ". Answer with the letter."` (exact format
+     the generators use today — copy it, don't invent). In `ItemGenerator._make`: when the
+     generator returned choices, treat the 3rd tuple element as the STEM — set
+     `problem=compose_mc_problem(stem, choices)`, `stem=stem` on the Item; non-choice
+     generators are unchanged (stem=None).
+  3. `src/mentar/engine/science_items.py` `_mc_which_is` — return the stem WITHOUT the
+     inline options (delete its local composition; it becomes
+     `(answer_type, checker, stem, letter, options)`). Keep the fact-table logic identical.
+  4. `src/mentar/engine/au_items.py` `_mc` — same change: drop the inline composition,
+     return the stem; delete the now-unused `opts_text` line.
+  5. `src/mentar/dialogue/controller.py` — new read-only property `current_question_stem`:
+     `getattr(self._ctx.current_item, "stem", None)` when state in `_QUESTION_AWAIT`, else
+     None (mirror `current_choices`' shape/docstring style). `question_display` composition
+     is UNCHANGED (CLI/transcript keep the full inline text + letter hint — they have no
+     radios).
+  6. `src/mentar/web/app.py` `_turn_context` — when `choices` AND
+     `ctrl.current_question_stem`: `question = ctrl.current_question_stem` (stem only, no
+     format hint). Otherwise unchanged.
+- **Files:** the five above + `tests/engine/test_au_items.py`,
+  `tests/engine/test_science_items.py`, `tests/web/test_app_smoke.py`,
+  `tests/dialogue/test_controller.py`.
+- **Accept (hand-write the tests — gemma's self-written tests are only trusted for pure
+  helpers):**
+  - mc items carry `stem` (no "A)" inside it) AND `problem` still contains "A)" and
+    "Answer with the letter" (CLI/transcript unchanged) — assert both in the au/science
+    generator tests.
+  - web: for the science subject, the `.question-text` div contains the stem but NOT "A)"
+    and NOT "(answer with a letter"; the 4 radios still render; `/parent`'s transcript
+    still shows the full inline options text.
+  - controller: `current_question_stem` returns the stem for an mc item and None for an
+    int item.
+  - Full suite + ruff green.
+
+## R2.2 — TTS: pause/resume instead of restart-from-the-top  `[G]`
+
+- **Why (maintainer finding):** clicking 🔊 while it's reading restarts the whole sentence;
+  there's no pause. Wanted: click → pause icon; click again → pause; click again → resume
+  from where it stopped.
+- **Design:** a three-state button driven by the Web Speech API's `pause()`/`resume()`:
+  `idle` (🔊 "Read the question aloud") → click → `speaking` (⏸ "Pause") → click →
+  `paused` (▶️ "Resume") → click → `speaking`. Natural end (or error) → back to `idle`.
+  State lives module-level in the script (the button element is REPLACED by every htmx
+  swap, so never store state on the element).
+- **Spec — rewrite `src/mentar/web/static/tts.js` (owned, no deps, ~60 lines):**
+  1. Keep the feature-detect (hide `.tts-btn` when `speechSynthesis` is unavailable) and
+     the document-level click delegation (survives htmx swaps with no rebinding).
+  2. Module state: `let state = "idle";` Click on `.tts-btn`:
+     - `idle` → assemble text from `.question-text` textContent + each `.choice-option`
+       textContent (joined ". "), `speechSynthesis.cancel()` first (clear any stale queue),
+       create the utterance (rate 0.9), set `utterance.onend` AND `utterance.onerror` to a
+       `reset(btn)` that restores 🔊/aria-label and `state="idle"`, then `speak()`;
+       `state="speaking"`, button shows ⏸ with `aria-label="Pause"`.
+     - `speaking` → `speechSynthesis.pause()`; `state="paused"`; button ▶️
+       `aria-label="Resume reading"`.
+     - `paused` → `speechSynthesis.resume()`; `state="speaking"`; button ⏸.
+  3. New-question safety: `document.body.addEventListener("htmx:afterSwap", ...)` →
+     `speechSynthesis.cancel(); state="idle";` — WITHOUT this, the previous question's
+     audio keeps playing over the new question (the swap replaces the button, which comes
+     back as 🔊/idle by construction, so only the module state + audio need resetting).
+  4. Comment the known platform ceiling: `speechSynthesis.pause()` is unreliable on some
+     mobile browsers (may behave as stop) — acceptable for the desktop/tablet pilot;
+     no workaround attempted.
+- **Files:** `src/mentar/web/static/tts.js` only (plus, if the icon needs it, a one-line
+  CSS tweak in `style.css`).
+- **Accept:** JS isn't covered by pytest — gate = ruff/pytest untouched-green plus this
+  **manual checklist for the maintainer's next hands-on look** (record the outcome in
+  UI_REQUIREMENTS.md §9): (a) click 🔊 → reads stem + options once (no duplication — needs
+  R2.1 first), icon becomes ⏸; (b) click ⏸ mid-sentence → audio stops, icon ▶️; (c) click
+  ▶️ → resumes from where it stopped (NOT from the top); (d) letting it finish → icon back
+  to 🔊; (e) submitting an answer mid-read → audio stops, new question's button is 🔊.
+
+---
+
 # Remainder Build Plan — v2
 
 Most of v1 shipped; **G0 is essentially validated** (model pick, safety, retrieval, E2E,
