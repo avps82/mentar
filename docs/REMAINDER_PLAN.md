@@ -130,7 +130,7 @@ verifies; needs `MENTAR_VLLM_*` from `eval/.creds.env`; remember `think:false` i
 depends on it. Per-task gate unchanged: `pytest tests/ -q` green + `ruff check .` clean +
 Accept criteria; one commit per task.
 
-## R2.1 — MCQ shows its options THREE times; web should show stem + radios only  `[G]`
+## R2.1 — MCQ shows its options THREE times; web should show stem + radios only  `[G]` ✅ DONE 2026-07-11 (commit e264652)
 
 - **Why (maintainer finding, verbatim symptom):** an mc4 question renders as
   *"Which of these is a non-living thing? A) a tree  B) a flower  C) a fish  D) a spoon.
@@ -182,7 +182,7 @@ Accept criteria; one commit per task.
     int item.
   - Full suite + ruff green.
 
-## R2.2 — TTS: pause/resume instead of restart-from-the-top  `[G]`
+## R2.2 — TTS: pause/resume instead of restart-from-the-top  `[G]` ✅ DONE 2026-07-11 (commit d85788e) — needs maintainer's hands-on audio check
 
 - **Why (maintainer finding):** clicking 🔊 while it's reading restarts the whole sentence;
   there's no pause. Wanted: click → pause icon; click again → pause; click again → resume
@@ -220,7 +220,7 @@ Accept criteria; one commit per task.
   ▶️ → resumes from where it stopped (NOT from the top); (d) letting it finish → icon back
   to 🔊; (e) submitting an answer mid-read → audio stops, new question's button is 🔊.
 
-## R2.3 — answer-mode registry: one configurable place mapping answer types → input widgets  `[G]`
+## R2.3 — answer-mode registry: one configurable place mapping answer types → input widgets  `[G]` ✅ DONE 2026-07-11 (commit e043dc4)
 
 - **Why (maintainer ask):** "better to have config for different modes for answering
   things." Today the widget choice is hardcoded as an if/elif chain in `_turn.html`
@@ -322,9 +322,10 @@ Accept criteria; one commit per task.
   "Equivalent fra<" (the old cut); node `"label"` (tooltip) still carries the full text;
   full suite + ruff green.
 
-**R2 execution order: R2.1 → R2.3 → R2.2** (R2.4 ✅ DONE, was independent of the
-other three; R2.3 folds R2.1's hint-suppression into the mode registry; R2.2's audio
-depends on R2.1's stem).
+**R2 batch ✅ ALL FOUR DONE 2026-07-11** (R2.1 e264652, R2.3 e043dc4, R2.2 d85788e,
+R2.4 83b9b1c). R2.2's pause/resume behaviour still needs the maintainer's hands-on audio
+check (not verifiable in-sandbox). **R3 (Year > Subject IA) remains plan-only** below —
+was explicitly scoped "plan but don't execute"; needs a fresh go-ahead before building.
 
 ---
 

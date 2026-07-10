@@ -342,7 +342,7 @@ response, same session:
 Still pending from U-2a: the maintainer's approval of the overall look → then README
 screenshots.
 
-### Review round 2 (2026-07-10, after round 1 shipped) — findings, specs written, NOT yet built
+### Review round 2 (2026-07-10, after round 1 shipped) — ✅ ALL FOUR (R2.1–R2.4) SHIPPED 2026-07-11
 
 - **R2-1: MCQ options rendered three times** — inline in the question text ("A) a tree
   B) …"), again in the format hint ("answer with a letter: A, B, C or D"), again as
