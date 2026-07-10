@@ -220,6 +220,72 @@ Accept criteria; one commit per task.
   ▶️ → resumes from where it stopped (NOT from the top); (d) letting it finish → icon back
   to 🔊; (e) submitting an answer mid-read → audio stops, new question's button is 🔊.
 
+## R2.3 — answer-mode registry: one configurable place mapping answer types → input widgets  `[G]`
+
+- **Why (maintainer ask):** "better to have config for different modes for answering
+  things." Today the widget choice is hardcoded as an if/elif chain in `_turn.html`
+  (choices → radios; `fraction` → num/den boxes; else text) and the server-side
+  answer-composition rule (`answer_num`/`answer_den` → `"n/d"`) is inlined in `/answer`.
+  Adding a new answering mode (mixed numbers `1 1/2`, a future decimal widget, a typed
+  letter fallback…) currently means touching template AND route in lockstep. One registry
+  = one place to add/adjust a mode.
+- **Design:** a single owned registry module — code-level config, NOT a YAML file (there's
+  no per-deployment reason to vary widgets at runtime; a dict in one module is the
+  configuration surface, reviewable and testable). Each answer mode owns BOTH halves of
+  the contract: how the input renders, and how the posted form composes back into the
+  single answer string the verifier already accepts. The verifier grammar itself is
+  UNTOUCHED — modes only shape input/display.
+- **Spec:**
+  1. New `src/mentar/web/answer_modes.py`:
+     ```python
+     @dataclass(frozen=True)
+     class AnswerMode:
+         widget: str                 # template branch key: "radio" | "fraction" | "number" | "text"
+         show_format_hint: bool      # whether question_display's "(answer like …)" hint is shown on the web
+         compose: Callable[[Mapping], str]   # request.form -> the single answer string for ctrl.step()
+
+     def _compose_default(form): return form.get("answer", "").strip()
+     def _compose_fraction(form):
+         answer = _compose_default(form)
+         if answer: return answer
+         num, den = form.get("answer_num", "").strip(), form.get("answer_den", "").strip()
+         return f"{num}/{den}" if num and den else ""
+
+     ANSWER_MODES: dict[str, AnswerMode] = {
+         "mc4":      AnswerMode("radio",    show_format_hint=False, compose=_compose_default),
+         "fraction": AnswerMode("fraction", show_format_hint=True,  compose=_compose_fraction),
+         "int":      AnswerMode("number",   show_format_hint=True,  compose=_compose_default),
+         "free_text": AnswerMode("text",    show_format_hint=True,  compose=_compose_default),
+     }
+     DEFAULT_MODE = ANSWER_MODES["free_text"]
+     def mode_for(answer_type): return ANSWER_MODES.get(answer_type or "", DEFAULT_MODE)
+     ```
+     ("number" = the plain text input but `type="number" inputmode="numeric"` — a nicer
+     mobile keyboard for int answers; behaviour otherwise identical.)
+  2. `src/mentar/web/app.py` — `/answer` replaces its inline fraction-compose block with
+     `answer_text = mode_for(ctrl.current_answer_type).compose(request.form)`;
+     `_turn_context` adds `"mode": mode_for(ctrl.current_answer_type)` and uses
+     `mode.show_format_hint` to decide stem-vs-full-display for mc4 (folds into R2.1's
+     branch — after R2.1, "show the stem" = `not mode.show_format_hint and choices`).
+  3. `src/mentar/web/templates/_turn.html` — switch on `mode.widget` instead of the
+     current `choices`/`answer_type == "fraction"` conditions (radio branch still guards
+     on `choices` being present — an mc4 item without structured choices falls back to the
+     text input, same as today).
+  4. Adding a future mode (e.g. mixed number) = one `AnswerMode` entry + one template
+     branch + its compose function — document this in the module docstring as the
+     extension recipe.
+- **Files:** `src/mentar/web/answer_modes.py` (new), `src/mentar/web/app.py`,
+  `src/mentar/web/templates/_turn.html`, `tests/web/test_app_smoke.py` (+ a small pure
+  test file `tests/web/test_answer_modes.py`).
+- **Accept (hand-write tests):** pure-registry tests — `mode_for("mc4").widget == "radio"`,
+  unknown/None answer_type falls back to text, `_compose_fraction` composes "3/4" and
+  prefers a direct `answer` field when both present; existing web tests (radios render,
+  fraction composes server-side, letter answers score) still pass unchanged through the
+  registry path; int questions now render `type="number"`; full suite + ruff green.
+
+**R2 execution order: R2.1 → R2.3 → R2.2** (R2.3 folds R2.1's hint-suppression into the
+mode registry; R2.2's audio depends on R2.1's stem).
+
 ---
 
 # Remainder Build Plan — v2

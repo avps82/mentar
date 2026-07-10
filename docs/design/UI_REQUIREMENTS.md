@@ -354,10 +354,17 @@ screenshots.
   via `speechSynthesis.pause()/resume()`, plus cancel-on-htmx-swap so a new question
   never plays over stale audio.
 
-**Tight `[G]` specs for both live in `docs/REMAINDER_PLAN.md` → "UI review round 2 (R2)"**
-(maintainer asked for plan-first so gemma/Sonnet can execute). Order: R2.1 before R2.2
-(the stem change alters what TTS reads). R2.2 carries a manual hands-on checklist since
-audio isn't verifiable in the build sandbox.
+- **R2-3: configurable answer modes** — maintainer: "better to have config for different
+  modes for answering things." The widget if/elif chain in `_turn.html` + the inline
+  compose rule in `/answer` become a single owned registry
+  (`web/answer_modes.py`: answer_type → widget / hint policy / form-compose fn) so new
+  answering modes (mixed numbers, decimals-later, …) are one entry + one template branch.
+
+**Tight `[G]` specs for all three live in `docs/REMAINDER_PLAN.md` → "UI review round 2
+(R2)"** (maintainer asked for plan-first so gemma/Sonnet can execute). Execution order:
+**R2.1 → R2.3 → R2.2** (R2.3 folds R2.1's hint-suppression into the registry; R2.2's audio
+depends on R2.1's stem). R2.2 carries a manual hands-on checklist since audio isn't
+verifiable in the build sandbox.
 
 ## Changelog
 
