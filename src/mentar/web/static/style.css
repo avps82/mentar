@@ -115,10 +115,17 @@ a { color: var(--primary-strong); }
   box-shadow: var(--shadow);
 }
 
-input[type=text] {
+/* The bare number widget (R2.3's "number" mode, used for int-answer questions
+   e.g. addition) had NO explicit rule here -- it fell back to the browser's
+   bare default number-input styling, rendering visibly smaller than the
+   fully-styled .btn next to it. min-height matches .btn's own explicit
+   min-height: 44px exactly, so the two are guaranteed equal, not just
+   "hopefully similar" via matching padding. */
+input[type=text], input[type=number] {
   font-size: 1.2rem;
   padding: 10px 16px;
   width: 60%;
+  min-height: 44px;
   border: 2px solid var(--border);
   border-radius: 8px;
   background: var(--surface);
@@ -201,7 +208,7 @@ input[type=text] {
 
 /* Fraction numerator/denominator inputs */
 .fraction-input { display: flex; align-items: center; gap: 8px; }
-.fraction-input input[type=number] { width: 90px; font-size: 1.2rem; padding: 10px 12px;
+.fraction-input input[type=number] { width: 90px; min-height: 44px; font-size: 1.2rem; padding: 10px 12px;
   border: 2px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); }
 .fraction-slash { font-size: 1.6rem; color: var(--text-muted); }
 
