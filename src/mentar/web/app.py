@@ -33,6 +33,7 @@ from markupsafe import escape
 from mentar.db.adapter import _DbStoreAdapter
 from mentar.db.store import LearnerStore
 from mentar.dialogue.controller import FSMState, SessionController
+from mentar.engine.au_items import AU_YEAR3_GENERATORS, AU_YEAR4_GENERATORS
 from mentar.engine.curriculum import load_curriculum, load_template_subject
 from mentar.engine.itembank import load_item_bank
 from mentar.engine.itemgen import (
@@ -94,6 +95,23 @@ SUBJECTS: dict[str, dict] = {
         "curriculum": _TPL / "science.md",
         "itembank": None,
         "generators": SCIENCE_GENERATORS,
+    },
+    # ACARA-aligned per-year templates (Australian Curriculum v9, Number strand).
+    "au_year3_maths": {
+        "label": "Maths — Year 3 🇦🇺",
+        "icon": "3️⃣",
+        "description": "Place value, adding, times tables and fractions (Australian Year 3).",
+        "curriculum": _REPO / "curriculum" / "templates" / "AU" / "year3_maths.md",
+        "itembank": None,
+        "generators": AU_YEAR3_GENERATORS,
+    },
+    "au_year4_maths": {
+        "label": "Maths — Year 4 🇦🇺",
+        "icon": "4️⃣",
+        "description": "Bigger numbers, times tables to 10×10, division and equivalent fractions (Australian Year 4).",
+        "curriculum": _REPO / "curriculum" / "templates" / "AU" / "year4_maths.md",
+        "itembank": None,
+        "generators": AU_YEAR4_GENERATORS,
     },
 }
 DEFAULT_SUBJECT = "fractions"

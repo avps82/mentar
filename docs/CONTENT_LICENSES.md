@@ -76,6 +76,14 @@ back or to another mounted ZIM needs no new licence work):
 
 ---
 
+## 2b. Curriculum-standard alignment sources (not grounding content)
+
+| Source | Licence | Use in Mentar | Notes |
+|--------|---------|---------------|-------|
+| **ACARA — Australian Curriculum v9** (australiancurriculum.edu.au) | **CC BY 4.0** for core curriculum content (verified against the site's copyright/terms page 2026-07-10) | `curriculum/templates/AU/*.md` reference **content-description CODES only** (e.g. AC9M3N01) as alignment identifiers; all node labels, question text and generator fact tables are **Mentar-authored** — no ACARA descriptor text is reproduced. | Attribution format if descriptor text is ever quoted: "© Australian Curriculum, Assessment and Reporting Authority (ACARA) 2010 to present" + download date + modification note. ⚠️ The **National Literacy Learning Progressions are CC BY-NC 4.0** (non-commercial) and "Excluded Materials" (photos/videos/teacher resources) are view-only — do NOT pull from either. |
+
+---
+
 ## 3. Hosted-tier / out-of-scope conflicts (logged, NOT resolved here)
 
 | Source | Licence | Conflict | Disposition |
@@ -102,3 +110,4 @@ Khan content format/integration (ZIM vs Kolibri) is a separate open item — SPE
 | Date | Change |
 |------|--------|
 | 2026-07-10 | v0.2 — Khan Academy promoted from §3-only (Phase-3 blocker note) to §1 (live pilot grounding source, cleared for local use) following B1's 2026-07-05 re-point. Vikidia/Simple-WP re-labelled cleared alternates, not currently mounted. Added the "no attribution UI exists yet, for any source" honesty note (D1, post-release-wave gap sweep). |
+| 2026-07-10 | v0.3 — new §2b: ACARA (Australian Curriculum v9) logged as a curriculum-ALIGNMENT source for the new `curriculum/templates/AU/` templates. Core content CC BY 4.0 (verified live against the site's copyright page); Mentar references codes only, reproduces no descriptor text; NC-licensed Literacy Progressions + view-only Excluded Materials flagged as off-limits. |
