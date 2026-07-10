@@ -1,10 +1,10 @@
 ---
 title: "Mentar — Content Licence Audit (Pilot Sources)"
-version: v0.1
+version: v0.2
 status: "Pilot sources cleared; hosted-tier conflicts logged"
-last-updated: 2026-06-14
+last-updated: 2026-07-10
 scope: "Phase-0 pilot grounding sources ONLY (W4.1). Not a full content-licensing policy."
-sources: "PHASE0.md W4.1; SPEC §18 (content stack), §24 #12; curriculum/templates/_pilot/fractions.md grounding anchors"
+sources: "PHASE0.md W4.1; SPEC §18 (content stack), §24 #12; curriculum/templates/_pilot/fractions.md grounding anchors; REMAINDER_PLAN.md B1 (2026-07-05 re-point to Khan Academy)"
 ---
 
 # Content Licence Audit — Pilot Sources
@@ -21,19 +21,32 @@ and tracked separately (see §3).
 ## 1. Pilot grounding sources — cleared for local pilot use
 
 The pilot grounds explanations in vetted reference passages (RAG, not recall — SAFETY.md
-Layer 6). The pilot template (`curriculum/templates/_pilot/fractions.md`) anchors to:
+Layer 6). **As of B1 (2026-07-05), the live pilot template
+(`curriculum/templates/_pilot/fractions.md`) anchors all 8 nodes to Khan Academy** — the
+originally-intended Vikidia/Simple-WP ZIMs were never present on the real mount
+(`/mnt/zim`); see `REMAINDER_PLAN.md` B1 for the full re-point story. Vikidia/Simple-WP stay
+listed below as cleared, verified alternates (the reader supports either; a future re-point
+back or to another mounted ZIM needs no new licence work):
 
 | Source | Licence | Local pilot use | Attribution / share-alike obligation |
 |--------|---------|-----------------|--------------------------------------|
-| **Vikidia** (en.vikidia.org) | CC BY-SA 3.0 | ✅ Compatible | Must credit Vikidia + authors; derivatives/adaptations must be shared under CC BY-SA (compatible). |
-| **Simple English Wikipedia** | CC BY-SA 4.0 (text; also GFDL legacy) | ✅ Compatible | Must credit Wikipedia contributors + link licence; share-alike on derivatives. |
+| **Khan Academy** (khanacademy_en_all, ZIM) — **live pilot source** | CC BY-NC-SA (unspecified version on the ZIM; treat as 3.0/4.0-equivalent pending exact confirmation) | ✅ Cleared for the **non-commercial local pilot** — a single supervised family running the OSS edition locally does not trigger the NC clause. **Does NOT clear the Phase-3 paid hosted tier** — see §3, same source, different tier. | Must credit Khan Academy; ND is not asserted by CC BY-NC-SA but SA (share-alike) is — any redistributed adaptation of KA text/transcript inherits CC BY-NC-SA (which is itself NC, compounding the hosted-tier restriction, not removing it). |
+| **Vikidia** (en.vikidia.org) — cleared alternate, not currently mounted | CC BY-SA 3.0 | ✅ Compatible | Must credit Vikidia + authors; derivatives/adaptations must be shared under CC BY-SA (compatible). |
+| **Simple English Wikipedia** — cleared alternate, not currently mounted | CC BY-SA 4.0 (text; also GFDL legacy) | ✅ Compatible | Must credit Wikipedia contributors + link licence; share-alike on derivatives. |
 
 **Why these are fine for the pilot:**
 - The pilot runs **local-only**, single supervised family — the content is read as grounding,
-  not redistributed publicly. No commercial use.
-- Both are CC BY-SA: no NonCommercial (NC) and no NoDerivatives (ND) clause → compatible
-  with Mentar's local use and an eventual OSS edition (subject to honoring attribution +
-  share-alike if any adapted text is redistributed).
+  not redistributed publicly. No commercial use. This is exactly the condition that clears
+  Khan Academy's NC clause for the pilot while still blocking it from the paid hosted tier.
+- Vikidia/Simple-WP are CC BY-SA: no NonCommercial (NC) and no NoDerivatives (ND) clause →
+  compatible with Mentar's local use and an eventual OSS edition (subject to honoring
+  attribution + share-alike if any adapted text is redistributed). Khan Academy adds the NC
+  clause on top, which is why it's pilot-only, not OSS-edition-general the way Vikidia/
+  Simple-WP are — see §3.
+- **No attribution UI exists for any source today** (Khan Academy or Vikidia/Simple-WP) — the
+  reader surfaces grounding passages to the LLM's system prompt only, never with a
+  learner/parent-visible source-credit string. The obligation below is tracked here + in each
+  curriculum node's `grounding:` metadata (source + anchor), not yet built as a UI feature.
 
 **Obligations to honour even in the pilot (cheap to do now):**
 1. Keep the source + anchor URL with each grounded passage (already in template `grounding:`).
@@ -48,6 +61,13 @@ Layer 6). The pilot template (`curriculum/templates/_pilot/fractions.md`) anchor
 
 ## 2. Verification notes (per source)
 
+- **Khan Academy:** stated CC BY-NC-SA site-wide (khanacademy.org footer/terms as of the
+  earlier W4.1 pass, logged in §3 pre-B1). The exact version (3.0 vs 4.0) on the specific
+  `khanacademy_en_all_2023-03.zim` mirror is unconfirmed — treat as the more restrictive
+  reading until verified. The pilot grounds on the video's **English `.vtt` subtitle
+  transcript** (plain narration text extracted by `ZimReader.get_video_narration`), never the
+  video file itself or page images — same "text passages only, no media" discipline as
+  Vikidia/Simple-WP below.
 - **Vikidia (en):** stated CC BY-SA 3.0. Some Vikidia language editions differ — the pilot
   uses the **English** edition; reconfirm if other-language editions are added.
 - **Simple English Wikipedia:** Wikimedia text is CC BY-SA 4.0 (with GFDL dual-licence
@@ -60,7 +80,7 @@ Layer 6). The pilot template (`curriculum/templates/_pilot/fractions.md`) anchor
 
 | Source | Licence | Conflict | Disposition |
 |--------|---------|----------|-------------|
-| **Khan Academy** content | CC BY-NC-SA | **NC (NonCommercial) clause vs Mentar paid hosted tier** | **Phase-3 blocker.** The NC clause is incompatible with a *paid* hosted tier. Fine for non-commercial local/OSS use; must NOT be bundled into any paid offering without a separate Khan licence. Logged in SPEC §24. |
+| **Khan Academy** content | CC BY-NC-SA | **NC (NonCommercial) clause vs Mentar paid hosted tier** | **Phase-3 blocker.** Same source as §1's live pilot anchor — the NC clause doesn't block the non-commercial local pilot (§1), only a *paid* hosted tier. Must NOT be bundled into any paid offering without a separate Khan licence. Logged in SPEC §24. |
 
 Khan content format/integration (ZIM vs Kolibri) is a separate open item — SPEC §24 #12.
 
@@ -68,8 +88,17 @@ Khan content format/integration (ZIM vs Kolibri) is a separate open item — SPE
 
 ## 4. Outcome
 
-- **Pilot sources (Vikidia, Simple English Wikipedia): CLEARED** for local pilot use under
-  CC BY-SA, with attribution + share-alike obligations noted above.
-- **Khan Academy CC BY-NC-SA: hosted-tier conflict logged** as a Phase-3 blocker (SPEC §24).
+- **Pilot sources: Khan Academy (live, since B1 2026-07-05) + Vikidia/Simple English
+  Wikipedia (cleared alternates): CLEARED** for local pilot use — Khan under CC BY-NC-SA
+  (NC clause doesn't trigger for a non-commercial local pilot), Vikidia/Simple-WP under
+  CC BY-SA, with attribution + share-alike obligations noted in §1.
+- **Khan Academy CC BY-NC-SA: hosted-tier conflict logged** as a Phase-3 blocker (SPEC §24) —
+  unchanged by the pilot re-point, since the pilot itself was never the blocked use case.
 - W4.1 acceptance met: licence table for pilot sources written; Khan NC conflict logged.
 - Project-licence choice + trademark search remain in **W4.2** (G2, not G0).
+
+## Changelog
+
+| Date | Change |
+|------|--------|
+| 2026-07-10 | v0.2 — Khan Academy promoted from §3-only (Phase-3 blocker note) to §1 (live pilot grounding source, cleared for local use) following B1's 2026-07-05 re-point. Vikidia/Simple-WP re-labelled cleared alternates, not currently mounted. Added the "no attribution UI exists yet, for any source" honesty note (D1, post-release-wave gap sweep). |

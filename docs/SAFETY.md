@@ -2,7 +2,7 @@
 title: "Mentar — Child Safety Specification"
 version: v0.1
 status: "Draft — Pilot Pending"
-last-updated: 2026-06-13
+last-updated: 2026-07-10
 sources: >
   SPEC v0.3 §15–16 (primary); PHASE0.md §W2.1–W2.6;
   safety/age-modes.md (folded in); safety/guardrails.md (folded in)
@@ -12,7 +12,7 @@ sources: >
 
 **Version:** v0.1  
 **Status:** Draft — Pilot Pending  
-**Last updated:** 2026-06-13  
+**Last updated:** 2026-07-10  
 **Sources:** SPEC v0.3 §15–16; PHASE0.md W2.1–W2.6; `safety/age-modes.md` and `safety/guardrails.md` (prior drafts folded in)
 
 ---
@@ -68,6 +68,8 @@ All child inputs are classified before any processing:
 The system maintains a keyword-and-classifier trigger list (detailed in Layer 3, §3.2) that is evaluated against every child input before any other processing. A trigger match suspends normal tutoring immediately — no LLM response is generated — and the Layer 3 escalation flow activates.
 
 **Design principle:** false negatives (missed distress) are the dangerous failure mode. The trigger list is biased toward sensitivity. Legitimate false positives (a child mentioning "my arm hurts" while solving a word problem) are resolved by the parent, never by the AI continuing the session silently.
+
+**Scope boundary — English only (v0.1):** every trigger regex, handoff message, and feedback string in the current implementation is English-only, while the product's stated design (per-country curriculum templates, SPEC §6) implies other languages eventually. **Loading a curriculum template in a language other than English is REFUSED until a vetted trigger bank and reviewed handoff wording exist for that language.** This is a hard scope boundary, not a soft degradation — Layer 1's whole safety case rests on the trigger list actually being able to recognise distress in the language the child is typing, and an unvetted machine-translated trigger list is not an acceptable substitute for the safeguarding-professional review this system already requires (§3.1, Appendix B). Full multi-language design (translation process, per-language review gate, locale-aware handoff wording) is deferred post-pilot; see Appendix B.
 
 ### 1.3 Off-Topic Redirect
 
@@ -742,6 +744,7 @@ This table provides the reviewer audit trail — every requirement in SPEC §16.
 | Over-reliance / parasocial attachment design | Bucket G | 2, 5 | Principle established (SPEC §7 #8); design patterns pending |
 | Age-appropriate content standards | Bucket E | 2 | Hard blocks in place; granular age-graded standards pending |
 | Real-world AI chatbot harm case review | Bucket C | 1, 3 | Pending — may update trigger list and handoff message |
+| Multi-language trigger bank + handoff wording (non-English template load is refused until this exists — §1.2 scope boundary) | Bucket D (safeguarding research, per language) | 1, 3 | Post-pilot design; English-only in v0.1 |
 
 ---
 

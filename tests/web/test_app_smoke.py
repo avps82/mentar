@@ -301,7 +301,16 @@ def test_turn_split_feedback_from_question():
     assert "What is 1/2 of 8?" in q_div
     assert "That" not in q_div.split("</div>")[0].replace("What is 1/2 of 8?", "")
 
-    # htmx fragment path renders the same two-area structure.
+    # htmx fragment path renders the same two-area structure. Stub step() so
+    # this is deterministic -- the real step() legitimately advances the FSM
+    # (item selection is unseeded-random) and would overwrite our manually-set
+    # current_question with whatever real question comes next, making the
+    # split match-or-not depend on random item selection.
+    from mentar.dialogue.controller import TurnResult
+    ctrl._ctx.current_question = "What is 1/2 of 8?"
+    ctrl.step = lambda answer_text: TurnResult(
+        state=ctrl.state, text="Correct! ⭐\n\nWhat is 1/2 of 8?", done=False, escalated=False)
+
     frag = c.post("/answer", data={"answer": "4"},
                   headers={"HX-Request": "true"}).get_data(as_text=True)
     assert '<div class="feedback' in frag
