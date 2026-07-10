@@ -305,6 +305,43 @@ note below). Per-screen:
   hit) — not a rendered-pixel check. This lines up with U-2a anyway: the maintainer reviews
   the actual running app before any screenshot is taken, which is the real visual QA step.
 
+## §9 — Maintainer review round 1 (U-2a, 2026-07-10) — findings + resolutions
+
+The maintainer reviewed the running rebuild (the U-2a gate). Findings and what shipped in
+response, same session:
+
+- **R1-1 (bug): feedback/question split broken in real use** — the Help flow's
+  `Q) {question}` recap made the rfind-split land right after `Q)`: the feedback box showed
+  a bare "Q)" ("there is a Q) box but it's empty, always") and the explanation landed
+  bundled into the question block. **Fixed structurally, as the maintainer directed**
+  ("have tags… so we can easily place it to the right spot"): `TurnResult` now carries
+  `message` + `question` fields composed at the FSM-state source (the controller knows
+  which part is which deterministically — no LLM tagging needed, and most turn text isn't
+  LLM-generated anyway); `_split_turn_text` deleted; the `Q)` recap removed (the question
+  stays visible in its own block). Verified live against the exact reported scenario.
+- **R1-2: multiple-choice answers → radio buttons** — `Item` gained a structured
+  `choices` tuple (mc generators return it; bank jsonl may carry a `choices` list); the
+  answer widget in `_turn.html` renders a native radio group A–D (no JS needed) when
+  choices are present. The widget lives inside the htmx swap target so it changes with
+  each question.
+- **R1-3: fraction answers (`_/_`) need a proper input** — fraction questions render
+  numerator/denominator number inputs; `/answer` composes `n/d` server-side (verifier
+  grammar unchanged, works with JS disabled). Other answer types keep the text input;
+  "variations" (mixed numbers etc.) can extend the same widget switch later.
+- **R1-4: more subjects/grades, Australian curriculum** — first two ACARA v9 templates
+  shipped (`curriculum/templates/AU/year3_maths.md`, `year4_maths.md`, Number strand) +
+  `engine/au_items.py` generators; ACARA core content verified CC BY 4.0 (codes referenced
+  as alignment identifiers only — CONTENT_LICENSES.md §2b). The per-year pattern is now
+  established; more year levels/strands extend it.
+- **R1-5: text-to-audio for question + choices** — `static/tts.js` (owned, no deps): a 🔊
+  button on the question block reads the question and choices via the browser's built-in
+  `speechSynthesis` (local voices, no network — U-80/U-81 hold); hides itself where
+  unsupported. ⚠️ Not verifiable in-sandbox (no browser/audio) — needs the maintainer's
+  next hands-on look.
+
+Still pending from U-2a: the maintainer's approval of the overall look → then README
+screenshots.
+
 ## Changelog
 
 | Date | Change |
@@ -312,3 +349,4 @@ note below). Per-screen:
 | 2026-07-10 | v0.1 — requirements drafted + ratified by the maintainer (audiences, no-landing, U-2a screenshot gate). Design phase not started. |
 | 2026-07-10 | U-90 resolved: htmx vendored + cleanly wired (no hybrid) after the maintainer typed the fetch command directly. New `GET /done` route; `X-Requested-With`/JSON contract replaced by native `HX-Request`/`HX-Redirect`; fragment responses HTML-escaped (U-32 pulled forward). 469 tests green. htmx `LICENSE` text still pending (same external-fetch boundary). |
 | 2026-07-10 | U-91/U-92 resolved (kept emoji identity; blended teal/coral palette + light/dark toggle) and all 6 flows built same session per maintainer direction — see §8. U-32 completed properly (full markdown-lite render, not just escaping) after re-checking the requirement text against the first pass. 473 tests green, ruff clean. Known gap: U-31 (feedback/question visual split) needs a controller data-contract change, out of scope; flagged not silently dropped. No screenshot/pixel verification available in-sandbox — content-level Flask-test-client verification only, real visual QA is the maintainer's pending review (U-2a). |
+| 2026-07-10 | **Maintainer review round 1 (U-2a) landed + all findings resolved same session — see §9.** Structured turn payload (TurnResult.message/.question) replaces the string-split entirely; mc4 radio buttons; fraction num/den inputs; TTS 🔊 (speechSynthesis, owned JS); ACARA Year 3 + Year 4 maths templates. 488 tests green. |
