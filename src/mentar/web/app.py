@@ -415,6 +415,37 @@ def _render_markdown_lite(text: str) -> str:
     return result
 
 
+def _wrap_label(label: str, max_chars: int = 16, max_lines: int = 3) -> list[str]:
+    """R2.4: greedy word-wrap for the concept-graph SVG labels -- never cuts a
+    word mid-way (a longer-than-max_chars word gets its own line, kept whole).
+    Truncates to max_lines with a trailing "…" only when words were actually
+    dropped. The full label is still shown via the node's hover tooltip."""
+    if not label or label.isspace():
+        return [""]
+    words = label.split()
+    if not words:
+        return [""]
+    lines = []
+    current_line = ""
+    for word in words:
+        if not current_line:
+            current_line = word
+        elif len(current_line) + 1 + len(word) <= max_chars:
+            current_line += " " + word
+        else:
+            lines.append(current_line)
+            current_line = word
+    if current_line:
+        lines.append(current_line)
+    if len(lines) > max_lines:
+        truncated = lines[:max_lines]
+        last_line = truncated[-1]
+        if not last_line.endswith("…"):
+            truncated[-1] = last_line + "…"
+        return truncated
+    return lines
+
+
 def _compute_graph_layout(curriculum: dict, node_pct: dict[str, int]) -> dict:
     """U-40/U-41: an owned layered layout for the concept-graph map -- no
     graph library. Works for any curriculum (node count/edges not hardcoded):
@@ -454,9 +485,11 @@ def _compute_graph_layout(curriculum: dict, node_pct: dict[str, int]) -> dict:
             pos[node_id] = (x, y)
             pct = node_pct.get(node_id)
             status = "not_started" if pct is None else ("mastered" if pct >= 85 else "learning")
+            label = curriculum[node_id].get("concept", node_id)
             nodes.append({
                 "id": node_id,
-                "label": curriculum[node_id].get("concept", node_id),
+                "label": label,
+                "label_lines": _wrap_label(label),
                 "x": round(x, 1), "y": round(y, 1),
                 "pct": pct or 0, "status": status,
             })
@@ -470,7 +503,7 @@ def _compute_graph_layout(curriculum: dict, node_pct: dict[str, int]) -> dict:
             x1, y1 = pos[prereq]
             edges.append({"x1": round(x1, 1), "y1": round(y1, 1), "x2": round(x2, 1), "y2": round(y2, 1)})
 
-    return {"nodes": nodes, "edges": edges, "height": max(n_levels * 22, 22)}
+    return {"nodes": nodes, "edges": edges, "height": max(n_levels * 26, 26)}
 
 
 @app.route("/progress")

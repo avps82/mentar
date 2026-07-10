@@ -12,7 +12,7 @@
     <g>
       <title>{{ n.label }} — {{ n.status | replace("_", " ") }} ({{ n.pct }}%)</title>
       <circle cx="{{ n.x }}" cy="{{ n.y }}" r="4" class="graph-node node-{{ n.status }}" />
-      <text x="{{ n.x }}" y="{{ n.y + 8 }}" text-anchor="middle" class="graph-node-label">{{ n.label | truncate(14, True, "") }}</text>
+      <text x="{{ n.x }}" y="{{ n.y + 8 }}" text-anchor="middle" class="graph-node-label">{% for line in n.label_lines %}<tspan x="{{ n.x }}" {% if not loop.first %}dy="4"{% endif %}>{{ line }}</tspan>{% endfor %}</text>
     </g>
     {% endfor %}
   </svg>
