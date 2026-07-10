@@ -461,7 +461,75 @@ maintainer said "note it, don't do anything" this round.**
   behaviour, just relocated); `/choose` POST → 302 to `/learn`; a full no-JS answer loop
   (`POST /answer` with no `HX-Request` header) still redirects through `/learn`, never bounces to
   the picker mid-quiz; `done.html`/`progress.html`/`parent.html` "back to lesson" links resolve
-  to `/learn`; full suite + ruff green.
+  to `/learn`; **clicking the brand icon (`_base.html`'s `<a href="/" class="brand">`) from ANY
+  screen, including mid-quiz, lands on the picker — this needs no separate change (the brand
+  link already points at `/`, which R4 makes picker-only), just an explicit test proving it**
+  (maintainer follow-up, 2026-07-11: "clicking mentar icon on top may need to take us to the
+  home page" — confirmed this is the same bug, not a second one); full suite + ruff green.
+
+---
+
+# R5 — Settings page: voice picker + relocate the theme toggle  `[G]`
+**Maintainer ask, 2026-07-11.** New `/settings` page. Two decisions clarified via
+AskUserQuestion: (1) voice picker = the raw `speechSynthesis.getVoices()` list, not a
+simplified/grouped one; (2) Settings also becomes the new home for the existing dark/light
+toggle (moved OUT of the header, not duplicated). A third ask ("download new curriculum or
+subjects") was clarified as **already satisfied by R3.1's auto-discovery** — dropping a new
+template file into `curriculum/templates/` already makes it appear automatically, no download
+mechanism needed; NOT in scope here (a real network-fetch feature would be a genuine departure
+from the app's offline-only design — flagged, not built, not asked for after clarification).
+
+- **Design:**
+  - `GET /settings` — plain server-rendered page (no htmx; a full reload on save is fine, same
+    posture as the R3.2 progress switcher). Reachable via a ⚙️ link in `_base.html`'s shared
+    header (replaces the standalone `.theme-toggle` button there — the toggle itself moves
+    into this page, not duplicated) + a "⚙️ Settings" link added to `learner.html`'s and
+    `progress.html`'s existing footer-nav rows. Deliberately NOT added to `frozen.html` (U-60
+    zero-chrome invariant, unchanged) or `parent.html`'s minimal header (stays as-is, matching
+    its existing "more serious tone" design call from the R1 build).
+  - Voice list is inherently CLIENT-SIDE ONLY (`speechSynthesis.getVoices()` can't be queried
+    server-side) — the page renders an empty `<select id="voice-select">` server-side; new
+    owned `static/settings.js` populates it in JS. Handle the async voice-list-population
+    quirk some browsers have: call `getVoices()` immediately AND re-populate on the
+    `speechSynthesis.onvoiceschanged` event (covers both eager and lazy browsers).
+  - Persistence: localStorage, same pattern as `theme.js` — a new key (e.g.
+    `mentar-tts-voice`) storing the chosen voice's `voiceURI` (spec-guaranteed unique per
+    browser, more robust than `.name`). No server round-trip; this is a pure client
+    preference, same shape as the theme choice.
+  - `static/tts.js`'s speak logic (in the `STATE_IDLE` branch, where the utterance is built)
+    reads the stored `voiceURI`, looks it up via
+    `speechSynthesis.getVoices().find(v => v.voiceURI === stored)`, and sets
+    `utterance.voice = match` when found. **Graceful degradation, not an error:** if the
+    stored voice isn't available on this device/browser (e.g. settings synced from a
+    different machine), silently fall back to the browser's default voice — same
+    never-break posture as the rest of tts.js.
+  - Nice-to-have, small: a "🔊 Test this voice" button on the settings page itself, using the
+    CURRENTLY-SELECTED-IN-THE-DROPDOWN voice (not yet saved) to speak a short fixed sample
+    sentence — lets a parent preview before committing. Same `SpeechSynthesisUtterance`
+    mechanics as `tts.js`, just triggered from `settings.js` instead.
+  - Theme toggle: the existing `.theme-toggle` button markup + `theme.js`'s wiring logic move
+    from `_base.html`'s header into `settings.html`'s content — `theme.js` itself needs
+    little to no change (it already queries `.theme-toggle` wherever it lives in the DOM, and
+    the top-level `data-theme` application is unconditional, not gated on the button
+    existing).
+- **Files:** `web/app.py` (new `/settings` route — no controller/session logic, purely
+  static), `web/templates/settings.html` (new), `web/templates/_base.html` (header: swap
+  `.theme-toggle` for the `/settings` link), `web/templates/learner.html` +
+  `web/templates/progress.html` (footer-nav: add the Settings link),
+  `web/static/settings.js` (new), `web/static/tts.js` (read the stored voice),
+  `web/static/style.css` (small: a `.settings-link` style, reusing `.theme-toggle`'s look).
+- **Accept:** `GET /settings` returns 200 and contains a `<select id="voice-select">` +
+  the relocated theme-toggle button; `_base.html`'s header no longer contains
+  `.theme-toggle` (moved, not duplicated) on any page using the default header block;
+  `frozen.html`/`parent.html` still show no settings link (unchanged invariant/design);
+  pytest covers the server-rendered parts (route 200, expected markup present, footer
+  links present on learner/progress). JS behaviour (voice enumeration, selection,
+  persistence, fallback-when-voice-missing, the test-voice button) isn't pytest-testable —
+  syntax-check via `node --check` plus a **manual hands-on checklist for the maintainer**
+  (same ceiling as R2.2): (a) open Settings, confirm a non-empty voice list appears; (b)
+  pick a non-default voice, click "Test this voice", confirm it plays in that voice; (c)
+  save, return to a quiz, click 🔊 — confirm it now reads in the chosen voice; (d) the
+  dark/light toggle still works exactly as before, now from Settings instead of the header.
 
 ---
 
