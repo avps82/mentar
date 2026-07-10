@@ -26,7 +26,8 @@ import os
 import uuid
 from pathlib import Path
 
-from flask import Flask, jsonify, redirect, render_template, request, session, url_for
+from flask import Flask, redirect, render_template, request, session, url_for
+from markupsafe import escape
 
 from mentar.db.adapter import _DbStoreAdapter
 from mentar.db.store import LearnerStore
@@ -128,6 +129,7 @@ _controllers: dict[str, SessionController] = {}
 _turn_logs: dict[str, list[dict]] = {}      # learner_id -> [{role, text}]
 _stores: dict[str, LearnerStore] = {}
 _db_learner_ids: dict[str, int] = {}        # flask-session learner_uuid -> DB int id
+_done_messages: dict[str, str] = {}         # learner_uuid -> final completion text
 
 
 def _get_or_create_controller(learner_uuid: str, subject: str) -> SessionController:
@@ -210,7 +212,8 @@ def index():
         result = ctrl.step(None)
         _log_turn(learner_uuid, "Mentar", result.text)
         if result.done:
-            return render_template("done.html", message=result.text or "All done!")
+            _done_messages[learner_uuid] = result.text or "All done!"
+            return redirect(url_for("done"))
         if result.escalated:
             return redirect(url_for("frozen"))
 
@@ -234,16 +237,16 @@ def choose():
 
 @app.route("/answer", methods=["POST"])
 def answer():
-    # U-90: static/turn.js sends this header to opt into a JSON fragment reply
-    # (no page reload) instead of the redirect/full-page response below. Absent
-    # header = today's behaviour, unchanged (progressive enhancement: JS off
-    # still works identically).
-    is_fetch = request.headers.get("X-Requested-With") == "fetch"
+    # U-90: htmx (static/htmx.min.js, vendored) drives every submit of this
+    # form. "HX-Request: true" marks an htmx-issued request; a normal browser
+    # POST (JS disabled) carries no such header and gets the classic redirect
+    # response instead — same routes/behaviour either way (U-14).
+    hx = request.headers.get("HX-Request") == "true"
 
     learner_uuid = session.get("learner_uuid")
     if not learner_uuid or learner_uuid not in _controllers:
-        if is_fetch:
-            return jsonify(redirect=url_for("index"))
+        if hx:
+            return "", 200, {"HX-Redirect": url_for("index")}
         return redirect(url_for("index"))
 
     answer_text = request.form.get("answer", "").strip()
@@ -255,17 +258,31 @@ def answer():
         _log_turn(learner_uuid, "Mentar", result.text)
 
     if result.escalated:
-        if is_fetch:
-            return jsonify(redirect=url_for("frozen"))
+        if hx:
+            return "", 200, {"HX-Redirect": url_for("frozen")}
         return redirect(url_for("frozen"))
     if result.done:
-        html = render_template("done.html", message=result.text or "Well done — session complete!")
-        if is_fetch:
-            return jsonify(full_html=html)
-        return html
-    if is_fetch:
-        return jsonify(question=_last_mentar_text(learner_uuid) or "Ready when you are!")
+        _done_messages[learner_uuid] = result.text or "Well done — session complete!"
+        if hx:
+            return "", 200, {"HX-Redirect": url_for("done")}
+        return redirect(url_for("done"))
+
+    # Advancing: htmx swaps this fragment straight into hx-target=".question"
+    # (no page reload); a non-JS browser gets the usual full redirect+reload.
+    # escape() matches the autoescaping Jinja already applies to {{ question }}
+    # in learner.html -- child-facing model/generator text must never be
+    # inserted unescaped into an innerHTML swap target (U-32).
+    question = _last_mentar_text(learner_uuid) or "Ready when you are!"
+    if hx:
+        return str(escape(question))
     return redirect(url_for("index"))
+
+
+@app.route("/done")
+def done():
+    learner_uuid = session.get("learner_uuid", "")
+    message = _done_messages.get(learner_uuid, "All done!")
+    return render_template("done.html", message=message)
 
 
 @app.route("/frozen")

@@ -35,6 +35,14 @@ graph, not just a strategy preference.
 
 - **`.vendor/yaml` = PyYAML 6.0.x (MIT)** — vendored *with* its `LICENSE`. Compliant. Removing it
   would *add* a dependency (wrong direction); keep.
+- **`src/mentar/web/static/htmx.min.js` = htmx 2.0.9** (`bigskysoftware/htmx`), pinned to the
+  latest stable non-beta tag (confirmed via GitHub's releases API 2026-07-10), fetched from
+  `https://unpkg.com/htmx.org@2.0.9/dist/htmx.min.js`, sha256
+  `57d9191515339922bd1356d7b2d80b1ee3b29f1b3a2c65a078bb8b2e8fd9ae5f`. Serves the web UI's
+  progressive-enhancement fragment swap (`docs/design/UI_REQUIREMENTS.md` U-90) — Flask serves it
+  as a plain static asset, not a Python import. ⚠️ **Licence text not yet verified/vendored** — the
+  minified bundle carries no embedded banner; upstream `LICENSE` file pending fetch. Do not treat
+  as compliant until that file is added alongside it (same pattern as `.vendor/yaml`).
 - No AGPL or NC **code** is vendored (verified).
 
 ## Reference-only (NOT vendored — no license obligation in our tree)

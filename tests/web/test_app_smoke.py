@@ -186,10 +186,11 @@ def test_learner_id_survives_server_restart():
     assert n_responses >= 2, "both pre- and post-restart answers should be under the same learner"
 
 
-def test_answer_fetch_header_returns_json_question():
-    """U-90 plumbing: static/turn.js sends X-Requested-With: fetch to get a JSON
-    fragment (no page reload) instead of the default redirect. Header absent =
-    unchanged behaviour (covered by test_web_learner_flow)."""
+def test_answer_hx_request_returns_question_fragment():
+    """U-90 plumbing: htmx (vendored static/htmx.min.js) sends HX-Request: true
+    to get a bare HTML fragment swapped into hx-target=".question" (no page
+    reload). Header absent = unchanged full-redirect behaviour (covered by
+    test_web_learner_flow)."""
     try:
         import flask  # noqa: F401
     except ImportError:
@@ -203,17 +204,43 @@ def test_answer_fetch_header_returns_json_question():
     r = c.post(
         "/answer",
         data={"answer": "4"},
-        headers={"X-Requested-With": "fetch"},
+        headers={"HX-Request": "true"},
     )
     assert r.status_code == 200
-    assert r.content_type.startswith("application/json")
-    body = r.get_json()
-    assert isinstance(body.get("question"), str) and body["question"]
+    assert "HX-Redirect" not in r.headers
+    text = r.get_data(as_text=True)
+    assert text.strip()  # a fragment, not a redirect/empty body
 
 
-def test_answer_fetch_header_on_escalation_returns_redirect_json():
-    """Escalated fetch turns get a JSON redirect to /frozen, never the verbatim
-    trigger text or trigger content in the JSON payload (mirrors A8)."""
+def test_answer_hx_fragment_escapes_html():
+    """U-32 (pulled forward): the htmx-swapped fragment must escape model/
+    generator text the same way Jinja's {{ question }} already does in
+    learner.html -- htmx swaps this string via innerHTML, so unescaped HTML
+    here would be a live XSS path into the child's browser."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+
+    app_mod, c = _client()
+    c.post("/choose", data={"subject": "fractions"})
+    c.get("/")
+    app_mod._last_mentar_text = lambda learner_uuid: "<script>alert(1)</script>"
+
+    r = c.post(
+        "/answer",
+        data={"answer": "4"},
+        headers={"HX-Request": "true"},
+    )
+    body = r.get_data(as_text=True)
+    assert "<script>" not in body
+    assert "&lt;script&gt;" in body
+
+
+def test_answer_hx_request_on_escalation_sends_hx_redirect():
+    """Escalated htmx turns get an HX-Redirect to /frozen (empty body), never
+    the verbatim trigger text anywhere in the response (mirrors A8)."""
     try:
         import flask  # noqa: F401
     except ImportError:
@@ -227,13 +254,48 @@ def test_answer_fetch_header_on_escalation_returns_redirect_json():
     r = c.post(
         "/answer",
         data={"answer": "I want to die"},
-        headers={"X-Requested-With": "fetch"},
+        headers={"HX-Request": "true"},
     )
     assert r.status_code == 200
-    assert r.content_type.startswith("application/json")
-    body = r.get_json()
-    assert body.get("redirect") == "/frozen"
-    assert "die" not in str(body)
+    assert r.headers.get("HX-Redirect") == "/frozen"
+    assert "die" not in r.get_data(as_text=True)
+
+
+def test_done_route_shows_final_message_and_is_directly_navigable():
+    """U-90: completion now goes through a real GET /done route (htmx's
+    HX-Redirect needs a URL to target) instead of being inline-rendered from
+    the POST /answer body. /done must show the session's real final message
+    and survive a plain re-GET (e.g. a refresh)."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+
+    app_mod, c = _client()
+    c.post("/choose", data={"subject": "fractions"})
+    c.get("/")
+
+    # Force a done outcome without depending on real lesson-completion length:
+    # stub the controller's step() to return a done TurnResult directly.
+    from mentar.dialogue.controller import TurnResult
+
+    with c.session_transaction() as sess:
+        learner_uuid = sess["learner_uuid"]
+    ctrl = app_mod._controllers[learner_uuid]
+    ctrl.step = lambda answer_text: TurnResult(
+        state=ctrl.state, text="Great work today — session complete!", done=True, escalated=False
+    )
+
+    r = c.post("/answer", data={"answer": "4"})
+    assert r.status_code == 302
+    assert r.headers["Location"].endswith("/done")
+
+    r2 = c.get("/done")
+    assert "Great work today" in r2.get_data(as_text=True)
+    # Re-GET (refresh) still shows the same message, not a generic fallback.
+    r3 = c.get("/done")
+    assert "Great work today" in r3.get_data(as_text=True)
 
 
 def test_parent_view_shows_degraded_banner_when_fallback_log_present():
@@ -266,10 +328,14 @@ if __name__ == "__main__":
     print("  ✓ test_web_learner_flow")
     test_parent_view_reads_db_and_persists_ack()
     print("  ✓ test_parent_view_reads_db_and_persists_ack")
-    test_answer_fetch_header_returns_json_question()
-    print("  ✓ test_answer_fetch_header_returns_json_question")
-    test_answer_fetch_header_on_escalation_returns_redirect_json()
-    print("  ✓ test_answer_fetch_header_on_escalation_returns_redirect_json")
+    test_answer_hx_request_returns_question_fragment()
+    print("  ✓ test_answer_hx_request_returns_question_fragment")
+    test_answer_hx_fragment_escapes_html()
+    print("  ✓ test_answer_hx_fragment_escapes_html")
+    test_answer_hx_request_on_escalation_sends_hx_redirect()
+    print("  ✓ test_answer_hx_request_on_escalation_sends_hx_redirect")
+    test_done_route_shows_final_message_and_is_directly_navigable()
+    print("  ✓ test_done_route_shows_final_message_and_is_directly_navigable")
     test_parent_view_shows_degraded_banner_when_fallback_log_present()
     print("  ✓ test_parent_view_shows_degraded_banner_when_fallback_log_present")
     test_learner_id_survives_server_restart()

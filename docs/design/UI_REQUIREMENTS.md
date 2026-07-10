@@ -184,20 +184,31 @@ does the same.
 
 ## 7. Open decisions for the maintainer (block the *design* phase, not this doc)
 
-- **U-90 RESOLVED 2026-07-10 — zero-dep owned snippet, shipped.** Maintainer initially
-  chose to vendor htmx; the harness's own permission classifier then blocked the agent
-  from fetching third-party code from an external CDN on the maintainer's verbal say-so —
-  by design, an external-code fetch has to be typed/run by a human, not authorized via
-  chat, and the maintainer was away from a terminal. This is a **real-world instance of
-  the exact U-81 "auditable JS" trust boundary** the requirements were already guarding,
-  now enforced by tooling instead of just policy. Pivoted to the zero-dep path: built
-  `src/mentar/web/static/turn.js` (~35 lines, no deps) + a matching `/answer` JSON-fragment
-  branch (`X-Requested-With: fetch` header opt-in; absent header = unchanged full-reload
-  behaviour, so U-14/routes and progressive enhancement both hold). Tests:
-  `tests/web/test_app_smoke.py::test_answer_fetch_header_returns_json_question` +
-  `::test_answer_fetch_header_on_escalation_returns_redirect_json`. htmx remains available
-  as a future swap-in (the maintainer can vendor it at a terminal later) — the server-side
-  fragment contract doesn't change either way.
+- **U-90 RESOLVED 2026-07-10 — htmx vendored + wired, shipped.** First attempt: the
+  harness's own permission classifier blocked fetching htmx from an external CDN on the
+  maintainer's verbal say-so (a real-world instance of the U-81 "auditable JS" trust
+  boundary — external-code fetches require a human-typed command, not chat authorization).
+  Shipped a zero-dep owned-JS stopgap (`turn.js`) so plumbing wasn't blocked. Maintainer
+  then typed the fetch command directly (`!` prefix), which cleared the boundary; htmx
+  2.0.9 vendored at `src/mentar/web/static/htmx.min.js` (pinned latest-stable tag, sha256
+  logged in `docs/LICENSE_AUDIT.md`). Maintainer explicitly asked for a **clean htmx
+  adoption, not a hybrid** — `turn.js` deleted; `/answer` rewired to native htmx idioms
+  (`HX-Request`/`HX-Redirect` headers) instead of the earlier custom JSON contract;
+  `learner.html`'s form now uses `hx-post`/`hx-target`/`hx-swap` declaratively, zero owned
+  JS. This required one small real architecture addition: completion (`done`) had no
+  standalone URL (rendered inline from the `POST /answer` body), and `HX-Redirect` needs a
+  real route to target — added `GET /done` (+ a small `_done_messages` per-learner dict,
+  same pattern as `_turn_logs`/`_db_learner_ids`) and unified BOTH completion paths
+  (`/` on first-turn-done, and `/answer` on later-turn-done) through it, removing the
+  inline-render duplication. Fragment responses are HTML-escaped
+  (`markupsafe.escape`, matching Jinja's existing `{{ question }}` autoescaping) since
+  htmx swaps via `innerHTML` — pulled the U-32 escaping requirement forward as a live test
+  rather than deferring it. Licence text for htmx is still pending verification (noted in
+  LICENSE_AUDIT.md) — same external-fetch boundary, queued for whenever the maintainer is
+  next at a terminal. Tests: `tests/web/test_app_smoke.py::test_answer_hx_request_returns_
+  question_fragment`, `::test_answer_hx_fragment_escapes_html`, `::test_answer_hx_request_
+  on_escalation_sends_hx_redirect`, `::test_done_route_shows_final_message_and_is_directly_
+  navigable`. 469 tests green, ruff clean.
 - **U-91** Brand direction: keep 🍕-style playful emoji identity vs a drawn mascot/wordmark
   (a mascot needs an artist or generated asset + licence decision). Still open.
 - **U-92** Palette preference (current warm cream/green vs something else) — pure taste,
@@ -208,4 +219,4 @@ does the same.
 | Date | Change |
 |------|--------|
 | 2026-07-10 | v0.1 — requirements drafted + ratified by the maintainer (audiences, no-landing, U-2a screenshot gate). Design phase not started. |
-| 2026-07-10 | U-90 resolved + shipped: owned zero-dep `turn.js` fragment-swap plumbing (`web/static/turn.js`, `/answer` JSON branch), 467 tests green. htmx vendoring blocked by the harness's own external-code permission boundary — documents a real instance of U-81. |
+| 2026-07-10 | U-90 resolved: htmx vendored + cleanly wired (no hybrid) after the maintainer typed the fetch command directly. New `GET /done` route; `X-Requested-With`/JSON contract replaced by native `HX-Request`/`HX-Redirect`; fragment responses HTML-escaped (U-32 pulled forward). 469 tests green. htmx `LICENSE` text still pending (same external-fetch boundary). |
