@@ -242,7 +242,8 @@ def index():
     if subject not in SUBJECTS:
         # No topic chosen yet — show the picker.
         return render_template(
-            "subjects.html", subjects=SUBJECTS, subjects_progress=_subjects_progress(learner_uuid)
+            "subjects.html", subjects=SUBJECTS, subject_groups=SUBJECT_GROUPS,
+            subjects_progress=_subjects_progress(learner_uuid),
         )
 
     ctrl = _get_or_create_controller(learner_uuid, subject)
@@ -285,7 +286,7 @@ def choose():
             session["subject"] = subject
         return redirect(url_for("index"))
     return render_template(
-        "subjects.html", subjects=SUBJECTS,
+        "subjects.html", subjects=SUBJECTS, subject_groups=SUBJECT_GROUPS,
         subjects_progress=_subjects_progress(session.get("learner_uuid", "")),
     )
 
@@ -519,16 +520,28 @@ def _compute_graph_layout(curriculum: dict, node_pct: dict[str, int]) -> dict:
 
 @app.route("/progress")
 def progress():
+    """R3.2: a year/subject switcher (?subject=<key>) on top of the concept
+    map + skill list -- the star-card list is now FILTERED to the selected
+    subject's own node ids (was: every subject's skill_state rows mixed into
+    one undifferentiated list, a real defect exposed once the AU templates
+    added a second/third curriculum's worth of nodes)."""
     learner_uuid = session.get("learner_uuid", "")
+    requested = request.args.get("subject")
+    subject = requested if requested in SUBJECTS else (session.get("subject") or DEFAULT_SUBJECT)
+
     store, db_id = _store_and_id(learner_uuid)
     skill_states = store.all_skill_states(db_id) if (store and db_id is not None) else []
-    # Convert sqlite3.Row to plain dicts for the template.
-    skills = [dict(r) for r in skill_states]
-    node_pct = {s["skill_id"]: int(s["p_mastery"] * 100) for s in skills}
-    subject = session.get("subject") or DEFAULT_SUBJECT
     curriculum = _SUBJECT_CURRICULA.get(subject, {})
+    # Convert sqlite3.Row to plain dicts, filtered to THIS subject's nodes only.
+    skills = [dict(r) for r in skill_states if r["skill_id"] in curriculum]
+    node_pct = {s["skill_id"]: int(s["p_mastery"] * 100) for s in skills}
     graph = _compute_graph_layout(curriculum, node_pct) if curriculum else None
-    return render_template("progress.html", skills=skills, graph=graph)
+
+    return render_template(
+        "progress.html", skills=skills, graph=graph,
+        subject=subject, subjects=SUBJECTS, subject_groups=SUBJECT_GROUPS,
+        subjects_progress=_subjects_progress(learner_uuid),
+    )
 
 
 @app.route("/parent")

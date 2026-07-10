@@ -225,6 +225,23 @@ th { background: var(--bg); }
 .bar-wrap { background: var(--not-started); border-radius: 4px; height: 12px; width: 120px; display: inline-block; vertical-align: middle; }
 .bar-fill { background: var(--mastered); border-radius: 4px; height: 12px; }
 
+.year-group-heading { text-align: center; color: var(--text-muted); font-size: 1rem; margin: 28px 0 4px; }
+
+.progress-switcher { margin-bottom: 20px; }
+.switcher-group { margin-bottom: 10px; }
+.switcher-group-label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px; }
+.switcher-link {
+  display: inline-block;
+  font-size: 0.9rem;
+  padding: 6px 12px;
+  margin: 0 6px 6px 0;
+  border-radius: 999px;
+  border: 2px solid var(--border);
+  color: var(--text);
+  text-decoration: none;
+}
+.switcher-link.active { border-color: var(--primary); background: var(--primary); color: #fff; }
+.switcher-count { opacity: 0.8; font-size: 0.8em; }
 .subject-grid { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; margin-top: 24px; }
 .subject-card {
   font-size: 1.1rem;

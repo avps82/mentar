@@ -2,6 +2,23 @@
 {% block title %}Mentar — My Progress{% endblock %}
 {% block content %}
 <h1 style="font-size:1.4rem">My Progress</h1>
+{# R3.2: Year > Subject switcher -- links (?subject=<key>), grouped by the
+   same SUBJECT_GROUPS as the picker. No JS: a full reload on switch is fine
+   here (not the fast turn-taking loop htmx targets). #}
+<nav class="progress-switcher">
+  {% for group_label, keys in subject_groups %}
+  <div class="switcher-group">
+    <span class="switcher-group-label">{{ group_label }}</span>
+    {% for key in keys %}
+    {% set s = subjects[key] %}
+    {% set p = subjects_progress.get(key) %}
+    <a href="/progress?subject={{ key }}" class="switcher-link{% if key == subject %} active{% endif %}">
+      {{ s.icon }} {{ s.label }}{% if p %} <span class="switcher-count">({{ p.mastered }}/{{ p.total }})</span>{% endif %}
+    </a>
+    {% endfor %}
+  </div>
+  {% endfor %}
+</nav>
 {% if graph and graph.nodes %}
 <div class="graph-wrap">
   <svg viewBox="0 0 100 {{ graph.height }}" role="img" aria-label="Concept map showing which skills are mastered, in progress, or not started yet" style="width:100%;height:auto;display:block">

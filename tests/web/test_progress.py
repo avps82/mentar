@@ -84,6 +84,64 @@ def test_progress_shows_concept_graph_for_pilot_curriculum():
     assert "graph-node" in body
 
 
+def test_picker_groups_subjects_by_year():
+    """R3.2: the picker reads Year -> Subject, grouped by SUBJECT_GROUPS
+    (derived from the R3.1 template-catalog scan, not hand-maintained)."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+
+    _app_mod, c = _client()
+    html = c.get("/choose").get_data(as_text=True)
+    assert "Year 3 (AU)" in html and "Year 4 (AU)" in html and "Try-out topics" in html
+    # AU subjects sit under their own year headings, pilot topics under try-out.
+    year3_idx = html.find("Year 3 (AU)")
+    tryout_idx = html.find("Try-out topics")
+    assert year3_idx < html.find("au_year3_maths") < tryout_idx
+    assert tryout_idx < html.find('value="fractions"')
+
+
+def test_progress_switcher_filters_star_cards_to_selected_subject():
+    """R3.2: fixes a real defect -- /progress used to mix ALL subjects' skill
+    rows into one undifferentiated list. A learner with history in TWO
+    subjects must see ONLY the selected subject's nodes on each switcher tab,
+    never the other subject's."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+
+    _app_mod, c = _client()
+
+    c.post("/choose", data={"subject": "fractions"})
+    c.get("/")
+    c.post("/answer", data={"answer": "4"})
+
+    c.post("/choose", data={"subject": "au_year3_maths"})
+    c.get("/")
+    c.post("/answer", data={"answer": "A"})
+
+    au3 = c.get("/progress?subject=au_year3_maths").get_data(as_text=True)
+    frac = c.get("/progress?subject=fractions").get_data(as_text=True)
+
+    assert "Au3 Place Value" in au3
+    assert "Whole Number Division" not in au3 and "Unit Fractions" not in au3
+
+    assert "Whole Number Division" in frac
+    assert "Au3" not in frac
+
+    # The active tab is highlighted; a per-subject mastered/total count shows.
+    assert 'href="/progress?subject=au_year3_maths" class="switcher-link active"' in au3
+    assert "(0/6)" in au3  # attempted once, not yet past the 0.85 mastery threshold
+
+    # No query param -> defaults to the session's active subject (au3, chosen last).
+    default = c.get("/progress").get_data(as_text=True)
+    assert 'href="/progress?subject=au_year3_maths" class="switcher-link active"' in default
+
+
 def test_wrap_label_never_cuts_a_word():
     """R2.4: greedy word-wrap for the concept-map labels -- the fix for the
     reported "Equivalent fra" / "Place value to" mid-word truncation."""

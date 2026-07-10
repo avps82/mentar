@@ -5,8 +5,13 @@
   Your private learning helper — everything stays on this computer.
 </p>
 <h2 style="text-align:center;color:var(--text)">What would you like to learn today?</h2>
+{# R3.2: Year > Subject grouping (SUBJECT_GROUPS is derived server-side by
+   R3.1's template-catalog scan, not hand-maintained here). #}
+{% for group_label, keys in subject_groups %}
+<h3 class="year-group-heading">{{ group_label }}</h3>
 <div class="subject-grid">
-  {% for key, s in subjects.items() %}
+  {% for key in keys %}
+  {% set s = subjects[key] %}
   <form method="POST" action="/choose">
     <input type="hidden" name="subject" value="{{ key }}">
     <button class="subject-card" type="submit">
@@ -19,4 +24,5 @@
   </form>
   {% endfor %}
 </div>
+{% endfor %}
 {% endblock %}
