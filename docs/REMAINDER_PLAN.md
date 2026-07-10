@@ -412,6 +412,59 @@ fractions/science and AU Year 3/4 nodes mix into one undifferentiated list.
 
 ---
 
+# R4 — bug: homepage lands on a quiz, not the Year > Subject picker  `[G]`
+**Reported 2026-07-11 (maintainer, live testing). Investigated + root-caused, NOT YET FIXED —
+maintainer said "note it, don't do anything" this round.**
+
+- **Root cause:** `session["subject"]` lives in the long-lived browser cookie with no expiry.
+  `index()` (`GET /`) skips the picker whenever `session.get("subject")` is any valid key —
+  so once a subject has EVER been chosen (a past dev test, a prior day's session, or simply
+  after a server restart that wiped the in-memory `_controllers`/`_turn_logs` dicts while the
+  cookie survived), every future visit to `/` silently resumes straight into a fresh quiz
+  question instead of showing "choose year and subject." Confirmed: `_get_or_create_controller`
+  happily creates a brand-new controller instance when `learner_uuid not in _controllers`
+  (reusing the durable DB learner row via A6, so mastery is fine) — nothing in that path
+  distinguishes "genuinely resuming an in-progress browser tab" from "a stale cookie value with
+  no live session behind it."
+- **Why the obvious fix (always show the picker on `/`) is NOT safe as a one-liner:** `/answer`'s
+  non-htmx (JS-disabled) fallback path does `redirect(url_for("index"))` after EVERY answer
+  submission to redisplay the next question — `/` currently does double duty as both "the
+  homepage" and "the mid-quiz redisplay target." Blindly making `/` always show the picker would
+  break the JS-disabled answer loop (every submitted answer would bounce back to the picker
+  instead of the next question).
+- **Correct fix — separate the two roles into two routes:**
+  1. New `GET /learn` — everything `index()` currently does AFTER the "subject chosen" check
+     (get-or-create controller, escalation-freeze check, first-turn step, render
+     `learner.html`) moves here unchanged.
+  2. `index()` (`GET /`) — becomes ONLY the picker render (still creates `learner_uuid` if
+     missing, for `_subjects_progress()`), with NO subject/controller logic at all. Always the
+     picker, unconditionally.
+  3. `/choose` POST — redirect target becomes `url_for("learn")` instead of `url_for("index")`.
+  4. `/answer`'s non-htmx advancing-case redirect → `url_for("learn")` (not `index`) — keeps the
+     JS-disabled answer loop working exactly as today, just pointed at the renamed route.
+  5. `/parent/ack`'s post-resume redirect → `url_for("learn")` (resuming a frozen session should
+     land back on the quiz, not the picker).
+  6. Template links: `done.html`'s "Start again" and `progress.html`/`parent.html`'s "Back to
+     lesson" currently point at `/` — repoint to `/learn` (going back to the ACTUAL lesson, not
+     the topic picker). `_base.html`'s brand-logo link and `parent.html`'s header brand link stay
+     pointed at `/` deliberately — clicking the Mentar logo taking you to "choose what to learn"
+     is normal, expected home-link behaviour, not the bug.
+  7. `/frozen`'s own fallback redirect (`ctrl is None or not frozen → redirect(index)`) can stay
+     pointed at `/` — an edge case (bad/missing state), picker is a safe universal fallback there.
+- **Files:** `web/app.py` (new `/learn` route, `index()` simplified, 4 redirect-target updates),
+  `web/templates/done.html`, `web/templates/progress.html`, `web/templates/parent.html`.
+  `tests/web/test_app_smoke.py`, `tests/web/test_progress.py` (any test currently asserting quiz
+  content via `GET /` needs to move to `GET /learn`).
+- **Accept (hand-write tests):** the actual regression test — `GET /` with `session["subject"]`
+  ALREADY set to a valid key (simulating the stale-cookie/restart scenario) still renders the
+  picker, never a question; `GET /learn` with a subject chosen renders the quiz (existing
+  behaviour, just relocated); `/choose` POST → 302 to `/learn`; a full no-JS answer loop
+  (`POST /answer` with no `HX-Request` header) still redirects through `/learn`, never bounces to
+  the picker mid-quiz; `done.html`/`progress.html`/`parent.html` "back to lesson" links resolve
+  to `/learn`; full suite + ruff green.
+
+---
+
 # Remainder Build Plan — v2
 
 Most of v1 shipped; **G0 is essentially validated** (model pick, safety, retrieval, E2E,
