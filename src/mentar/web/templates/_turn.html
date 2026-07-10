@@ -10,9 +10,14 @@
   <button class="tts-btn" type="button" aria-label="Read the question aloud" title="Read aloud">🔊</button>
   <div class="question-text">{{ question_html | safe }}</div>
 </div>
+<!-- R2.3: the widget switch is driven by web/answer_modes.py's registry
+     (answer_type -> widget/hint-policy/compose fn) -- one owned place instead
+     of a type-specific chain; adding a mode = one registry entry + one branch
+     here. The radio branch still guards on `choices` being present: an mc4
+     item without structured choices falls back to the text input. -->
 <form method="POST" action="/answer" class="answer-form"
       hx-post="/answer" hx-target="#turn-area" hx-swap="innerHTML">
-  {% if choices %}
+  {% if widget == "radio" and choices %}
   {# mc4 with structured choices: native radio group — works with JS disabled. #}
   <fieldset class="choice-group">
     <legend class="sr-only">Choose your answer</legend>
@@ -25,7 +30,7 @@
     {% endfor %}
   </fieldset>
   <button class="btn" type="submit">Send ✓</button>
-  {% elif answer_type == "fraction" %}
+  {% elif widget == "fraction" %}
   {# Fraction: structured numerator/denominator inputs; /answer composes "n/d"
      server-side — no client JS, JS-disabled identical. #}
   <div class="fraction-input">
@@ -35,6 +40,9 @@
     <button class="btn" type="submit">Send ✓</button>
   </div>
   <p class="hint">Top number first, then the bottom number.</p>
+  {% elif widget == "number" %}
+  <input type="number" inputmode="numeric" name="answer" autofocus placeholder="Type your answer…">
+  <button class="btn" type="submit">Send ✓</button>
   {% else %}
   <input type="text" name="answer" autofocus placeholder="Type your answer…">
   <button class="btn" type="submit">Send ✓</button>

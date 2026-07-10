@@ -376,7 +376,12 @@ def test_mc4_question_box_shows_stem_only_not_options_thrice():
 
 def test_fraction_inputs_compose_server_side():
     """POST /answer with answer_num/answer_den (and no answer field) composes
-    "n/d" server-side -- verified through the real controller scoring path."""
+    "n/d" server-side -- verified through the real controller scoring path.
+    R2.3: composition is scoped to the CURRENT question's actual answer_type
+    via the answer-mode registry (not attempted unconditionally whenever the
+    "answer" field is blank, unlike the pre-R2.3 code) -- force a fraction
+    node so this test doesn't depend on which node fringe-selection picks
+    first for the "fractions" subject (that's not always a fraction node)."""
     try:
         import flask  # noqa: F401
     except ImportError:
@@ -389,6 +394,9 @@ def test_fraction_inputs_compose_server_side():
     with c.session_transaction() as sess:
         learner_uuid = sess["learner_uuid"]
     ctrl = app_mod._controllers[learner_uuid]
+    ctrl._ctx.current_node_id = "unit_fractions"  # a real fraction-type node
+    ctrl._ctx.current_item = None
+    assert ctrl.current_answer_type == "fraction"
 
     captured = {}
     real_step = ctrl.step

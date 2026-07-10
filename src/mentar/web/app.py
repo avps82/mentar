@@ -45,6 +45,7 @@ from mentar.engine.itemgen import (
 from mentar.engine.science_items import SCIENCE_GENERATORS
 from mentar.inference import load_inference_config, make_llm_call
 from mentar.tools.validate_template import validate_or_raise
+from mentar.web.answer_modes import mode_for
 
 app = Flask(__name__, template_folder="templates")
 app.secret_key = os.environ.get("SECRET_KEY", "mentar-dev-insecure-change-in-prod")
@@ -288,18 +289,13 @@ def answer():
             return "", 200, {"HX-Redirect": url_for("index")}
         return redirect(url_for("index"))
 
-    answer_text = request.form.get("answer", "").strip()
-    if not answer_text:
-        # Fraction widget: two structured inputs (numerator / denominator) compose
-        # server-side into the "n/d" string the verifier already accepts — no
-        # client JS involved, works identically with JS disabled.
-        num = request.form.get("answer_num", "").strip()
-        den = request.form.get("answer_den", "").strip()
-        if num and den:
-            answer_text = f"{num}/{den}"
+    ctrl = _controllers[learner_uuid]
+    # R2.3: the answer-mode registry owns how the posted form composes into the
+    # ONE string ctrl.step() accepts (e.g. fraction's num/den -> "n/d") — one
+    # owned place instead of a type-specific if/elif here.
+    answer_text = mode_for(ctrl.current_answer_type).compose(request.form)
     _log_turn(learner_uuid, "Child", answer_text)
 
-    ctrl = _controllers[learner_uuid]
     result = ctrl.step(answer_text)
     if result.text:
         _log_turn(learner_uuid, "Mentar", result.text)
@@ -615,19 +611,22 @@ def _turn_context(learner_uuid: str, ctrl: SessionController, is_first_turn: boo
     """Template context for the _turn.html partial: the STRUCTURED message and
     question fields (TurnResult.message / .question — never string-split from
     prose), both rendered through the same markdown-lite (U-32), plus the
-    answer-widget metadata (mc4 radio choices / fraction inputs)."""
+    answer-widget metadata driven by the R2.3 answer-mode registry."""
     message = _last_messages.get(learner_uuid, "")
     choices = ctrl.current_choices
-    # R2.1: an mc4 item with a structured stem shows JUST the stem (no inline
-    # "A) ..." options, no format hint -- the radios make the answer shape
-    # obvious). Anything else keeps the full question_display (unchanged).
+    mode = mode_for(ctrl.current_answer_type)
+    # R2.1 (now owned by the mode registry): a structured stem + no format-hint
+    # mode (mc4) shows JUST the stem -- the radios make the answer shape
+    # obvious. Anything else keeps the full question_display (unchanged).
     stem = ctrl.current_question_stem
-    question = (stem if (choices and stem) else ctrl.question_display) or "Ready when you are!"
+    show_stem = choices and stem and not mode.show_format_hint
+    question = (stem if show_stem else ctrl.question_display) or "Ready when you are!"
     return {
         "message_html": _render_markdown_lite(message) if message else "",
         "question_html": _render_markdown_lite(question),
         "is_first_turn": is_first_turn,
         "answer_type": ctrl.current_answer_type,
+        "widget": mode.widget,
         "choices": choices,
         "choice_letters": ["A", "B", "C", "D"][: len(choices)] if choices else [],
     }
