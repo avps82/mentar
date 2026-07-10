@@ -1,7 +1,7 @@
 ---
 title: "Mentar — Model Evaluation Results (W1.2)"
 status: "W1.3 pick made 2026-06-27: gemma2:9b. This page is the evaluation record that led to it — see docs/MODEL.md for the pick + roster."
-last-updated: 2026-07-05
+last-updated: 2026-07-10
 owner: Opus
 see-also: docs/MODEL.md (roster + run plan + pick), docs/TESTS.md (T1.x test specs), eval/ (the tooling)
 ---
@@ -152,6 +152,45 @@ single scores above had made it look closer than it is. nemotron still held its 
 quarter of them, which is impressive for a model that's a fraction of the size and far faster, but
 gemma2:9b is the one to beat.
 
+### 3.3b Help-prompt rewrite re-verification (D3, 2026-07-10)
+
+**Why this run exists:** the 2026-06-27 Help-prompt rewrite (`prompts/help_*.md`) added an
+explicit instruction forbidding restating/rewording/re-asking the question, requiring a
+concrete next step worked through on the example first. §3.3 above measures the *pre-fix*
+prompts. PHASE0_STATUS.md flagged this with "⚠️ effectiveness needs a live re-test on
+gemma2:9b — verify on the Mac/eval host" and it was never run. Re-run today against the
+same `reexplain` suite (50 items, same rubric, same judge — Sonnet) to close that gap.
+
+**Result: 35/50 (70%) `overall_pass` — identical to the pre-fix §3.3 number.** The Help-prompt
+rewrite did not move this rubric's pass rate at all. Per-criterion: `age_appropriate` 49/50,
+`grounded` 45/50, `no_fabrication` 42/50, `in_modality` 41/50, `within_cap` 50/50 (essentially
+unchanged from §3.3's breakdown too).
+
+**What's actually driving the 15 failures** (of the 4 criteria that gate `overall_pass`):
+`in_modality` (9/15) and `no_fabrication` (8/15, overlapping with `grounded` 5/15) — the model
+often doesn't stick to the requested representation (asked for "concrete", answers abstractly;
+asked for "visual", gives an analogy instead) and invents ungrounded framing details (a "pizza"
+analogy not in the source passage, terminology like "dividend/divisor/quotient" the passage
+never used). **This is a different failure mode than what the June 27 fix targeted** — that
+fix was aimed at "reframes the question instead of giving a real hint"; the deterministic
+`asked_question` side-check (a crude `"?" in text` scan, not specific to re-asking the graded
+problem) shows 8/50 contain a literal "?" somewhere, but manual inspection of those 8 shows
+mostly benign rhetorical questions within an otherwise-graded response, not the re-ask
+anti-pattern — so the June 27 fix likely *did* work for its specific target, but the rubric
+this suite measures (`overall_pass`) is dominated by a different, still-open weakness:
+modality fidelity and grounding discipline.
+
+**Not fixed in this task, by design** (per the D3 spec: "if a modality fails badly, that's a
+prompt-iteration follow-up, not silently patched in this one"). **Below the 90% T1.6 gate,
+flagged as a real open item** for a maintainer prompt-iteration pass before broader rollout —
+not blocking the supervised single-family pilot (SAFETY §6.2 Level 2's `explain_check.py`
+numeric-claim verification still catches the safety-critical subset — wrong arithmetic in a
+re-explanation — independently of this rubric; this gap is explanation *quality*, not
+explanation *safety*).
+
+Raw data: `eval/responses/gemma2_9b.jsonl` (regenerated 2026-07-10), verdicts
+`reports/T1.4/judge_gemma2_9b.jsonl` (both gitignored, regenerate via §6).
+
 ### 3.4 Two safety-critical behaviours: not getting fooled, and not making things up
 
 A good tutor must do two things many chatbots fail at: **correct a child who states a wrong answer**
@@ -229,3 +268,7 @@ Tooling: `eval/` (scorers + runner), `tests/eval/` (the tests, all green). Roste
 - A **deterministic (temp-0)** safety re-run for stable per-item numbers.
 - The **retrieval-faithfulness (NIAH)** test.
 - Human spot-check of the judge's grades → then the **W1.3 model pick** in `docs/MODEL.md`.
+- **Prompt-iteration pass on `prompts/help_*.md`** — §3.3b found modality-fidelity and
+  grounding/fabrication (not question-restating) are the real drivers keeping explanation
+  quality at 70% vs. the 90% gate. A maintainer decision on how to prioritise this against
+  the pilot timeline, not something to iterate on speculatively.

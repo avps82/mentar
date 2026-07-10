@@ -388,8 +388,14 @@ dialogue controller, web app, eval dataset, FSM caller wiring) has **all shipped
   the question and require a **concrete next step worked through on the example** before the
   transfer re-check. Inputs were already sound (concept = node label via `web/app.py:72`;
   worked-example from the 31-item bank), so the fix is in the prompts. Hashes + README registry
-  re-synced (T4.6/T7.3 green). ⚠️ **Effectiveness needs a live re-test on `gemma2:9b`** (prompt
-  quality can't be unit-tested) — verify on the Mac/eval host.
+  re-synced (T4.6/T7.3 green). **✅ Re-tested 2026-07-10 (D3)** —
+  `docs/EVAL_RESULTS.md` §3.3b: 35/50 (70%) `overall_pass`, identical to the pre-fix number.
+  The fix's specific target (re-asking the graded question) does appear resolved on manual
+  inspection, but the rubric's `overall_pass` gate is dominated by a different, still-open
+  weakness — modality fidelity + grounding/fabrication discipline — not moved by this prompt
+  change. Below the 90% T1.6 gate; flagged as a real open item (prompt-iteration follow-up),
+  not blocking the supervised single-family pilot (the safety-critical numeric-claim subset
+  is independently caught by `explain_check.py`, unaffected by this quality gap).
 - **✅ FIXED — Help request at a re-check/probe was scored as an answer (2026-06-27).** Added a
   shared `_is_help_request()` guard (mirroring `_is_stop`) to the two unguarded await states:
   `_do_help_recheck_await` now routes `?`/`help`/`h` to another Help round (not the verifier);
@@ -426,6 +432,7 @@ Cross-cutting "later" items not tied to a single W-task. Add here as they come u
 
 | Date | Change |
 |------|--------|
+| 2026-07-10 | **D3: Help-prompt live re-test run** (eval host reachable this session) — `eval/run_candidates.py --model gemma2:9b --suite reexplain` + `eval/judge_responses.py`, real Sonnet-judged run, not a dry-run. Result: 35/50 (70%) `overall_pass`, identical to the pre-fix number in `docs/EVAL_RESULTS.md` §3.3 — the June 27 Help-prompt rewrite likely did fix its specific target (re-asking the question, confirmed by manual inspection) but didn't move the rubric's actual gating criteria (modality fidelity, grounding/fabrication discipline), which sit below the 90% T1.6 gate. Recorded honestly in `docs/EVAL_RESULTS.md` §3.3b as a real open item, not silently patched — prompt-iteration is a maintainer call, not something to guess at. |
 | 2026-07-10 | **D5: `docs/PILOT_RUNBOOK.md` written** — pre-session-1 checklist (9 hard gates from REMAINDER_PLAN.md §C, including the still-open safeguarding-professional review and red-team decision) + a per-session procedure + a P1–P5 evidence-recording table (thin overlay over PHASE0.md §26.7, no criteria duplicated). Not yet run against a real session. **Also: a full "PR open/awaiting review" sweep** — every A3–A21/B1/B2 task note in this file's "Known defects" section still said its fix was an open PR; all are merged (confirmed via `git log`, PRs #55–#74). Corrected ~18 occurrences across this file + `REMAINDER_PLAN.md`'s wave table (which also still framed the wave as "open, awaiting review" despite being fully merged). Picked up 2 related fixes while in the neighbourhood: the A11 entry's ambiguous "pre-existing `stop_request` gap" wording clarified to explicitly say documentation gap, not code gap (verified 2026-07-10, all three `*_AWAIT` states already handle stop correctly); A14's "v0 coverage floor" note updated to reflect D7's ÷/"divided by" support. Test count bumped to 482 (was stale at 463). |
 | 2026-07-10 | **D1/D2 doc-truth fixes (post-release-wave gap sweep).** D1: `docs/CONTENT_LICENSES.md` §1 promoted Khan Academy to the live pilot grounding source (was only logged in §3 as a Phase-3 hosted-tier conflict, stale since B1's 2026-07-05 re-point); Vikidia/Simple-WP relabelled cleared alternates, not currently mounted; `docs/SPEC.md` §24 row #18 synced to match. D2: `docs/SAFETY.md` §1.2 gained the agreed i18n scope-boundary paragraph (non-English template load refused until a vetted trigger bank + reviewed handoff wording exist) + an Appendix B open-item row. No code changes, pytest/ruff unaffected. |
 | 2026-07-10 | **UI-rebuild requirements ratified** — `docs/design/UI_REQUIREMENTS.md` (v0.1). Maintainer wants the web UI rebuilt as the project's "lure" (audiences: evaluating parents + OSS visitors; no landing page; presentation-layer only, U-14/U-82 lock routes + safety invariants). README screenshots required but **gated on maintainer review of the built front end** (U-2a). Design mockups + per-screen gemma specs = next phase, blocked on U-90–U-92 decisions. Absorbs the web-display backlog row (question-vanish + literal markdown). |
