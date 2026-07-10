@@ -13,7 +13,6 @@ label: "Maths: + − × 🔢"                             # R3.1: web picker cat
 icon: "🔢"
 description: "Adding, subtracting, and multiplying numbers."
 item_source: arithmetic
-subject_key: arithmetic                              # keep the pre-scan session-cookie key stable
 
 language_register:
   reading_level: "~Year 3-4 / ages 8-9"

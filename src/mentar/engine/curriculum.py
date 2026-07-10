@@ -41,11 +41,32 @@ def load_template_meta(path: Path) -> dict:
         "icon": raw.get("icon"),
         "description": raw.get("description"),
         "item_source": raw.get("item_source"),
-        # Optional override when template_id-with-dashes-to-underscores would
-        # collide with a key already in use elsewhere (e.g. an existing
-        # session cookie) -- see web/app.py's SUBJECTS construction.
+        # Rarely-needed escape hatch -- derive_subject_key() below handles the
+        # normal case fully automatically; a template only needs this if the
+        # automatic rule genuinely collides with something.
         "subject_key": raw.get("subject_key"),
     }
+
+
+def derive_subject_key(path: Path, meta: dict) -> str:
+    """The web subject/session key for a template -- fully automatic, no
+    per-template authoring step: the DIRECTORY is the namespace. A template
+    directly under templates/_pilot/ (the original, pre-namespaced pilot
+    content) keys off its filename alone, matching the keys already baked
+    into existing session cookies ("fractions", "arithmetic", "science").
+    Any OTHER directory (AU/, and any future US/, UK/, ...) auto-prefixes
+    with its own lowercased name, so "AU/year3_maths.md" always becomes
+    "au_year3_maths" with zero manual input -- drop a file in the right
+    folder and the correct, collision-free key falls out. `subject_key:`
+    front matter, if present, wins outright (verified: none of the 5
+    shipped templates need it under this rule -- see
+    tests/engine/test_template_catalog.py)."""
+    if meta.get("subject_key"):
+        return meta["subject_key"]
+    path = Path(path)
+    stem = path.stem
+    parent = path.parent.name
+    return stem if parent == "_pilot" else f"{parent.lower()}_{stem}"
 
 
 def load_curriculum(path: Path) -> dict:

@@ -33,7 +33,12 @@ from markupsafe import escape
 from mentar.db.adapter import _DbStoreAdapter
 from mentar.db.store import LearnerStore
 from mentar.dialogue.controller import FSMState, SessionController
-from mentar.engine.curriculum import load_curriculum, load_template_meta, load_template_subject
+from mentar.engine.curriculum import (
+    derive_subject_key,
+    load_curriculum,
+    load_template_meta,
+    load_template_subject,
+)
 from mentar.engine.item_sources import build_registry
 from mentar.engine.itembank import load_item_bank
 from mentar.engine.itemgen import CompositeItemSource, ItemGenerator
@@ -90,10 +95,9 @@ for _path in _discover_template_paths():
     # mastered everything!" completion for the child. Fail loud at startup.
     validate_or_raise(_path)
     _meta = load_template_meta(_path)
-    # subject_key lets a template pin its web-picker key explicitly (used by the
-    # 3 pre-existing pilot templates so already-issued session cookies keep
-    # resolving); otherwise derive one from template_id (dashes -> underscores).
-    _key = _meta["subject_key"] or (_meta["template_id"] or _path.stem).replace("-", "_")
+    # derive_subject_key: fully automatic (directory = namespace) — no
+    # per-template authoring step. See its docstring for the rule.
+    _key = derive_subject_key(_path, _meta)
     _source_name = _meta["item_source"]
     if _source_name not in _ITEM_SOURCE_REGISTRY:
         raise RuntimeError(

@@ -11,29 +11,31 @@ import sys
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
-from mentar.engine.curriculum import load_template_meta  # noqa: E402
+from mentar.engine.curriculum import derive_subject_key, load_template_meta  # noqa: E402
 from mentar.engine.item_sources import build_registry  # noqa: E402
 
 _TPL = REPO_ROOT / "curriculum" / "templates"
 
 # The exact catalog the hardcoded SUBJECTS dict carried before R3.1 -- the scan
 # must reproduce these keys/labels/item_sources exactly (session-cookie
-# stability for the 3 pilot templates via their subject_key: override).
+# stability). Keys are now derived FULLY AUTOMATICALLY from directory
+# structure (derive_subject_key) -- no template needs a subject_key: override,
+# proven by its absence below.
 _EXPECTED = {
     "curriculum/templates/_pilot/fractions.md": {
-        "subject_key": "fractions", "label": "Fractions 🍕", "item_source": "pilot_fractions",
+        "key": "fractions", "label": "Fractions 🍕", "item_source": "pilot_fractions",
     },
     "curriculum/templates/_pilot/arithmetic.md": {
-        "subject_key": "arithmetic", "label": "Maths: + − × 🔢", "item_source": "arithmetic",
+        "key": "arithmetic", "label": "Maths: + − × 🔢", "item_source": "arithmetic",
     },
     "curriculum/templates/_pilot/science.md": {
-        "subject_key": "science", "label": "Science 🔬", "item_source": "science",
+        "key": "science", "label": "Science 🔬", "item_source": "science",
     },
     "curriculum/templates/AU/year3_maths.md": {
-        "subject_key": None, "label": "Maths — Year 3 🇦🇺", "item_source": "au_year3",
+        "key": "au_year3_maths", "label": "Maths — Year 3 🇦🇺", "item_source": "au_year3",
     },
     "curriculum/templates/AU/year4_maths.md": {
-        "subject_key": None, "label": "Maths — Year 4 🇦🇺", "item_source": "au_year4",
+        "key": "au_year4_maths", "label": "Maths — Year 4 🇦🇺", "item_source": "au_year4",
     },
 }
 
@@ -44,22 +46,32 @@ def test_all_five_templates_discovered_with_expected_meta():
 
     for rel, expected in _EXPECTED.items():
         meta = load_template_meta(REPO_ROOT / rel)
-        assert meta["subject_key"] == expected["subject_key"], rel
         assert meta["label"] == expected["label"], rel
         assert meta["item_source"] == expected["item_source"], rel
 
 
-def test_derived_keys_match_the_pre_r3_hardcoded_dict():
-    """template_id-with-dashes-to-underscores, or the subject_key override when
-    present, must reproduce today's 5 literal keys exactly -- an already-issued
-    session cookie must keep resolving to the same subject after this change."""
-    expected_keys = {"fractions", "arithmetic", "science", "au_year3_maths", "au_year4_maths"}
-    derived = set()
+def test_no_shipped_template_needs_the_subject_key_escape_hatch():
+    """The automatic directory-based rule must be sufficient on its own -- if
+    a future template needed subject_key: to avoid a collision, that would be
+    a signal something's off with the automatic rule, not routine authoring."""
     for rel in _EXPECTED:
         meta = load_template_meta(REPO_ROOT / rel)
-        key = meta["subject_key"] or meta["template_id"].replace("-", "_")
-        derived.add(key)
-    assert derived == expected_keys
+        assert meta["subject_key"] is None, f"{rel} shouldn't need the escape hatch"
+
+
+def test_derived_keys_match_the_pre_r3_hardcoded_dict():
+    """derive_subject_key() must reproduce today's 5 literal keys exactly, with
+    ZERO manual input from any template -- an already-issued session cookie
+    must keep resolving to the same subject after this change."""
+    for rel, expected in _EXPECTED.items():
+        meta = load_template_meta(REPO_ROOT / rel)
+        assert derive_subject_key(REPO_ROOT / rel, meta) == expected["key"], rel
+
+
+def test_subject_key_front_matter_still_wins_when_present():
+    """The escape hatch itself still works, for the rare genuine collision."""
+    meta = {"subject_key": "custom_key"}
+    assert derive_subject_key(REPO_ROOT / "curriculum/templates/AU/year3_maths.md", meta) == "custom_key"
 
 
 def test_item_source_registry_has_every_referenced_name():
