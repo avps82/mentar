@@ -5,13 +5,14 @@ status: "Active"
 updated: 2026-07-05
 ---
 
-# Release Wave — pilot-ready main (status as of 2026-07-05, handover checkpoint)
+# Release Wave — pilot-ready main (status as of 2026-07-10)
 
-**A1–A21 + B2 are merged to `main`** (PRs #55–#72, all human-reviewed and merged by the
-maintainer). **B1 is done** (re-pointed pilot grounding to Khan Academy — see B1's row below)
-and open as **PR #73**, not yet merged. A small unrelated docs aside (README "Author's Funny
-Thoughts") is open as **PR #74**, not yet merged. Nothing else from this wave is outstanding —
-**#73 and #74 are the only two open PRs; everything else in A1–A21/B2 has already landed.**
+**A1–A21 + B1 + B2 are ALL merged to `main`** (PRs #55–#74, all human-reviewed and merged by
+the maintainer). B1 (re-pointed pilot grounding to Khan Academy — see B1's row below) merged
+as **PR #73**; the small unrelated docs aside (README "Author's Funny Thoughts") merged as
+**PR #74**. The entire release wave is closed — nothing from A1–A21/B1/B2 is outstanding.
+Post-wave work (D-tasks: doc-truth fixes, `mentar backup`, explain_check division support,
+this pilot runbook, the UI rebuild) tracked separately, not part of this wave.
 
 A CI bug was found and fixed mid-wave: a job-level `permissions:` block in `.github/workflows/
 ci.yml` was silently dropping `contents: read` (GitHub Actions `permissions:` *replaces*
@@ -52,10 +53,10 @@ re-derive the plan file from the Wave table if you want it back in that format.
 | Wave | Tasks | Status | Notes |
 |------|-------|--------|-------|
 | **0 — rails** | A12 | ✅ **DONE** (2026-07-04, PR #54, merged `b544978`) | CI matrix py3.11-3.13 + gitleaks CLI (MIT, pinned v8.30.1 — NOT gitleaks-action, which is commercial-licensed since v2). **Gotcha found + fixed:** `pip install -e ".[dev,web]"` is not enough — grounding tests need `libzim`, which lives behind its own `grounding` extra (spotty cross-platform wheels, so deliberately not in `dev`/`web`). CI installs `.[dev,web,grounding]`; manylinux wheels exist for cp311-313 on ubuntu-latest so this is safe. First run failed on this, second run (483630c) passed. |
-| **1 — safety-critical, Opus-led, in order** | A3 → A15 → A8 → A13 → A14 | ✅ **Wave 1 ALL DONE** (2026-07-05) — A3 (#55), A15 (#56), A8 (#57), A13 (#58), A14 (PR pending), all open, awaiting human review | A3 (schema v2) unblocks A13's incident-row home + A19's session-row rng_seed column — do it first. **2026-07-05 note:** auto-merge is blocked by the harness's permission classifier for safety-critical PRs authored+merged by the same agent with no visible review — every Wave-1 PR lands open, not merged, until the maintainer reviews. Branches are stacked (same files touched across tasks) — merge in stack order: #55 (A3), #56 (A15), #57 (A8), #58 (A13), then A14. |
-| **2 — correctness, Gemma-drafted/Opus-verified** | A17 → A16 → A5 → A6 → A9 → A7 → A20 → A21 | ✅ **Wave 2 ALL DONE** (2026-07-05) — A17 (#60), A16 (#61), A5 (#62), A6 (#63), A9 (#64), A7 (#65), A20 (#66), A21 (PR pending), all open, awaiting human review | A17 before A16 (layering clean-up first makes A16's startup hook land in one place). A20/A21 are the new ratified tasks — specs below. |
-| **3 — assent/docs/hygiene** | A1 → A4 → A18 → A19 → A2 → A11 | ✅ **Wave 3 ALL DONE** (2026-07-05) — A1 + A2 found **already shipped** (`e664658` / `a277b73`, doc drift corrected), A4 (#68), A18 (#69), A19 (#70), A11 all done, all open, awaiting human review | A1 before A4 (same controller preamble). A11 (FSM conformance test) runs **after** waves 1–2 since A9/A14/A21 add new FSM transitions the doc needs to capture. A18's own re-run caught + fixed a real eval-harness bug (see docs/MODEL.md 2026-07-05 note) — the A7 prompt change itself was confirmed safe (20/20, no regression). A19 bumped schema to v3 (`session.rng_seed`). A2's `run.example.yaml` re-verified `--dry-run` clean on this host. A11 removed the dead `PARENT_ACK_WAIT` state and fixed 2 stale transition-table edges the new T3.7 test caught. |
-| **4 — QA + doc close-out** | B1 → B2 → close-out | 🔶 B1 **skipped** (no readable Vikidia/Simple-WP `zim_dir` in this sandbox — logged, not blocking, per its own conditional clause); B2 done (PR pending) | B1 is conditional — check `zim_dir` is readable before running; log+skip if absent, don't block the wave. B2 (doc-drift sweep) runs LAST so it reflects the post-wave state — done last, after all of A3–A21/B1. **Every A/B task in this backlog is now built except B1** (blocked on ZIM access, not on code). |
+| **1 — safety-critical, Opus-led, in order** | A3 → A15 → A8 → A13 → A14 | ✅ **Wave 1 ALL DONE + MERGED** — A3 (#55), A15 (#56), A8 (#57), A13 (#58), A14 (#59) | A3 (schema v2) unblocks A13's incident-row home + A19's session-row rng_seed column — do it first. Branches were stacked (same files touched across tasks); merged in stack order #55→#59. |
+| **2 — correctness, Gemma-drafted/Opus-verified** | A17 → A16 → A5 → A6 → A9 → A7 → A20 → A21 | ✅ **Wave 2 ALL DONE + MERGED** — A17 (#60), A16 (#61), A5 (#62), A6 (#63), A9 (#64), A7 (#65), A20 (#66), A21 (#67) | A17 before A16 (layering clean-up first makes A16's startup hook land in one place). A20/A21 are the new ratified tasks — specs below. |
+| **3 — assent/docs/hygiene** | A1 → A4 → A18 → A19 → A2 → A11 | ✅ **Wave 3 ALL DONE + MERGED** — A1 + A2 found **already shipped** (`e664658` / `a277b73`, doc drift corrected), A4 (#68), A18 (#69), A19 (#70), A11 (#71) | A1 before A4 (same controller preamble). A11 (FSM conformance test) runs **after** waves 1–2 since A9/A14/A21 add new FSM transitions the doc needs to capture. A18's own re-run caught + fixed a real eval-harness bug (see docs/MODEL.md 2026-07-05 note) — the A7 prompt change itself was confirmed safe (20/20, no regression). A19 bumped schema to v3 (`session.rng_seed`). A2's `run.example.yaml` re-verified `--dry-run` clean on this host. A11 removed the dead `PARENT_ACK_WAIT` state and fixed 2 stale transition-table edges the new T3.7 test caught. |
+| **4 — QA + doc close-out** | B1 → B2 → close-out | ✅ **Wave 4 ALL DONE + MERGED** — B1 + B2 (#72, bundled), B1's final Khan Academy re-point (#73) | B1's "skipped" status was corrected: the maintainer pointed out `/mnt/zim` was always readable — the real gap was narrower (that mount holds Wikipedia/KhanAcademy/gutenberg/StackExchange, never Vikidia/Simple-WP), resolved by re-pointing to Khan Academy rather than waiting on a NAS upload. B2 (doc-drift sweep) ran last so it reflected the post-wave state. **Every A/B task in this backlog is built and merged.** |
 
 **Execution model (unchanged from plan):** one branch + PR per task; gate = `pytest tests/ -q`
 green (398 baseline, will grow) + `ruff check .` clean + the task's own Accept criteria (specs
@@ -383,7 +384,7 @@ Ordered by the review's priority table.
 - **Files:** `docs/ARCHITECTURE.md`, `README.md`, `AGENTS.md`, `docs/EVAL_RESULTS.md`,
   `docs/SAFETY.md` (App. C only), `pyproject.toml`, `docs/DOC_AUDIT.md` (mark actioned).
 - **Accept:** every row of REVIEW §4 either fixed or explicitly waived inline; ruff/pytest green.
-- **✅ DONE 2026-07-05** (PR pending, stacked, last in the wave): all 9 REVIEW §4 rows + all 11
+- **✅ DONE 2026-07-05, merged (PR #72)**: all 9 REVIEW §4 rows + all 11
   DOC_AUDIT §F rows actioned — see `docs/DOC_AUDIT.md` §F for the per-row status. Also picked up
   `docs/SPEC.md` (Cowork bridge TODO resolved, eval-host connection details supplied,
   Appendix B delivery note) and `docs/llm-compatibility.md`'s stale "pick pending" line while
@@ -408,7 +409,7 @@ Ordered by the review's priority table.
   wording (COPPA 2025 / GDPR-K) against public docs still a separate future check — the
   documents no longer overclaim, but a formal compliance-language pass hasn't been done.
 - ~~BKT rising-mastery-on-wrong call~~ — **ratified 2026-07-04 (Option B), built 2026-07-05 as
-  task A20** (PR open, awaiting review). No longer a pending C-row.
+  task A20, merged** (PR #66). No longer a pending C-row.
 - Run the **pilot** (P1–P5).
 
 ## Execution

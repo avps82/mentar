@@ -145,8 +145,9 @@ B1–B5.**
 ## Test suite
 
 The full suite runs via `python -m pytest tests/` — the root `conftest.py` puts `src/` + `.vendor/`
-on `sys.path`, so no editable install is needed. **463 tests pass and `ruff check .` is clean** as of
-2026-07-05 (main, plus B1's khanacademy grounding fix — see REMAINDER_PLAN.md). Each test file also
+on `sys.path`, so no editable install is needed. **482 tests pass and `ruff check .` is clean** as of
+2026-07-10 (main, post-release-wave D-tasks + the UI rebuild — see REMAINDER_PLAN.md and
+`docs/design/UI_REQUIREMENTS.md`). Each test file also
 carries an inline `python3`-runnable smoke runner (project convention).
 
 ---
@@ -169,8 +170,8 @@ dialogue controller, web app, eval dataset, FSM caller wiring) has **all shipped
 - **✅ RESOLVED 2026-07-05 — Escalation logging is best-effort — a DB failure silently drops
   the verbatim disclosure (2026-07-03, repo review 2nd pass).** Was: `write_escalation` try/except-
   swallowed in the controller with no fallback; the freeze still happened but SAFETY §3.1 "never
-  silently dropped" was violated on any DB error. Fixed via REMAINDER_PLAN A15 (PR open —
-  awaiting human review, not yet merged, stacked on #55/A3): a DB-write failure now also appends
+  silently dropped" was violated on any DB error. Fixed via REMAINDER_PLAN A15 (merged, PR #56,
+  stacked on #55/A3): a DB-write failure now also appends
   one JSON line (`iso_ts`, `trigger_class`, `severity`, `verbatim_text`) to
   `escalation_fallback.log` next to the DB file; `/parent` shows a "durable logging degraded"
   banner when that file is non-empty. → REVIEW §8.1.
@@ -178,8 +179,8 @@ dialogue controller, web app, eval dataset, FSM caller wiring) has **all shipped
   mastered" completion (2026-07-03, repo review 2nd pass).** Was: `validate()` ran only via the
   CLI subcommand; serve/run-session parsed YAML directly — a cyclic/bad-prereq template ->
   unsatisfiable nodes -> empty fringe -> child told "Well done — you've mastered all the
-  concepts!" silently. Fixed via REMAINDER_PLAN A16 (PR open — awaiting human review, not yet
-  merged, stacked on Wave 1 + A17): new `validate_template.validate_or_raise()`; `web/app.py`
+  concepts!" silently. Fixed via REMAINDER_PLAN A16 (merged, PR #61, stacked on Wave 1 + A17):
+  new `validate_template.validate_or_raise()`; `web/app.py`
   validates every `SUBJECTS` template at import time (raises `RuntimeError` naming the
   template + errors — a config error, not a 500); `cli/__main__.py`'s `run-session` validates
   before building the controller (prints the error, exits 1, same pattern as the existing
@@ -188,7 +189,7 @@ dialogue controller, web app, eval dataset, FSM caller wiring) has **all shipped
   repo review 2nd pass).** Was: the 20/20 pipeline-safety run (2026-06-27) predates several
   prompt re-hashes (including this wave's own A7 system_prompt.md edit); nothing required a
   T1.5 re-run on prompt change, so the headline claim could silently age. Fixed via
-  REMAINDER_PLAN A18 (PR open — awaiting human review, not yet merged, stacked on Wave 1/2/3):
+  REMAINDER_PLAN A18 (merged, PR #69, stacked on Wave 1/2/3):
   rule added to both `AGENTS.md` and `CONTRIBUTING.md` (re-run T1.5 + record the date in
   `docs/EVAL_RESULTS.md` before merging any prompts/-touching PR); new CI job
   (`prompt-eval-reminder`) posts a required-checklist comment on any PR that touches
@@ -197,13 +198,13 @@ dialogue controller, web app, eval dataset, FSM caller wiring) has **all shipped
 - **✅ RESOLVED 2026-07-05 — Layering violation — CLI imports the web module (2026-07-03, repo
   review 2nd pass).** Was: `cli/__main__.py` imported `_load_curriculum`/`_DbStoreAdapter` from
   `mentar.web.app`: headless run-session needed Flask + triggered web module-level side effects
-  (app creation, all-subject curriculum load). Fixed via REMAINDER_PLAN A17 (PR open — awaiting
-  human review, not yet merged, stacked on Wave 1): moved `load_curriculum` to
+  (app creation, all-subject curriculum load). Fixed via REMAINDER_PLAN A17 (merged, PR #60,
+  stacked on Wave 1): moved `load_curriculum` to
   `engine/curriculum.py` and `_DbStoreAdapter` to `db/adapter.py` (pure move, no behaviour
   change); `mentar.cli.__main__` now imports cleanly with Flask blocked. → REVIEW §8.3.
 - **✅ RESOLVED 2026-07-05 — `age_mode` stored but never read + floating deps + unreplayable
-  sessions (2026-07-03, repo review 2nd pass, §8.6/§8.7).** Fixed via REMAINDER_PLAN A19 (PR
-  open — awaiting human review, not yet merged, stacked on Wave 1/2/3): (1) new
+  sessions (2026-07-03, repo review 2nd pass, §8.6/§8.7).** Fixed via REMAINDER_PLAN A19
+  (merged, PR #70, stacked on Wave 1/2/3): (1) new
   `LearnerStore.assert_parent_mediated()`, called from both `web/app.py` and `cli/__main__.py`
   right after the learner id is known — raises a clear `RuntimeError` if a learner's
   `age_mode` is ever anything but `'parent_mediated'` (independent mode needs the W2.2
@@ -218,8 +219,8 @@ dialogue controller, web app, eval dataset, FSM caller wiring) has **all shipped
   follow-up).** Was: SAFETY L2 §2.1/§2.2 promised hard-block matches are discarded +
   incident-logged and every output is scope/age/pedagogy-checked, but the real chain was
   `llm_call -> redact_credentials -> _strip_trailing_questions -> child` — no content/scope
-  check, no discard path, no incident log. Fixed via REMAINDER_PLAN A13 (PR open — awaiting
-  human review, not yet merged, stacked on A3/A15/A8): new `safety/output_guard.py`
+  check, no discard path, no incident log. Fixed via REMAINDER_PLAN A13 (merged, PR #58,
+  stacked on A3/A15/A8): new `safety/output_guard.py`
   (`screen_output()`) wired as a second stage in `_make_safe_llm`; on a hard-content or
   off-scope match the output is discarded, an incident row is written (reusing
   `escalation_log`, `trigger_class=output_blocked:<class>`, session does NOT freeze), and the
@@ -230,19 +231,20 @@ dialogue controller, web app, eval dataset, FSM caller wiring) has **all shipped
   (2026-07-03, repo review follow-up).** Was: SAFETY §6.2 Level 2 promised numeric steps *in
   re-explanations* are verified before serving (discard + regenerate on failure), but
   `verify_numeric.check()` was only ever called on child answers — a wrong worked step in a
-  Help explanation shipped unchecked. Fixed via REMAINDER_PLAN A14 (PR open — awaiting human
-  review, not yet merged, stacked on A3/A15/A8/A13): new `engine/explain_check.py` extracts
+  Help explanation shipped unchecked. Fixed via REMAINDER_PLAN A14 (merged, PR #59,
+  stacked on A3/A15/A8/A13): new `engine/explain_check.py` extracts
   `a <op> b = c` arithmetic claims from Help explanation text and verifies each via
   `verify_numeric.normalise_fraction`; a verified-wrong claim triggers regeneration (bounded,
   2 attempts) then falls back to the deterministic hint. **v0 coverage floor** — simple
-  arithmetic claims only (no `/`-as-division, no decimals, no algebraic steps); unparseable
-  claims pass through unchecked, not blocked. → REVIEW §1.7.
+  arithmetic claims only, no decimals, no algebraic steps (÷/"divided by" added 2026-07-10
+  as D7; the plain `/` character stays unparsed — it collides with fraction notation);
+  unparseable claims pass through unchecked, not blocked. → REVIEW §1.7.
 - **✅ RESOLVED 2026-07-05 — SAFETY-AUDIT GAP — escalation_log missing/wrong fields
   (2026-07-03, repo review).** Was: no `severity` column, no `session_id`/turn number, and
   the live write path never set `session_outcome` (LOW jailbreaks stored as `'frozen'`
   instead of `'logged_only'`); a second uncalled write path (`escalation.handle_trigger()`)
-  had already drifted from the real one. Fixed via REMAINDER_PLAN A3 (PR #55, branch
-  `feat/a3-escalation-schema-v2`, **open — awaiting human review, not yet merged**):
+  had already drifted from the real one. Fixed via REMAINDER_PLAN A3 (merged, PR #55, branch
+  `feat/a3-escalation-schema-v2`):
   schema migrated to `user_version=2` (real v1->v2 `ALTER TABLE` migration, not a stub);
   `severity`/`session_id`/`turn_index`/`session_outcome` now flow from the controller
   through `LearnerStore.write_escalation`; `handle_trigger()` (the drifted duplicate)
@@ -251,7 +253,7 @@ dialogue controller, web app, eval dataset, FSM caller wiring) has **all shipped
   (2026-07-03, repo review).** Was: on escalation `/answer` (and any subsequent `/`) redirected
   the CHILD's browser to `/parent`, which shows the verbatim trigger text (SAFETY §3.3 Step 4
   says the alert must NOT carry it) plus the un-gated acknowledge/resume button. Fixed via
-  REMAINDER_PLAN A8 (PR open — awaiting human review, not yet merged, stacked on A3/A15): new
+  REMAINDER_PLAN A8 (merged, PR #57, stacked on A3/A15): new
   `/frozen` view shows ONLY the two fixed handoff messages (checked on every render while
   ESCALATION_FREEZE, not just the triggering turn); `/parent` is typed-URL-only (never
   auto-navigated); `/parent/ack` now requires a typed confirm word (`RESUME`) — wrong/missing
@@ -263,7 +265,7 @@ dialogue controller, web app, eval dataset, FSM caller wiring) has **all shipped
   retention/purge code existed (and transcript immutability triggers make row-level purge
   impossible — the two designs conflicted). (3) §5.5 session-start "I'm a computer helper"
   statement wasn't implemented (only the reactive system-prompt rule). Fixed via REMAINDER_PLAN
-  A4 (PR open — awaiting human review, not yet merged, stacked on Wave 1/2 + A1): (1) reworded
+  A4 (merged, PR #68, stacked on Wave 1/2 + A1): (1) reworded
   to describe the actual marker-data-wrapping control; (2) reworded to the ratified "pilot
   retains everything, deletion = delete the .db file" policy (§5.6 table + SECURITY.md updated
   to match); (3) new `TRANSPARENCY_LINE` constant, shown once alongside `ASSENT_LINE` on the
@@ -273,21 +275,21 @@ dialogue controller, web app, eval dataset, FSM caller wiring) has **all shipped
   review).** Was: `_do_probe_classify` used `len(ctx.help_modalities_used) > 0` — stale across
   nodes (Help on node A masked false_confidence on node B — SPEC §14.4 requires "no Help pressed
   *on concept*") and also set by system-initiated auto-help-on-wrong, conflating declared
-  confusion with scaffolding. Fixed via REMAINDER_PLAN A5 (PR open — awaiting human review, not
-  yet merged, stacked on Wave 1 + A17/A16): new `ctx.help_by_node: dict[str, bool]` set ONLY at
+  confusion with scaffolding. Fixed via REMAINDER_PLAN A5 (merged, PR #62,
+  stacked on Wave 1 + A17/A16): new `ctx.help_by_node: dict[str, bool]` set ONLY at
   the 3 `_is_help_request` call sites (never in `_do_bkt_update`'s auto-help branch);
   `_do_probe_classify` reads `ctx.help_by_node.get(current_node_id, False)`. → REVIEW §2.2.
 - **✅ RESOLVED 2026-07-05 — Web learner identity not durable — mastery silently resets on
   server restart (2026-07-03, repo review).** Was: `_db_learner_ids` is in-memory; the cookie
   survives a restart, the mapping doesn't -> `create_learner()` ran again -> new learner row,
-  orphaned history, mastery back to P_L0. Fixed via REMAINDER_PLAN A6 (PR open — awaiting human
-  review, not yet merged, stacked on Wave 1 + A17/A16/A5): new
+  orphaned history, mastery back to P_L0. Fixed via REMAINDER_PLAN A6 (merged, PR #63,
+  stacked on Wave 1 + A17/A16/A5): new
   `LearnerStore.get_learner_by_name()`; `_get_or_create_controller` looks up the deterministic
   `pilot-<uuid8>` name before `create_learner`, reusing the existing row. → REVIEW §2.3.
 - **✅ RESOLVED 2026-07-05 — System prompt hardcoded to fractions/Year-4 while the app serves 3
   subjects (2026-07-03, repo review).** Was: `prompts/system_prompt.md` scope-locked to
   fractions; arithmetic + science Help calls ran under it -> internal scope conflict. Fixed via
-  REMAINDER_PLAN A7 (PR open — awaiting human review, not yet merged, stacked on Wave 1 +
+  REMAINDER_PLAN A7 (merged, PR #65, stacked on Wave 1 +
   A17/A16/A5/A6/A9): `{{subject}}`/`{{scope_line}}` slots added to `system_prompt.md` (hash
   bumped `29ed98f0b07a` -> `54f902ef0d8e`, README registry updated); new
   `engine/curriculum.py::load_template_subject()` reads the template's `subject:` field;
@@ -295,20 +297,22 @@ dialogue controller, web app, eval dataset, FSM caller wiring) has **all shipped
   pass the active template's subject through. → REVIEW §2.1.
 - **✅ RESOLVED 2026-07-05 — SESSION_FSM.md conformance test (T3.7) never built + doc drifted
   (2026-07-03, repo review).** Was: the doc claimed `tests/dialogue/test_session_fsm.py` parses
-  its transition table; no such test existed. Fixed via REMAINDER_PLAN A11 (PR open — awaiting
-  human review, not yet merged, stacked on Waves 1–3): new `test_session_fsm.py` (AST-derived
+  its transition table; no such test existed. Fixed via REMAINDER_PLAN A11 (merged, PR #71,
+  stacked on Waves 1–3): new `test_session_fsm.py` (AST-derived
   code-edges vs. doc-edges, both directions). Ran it and fixed what it found: removed the dead
   `PARENT_ACK_WAIT` state (never wired); corrected two stale edges (`SCORE`'s `safe_reject` ->
   `AWAIT_ANSWER` not `PRESENT`; `PROBE_CLASSIFY`'s exits -> `NODE_SELECT` not `BRANCH_DECISION`,
   matching the shipped probe-demote fix); documented the previously-undocumented reachable
   transitions REVIEW named (auto-help, probe->help via A21, A9's unreadable-streak-cap) plus a
-  pre-existing `stop_request` gap in three `*_AWAIT` states; corrected §4 to stop claiming a
+  pre-existing **documentation** gap — `stop_request` was already correctly handled in code in
+  all three `*_AWAIT` states (`controller.py`, each with a passing test), just undocumented
+  until this pass; verified again 2026-07-10, not a code gap, don't re-investigate. Corrected §4 to stop claiming a
   `test_session_fsm_invariants.py` fuzz harness exists (it doesn't). → REVIEW §3.1.
 - **✅ RESOLVED 2026-07-05 — Legacy LLM-question fallback scores against a question, not an
   answer (2026-07-03, repo review).** Was: `engine/curriculum.py:load_curriculum` (formerly
   `web/app.py:_load_curriculum`) sets `expected_answer = transfer_seeds[0]`; any node without
   bank/generator coverage silently could never PASS. Also: the SAFE_REJECT/EXTRACT_FAIL re-ask
-  loop had no cap. Fixed via REMAINDER_PLAN A9 (PR open — awaiting human review, not yet merged,
+  loop had no cap. Fixed via REMAINDER_PLAN A9 (merged, PR #64,
   stacked on Wave 1 + A17/A16/A5/A6): `SessionController.__init__` raises `RuntimeError` naming
   every node with a real checker but no item-bank/generator coverage (only checked when an
   `item_bank` is actually wired — `item_bank=None` is the deliberate legacy/test fallback, not a
@@ -340,7 +344,7 @@ dialogue controller, web app, eval dataset, FSM caller wiring) has **all shipped
   *every* attempt, so from a low prior the +learns gain outweighed the small wrong penalty.
   Never false-mastered, but counterintuitive for the parent-facing %. **Maintainer ratified
   Option B 2026-07-04** (see REMAINDER_PLAN.md's ratified-decisions section). Fixed via
-  REMAINDER_PLAN A20 (PR open — awaiting human review, not yet merged, stacked on Wave 1 +
+  REMAINDER_PLAN A20 (merged, PR #66, stacked on Wave 1 +
   Wave 2): `bkt_update` now gates the learning transition on non-wrong observations only — a
   bare-wrong (unaided incorrect) attempt only conditions the posterior, no `learns` credit;
   hinted-win/correct paths unaffected. Literature reference + full rationale in
@@ -354,8 +358,8 @@ dialogue controller, web app, eval dataset, FSM caller wiring) has **all shipped
   safety-escalation); everything else — "I don't know", frustration, clarifying questions,
   off-topic, navigation — was force-scored as an answer (corrupting BKT). **Maintainer ratified
   a narrow v0 slice 2026-07-04** (don't-know + clarify/vocabulary only — the two intents that
-  actively corrupt the BKT signal); built as REMAINDER_PLAN A21 (PR open — awaiting human
-  review, not yet merged, stacked on Wave 1 + Wave 2): `_is_dont_know_or_question()` routes
+  actively corrupt the BKT signal); built as REMAINDER_PLAN A21 (merged, PR #67,
+  stacked on Wave 1 + Wave 2): `_is_dont_know_or_question()` routes
   both into the Help loop unscored, mirroring `_is_help_request`'s wiring exactly. **Still
   open/deferred:** frustration/mild-affect, off-topic, and meta/navigation intents — the full
   taxonomy proposal in **[design/INTERACTION_SCOPE.md](design/INTERACTION_SCOPE.md)** still
@@ -422,6 +426,7 @@ Cross-cutting "later" items not tied to a single W-task. Add here as they come u
 
 | Date | Change |
 |------|--------|
+| 2026-07-10 | **D5: `docs/PILOT_RUNBOOK.md` written** — pre-session-1 checklist (9 hard gates from REMAINDER_PLAN.md §C, including the still-open safeguarding-professional review and red-team decision) + a per-session procedure + a P1–P5 evidence-recording table (thin overlay over PHASE0.md §26.7, no criteria duplicated). Not yet run against a real session. **Also: a full "PR open/awaiting review" sweep** — every A3–A21/B1/B2 task note in this file's "Known defects" section still said its fix was an open PR; all are merged (confirmed via `git log`, PRs #55–#74). Corrected ~18 occurrences across this file + `REMAINDER_PLAN.md`'s wave table (which also still framed the wave as "open, awaiting review" despite being fully merged). Picked up 2 related fixes while in the neighbourhood: the A11 entry's ambiguous "pre-existing `stop_request` gap" wording clarified to explicitly say documentation gap, not code gap (verified 2026-07-10, all three `*_AWAIT` states already handle stop correctly); A14's "v0 coverage floor" note updated to reflect D7's ÷/"divided by" support. Test count bumped to 482 (was stale at 463). |
 | 2026-07-10 | **D1/D2 doc-truth fixes (post-release-wave gap sweep).** D1: `docs/CONTENT_LICENSES.md` §1 promoted Khan Academy to the live pilot grounding source (was only logged in §3 as a Phase-3 hosted-tier conflict, stale since B1's 2026-07-05 re-point); Vikidia/Simple-WP relabelled cleared alternates, not currently mounted; `docs/SPEC.md` §24 row #18 synced to match. D2: `docs/SAFETY.md` §1.2 gained the agreed i18n scope-boundary paragraph (non-English template load refused until a vetted trigger bank + reviewed handoff wording exist) + an Appendix B open-item row. No code changes, pytest/ruff unaffected. |
 | 2026-07-10 | **UI-rebuild requirements ratified** — `docs/design/UI_REQUIREMENTS.md` (v0.1). Maintainer wants the web UI rebuilt as the project's "lure" (audiences: evaluating parents + OSS visitors; no landing page; presentation-layer only, U-14/U-82 lock routes + safety invariants). README screenshots required but **gated on maintainer review of the built front end** (U-2a). Design mockups + per-screen gemma specs = next phase, blocked on U-90–U-92 decisions. Absorbs the web-display backlog row (question-vanish + literal markdown). |
 | 2026-07-10 | **UI rebuild BUILT — all 6 flows** (same session, maintainer directed an autonomous live build once U-90/91/92 were decided; see `UI_REQUIREMENTS.md` §8 for full detail). htmx vendored + cleanly wired (`GET /done` added; `HX-Request`/`HX-Redirect` native idioms). Shared `_base.html`/`style.css` (CSS-variable theme, light/dark toggle, blended teal/coral palette). Owned SVG concept-graph on `/progress` (`_compute_graph_layout`, no graph lib, verified against the real 8-node pilot curriculum: 8 nodes/7 edges). Parent dashboard reordered safety-first (U-50), all safety-critical literal strings preserved byte-for-byte. Frozen screen stripped to zero chrome (U-60). Owned markdown-lite renderer (`_render_markdown_lite`) — bold/italic/bullets over HTML-escaped text, wired into both the htmx-fragment and full-page paths identically. **473 tests pass, ruff clean.** Known gap: U-31 (feedback/question visual split) needs a controller data-contract change — out of scope, flagged not silently dropped. No headless-browser/screenshot tooling available in-sandbox; verification is full content/structural assertions against a live Flask test client, not a rendered-pixel check — real visual QA is the maintainer's pending review (U-2a) before any screenshot is taken. |
