@@ -33,16 +33,10 @@ from markupsafe import escape
 from mentar.db.adapter import _DbStoreAdapter
 from mentar.db.store import LearnerStore
 from mentar.dialogue.controller import FSMState, SessionController
-from mentar.engine.au_items import AU_YEAR3_GENERATORS, AU_YEAR4_GENERATORS
-from mentar.engine.curriculum import load_curriculum, load_template_subject
+from mentar.engine.curriculum import load_curriculum, load_template_meta, load_template_subject
+from mentar.engine.item_sources import build_registry
 from mentar.engine.itembank import load_item_bank
-from mentar.engine.itemgen import (
-    ARITHMETIC_GENERATORS,
-    DEFAULT_GENERATORS,
-    CompositeItemSource,
-    ItemGenerator,
-)
-from mentar.engine.science_items import SCIENCE_GENERATORS
+from mentar.engine.itemgen import CompositeItemSource, ItemGenerator
 from mentar.inference import load_inference_config, make_llm_call
 from mentar.tools.validate_template import validate_or_raise
 from mentar.web.answer_modes import mode_for
@@ -68,63 +62,84 @@ ITEMBANK_PATH = Path(os.environ.get(
     str(_REPO / "curriculum" / "itembank" / "pilot_fractions.jsonl"),
 ))
 
-# ── Subjects (multi-topic testing) ──────────────────────────────────────────────
-# Each subject = a curriculum template + its checkable-item source. Fractions keeps
-# the authored bank (Option A); the new subjects are fully generator-driven.
-_TPL = _REPO / "curriculum" / "templates" / "_pilot"
-SUBJECTS: dict[str, dict] = {
-    "fractions": {
-        "label": "Fractions 🍕",
-        "icon": "🍕",
-        "description": "Slices, halves, and sharing things fairly.",
-        "curriculum": CURRICULUM_PATH,
-        "itembank": ITEMBANK_PATH,
-        "generators": DEFAULT_GENERATORS,
-    },
-    "arithmetic": {
-        "label": "Maths: + − × 🔢",
-        "icon": "🔢",
-        "description": "Adding, subtracting, and multiplying numbers.",
-        "curriculum": _TPL / "arithmetic.md",
-        "itembank": None,
-        "generators": ARITHMETIC_GENERATORS,
-    },
-    "science": {
-        "label": "Science 🔬",
-        "icon": "🔬",
-        "description": "How the world around us works.",
-        "curriculum": _TPL / "science.md",
-        "itembank": None,
-        "generators": SCIENCE_GENERATORS,
-    },
-    # ACARA-aligned per-year templates (Australian Curriculum v9, Number strand).
-    "au_year3_maths": {
-        "label": "Maths — Year 3 🇦🇺",
-        "icon": "3️⃣",
-        "description": "Place value, adding, times tables and fractions (Australian Year 3).",
-        "curriculum": _REPO / "curriculum" / "templates" / "AU" / "year3_maths.md",
-        "itembank": None,
-        "generators": AU_YEAR3_GENERATORS,
-    },
-    "au_year4_maths": {
-        "label": "Maths — Year 4 🇦🇺",
-        "icon": "4️⃣",
-        "description": "Bigger numbers, times tables to 10×10, division and equivalent fractions (Australian Year 4).",
-        "curriculum": _REPO / "curriculum" / "templates" / "AU" / "year4_maths.md",
-        "itembank": None,
-        "generators": AU_YEAR4_GENERATORS,
-    },
-}
+# ── Subjects (R3.1: auto-discovered, not hand-registered) ───────────────────────
+# Each subject = a curriculum template + its checkable-item source. The catalog is
+# DERIVED by scanning curriculum/templates/**/*.md and reading each template's own
+# front matter (label/icon/description/item_source) -- adding a year/subject is
+# "drop a .md file in", not a code change here. Generators are code (can't live in
+# YAML), so a template names its item source BY NAME (item_source:) and
+# engine/item_sources.py's registry resolves the name -> actual generators/bank.
+_TEMPLATES_DIR = _REPO / "curriculum" / "templates"
+_ITEM_SOURCE_REGISTRY = build_registry(ITEMBANK_PATH)
+
+
+def _discover_template_paths() -> list[Path]:
+    paths = sorted(_TEMPLATES_DIR.glob("**/*.md"))
+    # MENTAR_CURRICULUM env override (CLI/tests) replaces whichever discovered
+    # path IS the default pilot fractions template -- preserves the existing
+    # override point (tests/web/test_startup_validation.py points this at a
+    # deliberately cyclic fixture to prove A16 validation still runs).
+    default_fractions = (_TEMPLATES_DIR / "_pilot" / "fractions.md").resolve()
+    return [CURRICULUM_PATH if p.resolve() == default_fractions else p for p in paths]
+
+
+SUBJECTS: dict[str, dict] = {}
+for _path in _discover_template_paths():
+    # A16: validate BEFORE anything else touches this template — a cyclic/bad-
+    # prereq template silently produces an empty fringe and a false "you've
+    # mastered everything!" completion for the child. Fail loud at startup.
+    validate_or_raise(_path)
+    _meta = load_template_meta(_path)
+    # subject_key lets a template pin its web-picker key explicitly (used by the
+    # 3 pre-existing pilot templates so already-issued session cookies keep
+    # resolving); otherwise derive one from template_id (dashes -> underscores).
+    _key = _meta["subject_key"] or (_meta["template_id"] or _path.stem).replace("-", "_")
+    _source_name = _meta["item_source"]
+    if _source_name not in _ITEM_SOURCE_REGISTRY:
+        raise RuntimeError(
+            f"template {_path} names item_source={_source_name!r}, which is not "
+            f"in the registry ({sorted(_ITEM_SOURCE_REGISTRY)}) — add it to "
+            "engine/item_sources.py or fix the template's item_source: field."
+        )
+    _source = _ITEM_SOURCE_REGISTRY[_source_name]
+    SUBJECTS[_key] = {
+        "label": _meta["label"] or _key,
+        "icon": _meta["icon"] or "",
+        "description": _meta["description"] or "",
+        "year_level": _meta["year_level"],
+        "country": _meta["country"],
+        "curriculum": _path,
+        "itembank": _source["itembank"],
+        "generators": _source["generators"],
+    }
 DEFAULT_SUBJECT = "fractions"
-# A16: validate every subject's template before loading — a cyclic/bad-prereq
-# template silently produces an empty fringe and a false "you've mastered
-# everything!" completion for the child. Fail loud at startup instead.
-for _subj_key, _subj_cfg in SUBJECTS.items():
-    validate_or_raise(_subj_cfg["curriculum"])
 _SUBJECT_CURRICULA = {k: load_curriculum(v["curriculum"]) for k, v in SUBJECTS.items()}
 # A7: each subject's template `subject:` field, fed into the system prompt so a
 # science session doesn't inherit the (formerly hardcoded) "fractions" text.
 _SUBJECT_NAMES = {k: load_template_subject(v["curriculum"]) for k, v in SUBJECTS.items()}
+
+
+def _subject_groups() -> list[tuple[str, list[str]]]:
+    """R3.1: Year > Subject grouping for the picker/progress switcher (R3.2) —
+    computed from the scan, not hand-maintained. Real years sort ascending;
+    "pilot" (no fixed year level) sorts last as a "Try-out topics" group."""
+    by_year: dict[str, list[str]] = {}
+    for key, cfg in SUBJECTS.items():
+        by_year.setdefault(cfg["year_level"] or "pilot", []).append(key)
+
+    def _sort_key(year: str) -> tuple[int, str]:
+        return (1, "") if year == "pilot" else (0, year)
+
+    groups = []
+    for year in sorted(by_year, key=_sort_key):
+        keys = by_year[year]
+        country = next((SUBJECTS[k]["country"] for k in keys if SUBJECTS[k]["country"]), None)
+        label = "Try-out topics" if year == "pilot" else (f"{year} ({country})" if country else year)
+        groups.append((label, keys))
+    return groups
+
+
+SUBJECT_GROUPS: list[tuple[str, list[str]]] = _subject_groups()
 _learner_subject: dict[str, str] = {}   # learner_uuid -> active subject key
 
 # Inference backend: prefer config/inference.yaml (the canonical, backend-agnostic

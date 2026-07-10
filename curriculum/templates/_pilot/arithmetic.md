@@ -9,6 +9,11 @@ year_level: pilot
 subject: mathematics
 curriculum_standard: null
 schema_version: "0.1"
+label: "Maths: + − × 🔢"                             # R3.1: web picker catalog fields
+icon: "🔢"
+description: "Adding, subtracting, and multiplying numbers."
+item_source: arithmetic
+subject_key: arithmetic                              # keep the pre-scan session-cookie key stable
 
 language_register:
   reading_level: "~Year 3-4 / ages 8-9"

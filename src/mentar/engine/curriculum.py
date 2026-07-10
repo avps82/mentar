@@ -24,6 +24,30 @@ def load_template_subject(path: Path) -> str:
     return raw.get("subject") or "maths"
 
 
+def load_template_meta(path: Path) -> dict:
+    """R3.1: the front-matter fields the web picker/progress catalog needs to
+    render a template WITHOUT hardcoding it in web/app.py -- adding a new
+    year/template becomes "drop a .md file in", not a code change. Missing
+    optional keys come back as None; the caller decides fallbacks."""
+    text = Path(path).read_text(encoding="utf-8")
+    parts = text.split("\n---\n", maxsplit=1)
+    raw = yaml.safe_load(parts[0]) or {}
+    return {
+        "template_id": raw.get("template_id"),
+        "country": raw.get("country"),
+        "year_level": raw.get("year_level"),
+        "subject": raw.get("subject"),
+        "label": raw.get("label"),
+        "icon": raw.get("icon"),
+        "description": raw.get("description"),
+        "item_source": raw.get("item_source"),
+        # Optional override when template_id-with-dashes-to-underscores would
+        # collide with a key already in use elsewhere (e.g. an existing
+        # session cookie) -- see web/app.py's SUBJECTS construction.
+        "subject_key": raw.get("subject_key"),
+    }
+
+
 def load_curriculum(path: Path) -> dict:
     """Convert a pilot template's YAML front matter into the controller's curriculum dict."""
     # The file is a YAML block followed by Markdown narrative (after a --- divider).
