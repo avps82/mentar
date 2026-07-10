@@ -350,6 +350,18 @@ a year/subject switcher. Fixed a real defect found while speccing: the skill-car
 used to mix every subject's rows together — now filtered to the selected subject only.
 Full detail: `docs/REMAINDER_PLAN.md` → "R3 — Year > Subject information architecture".
 
+### R6 — bugs on AU Year 3's /progress: graph clipped + display names inconsistent
+(2026-07-11, root-caused, NOT built)
+
+R6.1 (small, isolated): the concept-graph's y-position formula and its SVG viewBox height
+use two different uncoupled scales — R2.4 changed the height-per-level constant without
+updating the y formula to match, so any curriculum with ≥3 levels clips its bottom row.
+R6.2 (bigger, deliberately NOT patched — maintainer wants a ground-up pass): "Au3 Place
+Value" exposed that skill_id → display-name logic is reimplemented FOUR different, mutually
+inconsistent ways across `progress.html`/`learner.html`/`parent.html`/`done.html` — only
+the concept-graph does it correctly today (joins to the curriculum's own authored label).
+Full detail + the open design questions: `docs/REMAINDER_PLAN.md` → "R6".
+
 ### Review round 2 (2026-07-10, after round 1 shipped) — ✅ ALL FOUR (R2.1–R2.4) SHIPPED 2026-07-11
 
 - **R2-1: MCQ options rendered three times** — inline in the question text ("A) a tree

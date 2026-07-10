@@ -533,6 +533,88 @@ from the app's offline-only design — flagged, not built, not asked for after c
 
 ---
 
+# R6 — bugs: concept-graph bottom row clipped + inconsistent skill display names
+**Reported 2026-07-11 (maintainer, live testing on AU Year 3). Both root-caused, NEITHER
+FIXED — maintainer said "note it for now" for both; #2 explicitly wants a ground-up pass,
+not a quick patch.**
+
+## R6.1 — concept-graph bottom row is clipped off  `[G]` (small, isolated, tight enough to
+spec now even though #2 needs more design first)
+
+- **Root cause, confirmed by direct reproduction against the real AU Year 3 template:**
+  `_compute_graph_layout()`'s y-coordinate formula and its returned SVG viewBox height use
+  TWO DIFFERENT, uncoupled scales. `row_height = 100 / n_levels` positions nodes on a fixed
+  **0–100** scale (matching the x-axis), but the function separately returns
+  `"height": max(n_levels * 26, 26)` for the viewBox — a completely different scale, never
+  reconciled. R2.4 changed the per-level height constant from 22 to 26 (to fit wrapped
+  labels) but never updated the y-position formula to match. Reproduced directly: for AU
+  Year 3 (3 levels), viewBox height = 78, but the bottom row's nodes sit at y=83.3 (circle
+  radius extends to ~87.3, wrapped labels extend further still) — outside the visible
+  viewBox, hence clipped. Any curriculum with ≥3 levels hits this; the pilot's 8-node
+  fractions graph (also ≥3 levels) likely has the same bug, just less noticeable if no one
+  scrolled to check.
+- **Fix direction:** compute `row_height` as a fraction of the ACTUAL height value, not a
+  hardcoded 100 — i.e. `height = max(n_levels * 26, 26)` first, THEN
+  `row_height = height / n_levels`, and use `height` (not `100`) as the y-axis reference
+  throughout. x stays on 0–100 (unaffected, still correct). Also worth adding a small
+  bottom margin/padding to `height` beyond the last row's radius+label extent, so labels on
+  the LAST row never sit flush against the viewBox edge either.
+- **Files:** `web/app.py` (`_compute_graph_layout`), `tests/web/test_progress.py`.
+- **Accept:** for every existing template (fractions/arithmetic/science/au_year3/au_year4),
+  the bottom-most node's y + circle radius + full wrapped-label extent stays ≤ the returned
+  `height`; a direct regression test reproducing this exact AU Year 3 case (previously
+  y=83.3 > height=78) now passes; full suite + ruff green.
+
+## R6.2 — skill display names: four inconsistent strategies for the same data, needs a
+ground-up unification, NOT a quick patch (per maintainer explicitly)
+
+- **The reported symptom** ("Au3 Place Value ??? ... need a better way to identify this")
+  is a visible symptom of a real structural gap: **skill_id (the machine-safe, namespaced
+  identifier) and its human display name are conflated everywhere except one place.**
+  Confirmed by grep — FOUR different rendering strategies currently coexist for the exact
+  same underlying skill_id:
+  1. `progress.html`'s concept-graph SVG — **the only correct one**: joins back to
+     `curriculum[node_id]["concept"]`, the template-authored label (e.g. "Place value to
+     999", no machine prefix, properly cased).
+  2. `progress.html`'s star-card list + `learner.html`'s per-skill mastery bar — naive
+     `skill_id | replace("_"," ") | title`, which is WHERE "Au3 Place Value" comes from:
+     the `au3_` namespace prefix (added in R3.1 specifically so skill_state rows can't
+     collide across curricula) leaks straight into the display, and gets wrongly
+     capitalized as if it were a word.
+  3. `parent.html`'s mastery table + answers table — **no transform at all**, shows the
+     raw `skill_id` verbatim (e.g. literally "au3_place_value") to a parent — arguably the
+     worst of the four.
+  4. `done.html`'s session recap — same naive `replace + title` as #2.
+  Root data already exists and is already clean: `engine/curriculum.py`'s `load_curriculum`
+  reads each node's YAML `label:` field and stores it — but under the dict key `"concept"`,
+  a naming mismatch with the source field worth fixing at the same time ("structure and IDs
+  needs to be defined clearly" — the maintainer's own words apply to this internal
+  inconsistency too, not just the rendered output).
+- **Why this needs a proper pass, not a patch (per maintainer):** simply swapping the 3
+  wrong sites to also do `curriculum[skill_id]["concept"]` would fix today's symptom, but
+  doesn't address the underlying issue: THREE different templates each independently
+  deciding how to turn an id into a name is exactly the kind of ad-hoc-per-template display
+  logic this whole UI rebuild has been steadily replacing with structural, single-source
+  answers (same principle as R1's TurnResult.message/.question split and R2.1's mc4
+  stem/choices separation — display data should be computed ONCE, correctly, and every
+  template just renders it, never re-derives it).
+- **Design questions a future pass should answer before speccing:** (a) rename
+  `curriculum[id]["concept"]` → something clearer (`"label"` or `"display_name"`, matching
+  the YAML source field name) — is this internal-only or does it also need a schema/
+  migration note in `docs/PHASE0.md`'s W3.1 template schema? (b) where should the
+  id→display-name lookup live — a single helper function all 4 templates' routes call
+  before rendering, or should routes attach a `display_name` field directly onto every
+  skill/answer dict they pass to templates (so templates never do id-logic at all)? (c)
+  does this same unification need to also cover node ids shown elsewhere not grepped here
+  (e.g. any future audit surfaces, CLI output)? (d) is there a broader "how do we name
+  things" convention worth writing down once (a short design note) so future curriculum
+  authors and future template additions don't reintroduce the same drift?
+- **Not spec'd as a tactical `[G]` task** — deliberately, per the maintainer's own framing.
+  R6.1 (the graph clipping) can be executed independently and immediately since it's small
+  and fully isolated; R6.2 needs the above design questions answered first.
+
+---
+
 # Remainder Build Plan — v2
 
 Most of v1 shipped; **G0 is essentially validated** (model pick, safety, retrieval, E2E,
