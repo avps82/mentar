@@ -59,6 +59,36 @@ def test_multiplication_claim():
     assert has_verified_failure("2 × 3 = 7 is wrong.")
 
 
+def test_correct_division_symbol_claim_passes():
+    assert not has_verified_failure("We know that 12 ÷ 4 = 3, so...")
+
+
+def test_wrong_division_symbol_claim_fails():
+    assert has_verified_failure("We know that 12 ÷ 4 = 2, so...")
+
+
+def test_divided_by_phrase_claim():
+    assert not has_verified_failure("12 divided by 4 = 3 exactly.")
+    assert has_verified_failure("12 divided by 4 = 2, which is wrong.")
+
+
+def test_fraction_slash_still_not_treated_as_division():
+    """The plain "/" stays unparsed as an operator — it's fraction notation,
+    not division (unlike "÷"/"divided by", which are unambiguous)."""
+    text = "3/4 is a fraction, not a division claim on its own."
+    assert find_claims(text) == []
+    assert not has_verified_failure(text)
+
+
+def test_division_by_zero_claim_is_unparseable_not_a_failure():
+    """Fail-open, same as any other unparseable claim — never raises."""
+    text = "5 ÷ 0 = 0, oops."
+    claims = find_claims(text)
+    assert len(claims) == 1
+    assert claims[0].ok is None
+    assert not has_verified_failure(text)
+
+
 if __name__ == "__main__":
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     for fn in fns:

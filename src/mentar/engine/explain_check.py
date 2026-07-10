@@ -5,7 +5,7 @@ discard + regenerate on failure — SPEC's own "hallucination = safety failure" 
 previously only enforced on child *answers* via eval/verify_numeric.check(), never
 on the LLM's own worked-example prose).
 
-Finds `a <op> b = c` claims (integers, fractions, mixed numbers) in explanation
+Finds `a <op> b = c` claims (integers, fractions, mixed numbers, and division) in explanation
 text and verifies each computationally, reusing verify_numeric.normalise_fraction
 for parsing (same decimal-safe-reject, zero-denominator-safe-reject behaviour).
 
@@ -21,10 +21,9 @@ from dataclasses import dataclass
 from mentar.eval.verify_numeric import normalise_fraction
 
 _NUM = r"(?:\d+\s+\d+/\d+|\d+/\d+|\d+)"
-# ponytail: no explicit division/"÷" operator — it collides with the fraction
-# slash ("3/4 / 1/2") and needs a more careful parser than v0 warrants. Claims
-# using division are simply not matched (pass through unchecked), not blocked.
-_OP = r"[+\-×x*]"
+# ponytail: only the plain "/" division operator is not matched — it collides with
+# the fraction slash ("3/4 / 1/2"). "÷" and "divided by" are explicitly supported.
+_OP = r"(?:[+\-×x*÷]|divided\s+by)"
 _CLAIM_RE = re.compile(rf"({_NUM})\s*({_OP})\s*({_NUM})\s*=\s*({_NUM})")
 
 _OPS = {
@@ -33,6 +32,7 @@ _OPS = {
     "×": lambda a, b: a * b,
     "x": lambda a, b: a * b,
     "*": lambda a, b: a * b,
+    "÷": lambda a, b: a / b,
 }
 
 
@@ -55,7 +55,11 @@ def find_claims(text: str) -> list[ClaimCheck]:
         if a is None or b is None or c is None:
             results.append(ClaimCheck(m.group(0), None))
             continue
-        computed = _OPS[op](a, b)
+        op_key = "÷" if op.lower().startswith("divided") else op
+        if op_key == "÷" and b == 0:
+            results.append(ClaimCheck(m.group(0), None))
+            continue
+        computed = _OPS[op_key](a, b)
         results.append(ClaimCheck(m.group(0), computed == c))
     return results
 
