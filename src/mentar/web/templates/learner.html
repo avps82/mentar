@@ -1,5 +1,6 @@
 {% extends "_base.html" %}
-{% block extra_head %}<script src="/static/htmx.min.js" defer></script>{% endblock %}
+{% block extra_head %}<script src="/static/htmx.min.js" defer></script>
+<script src="/static/tts.js" defer></script>{% endblock %}
 {% block content %}
 {% if current_mastery %}
 <div class="hint" style="margin-bottom:6px">
@@ -9,18 +10,13 @@
 </div>
 {% endif %}
 <!-- U-90: htmx (vendored, static/htmx.min.js) swaps #turn-area in place on
-     submit -- no owned JS. JS disabled -> plain form POST, same routes/
-     responses either way (see /answer in web/app.py). U-30/U-31: the question
-     block inside _turn.html is stable; feedback renders separately. -->
+     submit. JS disabled -> plain form POST, same routes/responses either way
+     (see /answer in web/app.py). #turn-area holds message + question + the
+     answer widget (the widget varies with the question's answer_type, so it
+     must be inside the swap target). -->
 <div id="turn-area">
 {% include "_turn.html" %}
 </div>
-<form method="POST" action="/answer"
-      hx-post="/answer" hx-target="#turn-area" hx-swap="innerHTML"
-      hx-on::after-request="this.reset()">
-  <input type="text" name="answer" autofocus placeholder="Type your answer…">
-  <button class="btn" type="submit">Send ✓</button>
-</form>
 <div class="quick-actions" style="margin-top:8px">
   <form method="POST" action="/answer" hx-post="/answer" hx-target="#turn-area" hx-swap="innerHTML" style="display:inline-block">
     <input type="hidden" name="answer" value="help">

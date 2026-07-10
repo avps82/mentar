@@ -232,20 +232,28 @@ def test_answer_hx_request_returns_question_fragment():
 
 
 def test_answer_hx_fragment_escapes_html():
-    """U-32 (pulled forward): the htmx-swapped fragment must escape model/
-    generator text the same way Jinja's {{ question }} already does in
-    learner.html -- htmx swaps this string via innerHTML, so unescaped HTML
-    here would be a live XSS path into the child's browser."""
+    """U-32: the htmx-swapped fragment must escape model/generator text in BOTH
+    the message and the question areas -- htmx swaps via innerHTML, so unescaped
+    HTML here would be a live XSS path into the child's browser."""
     try:
         import flask  # noqa: F401
     except ImportError:
         import pytest
         pytest.skip("flask not installed (web extra)")
 
+    from mentar.dialogue.controller import TurnResult
+
     app_mod, c = _client()
     c.post("/choose", data={"subject": "fractions"})
     c.get("/")
-    app_mod._last_mentar_text = lambda learner_uuid: "<script>alert(1)</script>"
+    with c.session_transaction() as sess:
+        learner_uuid = sess["learner_uuid"]
+    ctrl = app_mod._controllers[learner_uuid]
+    ctrl._ctx.question_display = "<script>alert(1)</script>"
+    ctrl.step = lambda answer_text: TurnResult(
+        state=ctrl.state, text="x", done=False, escalated=False,
+        message="<script>alert(2)</script>", question=None,
+    )
 
     r = c.post(
         "/answer",
@@ -253,16 +261,59 @@ def test_answer_hx_fragment_escapes_html():
         headers={"HX-Request": "true"},
     )
     body = r.get_data(as_text=True)
-    assert "<script>" not in body
-    assert "&lt;script&gt;" in body
+    assert "<script>alert" not in body
+    assert "&lt;script&gt;alert(1)&lt;/script&gt;" in body   # question area
+    assert "&lt;script&gt;alert(2)&lt;/script&gt;" in body   # message area
 
 
-def test_turn_split_feedback_from_question():
-    """U-31: when the last Mentar text bundles feedback + the pending question
-    (the controller's '\\n\\n'-joined shape), the view renders them as separate
-    areas -- feedback div + stable question div. When the question can't be
-    located in the text, everything falls back into the question block
-    (pre-U-31 behaviour, never a lost question)."""
+def test_structured_turn_renders_message_and_question_separately():
+    """The proper U-31 fix (maintainer review 2026-07-10): message and question
+    come STRUCTURED from TurnResult.message/.question + ctrl.question_display —
+    never string-split from prose. The old rfind-split misfired on the Help
+    flow's "Q) {question}" recap (feedback box showed a bare "Q)", explanation
+    landed in the question block)."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+
+    from mentar.dialogue.controller import TurnResult
+
+    app_mod, c = _client()
+    c.post("/choose", data={"subject": "fractions"})
+    c.get("/")
+    with c.session_transaction() as sess:
+        learner_uuid = sess["learner_uuid"]
+    ctrl = app_mod._controllers[learner_uuid]
+
+    # A Help-shaped turn: explanation prose + the SAME question still live.
+    ctrl._ctx.question_display = "What is 1/2 of 8? (answer with a number)"
+    ctrl.step = lambda answer_text: TurnResult(
+        state=ctrl.state, text="ignored-compat-field", done=False, escalated=False,
+        message="Half means sharing into 2 equal parts.\n\nNow you try it! ✏️",
+        question="What is 1/2 of 8? (answer with a number)",
+    )
+    frag = c.post("/answer", data={"answer": "help"},
+                  headers={"HX-Request": "true"}).get_data(as_text=True)
+
+    fb_div = frag.split('<div class="feedback')[1].split("</div>")[0]
+    q_text = frag.split('<div class="question-text">')[1].split("</div>")[0]
+    assert "Half means sharing" in fb_div            # explanation in the message area
+    assert "What is 1/2 of 8?" not in fb_div         # question NOT duplicated into it
+    assert "What is 1/2 of 8?" in q_text             # question in its own block
+    assert "Half means sharing" not in q_text
+
+    # Full-page GET / agrees with the fragment (same structured source).
+    html = c.get("/").get_data(as_text=True)
+    assert "Half means sharing" in html.split('<div class="feedback')[1].split("</div>")[0]
+    assert "What is 1/2 of 8?" in html.split('<div class="question-text">')[1].split("</div>")[0]
+
+
+def test_mc4_choices_render_as_radio_buttons():
+    """mc4 items with structured choices render a native radio group (A-D),
+    no JS required; fraction answers render numerator/denominator inputs that
+    /answer composes server-side into the "n/d" the verifier accepts."""
     try:
         import flask  # noqa: F401
     except ImportError:
@@ -270,51 +321,57 @@ def test_turn_split_feedback_from_question():
         pytest.skip("flask not installed (web extra)")
 
     app_mod, c = _client()
+    c.post("/choose", data={"subject": "science"})   # science = mc4 generators
+    html = c.get("/").get_data(as_text=True)
+    assert 'type="radio"' in html
+    assert 'name="answer" value="A"' in html
+    assert 'value="D"' in html
+    assert "choice-option" in html
 
-    # The pure splitter first.
-    split = app_mod._split_turn_text
-    assert split("Great job!\n\nWhat is 1/2 of 8?", "What is 1/2 of 8?") == (
-        "Great job!", "What is 1/2 of 8?")
-    # PRESENT bundles a trailing format hint after the question -- it stays
-    # with the question display.
-    assert split("Nice!\n\nWhat is 1/2 of 8? (Type a number)", "What is 1/2 of 8?") == (
-        "Nice!", "What is 1/2 of 8? (Type a number)")
-    # Question-at-start (Help's "Q) ..." shape) or not-found -> no split.
-    assert split("What is 1/2 of 8?\n\nBecause...", "What is 1/2 of 8?") == (
-        "", "What is 1/2 of 8?\n\nBecause...")
-    assert split("Some text", "unrelated question") == ("", "Some text")
+    # Answering via the radio value (a bare letter) works end-to-end.
+    r = c.post("/answer", data={"answer": "A"})
+    assert r.status_code in (200, 302)
 
-    # And through the live view: stub the log + the controller's question.
+    # Fraction widget path: unit_fractions is a fraction-answer node. Force it
+    # via a fresh fractions session and check the current answer_type drives
+    # the widget when it's a fraction question.
+    c2 = app_mod.app.test_client()
+    c2.post("/choose", data={"subject": "fractions"})
+    body = c2.get("/").get_data(as_text=True)
+    with c2.session_transaction() as sess:
+        learner_uuid = sess["learner_uuid"]
+    ctrl = app_mod._controllers[learner_uuid]
+    if ctrl.current_answer_type == "fraction":
+        assert 'name="answer_num"' in body and 'name="answer_den"' in body
+    else:
+        assert 'name="answer"' in body  # int/free-text fall back to the text input
+
+
+def test_fraction_inputs_compose_server_side():
+    """POST /answer with answer_num/answer_den (and no answer field) composes
+    "n/d" server-side -- verified through the real controller scoring path."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+
+    app_mod, c = _client()
     c.post("/choose", data={"subject": "fractions"})
     c.get("/")
     with c.session_transaction() as sess:
         learner_uuid = sess["learner_uuid"]
     ctrl = app_mod._controllers[learner_uuid]
-    ctrl._ctx.current_question = "What is 1/2 of 8?"
-    app_mod._last_mentar_text = lambda u: "That's right! ⭐\n\nWhat is 1/2 of 8?"
 
-    html = c.get("/").get_data(as_text=True)
-    assert '<div class="feedback' in html
-    assert "That&#39;s right!" in html or "That's right!" in html
-    # Feedback must NOT be inside the question block; question block holds the question.
-    q_div = html.split('<div class="question')[1]
-    assert "What is 1/2 of 8?" in q_div
-    assert "That" not in q_div.split("</div>")[0].replace("What is 1/2 of 8?", "")
+    captured = {}
+    real_step = ctrl.step
+    def capturing_step(answer_text):
+        captured["answer"] = answer_text
+        return real_step(answer_text)
+    ctrl.step = capturing_step
 
-    # htmx fragment path renders the same two-area structure. Stub step() so
-    # this is deterministic -- the real step() legitimately advances the FSM
-    # (item selection is unseeded-random) and would overwrite our manually-set
-    # current_question with whatever real question comes next, making the
-    # split match-or-not depend on random item selection.
-    from mentar.dialogue.controller import TurnResult
-    ctrl._ctx.current_question = "What is 1/2 of 8?"
-    ctrl.step = lambda answer_text: TurnResult(
-        state=ctrl.state, text="Correct! ⭐\n\nWhat is 1/2 of 8?", done=False, escalated=False)
-
-    frag = c.post("/answer", data={"answer": "4"},
-                  headers={"HX-Request": "true"}).get_data(as_text=True)
-    assert '<div class="feedback' in frag
-    assert '<div class="question' in frag
+    c.post("/answer", data={"answer_num": "3", "answer_den": "4"})
+    assert captured["answer"] == "3/4"
 
 
 def test_markdown_lite_renders_bold_italic_and_bullets():
@@ -341,9 +398,17 @@ def test_markdown_lite_renders_bold_italic_and_bullets():
     assert "<script>" not in mixed
     assert mixed == "<strong>&lt;script&gt;alert(1)&lt;/script&gt;</strong>"
 
+    from mentar.dialogue.controller import TurnResult
+
     c.post("/choose", data={"subject": "fractions"})
     c.get("/")
-    app_mod._last_mentar_text = lambda learner_uuid: "**Nice work!**\n* Step one\n* Step two"
+    with c.session_transaction() as sess:
+        learner_uuid = sess["learner_uuid"]
+    ctrl = app_mod._controllers[learner_uuid]
+    ctrl.step = lambda answer_text: TurnResult(
+        state=ctrl.state, text="x", done=False, escalated=False,
+        message="**Nice work!**\n* Step one\n* Step two", question=None,
+    )
     r = c.post("/answer", data={"answer": "4"}, headers={"HX-Request": "true"})
     body = r.get_data(as_text=True)
     assert "<strong>Nice work!</strong>" in body
@@ -478,8 +543,12 @@ if __name__ == "__main__":
     print("  ✓ test_answer_hx_fragment_escapes_html")
     test_markdown_lite_renders_bold_italic_and_bullets()
     print("  ✓ test_markdown_lite_renders_bold_italic_and_bullets")
-    test_turn_split_feedback_from_question()
-    print("  ✓ test_turn_split_feedback_from_question")
+    test_structured_turn_renders_message_and_question_separately()
+    print("  ✓ test_structured_turn_renders_message_and_question_separately")
+    test_mc4_choices_render_as_radio_buttons()
+    print("  ✓ test_mc4_choices_render_as_radio_buttons")
+    test_fraction_inputs_compose_server_side()
+    print("  ✓ test_fraction_inputs_compose_server_side")
     test_answer_hx_request_on_escalation_sends_hx_redirect()
     print("  ✓ test_answer_hx_request_on_escalation_sends_hx_redirect")
     test_done_route_shows_final_message_and_is_directly_navigable()

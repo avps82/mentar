@@ -168,11 +168,15 @@ class ItemGenerator:
         gen = self._gens.get(node_id)
         if gen is None:
             return None
-        answer_type, checker, problem, answer = gen(self._rng)
+        result = gen(self._rng)
+        answer_type, checker, problem, answer = result[:4]
+        # mc generators may return a 5th element: the structured choice texts in
+        # A/B/C/D order (drives the web radio buttons); 4-tuples stay valid.
+        choices = tuple(result[4]) if len(result) > 4 and result[4] else None
         return Item(
             id=f"gen-{node_id}-{self._rng.randrange(10 ** 9)}",
             node=node_id, problem=problem, answer=answer,
-            answer_type=answer_type, checker=checker,
+            answer_type=answer_type, checker=checker, choices=choices,
         )
 
     def sample(self, node_id: str) -> Item | None:

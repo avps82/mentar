@@ -137,6 +137,7 @@ _turn_logs: dict[str, list[dict]] = {}      # learner_id -> [{role, text}]
 _stores: dict[str, LearnerStore] = {}
 _db_learner_ids: dict[str, int] = {}        # flask-session learner_uuid -> DB int id
 _done_messages: dict[str, str] = {}         # learner_uuid -> final completion text
+_last_messages: dict[str, str] = {}         # learner_uuid -> last TurnResult.message (transient prose)
 
 
 def _get_or_create_controller(learner_uuid: str, subject: str) -> SessionController:
@@ -146,6 +147,7 @@ def _get_or_create_controller(learner_uuid: str, subject: str) -> SessionControl
     if _learner_subject.get(learner_uuid) != subject:
         _controllers.pop(learner_uuid, None)
         _turn_logs[learner_uuid] = []
+        _last_messages.pop(learner_uuid, None)
         _learner_subject[learner_uuid] = subject
 
     if learner_uuid not in _controllers:
@@ -225,6 +227,7 @@ def index():
     if is_first_turn:
         result = ctrl.step(None)
         _log_turn(learner_uuid, "Mentar", result.text)
+        _last_messages[learner_uuid] = result.message
         if result.done:
             _done_messages[learner_uuid] = result.text or "All done!"
             return redirect(url_for("done"))
@@ -268,12 +271,21 @@ def answer():
         return redirect(url_for("index"))
 
     answer_text = request.form.get("answer", "").strip()
+    if not answer_text:
+        # Fraction widget: two structured inputs (numerator / denominator) compose
+        # server-side into the "n/d" string the verifier already accepts — no
+        # client JS involved, works identically with JS disabled.
+        num = request.form.get("answer_num", "").strip()
+        den = request.form.get("answer_den", "").strip()
+        if num and den:
+            answer_text = f"{num}/{den}"
     _log_turn(learner_uuid, "Child", answer_text)
 
     ctrl = _controllers[learner_uuid]
     result = ctrl.step(answer_text)
     if result.text:
         _log_turn(learner_uuid, "Mentar", result.text)
+    _last_messages[learner_uuid] = result.message
 
     if result.escalated:
         if hx:
@@ -333,27 +345,6 @@ def frozen():
         handoff_primary=HANDOFF_MESSAGE_PRIMARY,
         handoff_support=HANDOFF_MESSAGE_SUPPORT,
     )
-
-
-def _split_turn_text(text: str, current_question: str | None) -> tuple[str, str]:
-    """U-31: split a turn's bundled text into (feedback, question_display).
-
-    The controller joins per-state outputs with "\\n\\n" and, in every state that
-    awaits an answer, the pending question is the FINAL segment (PRESENT's
-    "{question} {hint}", the re-prompt/redirect "{msg}\\n\\n{question}" bundles).
-    So: split at the LAST occurrence of current_question -- everything before it
-    is transient feedback/praise/assent, everything from it onward (question +
-    any format hint) is the stable question display. If the question isn't
-    found, or is the very start of the text (Help's "Q) {q}\\n\\n{explanation}"
-    shape), fall back to no-split: the whole text renders in the question block,
-    which is exactly the pre-U-31 behaviour -- degraded means "as before",
-    never a lost question.
-    """
-    if current_question:
-        idx = text.rfind(current_question)
-        if idx > 0:
-            return text[:idx].strip(), text[idx:]
-    return "", text
 
 
 _MD_BOLD_RE = re.compile(r"\*\*(.+?)\*\*")
@@ -553,6 +544,7 @@ def parent_ack():
         result = ctrl.parent_acknowledge(action)
         if result.text:
             _log_turn(learner_uuid, "Mentar", result.text)
+        _last_messages[learner_uuid] = result.message or result.text
         if result.done:
             return render_template("done.html", message=result.text or "Session ended.")
     return redirect(url_for("index"))
@@ -569,14 +561,20 @@ def _store_and_id(learner_uuid: str) -> tuple[LearnerStore | None, int | None]:
 
 
 def _turn_context(learner_uuid: str, ctrl: SessionController, is_first_turn: bool = False) -> dict:
-    """Template context for the _turn.html partial (U-31/U-32): the split
-    feedback/question areas, both rendered through the same markdown-lite."""
-    text = _last_mentar_text(learner_uuid) or "Ready when you are!"
-    feedback, question_display = _split_turn_text(text, ctrl.current_question)
+    """Template context for the _turn.html partial: the STRUCTURED message and
+    question fields (TurnResult.message / .question — never string-split from
+    prose), both rendered through the same markdown-lite (U-32), plus the
+    answer-widget metadata (mc4 radio choices / fraction inputs)."""
+    message = _last_messages.get(learner_uuid, "")
+    question = ctrl.question_display or "Ready when you are!"
+    choices = ctrl.current_choices
     return {
-        "feedback_html": _render_markdown_lite(feedback) if feedback else "",
-        "question_html": _render_markdown_lite(question_display),
+        "message_html": _render_markdown_lite(message) if message else "",
+        "question_html": _render_markdown_lite(question),
         "is_first_turn": is_first_turn,
+        "answer_type": ctrl.current_answer_type,
+        "choices": choices,
+        "choice_letters": ["A", "B", "C", "D"][: len(choices)] if choices else [],
     }
 
 

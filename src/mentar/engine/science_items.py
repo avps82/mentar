@@ -38,7 +38,9 @@ def _mc_which_is(rng: random.Random, prompt: str, classes: dict[str, list[str]])
     letter = _LETTERS[options.index(correct)]
     opts = "  ".join(f"{ltr}) {opt}" for ltr, opt in zip(_LETTERS, options, strict=True))
     problem = f"{prompt.format(label=target)} {opts}. Answer with the letter."
-    return ("mc4", "mc_choice", problem, letter)
+    # 5th element: structured choices (A/B/C/D order) — the web view renders these
+    # as radio buttons; the inline "A) …" text stays for the CLI/transcript.
+    return ("mc4", "mc_choice", problem, letter, options)
 
 
 # ── Curated fact tables (the ground truth) — Year-4 friendly, disjoint classes ──

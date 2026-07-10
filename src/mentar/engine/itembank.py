@@ -32,6 +32,11 @@ class Item:
     answer: str           # ground truth for the verifier
     answer_type: str      # int | fraction | mc4 | free_text
     checker: str          # int_exact | fraction_equiv | mc_choice | none
+    # mc4 only: choice texts in A/B/C/D order (STRUCTURED — the web view renders
+    # these as radio buttons instead of parsing them back out of the problem
+    # string). None for non-choice items; the problem text may still carry the
+    # inline "A) … B) …" form for the CLI/transcript.
+    choices: tuple[str, ...] | None = None
 
 
 class ItemBank:
@@ -98,5 +103,6 @@ def load_item_bank(path: str | Path, rng: random.Random | None = None) -> ItemBa
             answer=str(d["answer"]),
             answer_type=d.get("answer_type", "free_text"),
             checker=d.get("checker", "none"),
+            choices=tuple(d["choices"]) if d.get("choices") else None,
         ))
     return ItemBank(items, rng=rng)

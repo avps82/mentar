@@ -185,6 +185,15 @@ _AWAIT = {
     FSMState.ESCALATION_FREEZE,
 }
 
+# States where a pending QUESTION is live on screen (TurnResult.question carries
+# it, structurally — the display layer must never have to string-split it back
+# out of the prose; that approach broke on the Help flow's "Q) …" recap).
+_QUESTION_AWAIT = {
+    FSMState.AWAIT_ANSWER,
+    FSMState.HELP_RECHECK_AWAIT,
+    FSMState.PROBE_AWAIT_ANSWER,
+}
+
 # Terminal state -> session.ended_reason recorded when the session closes.
 _END_REASON = {
     FSMState.SESSION_END_COMPLETE: "completed",
@@ -196,9 +205,13 @@ _END_REASON = {
 @dataclass
 class TurnResult:
     state: str
-    text: str
+    text: str            # full child-facing text (message + question) — CLI/transcript compat
     done: bool
     escalated: bool
+    # Structured display fields (U-31 proper fix, maintainer-requested 2026-07-10):
+    # the web view places each part in its own area instead of string-splitting text.
+    message: str = ""            # transient prose: feedback, praise, explanation, nudges
+    question: str | None = None  # the pending question display (incl. format hint), if awaiting one
 
 
 @dataclass
@@ -209,7 +222,8 @@ class _SessionCtx:
     mastery_updated_at: dict = field(default_factory=dict)  # node_id -> ISO ts | None
     current_node_id: str | None = None
     current_pattern: str | None = None
-    current_question: str | None = None           # rendered question text
+    current_question: str | None = None           # rendered question text (verbatim, for logging/templates)
+    question_display: str | None = None           # child-facing question incl. format hint (TurnResult.question)
     current_item: object | None = None            # current checkable Item (or None = LLM-gen)
     current_answer: str | None = None             # child's latest answer
     last_scored_correct: bool | None = None
@@ -305,12 +319,16 @@ class SessionController:
         result = self._step_core(learner_input)
         if result.text and not self._assent_shown:
             # W5.6 assent + A4/SAFETY §5.5 AI-transparency: prepend both, once, to
-            # the very first child-facing turn.
+            # the very first child-facing turn (message prose, not the question).
             self._assent_shown = True
+            message = "\n\n".join(
+                part for part in (ASSENT_LINE, TRANSPARENCY_LINE, result.message) if part
+            )
             result = TurnResult(
                 state=result.state,
-                text=f"{ASSENT_LINE}\n\n{TRANSPARENCY_LINE}\n\n{result.text}",
+                text="\n\n".join(part for part in (message, result.question) if part),
                 done=result.done, escalated=result.escalated,
+                message=message, question=result.question,
             )
         if result.text:
             self._log_transcript("tutor", result.text)
@@ -341,9 +359,11 @@ class SessionController:
         # question so the child has something to do.
         if not result.done and ctx.state not in _AWAIT and ctx.state not in _TERMINAL:
             driven = self._step_core(None)
-            text = "\n\n".join(t for t in (result.text, driven.text) if t)
+            message = "\n\n".join(t for t in (result.message or result.text, driven.message) if t)
+            text = "\n\n".join(t for t in (message, driven.question) if t)
             result = TurnResult(
                 state=ctx.state.value, text=text, done=driven.done, escalated=False,
+                message=message, question=driven.question,
             )
         if result.text:
             self._log_transcript("tutor", result.text)
@@ -398,12 +418,7 @@ class SessionController:
                     logger.info(
                         "jailbreak (logged, not frozen): span=%s", trigger.matched_span[:80]
                     )
-                    redirect = "Let's keep going with our maths! 😊"
-                    if ctx.current_question:
-                        redirect = f"{redirect}\n\n{ctx.current_question}"
-                    return TurnResult(
-                        state=ctx.state.value, text=redirect, done=False, escalated=False
-                    )
+                    return self._compose_result("Let's keep going with our maths! 😊")
 
                 # CRITICAL / HIGH: freeze + parent handoff.
                 ctx.state = FSMState.ESCALATION_FREEZE
@@ -415,6 +430,7 @@ class SessionController:
                     text=HANDOFF_MESSAGE_PRIMARY,
                     done=False,
                     escalated=True,
+                    message=HANDOFF_MESSAGE_PRIMARY,
                 )
 
         # Drive transient states until we hit an await or terminal state.
@@ -422,26 +438,38 @@ class SessionController:
         for _ in range(40):  # guard against infinite loops in tests
             state = ctx.state
             if state in _TERMINAL:
-                return TurnResult(state=state.value, text=output_text, done=True, escalated=False)
+                return self._compose_result(output_text)
             if state in _AWAIT and learner_input is None and state != FSMState.SESSION_START:
                 # Already waiting; caller must supply input.
-                return TurnResult(state=state.value, text=output_text, done=False, escalated=False)
+                return self._compose_result(output_text)
 
             text, advance = self._tick(state, learner_input)
             if text:
                 # Accumulate across ticks: a single turn can emit several messages
-                # (e.g. a Help explanation THEN the re-check question). Overwriting would
+                # (e.g. a Help explanation THEN the re-check prompt). Overwriting would
                 # drop the explanation and show only the last message.
                 output_text = f"{output_text}\n\n{text}" if output_text else text
             learner_input = None  # consumed; subsequent ticks are transient
             if not advance:
                 break  # reached a natural await/terminal
 
+        return self._compose_result(output_text)
+
+    def _compose_result(self, message: str) -> TurnResult:
+        """Build a TurnResult from the accumulated MESSAGE prose + the pending
+        question (structural — TurnResult.question, never embedded-and-re-split).
+        `text` stays the full joined string for the CLI, the durable transcript,
+        and backward compatibility."""
+        ctx = self._ctx
+        question = ctx.question_display if ctx.state in _QUESTION_AWAIT else None
+        text = "\n\n".join(part for part in (message, question) if part)
         return TurnResult(
             state=ctx.state.value,
-            text=output_text,
+            text=text,
             done=ctx.state in _TERMINAL,
             escalated=ctx.state is FSMState.ESCALATION_FREEZE,
+            message=message,
+            question=question,
         )
 
     @property
@@ -457,10 +485,38 @@ class SessionController:
 
     @property
     def current_question(self) -> str | None:
-        """The pending question text, or None before the first PRESENT
-        (read-only display accessor -- U-31: lets the web view render the
-        question as a stable block separate from transient feedback)."""
+        """The pending question text (verbatim, as used for logging/templates),
+        or None before the first PRESENT."""
         return self._ctx.current_question
+
+    @property
+    def question_display(self) -> str | None:
+        """The child-facing question display (question + answer-format hint) when a
+        question is live on screen, else None (read-only — the web view's stable
+        question block renders exactly this, matching TurnResult.question)."""
+        if self._ctx.state in _QUESTION_AWAIT:
+            return self._ctx.question_display
+        return None
+
+    @property
+    def current_answer_type(self) -> str | None:
+        """The live question's expected answer type (int/fraction/mc4/free_text),
+        or None when no question is awaiting — drives the web input widget
+        (radio buttons for mc4, numerator/denominator boxes for fraction)."""
+        if self._ctx.state not in _QUESTION_AWAIT or self._ctx.current_node_id is None:
+            return None
+        answer_type, _, _ = self._answer_spec(self._curriculum[self._ctx.current_node_id])
+        return answer_type
+
+    @property
+    def current_choices(self) -> list[str] | None:
+        """Structured choice texts for the live mc4 question (parallel to A/B/C/D),
+        or None for non-choice questions / items without structured choices."""
+        if self._ctx.state not in _QUESTION_AWAIT:
+            return None
+        item = self._ctx.current_item
+        choices = getattr(item, "choices", None)
+        return list(choices) if choices else None
 
     @property
     def session_id(self) -> str:
@@ -661,7 +717,8 @@ class SessionController:
             ctx.current_question = item.problem
             ctx.state = FSMState.AWAIT_ANSWER
             hint = self._answer_format_hint(item.answer_type)
-            return (f"{item.problem} {hint}".rstrip(), False)
+            ctx.question_display = f"{item.problem} {hint}".rstrip()
+            return ("", False)
         # Fallback: LLM-generated question (nodes without a bank / legacy callers).
         ctx.current_item = None
         passage = resolve_grounding(node.get("grounding", {}), self._grounding_cfg)
@@ -674,7 +731,8 @@ class SessionController:
         ctx.current_question = question
         ctx.state = FSMState.AWAIT_ANSWER
         hint = self._answer_format_hint(node.get("answer_type", ""))
-        return (f"{question} {hint}".rstrip(), False)
+        ctx.question_display = f"{question} {hint}".rstrip()
+        return ("", False)
 
     # ── Item / answer-spec helpers ──────────────────────────────────────────────
 
@@ -742,14 +800,14 @@ class SessionController:
                 return ("", True)
             # Couldn't read a checkable answer (blank / gibberish / malformed). Don't
             # penalise or log — re-ask the SAME question with answer-type-aware guidance.
-            # (A vague "couldn't read" + jumping to a NEW question confused testers; this
-            # is neither correct nor wrong, so say what's needed and keep the question.)
+            # (The question itself stays live via TurnResult.question / question_display;
+            # no need to re-embed it in the nudge prose.)
             ctx.state = FSMState.AWAIT_ANSWER
             if answer_type == "mc4":
                 nudge = "I didn't catch a letter there — please answer with A, B, C or D."
             else:
                 nudge = "Hmm, I couldn't read a number there — give it another go."
-            return (f"{nudge}\n\n{ctx.current_question}", False)
+            return (nudge, False)
         ctx.last_scored_correct = (outcome.result is CheckResult.PASS)
         self._log_response(
             ctx.current_node_id, ctx.current_answer,
@@ -976,22 +1034,23 @@ class SessionController:
             # LLM unavailable/empty, or every attempt had a verified-wrong claim —
             # never leave the child with no hint, and never with a wrong one.
             explanation = self._fallback_hint(ctx.current_node_id)
-        if ctx.current_question:
-            # Show the question being explained first, labelled, for context.
-            explanation = f"Q) {ctx.current_question}\n\n{explanation}"
+        # (No "Q) {question}" recap prefix any more — the pending question is carried
+        # structurally in TurnResult.question and stays visible in its own display
+        # block; the recap prefix was what broke the old string-split display.)
         ctx.state = FSMState.HELP_RECHECK_PRESENT
         return (explanation, True)
 
     def _do_help_recheck_present(self) -> tuple[str, bool]:
         ctx = self._ctx
-        # ONE question at a time: re-try the SAME question the child is on (it's
-        # already shown as "Q) …" above), rather than posing a new, different one.
+        # ONE question at a time: re-try the SAME question the child is on (kept
+        # visible via TurnResult.question), rather than posing a new, different one.
         # Show the expected answer SHAPE so the child knows how to reply.
         answer_type, _, _ = self._answer_spec(self._curriculum[ctx.current_node_id])
-        prompt = f"Now you try it! ✏️ {self._answer_format_hint(answer_type)}".rstrip()
+        hint = self._answer_format_hint(answer_type)
         if ctx.current_item is not None or ctx.current_question:
             ctx.state = FSMState.HELP_RECHECK_AWAIT
-            return (prompt, False)
+            ctx.question_display = f"{ctx.current_question} {hint}".rstrip()
+            return ("Now you try it! ✏️", False)
         ctx.current_item = None
         node = self._curriculum[ctx.current_node_id]
         passage = resolve_grounding(node.get("grounding", {}), self._grounding_cfg)
@@ -1006,7 +1065,8 @@ class SessionController:
         ])
         ctx.current_question = recheck_q
         ctx.state = FSMState.HELP_RECHECK_AWAIT
-        return (recheck_q, False)
+        ctx.question_display = f"{recheck_q} {hint}".rstrip()
+        return ("Now you try it! ✏️", False)
 
     def _do_help_recheck_await(self, inp: str | None) -> tuple[str, bool]:
         ctx = self._ctx
@@ -1026,7 +1086,7 @@ class SessionController:
             return ("", True)
         if not stripped:
             # Skip attempt rejected — keep the question on screen (web shows last msg).
-            return (f"Please give it a try — even a guess is OK!\n\n{ctx.current_question}", False)
+            return ("Please give it a try — even a guess is OK!", False)
         ctx.help_answer = stripped
         ctx.state = FSMState.HELP_RECHECK_SCORE
         return ("", True)
@@ -1095,7 +1155,8 @@ class SessionController:
             ctx.current_question = item.problem
             ctx.state = FSMState.PROBE_AWAIT_ANSWER
             hint = self._answer_format_hint(item.answer_type)
-            return (f"{item.problem} {hint}".rstrip(), False)
+            ctx.question_display = f"{item.problem} {hint}".rstrip()
+            return ("", False)
         ctx.current_item = None
         node = self._curriculum[ctx.current_node_id]
         passage = resolve_grounding(node.get("grounding", {}), self._grounding_cfg)
@@ -1111,7 +1172,8 @@ class SessionController:
         ctx.current_question = probe_q
         ctx.state = FSMState.PROBE_AWAIT_ANSWER
         hint = self._answer_format_hint(node.get("answer_type", ""))
-        return (f"{probe_q} {hint}".rstrip(), False)
+        ctx.question_display = f"{probe_q} {hint}".rstrip()
+        return ("", False)
 
     def _do_probe_await_answer(self, inp: str | None) -> tuple[str, bool]:
         ctx = self._ctx
@@ -1133,7 +1195,7 @@ class SessionController:
             return ("", True)
         if not stripped:
             # Keep the question on screen (the web view shows the last message).
-            return (f"Give it a go — what do you think?\n\n{ctx.current_question}", False)
+            return ("Give it a go — what do you think?", False)
         ctx.probe_answer = stripped
         ctx.state = FSMState.PROBE_SCORE
         return ("", True)

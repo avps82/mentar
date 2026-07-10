@@ -1,7 +1,42 @@
-{# U-31: transient feedback and the stable question render as separate areas.
-   Included by learner.html for full-page loads AND returned bare as the htmx
-   fragment for POST /answer (hx-target="#turn-area"), so both paths always
-   agree. Both fields are pre-rendered by _render_markdown_lite (escape-first,
-   whitelist-4-tags -- U-32), hence | safe. #}
-{% if feedback_html %}<div class="feedback{% if is_first_turn %} first-turn{% endif %}">{{ feedback_html | safe }}</div>{% endif %}
-<div class="question{% if is_first_turn and not feedback_html %} first-turn{% endif %}">{{ question_html | safe }}</div>
+{# The live turn area: transient message + stable question + the ANSWER WIDGET
+   (which varies with the question's answer_type, so it lives inside the swap
+   target). Included by learner.html for full-page loads AND returned bare as
+   the htmx fragment for POST /answer (hx-target="#turn-area") — both paths
+   always agree. message/question come STRUCTURED from TurnResult.message /
+   .question (never string-split from prose); both are pre-rendered by
+   _render_markdown_lite (escape-first, whitelist-4-tags — U-32), hence | safe. #}
+{% if message_html %}<div class="feedback{% if is_first_turn %} first-turn{% endif %}">{{ message_html | safe }}</div>{% endif %}
+<div class="question{% if is_first_turn and not message_html %} first-turn{% endif %}">
+  <button class="tts-btn" type="button" aria-label="Read the question aloud" title="Read aloud">🔊</button>
+  <div class="question-text">{{ question_html | safe }}</div>
+</div>
+<form method="POST" action="/answer" class="answer-form"
+      hx-post="/answer" hx-target="#turn-area" hx-swap="innerHTML">
+  {% if choices %}
+  {# mc4 with structured choices: native radio group — works with JS disabled. #}
+  <fieldset class="choice-group">
+    <legend class="sr-only">Choose your answer</legend>
+    {% for choice in choices %}
+    {% set letter = choice_letters[loop.index0] %}
+    <label class="choice-option">
+      <input type="radio" name="answer" value="{{ letter }}" required>
+      <span><b>{{ letter }})</b> {{ choice }}</span>
+    </label>
+    {% endfor %}
+  </fieldset>
+  <button class="btn" type="submit">Send ✓</button>
+  {% elif answer_type == "fraction" %}
+  {# Fraction: structured numerator/denominator inputs; /answer composes "n/d"
+     server-side — no client JS, JS-disabled identical. #}
+  <div class="fraction-input">
+    <input type="number" name="answer_num" aria-label="numerator (top number)" required>
+    <span class="fraction-slash">/</span>
+    <input type="number" name="answer_den" aria-label="denominator (bottom number)" required>
+    <button class="btn" type="submit">Send ✓</button>
+  </div>
+  <p class="hint">Top number first, then the bottom number.</p>
+  {% else %}
+  <input type="text" name="answer" autofocus placeholder="Type your answer…">
+  <button class="btn" type="submit">Send ✓</button>
+  {% endif %}
+</form>

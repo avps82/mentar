@@ -54,10 +54,13 @@ def test_mc_answer_letter_points_to_a_real_member():
     classes = {"alpha": ["a1", "a2"], "beta": ["b1", "b2"], "gamma": ["c1", "c2"]}
     members = {m for ms in classes.values() for m in ms}
     rng = random.Random(0)
+    letters = "ABCD"
     for _ in range(100):
-        _, _, problem, letter = _mc_which_is(rng, "Which is {label}?", classes)
+        _, _, problem, letter, choices = _mc_which_is(rng, "Which is {label}?", classes)
         opts = dict(re.findall(r"([A-D])\)\s*(\S+)", problem))
         assert opts[letter].rstrip(".") in members
+        # Structured choices (5th element) must agree with the answer letter.
+        assert choices[letters.index(letter)] in members
 
 
 def test_science_mc_has_four_distinct_options():
@@ -66,6 +69,9 @@ def test_science_mc_has_four_distinct_options():
     opts = re.findall(r"[A-D]\)\s*([^A-D]+?)(?=\s+[A-D]\)|\.\s*Answer)", it.problem)
     opts = [o.strip() for o in opts]
     assert len(opts) == 4 and len(set(opts)) == 4, it.problem
+    # Structured choices carried on the Item, in the same A/B/C/D order as the text.
+    assert it.choices is not None and len(it.choices) == 4
+    assert list(it.choices) == opts
 
 
 if __name__ == "__main__":
