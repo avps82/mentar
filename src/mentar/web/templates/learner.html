@@ -8,23 +8,25 @@
   {{ current_mastery.pct }}%
 </div>
 {% endif %}
-<!-- U-90: htmx (vendored, static/htmx.min.js) swaps .question in place on
+<!-- U-90: htmx (vendored, static/htmx.min.js) swaps #turn-area in place on
      submit -- no owned JS. JS disabled -> plain form POST, same routes/
-     responses either way (see /answer in web/app.py). U-30: this block is the
-     stable question target and is never itself removed from the DOM. -->
-<div class="question{% if is_first_turn %} first-turn{% endif %}">{{ question_html | safe }}</div>
+     responses either way (see /answer in web/app.py). U-30/U-31: the question
+     block inside _turn.html is stable; feedback renders separately. -->
+<div id="turn-area">
+{% include "_turn.html" %}
+</div>
 <form method="POST" action="/answer"
-      hx-post="/answer" hx-target=".question" hx-swap="innerHTML"
+      hx-post="/answer" hx-target="#turn-area" hx-swap="innerHTML"
       hx-on::after-request="this.reset()">
   <input type="text" name="answer" autofocus placeholder="Type your answer…">
   <button class="btn" type="submit">Send ✓</button>
 </form>
 <div class="quick-actions" style="margin-top:8px">
-  <form method="POST" action="/answer" hx-post="/answer" hx-target=".question" hx-swap="innerHTML" style="display:inline-block">
+  <form method="POST" action="/answer" hx-post="/answer" hx-target="#turn-area" hx-swap="innerHTML" style="display:inline-block">
     <input type="hidden" name="answer" value="help">
     <button class="btn btn-quiet" type="submit">🆘 Help</button>
   </form>
-  <form method="POST" action="/answer" hx-post="/answer" hx-target=".question" hx-swap="innerHTML" style="display:inline-block">
+  <form method="POST" action="/answer" hx-post="/answer" hx-target="#turn-area" hx-swap="innerHTML" style="display:inline-block">
     <input type="hidden" name="answer" value="stop">
     <button class="btn btn-quiet" type="submit">🛑 Stop</button>
   </form>

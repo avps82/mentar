@@ -1,0 +1,7 @@
+{# U-31: transient feedback and the stable question render as separate areas.
+   Included by learner.html for full-page loads AND returned bare as the htmx
+   fragment for POST /answer (hx-target="#turn-area"), so both paths always
+   agree. Both fields are pre-rendered by _render_markdown_lite (escape-first,
+   whitelist-4-tags -- U-32), hence | safe. #}
+{% if feedback_html %}<div class="feedback{% if is_first_turn %} first-turn{% endif %}">{{ feedback_html | safe }}</div>{% endif %}
+<div class="question{% if is_first_turn and not feedback_html %} first-turn{% endif %}">{{ question_html | safe }}</div>

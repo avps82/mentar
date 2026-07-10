@@ -262,11 +262,19 @@ note below). Per-screen:
   `.question` block is `white-space:pre-wrap`, so a stray newline next to a block element would
   render as a visible gap) — caught by tracing the join logic by hand before shipping, not by
   a failing test. Tests: `test_markdown_lite_renders_bold_italic_and_bullets`.
-  **Deviation — U-31 (visually distinct feedback vs. question area): NOT fully implemented.**
-  The controller bundles feedback and the next question into one `TurnResult.text` string;
-  splitting them visually would need a data-contract change (two fields, not one), which is a
-  controller change, not presentation — out of scope per U-82 ("goes back to the maintainer").
-  Flagging as a real gap, not silently dropping it.
+  **U-31 RESOLVED 2026-07-10 (second pass, no controller data-contract change needed):**
+  initially flagged as needing a `TurnResult` change; re-examined and solved at the view
+  layer. The controller joins per-state outputs with `\n\n` and the pending question is the
+  FINAL segment in every await state, so `_split_turn_text()` splits at the LAST occurrence
+  of the (newly exposed, read-only) `SessionController.current_question` — everything before
+  it renders in a distinct `.feedback` area, everything from it onward (question + format
+  hint) in the stable `.question` block. Both areas render via the shared `_turn.html`
+  partial, included on full-page loads AND returned bare as the htmx fragment
+  (`hx-target="#turn-area"`), so the two paths cannot disagree. Graceful degradation: if the
+  question isn't found in the text (or is at position 0, the Help `Q) …` shape), no split —
+  the whole text renders in the question block, which is exactly the pre-U-31 behaviour.
+  Tests: `test_turn_split_feedback_from_question` (pure splitter cases + live view + htmx
+  fragment).
 - **Progress/concept map (U-40–U-42):** new `_compute_graph_layout()` in `web/app.py` — a
   pure, owned layered-DAG layout (level = 1 + max(prereq levels), percentage coordinates, no
   graph library) rendered as an SVG in `progress.html`. Verified against the real 8-node

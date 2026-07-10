@@ -149,7 +149,20 @@ input[type=text] {
 }
 
 .question.first-turn { border-left: 5px solid var(--accent); }
-.question ul { margin: 8px 0; padding-left: 22px; }
+.question ul, .feedback ul { margin: 8px 0; padding-left: 22px; }
+
+.feedback {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--learning);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  font-size: 1.05rem;
+  line-height: 1.5;
+  margin-bottom: 12px;
+  white-space: pre-wrap;
+}
+.feedback.first-turn { border-left-color: var(--accent); }
 
 .hint { color: var(--text-muted); font-size: 0.9rem; margin-top: 8px; }
 

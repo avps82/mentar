@@ -456,6 +456,13 @@ class SessionController:
         return self._ctx.current_node_id
 
     @property
+    def current_question(self) -> str | None:
+        """The pending question text, or None before the first PRESENT
+        (read-only display accessor -- U-31: lets the web view render the
+        question as a stable block separate from transient feedback)."""
+        return self._ctx.current_question
+
+    @property
     def session_id(self) -> str:
         """The id of this controller's tutoring session (for durable-log reads)."""
         return self._session_id

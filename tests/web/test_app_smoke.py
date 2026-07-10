@@ -257,6 +257,57 @@ def test_answer_hx_fragment_escapes_html():
     assert "&lt;script&gt;" in body
 
 
+def test_turn_split_feedback_from_question():
+    """U-31: when the last Mentar text bundles feedback + the pending question
+    (the controller's '\\n\\n'-joined shape), the view renders them as separate
+    areas -- feedback div + stable question div. When the question can't be
+    located in the text, everything falls back into the question block
+    (pre-U-31 behaviour, never a lost question)."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+
+    app_mod, c = _client()
+
+    # The pure splitter first.
+    split = app_mod._split_turn_text
+    assert split("Great job!\n\nWhat is 1/2 of 8?", "What is 1/2 of 8?") == (
+        "Great job!", "What is 1/2 of 8?")
+    # PRESENT bundles a trailing format hint after the question -- it stays
+    # with the question display.
+    assert split("Nice!\n\nWhat is 1/2 of 8? (Type a number)", "What is 1/2 of 8?") == (
+        "Nice!", "What is 1/2 of 8? (Type a number)")
+    # Question-at-start (Help's "Q) ..." shape) or not-found -> no split.
+    assert split("What is 1/2 of 8?\n\nBecause...", "What is 1/2 of 8?") == (
+        "", "What is 1/2 of 8?\n\nBecause...")
+    assert split("Some text", "unrelated question") == ("", "Some text")
+
+    # And through the live view: stub the log + the controller's question.
+    c.post("/choose", data={"subject": "fractions"})
+    c.get("/")
+    with c.session_transaction() as sess:
+        learner_uuid = sess["learner_uuid"]
+    ctrl = app_mod._controllers[learner_uuid]
+    ctrl._ctx.current_question = "What is 1/2 of 8?"
+    app_mod._last_mentar_text = lambda u: "That's right! ⭐\n\nWhat is 1/2 of 8?"
+
+    html = c.get("/").get_data(as_text=True)
+    assert '<div class="feedback' in html
+    assert "That&#39;s right!" in html or "That's right!" in html
+    # Feedback must NOT be inside the question block; question block holds the question.
+    q_div = html.split('<div class="question')[1]
+    assert "What is 1/2 of 8?" in q_div
+    assert "That" not in q_div.split("</div>")[0].replace("What is 1/2 of 8?", "")
+
+    # htmx fragment path renders the same two-area structure.
+    frag = c.post("/answer", data={"answer": "4"},
+                  headers={"HX-Request": "true"}).get_data(as_text=True)
+    assert '<div class="feedback' in frag
+    assert '<div class="question' in frag
+
+
 def test_markdown_lite_renders_bold_italic_and_bullets():
     """U-32: the owned markdown-lite subset actually renders bold/italic/
     bullets (not just escapes) -- and stays safe on a mixed malicious+markdown
@@ -418,6 +469,8 @@ if __name__ == "__main__":
     print("  ✓ test_answer_hx_fragment_escapes_html")
     test_markdown_lite_renders_bold_italic_and_bullets()
     print("  ✓ test_markdown_lite_renders_bold_italic_and_bullets")
+    test_turn_split_feedback_from_question()
+    print("  ✓ test_turn_split_feedback_from_question")
     test_answer_hx_request_on_escalation_sends_hx_redirect()
     print("  ✓ test_answer_hx_request_on_escalation_sends_hx_redirect")
     test_done_route_shows_final_message_and_is_directly_navigable()

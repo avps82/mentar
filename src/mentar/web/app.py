@@ -231,12 +231,11 @@ def index():
         if result.escalated:
             return redirect(url_for("frozen"))
 
-    # Re-display the last Mentar question from the log (don't call step again).
-    question = _last_mentar_text(learner_uuid) or "Ready when you are!"
+    # Re-display the last Mentar turn from the log (don't call step again).
     return render_template(
-        "learner.html", question_html=_render_markdown_lite(question),
-        subject_label=SUBJECTS[subject]["label"],
-        current_mastery=_current_node_mastery(learner_uuid, ctrl), is_first_turn=is_first_turn,
+        "learner.html", subject_label=SUBJECTS[subject]["label"],
+        current_mastery=_current_node_mastery(learner_uuid, ctrl),
+        **_turn_context(learner_uuid, ctrl, is_first_turn=is_first_turn),
     )
 
 
@@ -286,14 +285,12 @@ def answer():
             return "", 200, {"HX-Redirect": url_for("done")}
         return redirect(url_for("done"))
 
-    # Advancing: htmx swaps this fragment straight into hx-target=".question"
+    # Advancing: htmx swaps this fragment straight into hx-target="#turn-area"
     # (no page reload); a non-JS browser gets the usual full redirect+reload.
-    # _render_markdown_lite escapes first (U-32 security property) then
-    # renders the same owned markdown subset index() uses for the full-page
-    # path, so the two never visually disagree.
-    question = _last_mentar_text(learner_uuid) or "Ready when you are!"
+    # Same _turn.html partial as the full-page path (U-31 feedback/question
+    # split + U-32 markdown-lite), so the two never visually disagree.
     if hx:
-        return _render_markdown_lite(question)
+        return _render_turn_fragment(learner_uuid, ctrl)
     return redirect(url_for("index"))
 
 
@@ -336,6 +333,27 @@ def frozen():
         handoff_primary=HANDOFF_MESSAGE_PRIMARY,
         handoff_support=HANDOFF_MESSAGE_SUPPORT,
     )
+
+
+def _split_turn_text(text: str, current_question: str | None) -> tuple[str, str]:
+    """U-31: split a turn's bundled text into (feedback, question_display).
+
+    The controller joins per-state outputs with "\\n\\n" and, in every state that
+    awaits an answer, the pending question is the FINAL segment (PRESENT's
+    "{question} {hint}", the re-prompt/redirect "{msg}\\n\\n{question}" bundles).
+    So: split at the LAST occurrence of current_question -- everything before it
+    is transient feedback/praise/assent, everything from it onward (question +
+    any format hint) is the stable question display. If the question isn't
+    found, or is the very start of the text (Help's "Q) {q}\\n\\n{explanation}"
+    shape), fall back to no-split: the whole text renders in the question block,
+    which is exactly the pre-U-31 behaviour -- degraded means "as before",
+    never a lost question.
+    """
+    if current_question:
+        idx = text.rfind(current_question)
+        if idx > 0:
+            return text[:idx].strip(), text[idx:]
+    return "", text
 
 
 _MD_BOLD_RE = re.compile(r"\*\*(.+?)\*\*")
@@ -548,6 +566,22 @@ _ROLE_DISPLAY = {"learner": "Child", "tutor": "Mentar", "system": "System"}
 
 def _store_and_id(learner_uuid: str) -> tuple[LearnerStore | None, int | None]:
     return _stores.get(learner_uuid), _db_learner_ids.get(learner_uuid)
+
+
+def _turn_context(learner_uuid: str, ctrl: SessionController, is_first_turn: bool = False) -> dict:
+    """Template context for the _turn.html partial (U-31/U-32): the split
+    feedback/question areas, both rendered through the same markdown-lite."""
+    text = _last_mentar_text(learner_uuid) or "Ready when you are!"
+    feedback, question_display = _split_turn_text(text, ctrl.current_question)
+    return {
+        "feedback_html": _render_markdown_lite(feedback) if feedback else "",
+        "question_html": _render_markdown_lite(question_display),
+        "is_first_turn": is_first_turn,
+    }
+
+
+def _render_turn_fragment(learner_uuid: str, ctrl: SessionController) -> str:
+    return render_template("_turn.html", **_turn_context(learner_uuid, ctrl))
 
 
 def _current_node_mastery(learner_uuid: str, ctrl: SessionController) -> dict | None:
