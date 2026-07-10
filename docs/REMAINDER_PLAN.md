@@ -329,7 +329,7 @@ was explicitly scoped "plan but don't execute"; needs a fresh go-ahead before bu
 
 ---
 
-# R3 — Year > Subject information architecture (maintainer ask, 2026-07-10)
+# R3 — Year > Subject information architecture (maintainer ask, 2026-07-10) ✅ ALL DONE 2026-07-11 (R3.1 90f1fc1, R3.2 10f3fd9)
 
 Maintainer direction: the picker and the progress page should read **Year → Subject →
 parts of the subject** (concept nodes), and the year/subject catalog should be *derived*,

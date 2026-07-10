@@ -342,6 +342,14 @@ response, same session:
 Still pending from U-2a: the maintainer's approval of the overall look → then README
 screenshots.
 
+### R3 — Year > Subject IA (2026-07-10 ask) — ✅ BOTH DONE 2026-07-11
+
+Picker groups subjects by year ("Year 3 (AU)", "Year 4 (AU)", "Try-out topics" — derived
+server-side from the R3.1 template-catalog scan, not hand-maintained); `/progress` gained
+a year/subject switcher. Fixed a real defect found while speccing: the skill-card list
+used to mix every subject's rows together — now filtered to the selected subject only.
+Full detail: `docs/REMAINDER_PLAN.md` → "R3 — Year > Subject information architecture".
+
 ### Review round 2 (2026-07-10, after round 1 shipped) — ✅ ALL FOUR (R2.1–R2.4) SHIPPED 2026-07-11
 
 - **R2-1: MCQ options rendered three times** — inline in the question text ("A) a tree
