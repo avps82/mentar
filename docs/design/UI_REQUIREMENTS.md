@@ -360,7 +360,7 @@ screenshots.
   (`web/answer_modes.py`: answer_type → widget / hint policy / form-compose fn) so new
   answering modes (mixed numbers, decimals-later, …) are one entry + one template branch.
 
-- **R2-4: concept-map labels truncate mid-word** (/progress) — the SVG node labels were
+- **R2-4 ✅ DONE 2026-07-11 (commit 83b9b1c): concept-map labels truncate mid-word** (/progress) — the SVG node labels were
   hard-cut at 14 chars ("Place value to", "Equivalent fra"), exposed by the longer AU
   labels. Fix direction: word-wrapped multi-line labels (`<tspan>` per line) computed in
   the pure layout function; never cut mid-word; full label stays as the hover tooltip.

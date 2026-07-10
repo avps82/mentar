@@ -283,7 +283,7 @@ Accept criteria; one commit per task.
   fraction composes server-side, letter answers score) still pass unchanged through the
   registry path; int questions now render `type="number"`; full suite + ruff green.
 
-## R2.4 — concept-map node labels truncate mid-word ("Equivalent fra")  `[G]`
+## R2.4 — concept-map node labels truncate mid-word ("Equivalent fra")  `[G]` ✅ DONE 2026-07-11 (commit 83b9b1c)
 
 - **Why (maintainer finding, /progress):** node labels on the concept-graph SVG are
   hard-cut at 14 characters with no ellipsis (`progress.html:15` —
@@ -322,7 +322,7 @@ Accept criteria; one commit per task.
   "Equivalent fra<" (the old cut); node `"label"` (tooltip) still carries the full text;
   full suite + ruff green.
 
-**R2 execution order: R2.1 → R2.3 → R2.2, R2.4 anytime** (R2.4 is independent of the
+**R2 execution order: R2.1 → R2.3 → R2.2** (R2.4 ✅ DONE, was independent of the
 other three; R2.3 folds R2.1's hint-suppression into the mode registry; R2.2's audio
 depends on R2.1's stem).
 
