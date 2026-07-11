@@ -617,6 +617,69 @@ built same wave
 
 ---
 
+# R7 — evergreen Try-out practice sampler + Settings LLM status check  `[G]` ✅ DONE 2026-07-11
+
+**Maintainer ask, 2026-07-11.** Two unrelated asks bundled into one build wave: (1) a
+permanent, country-agnostic "practice makes perfect" sampler under the picker's Try-out
+group ("times tables up to 12... practically like a demo for this product"); (2) the
+Settings page should show whether the local LLM is actually reachable ("it's guess work to
+see if it's running or not via the interface"), discovered while root-causing a reported
+voice-picker bug.
+
+## R7.1 — practice sampler pack
+
+- **New directory `curriculum/templates/practice/`** (not `_pilot/` — maintainer's call,
+  "makes more sense for now and long term"; not `_practice/` either — the leading
+  underscore is reserved for `_pilot`'s specific no-prefix exemption, any other directory
+  already auto-prefixes via `derive_subject_key()`, so a plain `practice/` name gives the
+  cleanest auto-derived key: `practice_maths`/`practice_english`).
+- **Maths practice** (`curriculum/templates/practice/maths.md`, 3 flat nodes, `int`
+  answers): times tables 1–12, skip counting/number patterns, doubles & halves.
+- **English practice** (`curriculum/templates/practice/english.md`, 4 flat nodes, `mc4`
+  answers): synonyms & antonyms, rhyming words, odd one out, plural forms.
+- **New `engine/practice_items.py`**: generator functions + `MATHS_PRACTICE_GENERATORS`/
+  `ENGLISH_PRACTICE_GENERATORS` registries, wired into `engine/item_sources.py` as
+  `maths_practice`/`english_practice`. The 4 English generators reuse one relocated shared
+  helper (`itemgen.mc_which_is`, moved from `science_items.py` where it was private-named
+  `_mc_which_is` — same disjoint-fact-table-with-distractors shape science already used)
+  rather than four bespoke generators.
+- **Node ids are manually prefixed `practice_`** (e.g. `practice_times_tables`) — skill_id
+  is NOT auto-namespaced by directory the way the subject_key is; this matches the AU
+  templates' own `au3_`/`au4_` convention and avoids ever colliding with a future
+  country's node id. Guarded by a new collision test across every shipped template.
+- **No licensing work needed** — 100% Mentar-authored generic facts (times tables, common
+  vocabulary), unlike country-curriculum content.
+- **Content-quality review** (Sonnet-led, not gemma): all 5 curated fact tables
+  (synonyms/antonyms/rhymes/odd-one-out/plurals) hand-verified pairwise-disjoint (no word
+  appears under two different labels, which would make a distractor accidentally correct)
+  — enforced going forward by `test_english_fact_tables_are_pairwise_disjoint`.
+- **Accept:** both subjects appear under "Try-out topics" in the picker (grouping is by
+  `year_level: pilot`, not by directory name); every generator self-validates against the
+  deterministic verifier across 200+ seeds; no skill_id collides with any other shipped
+  template; full suite + ruff green.
+
+## R7.2 — Settings: local LLM connectivity check
+
+- **New `GET /settings/llm-status`** route: a SHORT 5-second-timeout `models.list()` call
+  against `LLM_BASE_URL`/`LLM_CRED` — deliberately a separate, much shorter timeout than
+  the app's own 120s generation call, so a genuinely unreachable backend can't hang the
+  settings page. Returns `{ok, model, base_url, latency_ms, error}` as JSON.
+- **`settings.js`** auto-checks on page load + a "🔄 Check again" button; renders
+  "🟢 Connected (model, Nms)" or "🔴 Not reachable at <url> (<error>)".
+- **Voice-picker bug, root-caused while building this:** `settings.js`'s test-voice button
+  and `tts.js`'s real read-aloud logic both set `utterance.voice` but never
+  `utterance.lang` — a well-documented Web Speech API gotcha where several browsers
+  silently fall back to the default voice when `.lang` doesn't match the assigned
+  `.voice`. Fixed in both files (2 lines each). Also added a brief "Saved ✓" flash on the
+  voice `<select>`'s change event — not an actual Save button (the auto-save-on-change was
+  already correct), just visible confirmation that a no-button choice actually persisted.
+- **Accept:** endpoint tested with a mocked reachable + unreachable backend (no real
+  network in tests); JS syntax-checked with `node --check`; the `.lang` fix and "Saved ✓"
+  flash are JS-only and not pytest-testable — same ceiling as R2.2/R5's voice features,
+  flagged for a maintainer hands-on check alongside the existing R5 audio checklist.
+
+---
+
 # Remainder Build Plan — v2
 
 Most of v1 shipped; **G0 is essentially validated** (model pick, safety, retrieval, E2E,
