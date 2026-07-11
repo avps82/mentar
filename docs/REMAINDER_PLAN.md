@@ -680,7 +680,7 @@ voice-picker bug.
 
 ---
 
-# R8 — content-download MVP + India (general Class 3 maths) pack  `[G]`
+# R8 — content-download MVP + India (general Class 3 maths) pack  `[G]` ✅ DONE 2026-07-12
 
 **Maintainer ask, 2026-07-11.** In-app curriculum management from Settings: see what's
 installed, download what isn't, delete what you no longer want — the in-app counterpart to
@@ -715,11 +715,19 @@ Re-verify `epathshala.nic.in`'s licence directly before ever attempting a real
 
 ## R8.1 — manifest + fetch mechanism
 
+- **Two physically separate directories, not just a manifest-level distinction:**
+  `curriculum/templates/` is what `web/app.py`'s auto-discovery scans (`glob("**/*.md")`)
+  — anything here ships with every checkout and needs no download (AU, `practice/`).
+  Downloadable packs live SOURCE-side in a sibling directory the scanner never touches,
+  **`curriculum/downloadable_packs/<DIR>/`** — present in the git tree (so the raw-URL
+  fetch below can find real content) but invisible to the picker until explicitly
+  installed, which COPIES the files into `curriculum/templates/<DIR>/`. (Putting a
+  downloadable pack directly under `templates/` would defeat the whole feature — every
+  fresh `git clone` would auto-discover it immediately, no download needed.)
 - **`curriculum/packs.json`** (new, lives in the repo, auto-discovered like everything
   else): one entry per downloadable pack — `{id, dir, label, description, licence,
-  files: [{name, sha256}]}`. `AU` and `practice/` stay **in-tree** (ship with every
-  checkout, not downloadable — they're the base install); only NEW packs not yet in a
-  fresh checkout go in the manifest (`IN_GENERIC` is the first).
+  files: [{name, sha256}]}`, `files` naming paths under `downloadable_packs/<dir>/`.
+  `IN_GENERIC` is the first (and only) entry this wave.
 - **Fetch is HTTPS against ONE pinned, hardcoded base URL**
   (`https://raw.githubusercontent.com/avps82/mentar/main/`) — never a user-supplied URL,
   never configurable from the UI. This is git-pull-shaped (same trust boundary you already
