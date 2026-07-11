@@ -1,8 +1,8 @@
 ---
 title: "Multi-Country Curriculum Platform — Design"
-version: v0.3
-status: "Design draft — NOT ratified. No code changes implied by this doc until maintainer sign-off."
-last-updated: 2026-07-11
+version: v0.4
+status: "Design draft — NOT formally ratified, but its content-download design (§4) and the India-pack/second-country decision (§6) are already built and shipped (R8, R9, R9.1)."
+last-updated: 2026-07-13
 owner: Opus (drafted) / maintainer (ratification pending)
 sources: "PHASE0_STATUS.md backlog row (2026-07-11, ratified strategic goal); curriculum/templates/AU/*.md; engine/curriculum.py; engine/item_sources.py; docs/CONTENT_LICENSES.md; REMAINDER_PLAN.md R6.2"
 ---
@@ -300,7 +300,8 @@ equals the YAML label ("Place value to 999") — never "Au3 Place Value", never 
 - A licence-onboarding checklist to add to `CONTENT_LICENSES.md` before any second country's
   content is authored.
 - Content-download's shape (manifest + static release hosting + pack-is-data-not-code +
-  explicit user action + preserve-mastery-on-delete) — design only, not built.
+  explicit user action + preserve-mastery-on-delete) — **built** (R8, 2026-07-12; see §4's
+  updated note).
 - R6.2's naming convention (§5) — this one ships as code this same wave.
 - India's confirmed authority list: `IN_NCERT`, `IN_CBSE`, `IN_ICSE`,
   `IN_STATE_BRD_<XX>` per state (two-letter code, e.g. `IN_STATE_BRD_TN` for Tamil Nadu) —
@@ -314,6 +315,8 @@ equals the YAML label ("Place value to 999") — never "Au3 Place Value", never 
   convention early rather than defer its hardest edge to later.
 
 **Left open for the maintainer to ratify or push back on:**
-- Whether content-download is worth building at all in the near term, or whether "clone the
-  repo / drop a file in" remains an acceptable distribution story for longer (it's exactly
-  as functional today, just less parent-friendly).
+- ~~Whether content-download is worth building at all in the near term~~ — **answered by
+  building it.** R8 (2026-07-12) shipped the mechanism (manifest + pinned-URL HTTPS fetch +
+  checksum verify + Settings install/uninstall) and the first non-AU pack (India, generic).
+  This §4 design section stays accurate as a description of what got built, not a proposal
+  anymore.
