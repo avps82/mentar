@@ -794,6 +794,85 @@ Re-verify `epathshala.nic.in`'s licence directly before ever attempting a real
 
 ---
 
+# R9 — first-run setup gate + live backend switch (no restart)  `[G]` ✅ DONE 2026-07-13
+
+**Maintainer ask, 2026-07-13.** Two related asks that turned into one piece of work
+using the same config-writing/reload machinery: (1) let Settings switch between a
+local model and a remote API backend, not just show status; (2) a fresh install
+should route to a setup page FIRST, before the picker, rather than let a family
+reach a broken app with no model configured. Confirmed: gate on config MISSING **or**
+unreachable (not missing-only); build/test the web-side gate now, the CLI installer's
+own API-backend support later, separately.
+
+**The `mentar setup` CLI already writes `config/inference.yaml`** for local models
+(auto-selected from a roster) — this wave adds the web-side counterpart, not a
+replacement.
+
+## Design
+
+- **`GET/POST /setup`** — a plain page with two forms: "Local model" (base URL,
+  model to load) and "Remote API" (base URL, model, optional API key). Reuses
+  `write_inference_config()` (already used by `mentar setup`) to write the config —
+  no new file-writing logic invented.
+- **API key never inlined in the yaml.** If provided, it's written to a gitignored
+  `.env` next to the config (`_upsert_dotenv_value`, a small write-side counterpart
+  to `backend.py`'s existing `_load_dotenv`), and the yaml gets `${MENTAR_VLLM_API_KEY}`
+  — the SAME env-var-reference convention already used everywhere else in this
+  codebase. A blank key writes `"no-key"` (matches `_resolve_http`'s own default),
+  not "keep whatever was there before" — simplest correct behavior for a form that
+  never round-trips a previously-saved secret back to the browser.
+- **Gate:** `@app.before_request` redirects every route except `/setup` itself to
+  `/setup` when `_setup_is_complete()` is false — false when
+  `config/inference.yaml` doesn't exist, OR it exists but the backend fails the
+  SAME short-timeout reachability probe `/settings/llm-status` already used
+  (`_probe_llm_backend`, extracted so the two can never disagree about "working").
+  An in-process llamacpp backend has no HTTP endpoint to probe — its mere presence
+  counts as configured. Cached 30s so the common (healthy backend) case doesn't add
+  a live network probe to every single page request.
+- **Reload, no restart, either from `/setup` or a future Settings toggle:**
+  `_reload_inference_config()` re-reads the config and resets every derived cache
+  (`_INFERENCE_CFG`, `_GROUNDING_CFG`, `_LLM_STATUS_ENDPOINT`, `_llm_call_cached`).
+  This works with zero restart because `_llm_call` (the function every
+  `SessionController` holds a reference to, wrapped in its own `_make_safe_llm`) is
+  a stable indirection — it reads `_INFERENCE_CFG`/`_llm_call_cached` fresh via
+  `global` on every call, never a snapshot captured at controller-construction time.
+  An ALREADY-RUNNING session picks up a backend change on its very next turn.
+  Proven directly in tests (`test_llm_call_reflects_new_backend_immediately_no_restart`),
+  not just asserted.
+- **Real bug caught by writing the reload test, not by inspection:** the first
+  version of `_reload_inference_config()` called `load_inference_config()` with no
+  path argument, which resolves its OWN independently-computed default location —
+  happens to match `_INFERENCE_CONFIG_PATH` in production (both compute the same
+  `<repo>/config/inference.yaml`), so it looked correct, but silently ignored
+  whatever path `_setup_is_complete()`/`write_inference_config()` were actually
+  using. Fixed to load explicitly from `_INFERENCE_CONFIG_PATH`.
+- **Test-suite impact:** every existing web test now needs the gate bypassed
+  (`_SETUP_GATE_BYPASS`, a module flag every test file's `_client()` helper sets) —
+  otherwise all ~500 existing web tests would redirect to `/setup` the moment the
+  gate is added, since test runs have no real, reachable backend. One test
+  (`test_learner_id_survives_server_restart`) does its OWN mid-test
+  `importlib.reload()` to simulate a real restart — that resets the bypass flag
+  too, needed re-setting there specifically.
+
+## Accept
+
+- New `tests/web/test_setup_gate.py` (11 tests, gate deliberately NOT bypassed):
+  redirects on missing config, redirects on unreachable-but-present config, allows
+  through when reachable, allows an in-process backend through without probing,
+  `/setup` itself is never gated, a successful save writes the right yaml + reloads
+  live, an API key never appears in the yaml (only in `.env`), a blank key writes
+  `no-key`, an unreachable save shows an error and does NOT redirect (config is
+  still written so the parent doesn't have to re-type everything once they fix
+  connectivity), missing required fields are rejected before anything is written.
+- Full suite (553 tests) + ruff green.
+- **Not built this wave (explicitly, not silently dropped):** the CLI (`mentar
+  setup --runtime vllm --base-url ... --api-key ...`) still only supports local
+  models. Extending it to write a remote-API config the same way is a natural,
+  separate follow-up — the config-writing/reload core it would reuse is exactly
+  what `/setup` already exercises here.
+
+---
+
 # Remainder Build Plan — v2
 
 Most of v1 shipped; **G0 is essentially validated** (model pick, safety, retrieval, E2E,
