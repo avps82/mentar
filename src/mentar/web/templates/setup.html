@@ -1,0 +1,45 @@
+{% extends "_base.html" %}
+{% block title %}Mentar — Set up your AI model{% endblock %}
+{% block content %}
+<h1 style="font-size:1.4rem">Let's connect Mentar to an AI model</h1>
+<p class="hint">Mentar needs a working AI model before your child can start a lesson.
+  Choose ONE of the options below.</p>
+
+{% if result and not result.ok %}
+<p class="hint" style="color:var(--danger)">{{ result.error }}</p>
+{% endif %}
+
+<section class="settings-section">
+  <h2 style="font-size:1.1rem">Option A — Local model (runs on this device)</h2>
+  <p class="hint">For a model already running locally (e.g. Ollama).</p>
+  <form method="POST" action="/setup">
+    <input type="hidden" name="backend" value="ollama">
+    <label>Server address<br>
+      <input type="text" name="base_url" value="http://localhost:11434/v1"
+             placeholder="http://localhost:11434/v1">
+    </label><br><br>
+    <label>Model to load<br>
+      <input type="text" name="model" placeholder="gemma2:9b">
+    </label><br><br>
+    <button type="submit">Save &amp; Connect (Local)</button>
+  </form>
+</section>
+
+<section class="settings-section">
+  <h2 style="font-size:1.1rem">Option B — Remote API (e.g. a LiteLLM/vLLM proxy)</h2>
+  <p class="hint">For a model served elsewhere on your network or the internet.</p>
+  <form method="POST" action="/setup">
+    <input type="hidden" name="backend" value="vllm">
+    <label>Server URL (with port)<br>
+      <input type="text" name="base_url" placeholder="http://192.168.xx.xxx:4000/v1">
+    </label><br><br>
+    <label>Model name<br>
+      <input type="text" name="model" placeholder="gemma2:9b">
+    </label><br><br>
+    <label>API key (leave blank if your server doesn't need one)<br>
+      <input type="password" name="api_key" placeholder="sk-...">
+    </label><br><br>
+    <button type="submit">Save &amp; Connect (Remote API)</button>
+  </form>
+</section>
+{% endblock %}

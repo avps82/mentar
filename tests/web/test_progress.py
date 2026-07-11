@@ -23,6 +23,7 @@ def _client():
     import mentar.web.app as app_mod
     app_mod = importlib.reload(app_mod)
     app_mod._llm_call_cached = lambda messages: "stub tutor reply"  # no network in tests
+    app_mod._SETUP_GATE_BYPASS = True  # R9: not testing setup/first-run here
     return app_mod, app_mod.app.test_client()
 
 

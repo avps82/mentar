@@ -31,6 +31,9 @@ def _client():
     # Stub the LLM so tests never hit the network (auto-help on a wrong answer
     # would otherwise call the backend and hang on retries).
     app_mod._llm_call_cached = lambda messages: "stub tutor reply"
+    # R9: bypass the setup gate -- these tests aren't testing setup/first-run,
+    # and a live reachability probe per test would be slow/flaky/network-bound.
+    app_mod._SETUP_GATE_BYPASS = True
     return app_mod, app_mod.app.test_client()
 
 
@@ -195,6 +198,7 @@ def test_learner_id_survives_server_restart():
     import importlib
     app_mod = importlib.reload(app_mod)
     app_mod._llm_call_cached = lambda messages: "stub tutor reply"
+    app_mod._SETUP_GATE_BYPASS = True  # R9: reload resets this too -- not testing setup here
     c2 = app_mod.app.test_client()
     c2.set_cookie(domain="localhost", key="session", value=session_cookie.value)
 

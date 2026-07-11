@@ -173,21 +173,54 @@ _learner_subject: dict[str, str] = {}   # learner_uuid -> active subject key
 # Inference backend: prefer config/inference.yaml (the canonical, backend-agnostic
 # source — llamacpp/vllm/ollama). Fall back to the legacy MENTAR_LLM_* env vars so an
 # existing env-only setup keeps working (treated as an OpenAI-compatible endpoint).
-_INFERENCE_CFG = load_inference_config()
-if _INFERENCE_CFG is None:
-    _INFERENCE_CFG = {
-        "backend": "vllm",
-        "vllm": {"base_url": LLM_BASE_URL, "api_key": LLM_CRED, "model": LLM_MODEL},
-    }
-_GROUNDING_CFG: dict = _INFERENCE_CFG.get("grounding", {})  # ZIM reader config (W7)
+_INFERENCE_CONFIG_PATH = _REPO / "config" / "inference.yaml"
+_INFERENCE_CFG: dict = {}
+_GROUNDING_CFG: dict = {}  # ZIM reader config (W7)
 # The endpoint the app will ACTUALLY call (yaml or env fallback, local or remote) --
 # the settings page's reachability check must test this, never a parallel default.
 # None = in-process llamacpp (no HTTP endpoint to probe).
-_LLM_STATUS_ENDPOINT = resolve_http_endpoint(_INFERENCE_CFG)
+_LLM_STATUS_ENDPOINT: dict | None = None
 
 # Built lazily: an in-process llama.cpp backend loads the GGUF on construction, so we
 # defer it until the first turn (keeps `import mentar.web.app` cheap for tests/CLI reuse).
 _llm_call_cached = None
+
+# R9: setup gate. A missing OR unreachable backend redirects every route to /setup
+# (see _require_setup below) instead of letting a family reach a picker that will
+# just fail confusingly once they try to start a lesson. Cached briefly so the
+# common (healthy backend) case doesn't add a live network probe to every request.
+_SETUP_GATE_BYPASS = False  # tests set this True -- see tests/web/*.py _client()
+_SETUP_GATE_CACHE: dict = {"ok": None, "checked_at": 0.0}
+_SETUP_GATE_TTL_S = 30.0
+
+
+def _reload_inference_config() -> None:
+    """(Re-)read config/inference.yaml and reset every cached derivative.
+    Called at import time AND after /setup writes a new config -- no
+    restart needed either time, because _llm_call below is a stable
+    indirection that lazily rebuilds _llm_call_cached from _INFERENCE_CFG
+    on its NEXT call, and every session already holds a reference to
+    _llm_call itself, never a snapshot of the config."""
+    global _INFERENCE_CFG, _GROUNDING_CFG, _LLM_STATUS_ENDPOINT, _llm_call_cached
+    # Explicit path, not load_inference_config()'s own no-arg default -- must
+    # read the SAME file _setup_is_complete()/write_inference_config() use
+    # (_INFERENCE_CONFIG_PATH), not a second, independently-computed default
+    # that only coincidentally matches it in production. An explicit path
+    # that doesn't exist raises, unlike the no-arg form -- guard it here.
+    _INFERENCE_CFG = load_inference_config(_INFERENCE_CONFIG_PATH) if _INFERENCE_CONFIG_PATH.exists() else None
+    if _INFERENCE_CFG is None:
+        _INFERENCE_CFG = {
+            "backend": "vllm",
+            "vllm": {"base_url": LLM_BASE_URL, "api_key": LLM_CRED, "model": LLM_MODEL},
+        }
+    _GROUNDING_CFG = _INFERENCE_CFG.get("grounding", {})
+    _LLM_STATUS_ENDPOINT = resolve_http_endpoint(_INFERENCE_CFG)
+    _llm_call_cached = None
+    _SETUP_GATE_CACHE["ok"] = None
+    _SETUP_GATE_CACHE["checked_at"] = 0.0
+
+
+_reload_inference_config()
 
 
 def _llm_call(messages: list[dict]) -> str:
@@ -195,6 +228,51 @@ def _llm_call(messages: list[dict]) -> str:
     if _llm_call_cached is None:
         _llm_call_cached = make_llm_call(_INFERENCE_CFG)
     return _llm_call_cached(messages)
+
+
+def _probe_llm_backend(endpoint: dict) -> tuple[bool, int, str | None]:
+    """Short-timeout reachability probe against an OpenAI-compatible endpoint --
+    shared by /settings/llm-status and the setup gate so they can never
+    disagree about what "working" means. Deliberately a much shorter timeout
+    than the app's own generation calls (see make_llm_call's config), so an
+    unreachable backend can't hang a page load."""
+    import time as _time
+
+    from openai import OpenAI
+
+    start = _time.monotonic()
+    try:
+        client = OpenAI(base_url=endpoint["base_url"], api_key=endpoint["api_key"], timeout=5.0)
+        client.models.list()
+        return True, round((_time.monotonic() - start) * 1000), None
+    except Exception as exc:
+        return False, round((_time.monotonic() - start) * 1000), str(exc)
+
+
+def _setup_is_complete() -> bool:
+    """Whether a working LLM backend is configured. False when
+    config/inference.yaml doesn't exist at all (fresh install) OR when it
+    exists but the backend fails the SAME reachability probe /settings/
+    llm-status uses (an in-process llamacpp backend has no HTTP endpoint to
+    probe, so its mere presence counts as configured). Cached for
+    _SETUP_GATE_TTL_S -- a fresh install/broken backend is a real,
+    persistent state, not something worth re-probing on every request."""
+    if _SETUP_GATE_BYPASS:
+        return True
+    import time as _time
+    now = _time.monotonic()
+    if _SETUP_GATE_CACHE["ok"] is not None and now - _SETUP_GATE_CACHE["checked_at"] < _SETUP_GATE_TTL_S:
+        return _SETUP_GATE_CACHE["ok"]
+
+    ok = False
+    if _INFERENCE_CONFIG_PATH.exists():
+        if _LLM_STATUS_ENDPOINT is None:
+            ok = True  # in-process backend -- no HTTP endpoint to probe, trust it
+        else:
+            ok, _latency, _error = _probe_llm_backend(_LLM_STATUS_ENDPOINT)
+    _SETUP_GATE_CACHE["ok"] = ok
+    _SETUP_GATE_CACHE["checked_at"] = now
+    return ok
 
 
 # Per-learner controller instances and turn logs.
@@ -262,6 +340,76 @@ def _get_or_create_controller(learner_uuid: str, subject: str) -> SessionControl
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────
+
+def _upsert_dotenv_value(env_path: Path, key: str, value: str) -> None:
+    """Write/replace ONE KEY=VALUE line in a gitignored .env file next to the
+    inference config -- never touches any other line, creates the file if it
+    doesn't exist yet. Write-side counterpart to backend.py's _load_dotenv."""
+    lines = env_path.read_text(encoding="utf-8").splitlines() if env_path.exists() else []
+    prefix = f"{key}="
+    kept = [line for line in lines if not line.strip().startswith(prefix)]
+    kept.append(f'{key}="{value}"')
+    env_path.write_text("\n".join(kept) + "\n", encoding="utf-8")
+
+
+@app.before_request
+def _require_setup():
+    """R9: every route redirects to /setup while no working LLM backend is
+    configured -- a family should never reach a picker that will just fail
+    confusingly the moment they try to start a lesson."""
+    if request.endpoint in ("setup", "setup_save", "static"):
+        return None
+    if not _setup_is_complete():
+        return redirect(url_for("setup"))
+    return None
+
+
+@app.route("/setup")
+def setup():
+    """R9: the first-run gate's destination -- never itself gated."""
+    return render_template("setup.html", result=None)
+
+
+@app.route("/setup", methods=["POST"])
+def setup_save():
+    """R9: writes config/inference.yaml (+ a gitignored .env for a remote API
+    key -- NEVER inlined in the yaml, same ${VAR} convention used everywhere
+    else in this codebase), reloads live (no restart -- see
+    _reload_inference_config), and immediately re-probes so the parent gets
+    an instant answer instead of a guess."""
+    import time
+
+    backend = request.form.get("backend", "").strip()
+    base_url = request.form.get("base_url", "").strip()
+    model = request.form.get("model", "").strip()
+    api_key = (request.form.get("api_key", "")).strip()
+
+    if backend not in ("ollama", "vllm") or not base_url or not model:
+        return render_template("setup.html", result={"ok": False, "error": "Please fill in all fields."})
+
+    cfg: dict = {"backend": backend, backend: {"base_url": base_url, "model": model}}
+    if backend == "vllm":
+        if api_key:
+            _upsert_dotenv_value(_INFERENCE_CONFIG_PATH.parent / ".env", "MENTAR_VLLM_API_KEY", api_key)
+            cfg["vllm"]["api_key"] = "${MENTAR_VLLM_API_KEY}"
+        else:
+            cfg["vllm"]["api_key"] = "no-key"
+
+    from mentar.inference.backend import write_inference_config
+    write_inference_config(cfg, _INFERENCE_CONFIG_PATH)
+    _reload_inference_config()
+
+    if _LLM_STATUS_ENDPOINT is None:
+        ok, error = True, None  # in-process backend -- nothing to probe, trust it
+    else:
+        ok, _latency, error = _probe_llm_backend(_LLM_STATUS_ENDPOINT)
+    _SETUP_GATE_CACHE["ok"] = ok
+    _SETUP_GATE_CACHE["checked_at"] = time.monotonic()
+
+    if ok:
+        return redirect(url_for("index"))
+    return render_template("setup.html", result={"ok": False, "error": f"Saved, but couldn't connect: {error}"})
+
 
 @app.route("/")
 def index():
@@ -439,12 +587,8 @@ def settings_llm_status():
     """R7.2: a short-timeout reachability check against the SAME endpoint the
     app's own LLM calls resolve to (_LLM_STATUS_ENDPOINT, from
     config/inference.yaml or the env fallback -- local or remote, one config,
-    one truth). Distinct from the generation path's much longer timeout so a
-    genuinely unreachable backend can't hang the settings page."""
-    import time
-
-    from openai import OpenAI
-
+    one truth) -- via the same _probe_llm_backend the setup gate uses, so the
+    two can never disagree about what "working" means."""
     if _LLM_STATUS_ENDPOINT is None:
         # In-process llamacpp (or an unprobeable backend): there is no HTTP
         # endpoint to check -- report that honestly instead of green/red.
@@ -456,32 +600,14 @@ def settings_llm_status():
             "error": "In-process model -- no HTTP endpoint to check.",
         })
 
-    endpoint = _LLM_STATUS_ENDPOINT
-    start = time.monotonic()
-    try:
-        client = OpenAI(
-            base_url=endpoint["base_url"],
-            api_key=endpoint["api_key"],
-            timeout=5.0,
-        )
-        client.models.list()
-        latency_ms = round((time.monotonic() - start) * 1000)
-        return jsonify({
-            "ok": True,
-            "model": endpoint["model"],
-            "base_url": endpoint["base_url"],
-            "latency_ms": latency_ms,
-            "error": None,
-        })
-    except Exception as exc:
-        latency_ms = round((time.monotonic() - start) * 1000)
-        return jsonify({
-            "ok": False,
-            "model": endpoint["model"],
-            "base_url": endpoint["base_url"],
-            "latency_ms": latency_ms,
-            "error": str(exc),
-        })
+    ok, latency_ms, error = _probe_llm_backend(_LLM_STATUS_ENDPOINT)
+    return jsonify({
+        "ok": ok,
+        "model": _LLM_STATUS_ENDPOINT["model"],
+        "base_url": _LLM_STATUS_ENDPOINT["base_url"],
+        "latency_ms": latency_ms,
+        "error": error,
+    })
 
 
 def _load_packs_manifest() -> list[dict]:
