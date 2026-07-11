@@ -814,6 +814,209 @@ def test_llm_status_reports_not_ok_when_backend_unreachable():
         assert isinstance(data["latency_ms"], int)
 
 
+def _fake_response(content: bytes):
+    """A urllib.request.urlopen(...) context-manager stand-in (no real network)."""
+    from unittest.mock import MagicMock
+    resp = MagicMock()
+    resp.read.return_value = content
+    resp.__enter__.return_value = resp
+    return resp
+
+
+def test_curriculum_packs_list_reports_not_installed_for_a_fresh_checkout():
+    """R8: GET /settings/curriculum-packs reads curriculum/packs.json and
+    reports install status by checking curriculum/templates/<dir>/ locally
+    -- no network for listing, only for an actual install."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+    import pathlib
+    import tempfile
+    from unittest.mock import patch
+
+    app_mod, c = _client()
+    scratch = pathlib.Path(tempfile.mkdtemp())
+    with patch.object(app_mod, "_TEMPLATES_DIR", scratch):
+        r = c.get("/settings/curriculum-packs")
+        assert r.status_code == 200
+        data = r.get_json()
+        packs = {p["id"]: p for p in data["packs"]}
+        assert "in_generic" in packs
+        assert packs["in_generic"]["installed"] is False
+        assert packs["in_generic"]["licence"]  # shown to the parent before they install
+
+
+def test_curriculum_pack_install_verifies_checksum_and_writes_files():
+    """R8: a successful install fetches every file, checks its sha256 against
+    the manifest, and only then writes to curriculum/templates/<dir>/."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+    import pathlib
+    import tempfile
+    from unittest.mock import patch
+
+    app_mod, c = _client()
+    real_content = (pathlib.Path(app_mod._REPO) / "curriculum" / "downloadable_packs"
+                    / "IN_GENERIC" / "class3_maths.md").read_bytes()
+    scratch = pathlib.Path(tempfile.mkdtemp())
+    with patch.object(app_mod, "_TEMPLATES_DIR", scratch):
+        with patch("urllib.request.urlopen", return_value=_fake_response(real_content)):
+            r = c.post("/settings/curriculum-packs/in_generic/install")
+        assert r.status_code == 200
+        data = r.get_json()
+        assert data["ok"] is True
+        assert data["restart_required"] is True
+
+        installed = scratch / "IN_GENERIC" / "class3_maths.md"
+        assert installed.exists()
+        assert installed.read_bytes() == real_content
+
+        # Listing now reports it as installed (same process, same scratch dir).
+        listing = c.get("/settings/curriculum-packs").get_json()
+        packs = {p["id"]: p for p in listing["packs"]}
+        assert packs["in_generic"]["installed"] is True
+
+
+def test_curriculum_pack_install_rejects_checksum_mismatch_writes_nothing():
+    """R8: a corrupted/tampered download must be rejected BEFORE anything is
+    written to disk -- verify-then-write, never write-then-verify."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+    import pathlib
+    import tempfile
+    from unittest.mock import patch
+
+    app_mod, c = _client()
+    scratch = pathlib.Path(tempfile.mkdtemp())
+    with patch.object(app_mod, "_TEMPLATES_DIR", scratch):
+        with patch("urllib.request.urlopen", return_value=_fake_response(b"corrupted content")):
+            r = c.post("/settings/curriculum-packs/in_generic/install")
+        assert r.status_code == 502
+        data = r.get_json()
+        assert data["ok"] is False
+        assert "checksum mismatch" in data["error"]
+        assert not (scratch / "IN_GENERIC").exists()
+
+
+def test_curriculum_pack_install_rejects_unknown_pack_id():
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+
+    app_mod, c = _client()  # noqa: F841
+    r = c.post("/settings/curriculum-packs/not_a_real_pack/install")
+    assert r.status_code == 404
+
+
+def test_curriculum_pack_install_rejects_already_installed():
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+    import pathlib
+    import tempfile
+    from unittest.mock import patch
+
+    app_mod, c = _client()
+    scratch = pathlib.Path(tempfile.mkdtemp())
+    (scratch / "IN_GENERIC").mkdir(parents=True)
+    with patch.object(app_mod, "_TEMPLATES_DIR", scratch):
+        r = c.post("/settings/curriculum-packs/in_generic/install")
+        assert r.status_code == 400
+        assert "already installed" in r.get_json()["error"]
+
+
+def test_curriculum_pack_uninstall_removes_directory():
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+    import pathlib
+    import tempfile
+    from unittest.mock import patch
+
+    app_mod, c = _client()
+    scratch = pathlib.Path(tempfile.mkdtemp())
+    (scratch / "IN_GENERIC").mkdir(parents=True)
+    (scratch / "IN_GENERIC" / "class3_maths.md").write_text("x", encoding="utf-8")
+    with patch.object(app_mod, "_TEMPLATES_DIR", scratch):
+        r = c.post("/settings/curriculum-packs/in_generic/uninstall")
+        assert r.status_code == 200
+        data = r.get_json()
+        assert data["ok"] is True
+        assert data["restart_required"] is True
+        assert not (scratch / "IN_GENERIC").exists()
+
+
+def test_curriculum_pack_uninstall_rejects_not_installed():
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+    import pathlib
+    import tempfile
+    from unittest.mock import patch
+
+    app_mod, c = _client()
+    scratch = pathlib.Path(tempfile.mkdtemp())
+    with patch.object(app_mod, "_TEMPLATES_DIR", scratch):
+        r = c.post("/settings/curriculum-packs/in_generic/uninstall")
+        assert r.status_code == 400
+        assert "not installed" in r.get_json()["error"]
+
+
+def test_curriculum_pack_uninstall_preserves_mastery_history():
+    """R8: deleting a pack's templates must NEVER touch skill_state -- a
+    child's mastery history for that pack's node ids survives an uninstall
+    (preserve-by-default, per REMAINDER_PLAN.md R8.1). skill_state is a
+    separate DB table keyed by skill_id; a file delete has no way to reach
+    it, but this proves the invariant explicitly rather than by inference."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+    import pathlib
+    import sqlite3
+    import tempfile
+    from unittest.mock import patch
+
+    app_mod, c = _client()
+    c.post("/choose", data={"subject": "fractions"})
+    c.get("/learn")
+    c.post("/answer", data={"answer": "4"})  # writes a real skill_state row
+
+    dbp = os.environ["MENTAR_DB_PATH"]
+    db = sqlite3.connect(dbp)
+    n_before = db.execute("SELECT count(*) FROM skill_state").fetchone()[0]
+    db.close()
+    assert n_before >= 1
+
+    scratch = pathlib.Path(tempfile.mkdtemp())
+    (scratch / "IN_GENERIC").mkdir(parents=True)
+    with patch.object(app_mod, "_TEMPLATES_DIR", scratch):
+        r = c.post("/settings/curriculum-packs/in_generic/uninstall")
+        assert r.status_code == 200
+
+    db = sqlite3.connect(dbp)
+    n_after = db.execute("SELECT count(*) FROM skill_state").fetchone()[0]
+    db.close()
+    assert n_after == n_before, "uninstalling an unrelated pack must never touch skill_state"
+
+
 if __name__ == "__main__":
     test_trust_strip_on_child_and_parent_screens()
     print("  ✓ test_trust_strip_on_child_and_parent_screens")
@@ -865,3 +1068,19 @@ if __name__ == "__main__":
     print("  ✓ test_llm_status_reports_not_ok_when_backend_unreachable")
     test_llm_status_reports_info_for_in_process_backend()
     print("  ✓ test_llm_status_reports_info_for_in_process_backend")
+    test_curriculum_packs_list_reports_not_installed_for_a_fresh_checkout()
+    print("  ✓ test_curriculum_packs_list_reports_not_installed_for_a_fresh_checkout")
+    test_curriculum_pack_install_verifies_checksum_and_writes_files()
+    print("  ✓ test_curriculum_pack_install_verifies_checksum_and_writes_files")
+    test_curriculum_pack_install_rejects_checksum_mismatch_writes_nothing()
+    print("  ✓ test_curriculum_pack_install_rejects_checksum_mismatch_writes_nothing")
+    test_curriculum_pack_install_rejects_unknown_pack_id()
+    print("  ✓ test_curriculum_pack_install_rejects_unknown_pack_id")
+    test_curriculum_pack_install_rejects_already_installed()
+    print("  ✓ test_curriculum_pack_install_rejects_already_installed")
+    test_curriculum_pack_uninstall_removes_directory()
+    print("  ✓ test_curriculum_pack_uninstall_removes_directory")
+    test_curriculum_pack_uninstall_rejects_not_installed()
+    print("  ✓ test_curriculum_pack_uninstall_rejects_not_installed")
+    test_curriculum_pack_uninstall_preserves_mastery_history()
+    print("  ✓ test_curriculum_pack_uninstall_preserves_mastery_history")

@@ -1,0 +1,18 @@
+{
+  "_comment": "R8: downloadable curriculum packs. Fetched over HTTPS against a PINNED, hardcoded base URL (never from this file, never user-supplied) -- see web/app.py's curriculum_packs route. Source files for each pack live at curriculum/downloadable_packs/<dir>/ in this repo, never curriculum/templates/ (that would defeat the point -- see REMAINDER_PLAN.md R8.1). Installing a pack copies its files into curriculum/templates/<dir>/.",
+  "packs": [
+    {
+      "id": "in_generic",
+      "dir": "IN_GENERIC",
+      "label": "Maths — Class 3 🇮🇳 (general)",
+      "description": "Place value, adding, times tables and fractions -- general topics, not tied to any specific board.",
+      "licence": "100% Mentar-authored / reused generic content. Not aligned to NCERT, CBSE, ICSE, or any state board (see docs/CONTENT_LICENSES.md §2b).",
+      "files": [
+        {
+          "name": "class3_maths.md",
+          "sha256": "dacd4258ff60d59e2b175199e6a77be0fe1ad4f715f9ed48585dd476dc1a4d7b"
+        }
+      ]
+    }
+  ]
+}

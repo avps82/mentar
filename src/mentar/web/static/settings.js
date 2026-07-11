@@ -44,6 +44,70 @@
         });
     }
 
+    // ── Curriculum packs: install/uninstall (R8) ────────────────────────────
+    function loadCurriculumPacks() {
+        var container = document.getElementById("curriculum-packs-list");
+        if (!container) return;
+
+        fetch("/settings/curriculum-packs")
+            .then(function (response) {
+                return response.json();
+            })
+            .then(function (data) {
+                container.innerHTML = "";
+                if (!data.packs || data.packs.length === 0) {
+                    container.textContent = "No curriculum packs available right now.";
+                    return;
+                }
+
+                data.packs.forEach(function (pack) {
+                    var div = document.createElement("div");
+                    div.style.marginBottom = "20px";
+
+                    var title = document.createElement("strong");
+                    title.textContent = pack.label;
+
+                    var desc = document.createElement("p");
+                    desc.textContent = pack.description;
+
+                    var lic = document.createElement("p");
+                    var licSmall = document.createElement("small");
+                    licSmall.textContent = pack.licence;
+                    lic.appendChild(licSmall);
+
+                    var btn = document.createElement("button");
+                    var action = pack.installed ? "uninstall" : "install";
+                    btn.textContent = pack.installed ? "Uninstall" : "⬇️ Download";
+                    btn.onclick = function () {
+                        fetch("/settings/curriculum-packs/" + pack.id + "/" + action, {
+                            method: "POST",
+                        }).then(function (r) {
+                            return r.json();
+                        }).then(function (res) {
+                            var status = document.createElement("p");
+                            status.textContent = res.ok
+                                ? "Done — restart Mentar to see the change."
+                                : "Error: " + res.error;
+                            div.appendChild(status);
+                        });
+                    };
+
+                    div.appendChild(title);
+                    div.appendChild(desc);
+                    div.appendChild(lic);
+                    div.appendChild(btn);
+                    container.appendChild(div);
+                });
+            })
+            .catch(function () {
+                container.textContent = "Could not load curriculum packs.";
+            });
+    }
+
+    if (document.getElementById("curriculum-packs-list")) {
+        loadCurriculumPacks();
+    }
+
     if ("speechSynthesis" in window) {
         const voiceSelect = document.getElementById("voice-select");
         const testVoiceBtn = document.getElementById("test-voice-btn");

@@ -107,12 +107,18 @@ def test_no_skill_id_collides_across_any_shipped_template():
     """R6.2/practice-pack guard: skill_id is NOT auto-namespaced the way the
     subject_key is -- individual node ids inside a template's `concepts:`
     list must be manually kept collision-free (AU's au3_/au4_ prefixes, the
-    practice pack's practice_ prefix). A collision would silently merge two
-    unrelated skills' skill_state mastery rows in the DB. Guards every
-    shipped template, not just the ones in _EXPECTED, so a new template
-    dropped in later is covered automatically."""
+    practice pack's practice_ prefix, R8's in_generic_ prefix). A collision
+    would silently merge two unrelated skills' skill_state mastery rows in
+    the DB. Guards every shipped template AND every downloadable pack's
+    source (curriculum/downloadable_packs/ -- R8 -- which a fresh checkout
+    doesn't auto-discover but a download would still create the same
+    collision risk against), not just the ones in _EXPECTED, so a new
+    template/pack dropped in later is covered automatically."""
     owners: dict[str, str] = {}
-    for path in sorted(_TPL.glob("**/*.md")):
+    paths = sorted(_TPL.glob("**/*.md")) + sorted(
+        (REPO_ROOT / "curriculum" / "downloadable_packs").glob("**/*.md")
+    )
+    for path in paths:
         curriculum = load_curriculum(path)
         for skill_id in curriculum:
             rel = str(path.relative_to(REPO_ROOT))

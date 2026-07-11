@@ -20,6 +20,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from mentar.engine.au_items import AU_YEAR3_GENERATORS, AU_YEAR4_GENERATORS
+from mentar.engine.in_generic_items import IN_GENERIC_MATHS_GENERATORS
 from mentar.engine.itemgen import ARITHMETIC_GENERATORS, DEFAULT_GENERATORS
 from mentar.engine.practice_items import ENGLISH_PRACTICE_GENERATORS, MATHS_PRACTICE_GENERATORS
 from mentar.engine.science_items import SCIENCE_GENERATORS
@@ -37,4 +38,9 @@ def build_registry(pilot_itembank_path: Path) -> dict[str, dict]:
         "au_year4": {"generators": AU_YEAR4_GENERATORS, "itembank": None},
         "maths_practice": {"generators": MATHS_PRACTICE_GENERATORS, "itembank": None},
         "english_practice": {"generators": ENGLISH_PRACTICE_GENERATORS, "itembank": None},
+        # R8: IN_GENERIC ships in curriculum/downloadable_packs/, not curriculum/
+        # templates/ -- registered here regardless (item_sources doesn't care
+        # where a template lives on disk), resolved the moment a family
+        # downloads it via Settings.
+        "in_generic_maths": {"generators": IN_GENERIC_MATHS_GENERATORS, "itembank": None},
     }

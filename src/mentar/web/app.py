@@ -77,6 +77,16 @@ ITEMBANK_PATH = Path(os.environ.get(
 _TEMPLATES_DIR = _REPO / "curriculum" / "templates"
 _ITEM_SOURCE_REGISTRY = build_registry(ITEMBANK_PATH)
 
+# R8: content-download. ONE pinned, hardcoded source -- never user-supplied, never
+# configurable from the UI or from packs.json itself (that file only names files
+# WITHIN this fixed base, it can't redirect the fetch elsewhere). Source files for
+# a downloadable pack live at curriculum/downloadable_packs/<dir>/ in this same
+# repo -- deliberately NOT under curriculum/templates/, which _discover_template_paths
+# scans automatically (a pack living there would already be "installed" the moment
+# anyone clones the repo, defeating the point of a download step).
+_PACKS_BASE_URL = "https://raw.githubusercontent.com/avps82/mentar/main"
+_PACKS_MANIFEST_PATH = _REPO / "curriculum" / "packs.json"
+
 
 def _discover_template_paths() -> list[Path]:
     paths = sorted(_TEMPLATES_DIR.glob("**/*.md"))
@@ -472,6 +482,109 @@ def settings_llm_status():
             "latency_ms": latency_ms,
             "error": str(exc),
         })
+
+
+def _load_packs_manifest() -> list[dict]:
+    import json
+    data = json.loads(_PACKS_MANIFEST_PATH.read_text(encoding="utf-8"))
+    return data.get("packs", [])
+
+
+def _is_safe_path_component(name: str) -> bool:
+    """Defense in depth: pack "dir"/file "name" values come from packs.json (repo-
+    controlled, not directly user-supplied), but they still end up in filesystem
+    paths -- reject anything that isn't a plain single path segment before it's
+    ever joined onto a real path, same discipline as the checksum verification
+    below (never trust, always verify, even a source we mostly control)."""
+    return bool(name) and "/" not in name and "\\" not in name and name not in (".", "..")
+
+
+@app.route("/settings/curriculum-packs")
+def curriculum_packs():
+    """R8: list downloadable packs (curriculum/packs.json) with install status --
+    whether curriculum/templates/<dir>/ already exists locally. Reading the
+    manifest is local-disk only, no network -- the network fetch only happens
+    on an explicit install."""
+    packs = []
+    for p in _load_packs_manifest():
+        if not _is_safe_path_component(p.get("dir", "")):
+            continue
+        installed = (_TEMPLATES_DIR / p["dir"]).exists()
+        packs.append({
+            "id": p["id"], "label": p["label"], "description": p["description"],
+            "licence": p["licence"], "installed": installed,
+        })
+    return jsonify({"packs": packs})
+
+
+@app.route("/settings/curriculum-packs/<pack_id>/install", methods=["POST"])
+def install_curriculum_pack(pack_id):
+    """R8: fetch every file for one pack over HTTPS from the ONE pinned base URL,
+    verify EVERY file's sha256 against the manifest BEFORE any write happens
+    (all-or-nothing -- a checksum mismatch on file 2 must not leave file 1
+    written), then copy into curriculum/templates/<dir>/. Content is markdown/
+    YAML template data, parsed by the existing yaml.safe_load path elsewhere --
+    never executed. Restart is required for the new pack to appear in the
+    picker (R3.1's auto-discovery scans once at startup, not per-request)."""
+    import hashlib
+    import urllib.request
+
+    pack = next((p for p in _load_packs_manifest() if p.get("id") == pack_id), None)
+    if pack is None:
+        return jsonify({"ok": False, "error": "unknown pack"}), 404
+    if not _is_safe_path_component(pack.get("dir", "")):
+        return jsonify({"ok": False, "error": "invalid pack manifest entry"}), 500
+
+    dest_dir = _TEMPLATES_DIR / pack["dir"]
+    if dest_dir.exists():
+        return jsonify({"ok": False, "error": "already installed"}), 400
+
+    downloaded: dict[str, bytes] = {}
+    for f in pack.get("files", []):
+        if not _is_safe_path_component(f.get("name", "")):
+            return jsonify({"ok": False, "error": "invalid pack manifest entry"}), 500
+        url = f"{_PACKS_BASE_URL}/curriculum/downloadable_packs/{pack['dir']}/{f['name']}"
+        try:
+            with urllib.request.urlopen(url, timeout=10) as resp:  # noqa: S310 -- pinned base, HTTPS only
+                content = resp.read()
+        except Exception as exc:
+            return jsonify({"ok": False, "error": f"download failed for {f['name']}: {exc}"}), 502
+        digest = hashlib.sha256(content).hexdigest()
+        if digest != f["sha256"]:
+            return jsonify({"ok": False, "error": f"checksum mismatch for {f['name']}"}), 502
+        downloaded[f["name"]] = content
+
+    # Every file verified -- now write. Nothing was written above; a failure at
+    # any point before this line leaves the local filesystem untouched.
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    for name, content in downloaded.items():
+        (dest_dir / name).write_bytes(content)
+
+    return jsonify({"ok": True, "restart_required": True})
+
+
+@app.route("/settings/curriculum-packs/<pack_id>/uninstall", methods=["POST"])
+def uninstall_curriculum_pack(pack_id):
+    """R8: removes the pack's curriculum/templates/<dir>/ so it stops being
+    discovered -- the child's skill_state DB rows for that pack's node ids are
+    a SEPARATE table, keyed by skill_id, never touched by this (preserve-by-
+    default, no code needed beyond simply not touching the DB). A future,
+    separate, harder-to-reach "also erase this child's history" action is
+    explicitly NOT built here (REMAINDER_PLAN.md R8.1)."""
+    import shutil
+
+    pack = next((p for p in _load_packs_manifest() if p.get("id") == pack_id), None)
+    if pack is None:
+        return jsonify({"ok": False, "error": "unknown pack"}), 404
+    if not _is_safe_path_component(pack.get("dir", "")):
+        return jsonify({"ok": False, "error": "invalid pack manifest entry"}), 500
+
+    dest_dir = _TEMPLATES_DIR / pack["dir"]
+    if not dest_dir.exists():
+        return jsonify({"ok": False, "error": "not installed"}), 400
+
+    shutil.rmtree(dest_dir)
+    return jsonify({"ok": True, "restart_required": True})
 
 
 _MD_BOLD_RE = re.compile(r"\*\*(.+?)\*\*")
