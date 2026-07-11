@@ -800,6 +800,28 @@ def test_llm_status_reports_info_for_in_process_backend():
         assert "no HTTP endpoint" in data["error"]
 
 
+def test_settings_links_to_setup_page_for_ongoing_backend_switching():
+    """R9 follow-up: /setup is reachable voluntarily at any time (not just as
+    the gate's forced destination when something's broken) -- Settings must
+    link to it so a family can find their way back to reconfigure without
+    needing to remember the URL."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+
+    app_mod, c = _client()  # noqa: F841
+    body = c.get("/settings").get_data(as_text=True)
+    assert 'href="/setup"' in body
+
+    # And /setup itself must actually be reachable (not redirected away) even
+    # though the test client's backend is "working" (bypassed, but the point
+    # is the route itself never blocks a voluntary visit).
+    r = c.get("/setup")
+    assert r.status_code == 200
+
+
 def test_llm_status_reports_not_ok_when_backend_unreachable():
     try:
         import flask  # noqa: F401
@@ -1072,6 +1094,8 @@ if __name__ == "__main__":
     print("  ✓ test_llm_status_reports_not_ok_when_backend_unreachable")
     test_llm_status_reports_info_for_in_process_backend()
     print("  ✓ test_llm_status_reports_info_for_in_process_backend")
+    test_settings_links_to_setup_page_for_ongoing_backend_switching()
+    print("  ✓ test_settings_links_to_setup_page_for_ongoing_backend_switching")
     test_curriculum_packs_list_reports_not_installed_for_a_fresh_checkout()
     print("  ✓ test_curriculum_packs_list_reports_not_installed_for_a_fresh_checkout")
     test_curriculum_pack_install_verifies_checksum_and_writes_files()
