@@ -85,6 +85,21 @@ def write_inference_config(cfg: dict, path: str | Path | None = None) -> Path:
     return out
 
 
+def upsert_dotenv_value(env_path: str | Path, key: str, value: str) -> None:
+    """Write/replace ONE KEY=VALUE line in a gitignored .env file -- never
+    touches any other line, creates the file if it doesn't exist yet.
+    Write-side counterpart to _load_dotenv above. Shared by the web /setup
+    route and the `mentar setup` CLI's remote-API path (R9) -- one place
+    for anything that touches a credential file, not two independently-
+    maintained copies."""
+    env_path = Path(env_path)
+    lines = env_path.read_text(encoding="utf-8").splitlines() if env_path.exists() else []
+    prefix = f"{key}="
+    kept = [line for line in lines if not line.strip().startswith(prefix)]
+    kept.append(f'{key}="{value}"')
+    env_path.write_text("\n".join(kept) + "\n", encoding="utf-8")
+
+
 def load_inference_config(path: str | Path | None = None) -> dict | None:
     """Load and ``${VAR}``-expand the inference config.
 

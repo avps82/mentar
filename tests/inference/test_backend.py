@@ -242,6 +242,30 @@ def test_resolve_http_endpoint_returns_none_when_no_http_endpoint_exists():
     assert B.resolve_http_endpoint({"backend": "vllm", "vllm": "not-a-mapping"}) is None
 
 
+def test_upsert_dotenv_value_creates_file_and_writes_one_line(tmp_path):
+    """R9: shared by both web /setup and the CLI's remote-API setup path --
+    one place that touches a credential file, not two independently-
+    maintained copies."""
+    env_path = tmp_path / ".env"
+    assert not env_path.exists()
+    B.upsert_dotenv_value(env_path, "MENTAR_VLLM_API_KEY", "first-value")
+    assert env_path.exists()
+    content = env_path.read_text(encoding="utf-8")
+    assert 'MENTAR_VLLM_API_KEY="first-value"' in content
+
+
+def test_upsert_dotenv_value_replaces_only_the_matching_key(tmp_path):
+    env_path = tmp_path / ".env"
+    env_path.write_text('OTHER_VAR="untouched"\nMENTAR_VLLM_API_KEY="old-value"\n', encoding="utf-8")
+    B.upsert_dotenv_value(env_path, "MENTAR_VLLM_API_KEY", "new-value")
+    content = env_path.read_text(encoding="utf-8")
+    assert 'OTHER_VAR="untouched"' in content
+    assert 'MENTAR_VLLM_API_KEY="old-value"' not in content
+    assert 'MENTAR_VLLM_API_KEY="new-value"' in content
+    # Exactly one line for the key -- no duplicate appended alongside the old one.
+    assert content.count("MENTAR_VLLM_API_KEY=") == 1
+
+
 # ── Inline smoke runner ───────────────────────────────────────────────────────
 
 if __name__ == "__main__":

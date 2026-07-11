@@ -42,7 +42,13 @@ from mentar.engine.curriculum import (
 from mentar.engine.item_sources import build_registry
 from mentar.engine.itembank import load_item_bank
 from mentar.engine.itemgen import CompositeItemSource, ItemGenerator
-from mentar.inference import load_inference_config, make_llm_call, resolve_http_endpoint
+from mentar.inference import (
+    load_inference_config,
+    make_llm_call,
+    resolve_http_endpoint,
+    upsert_dotenv_value,
+    write_inference_config,
+)
 from mentar.tools.validate_template import validate_or_raise
 from mentar.web.answer_modes import mode_for
 
@@ -341,17 +347,6 @@ def _get_or_create_controller(learner_uuid: str, subject: str) -> SessionControl
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 
-def _upsert_dotenv_value(env_path: Path, key: str, value: str) -> None:
-    """Write/replace ONE KEY=VALUE line in a gitignored .env file next to the
-    inference config -- never touches any other line, creates the file if it
-    doesn't exist yet. Write-side counterpart to backend.py's _load_dotenv."""
-    lines = env_path.read_text(encoding="utf-8").splitlines() if env_path.exists() else []
-    prefix = f"{key}="
-    kept = [line for line in lines if not line.strip().startswith(prefix)]
-    kept.append(f'{key}="{value}"')
-    env_path.write_text("\n".join(kept) + "\n", encoding="utf-8")
-
-
 @app.before_request
 def _require_setup():
     """R9: every route redirects to /setup while no working LLM backend is
@@ -390,12 +385,11 @@ def setup_save():
     cfg: dict = {"backend": backend, backend: {"base_url": base_url, "model": model}}
     if backend == "vllm":
         if api_key:
-            _upsert_dotenv_value(_INFERENCE_CONFIG_PATH.parent / ".env", "MENTAR_VLLM_API_KEY", api_key)
+            upsert_dotenv_value(_INFERENCE_CONFIG_PATH.parent / ".env", "MENTAR_VLLM_API_KEY", api_key)
             cfg["vllm"]["api_key"] = "${MENTAR_VLLM_API_KEY}"
         else:
             cfg["vllm"]["api_key"] = "no-key"
 
-    from mentar.inference.backend import write_inference_config
     write_inference_config(cfg, _INFERENCE_CONFIG_PATH)
     _reload_inference_config()
 

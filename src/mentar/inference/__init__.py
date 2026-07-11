@@ -11,6 +11,15 @@ from mentar.inference.backend import (
     load_inference_config,
     make_llm_call,
     resolve_http_endpoint,
+    upsert_dotenv_value,
+    write_inference_config,
 )
 
-__all__ = ["LLMCall", "load_inference_config", "make_llm_call", "resolve_http_endpoint"]
+__all__ = [
+    "LLMCall",
+    "load_inference_config",
+    "make_llm_call",
+    "resolve_http_endpoint",
+    "upsert_dotenv_value",
+    "write_inference_config",
+]

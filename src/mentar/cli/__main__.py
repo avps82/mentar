@@ -202,11 +202,60 @@ def _verify_backend(cfg: dict) -> tuple[bool, str]:
     return False, "empty reply (reasoning model? set generation.extra_body.think=false)"
 
 
+def _setup_remote_api(args, repo: Path) -> int:
+    """--runtime vllm: a remote OpenAI-compatible API (LiteLLM/vLLM proxy) --
+    no roster/download involved, just write what the caller already knows.
+    The CLI counterpart to the web /setup page (R9); same
+    write_inference_config()/upsert_dotenv_value() a family would otherwise
+    only reach through a browser, useful for a scripted/headless install."""
+    from mentar.inference.backend import upsert_dotenv_value, write_inference_config
+
+    if not args.base_url or not args.model:
+        print("ERROR: --runtime vllm requires --base-url and --model", file=sys.stderr)
+        return 1
+
+    cfg_path = Path(args.config) if args.config else (repo / "config" / "inference.yaml")
+    cfg: dict = {
+        "backend": "vllm",
+        "vllm": {"base_url": args.base_url, "model": args.model,
+                 "api_key": "${MENTAR_VLLM_API_KEY}" if args.api_key else "no-key"},
+        "generation": {"temperature": 0.3, "max_tokens": 512},
+    }
+
+    print("\nmentar setup (remote API)")
+    print(f"  backend=vllm base_url={args.base_url} model={args.model}")
+
+    if args.dry_run:
+        # Dry-run writes NOTHING to disk -- not the yaml, not the .env either.
+        import yaml
+        print(f"\n[dry-run] would write {cfg_path}:\n")
+        print(yaml.safe_dump(cfg, sort_keys=False))
+        return 0
+
+    if args.api_key:
+        upsert_dotenv_value(cfg_path.parent / ".env", "MENTAR_VLLM_API_KEY", args.api_key)
+    write_inference_config(cfg, cfg_path)
+    print(f"\n✓ Wrote {cfg_path}")
+
+    print("\nVerifying the backend responds (the first call may load the model)...")
+    ok, msg = _verify_backend(cfg)
+    if not ok:
+        print(f"✗ Backend did not respond: {msg}", file=sys.stderr)
+        print("  Diagnose:  python3 scripts/check_backend.py", file=sys.stderr)
+        return 1
+    print(f"✓ Backend LIVE — {msg}")
+    print("✓ Ready — run:  mentar serve   (web)   or   mentar run-session   (terminal)")
+    return 0
+
+
 def _setup(args) -> int:
+    repo = _repo_root()
+    if args.runtime == "vllm":
+        return _setup_remote_api(args, repo)
+
     from mentar.inference.autoselect import load_roster, select
     from mentar.inference.backend import write_inference_config
 
-    repo = _repo_root()
     roster = load_roster(args.roster)
     n_ctx = args.ctx
 
@@ -404,9 +453,16 @@ def main(argv: list[str] | None = None) -> int:
     sub = parser.add_subparsers(dest="cmd", required=True)
 
     su = sub.add_parser("setup", help="Detect hardware, pick + download the best-fit model, write config.")
-    su.add_argument("--runtime", choices=["auto", "ollama", "llama_app", "gguf"], default="auto",
-                    help="Runtime: auto = Ollama, else llama.app (`llama serve`), else in-process GGUF.")
-    su.add_argument("--model", help="Override auto-selection with a roster id or ollama tag.")
+    su.add_argument("--runtime", choices=["auto", "ollama", "llama_app", "gguf", "vllm"], default="auto",
+                    help="Runtime: auto = Ollama, else llama.app (`llama serve`), else in-process GGUF. "
+                         "vllm = a remote OpenAI-compatible API (LiteLLM/vLLM proxy) -- needs --base-url "
+                         "and --model, no download/roster involved.")
+    su.add_argument("--model", help="Override auto-selection with a roster id or ollama tag "
+                    "(or the exact remote model name, for --runtime vllm).")
+    su.add_argument("--base-url", help="Remote API base URL, e.g. http://192.168.xx.xxx:4000/v1 "
+                    "(--runtime vllm only).")
+    su.add_argument("--api-key", help="Remote API key, if the server needs one (--runtime vllm only) -- "
+                    "written to a gitignored .env next to the config, never inlined in the yaml.")
     su.add_argument("--ctx", type=int, default=4096, help="Context size for fit sizing (default: 4096).")
     su.add_argument("--roster", help="Roster yaml (default: config/model_roster.yaml).")
     su.add_argument("--config", help="Output config path (default: config/inference.yaml).")
