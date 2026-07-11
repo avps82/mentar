@@ -103,6 +103,30 @@ def test_picker_groups_subjects_by_year():
     assert tryout_idx < html.find('value="fractions"')
 
 
+def test_practice_pack_subjects_appear_under_tryout_topics():
+    """The evergreen practice sampler (times tables/skip counting/doubles-halves,
+    synonyms-antonyms/rhyming/odd-one-out/plurals) lives in its own
+    curriculum/templates/practice/ directory (not _pilot/), auto-prefixed
+    "practice_" -- but must still land in the SAME "Try-out topics" picker
+    group as fractions/arithmetic/science (grouping is by year_level: pilot,
+    not by directory name)."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+
+    _app_mod, c = _client()
+    html = c.get("/choose").get_data(as_text=True)
+    assert "Maths practice" in html
+    assert "English practice" in html
+
+    tryout_idx = html.find("Try-out topics")
+    assert tryout_idx != -1
+    assert tryout_idx < html.find('value="practice_maths"')
+    assert tryout_idx < html.find('value="practice_english"')
+
+
 def test_progress_switcher_filters_star_cards_to_selected_subject():
     """R3.2: fixes a real defect -- /progress used to mix ALL subjects' skill
     rows into one undifferentiated list. A learner with history in TWO

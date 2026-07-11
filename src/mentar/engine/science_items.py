@@ -15,34 +15,8 @@ so it drops into `ItemGenerator(generators=SCIENCE_GENERATORS)`.
 from __future__ import annotations
 
 import random
-from collections.abc import Callable
 
-GenFn = Callable[[random.Random], "tuple[str, str, str, str]"]
-
-_LETTERS = ("A", "B", "C", "D")
-
-
-def _mc_which_is(rng: random.Random, prompt: str, classes: dict[str, list[str]]):
-    """Build a "Which of these is a <label>?" MC item from a {label: [members]} table.
-
-    One correct member of a randomly chosen target label + three distractors drawn
-    from the OTHER labels (classes are disjoint, so distractors are always wrong).
-    """
-    labels = list(classes)
-    target = rng.choice(labels)
-    correct = rng.choice(classes[target])
-    pool = [m for lbl in labels if lbl != target for m in classes[lbl]]
-    distractors = rng.sample(pool, 3)
-    options = [*distractors, correct]
-    rng.shuffle(options)
-    letter = _LETTERS[options.index(correct)]
-    stem = prompt.format(label=target)
-    # 3rd element is the STEM (no inline "A) ..." options — R2.1: the web view
-    # shows stem + radios, the inline form is composed centrally for CLI/
-    # transcript by ItemGenerator._make via itemgen.compose_mc_problem).
-    # 5th element: structured choices (A/B/C/D order) for the radio buttons.
-    return ("mc4", "mc_choice", stem, letter, options)
-
+from mentar.engine.itemgen import GenFn, mc_which_is
 
 # ── Curated fact tables (the ground truth) — Year-4 friendly, disjoint classes ──
 
@@ -66,15 +40,15 @@ _LIVING_CLASSES = {
 
 
 def _gen_classify_animals(rng: random.Random):
-    return _mc_which_is(rng, "Which of these is a {label}?", _ANIMAL_CLASSES)
+    return mc_which_is(rng, "Which of these is a {label}?", _ANIMAL_CLASSES)
 
 
 def _gen_states_of_matter(rng: random.Random):
-    return _mc_which_is(rng, "Which of these is a {label}?", _MATTER_CLASSES)
+    return mc_which_is(rng, "Which of these is a {label}?", _MATTER_CLASSES)
 
 
 def _gen_living_nonliving(rng: random.Random):
-    return _mc_which_is(rng, "Which of these is a {label}?", _LIVING_CLASSES)
+    return mc_which_is(rng, "Which of these is a {label}?", _LIVING_CLASSES)
 
 
 # Registry — node_id -> generator (matches the science curriculum template node ids).

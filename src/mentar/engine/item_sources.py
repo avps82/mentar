@@ -21,6 +21,7 @@ from pathlib import Path
 
 from mentar.engine.au_items import AU_YEAR3_GENERATORS, AU_YEAR4_GENERATORS
 from mentar.engine.itemgen import ARITHMETIC_GENERATORS, DEFAULT_GENERATORS
+from mentar.engine.practice_items import ENGLISH_PRACTICE_GENERATORS, MATHS_PRACTICE_GENERATORS
 from mentar.engine.science_items import SCIENCE_GENERATORS
 
 
@@ -34,4 +35,6 @@ def build_registry(pilot_itembank_path: Path) -> dict[str, dict]:
         "science": {"generators": SCIENCE_GENERATORS, "itembank": None},
         "au_year3": {"generators": AU_YEAR3_GENERATORS, "itembank": None},
         "au_year4": {"generators": AU_YEAR4_GENERATORS, "itembank": None},
+        "maths_practice": {"generators": MATHS_PRACTICE_GENERATORS, "itembank": None},
+        "english_practice": {"generators": ENGLISH_PRACTICE_GENERATORS, "itembank": None},
     }

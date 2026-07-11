@@ -39,6 +39,29 @@ def compose_mc_problem(stem: str, choices: tuple[str, ...] | list[str]) -> str:
     opts = "  ".join(f"{ltr}) {opt}" for ltr, opt in zip(_LETTERS, choices, strict=True))
     return f"{stem} {opts}. Answer with the letter."
 
+
+def mc_which_is(rng: random.Random, prompt: str, classes: dict[str, list[str]]):
+    """Build a "Which of these is a <label>?"-shaped MC item from a
+    {label: [members]} table. One correct member of a randomly chosen target
+    label + three distractors drawn from the OTHER labels (classes are
+    disjoint, so distractors are always wrong). Shared by science_items.py
+    and practice_items.py -- any fact table with disjoint categories fits
+    this shape (animal classes, states of matter, synonyms, rhymes...)."""
+    labels = list(classes)
+    target = rng.choice(labels)
+    correct = rng.choice(classes[target])
+    pool = [m for lbl in labels if lbl != target for m in classes[lbl]]
+    distractors = rng.sample(pool, 3)
+    options = [*distractors, correct]
+    rng.shuffle(options)
+    letter = _LETTERS[options.index(correct)]
+    stem = prompt.format(label=target)
+    # 3rd element is the STEM (no inline "A) ..." options — R2.1: the web view
+    # shows stem + radios, the inline form is composed centrally for CLI/
+    # transcript by ItemGenerator._make via compose_mc_problem() above.
+    # 5th element: structured choices (A/B/C/D order) for the radio buttons.
+    return ("mc4", "mc_choice", stem, letter, options)
+
 _THINGS = ["stickers", "crayons", "grapes", "marbles", "sweets", "pencils", "apples", "cookies"]
 _GROUPS = ["children", "friends", "baskets", "boxes", "bags", "plates", "pots"]
 _WHOLES = ["a cake", "a pizza", "a chocolate bar", "a ribbon", "a pie"]

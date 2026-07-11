@@ -11,7 +11,11 @@ import sys
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
-from mentar.engine.curriculum import derive_subject_key, load_template_meta  # noqa: E402
+from mentar.engine.curriculum import (  # noqa: E402
+    derive_subject_key,
+    load_curriculum,
+    load_template_meta,
+)
 from mentar.engine.item_sources import build_registry  # noqa: E402
 
 _TPL = REPO_ROOT / "curriculum" / "templates"
@@ -37,10 +41,16 @@ _EXPECTED = {
     "curriculum/templates/AU/year4_maths.md": {
         "key": "au_year4_maths", "label": "Maths — Year 4 🇦🇺", "item_source": "au_year4",
     },
+    "curriculum/templates/practice/maths.md": {
+        "key": "practice_maths", "label": "Maths practice ➗", "item_source": "maths_practice",
+    },
+    "curriculum/templates/practice/english.md": {
+        "key": "practice_english", "label": "English practice 📖", "item_source": "english_practice",
+    },
 }
 
 
-def test_all_five_templates_discovered_with_expected_meta():
+def test_all_shipped_templates_discovered_with_expected_meta():
     found = sorted(str(p.relative_to(REPO_ROOT)) for p in _TPL.glob("**/*.md"))
     assert found == sorted(_EXPECTED), found
 
@@ -60,9 +70,10 @@ def test_no_shipped_template_needs_the_subject_key_escape_hatch():
 
 
 def test_derived_keys_match_the_pre_r3_hardcoded_dict():
-    """derive_subject_key() must reproduce today's 5 literal keys exactly, with
-    ZERO manual input from any template -- an already-issued session cookie
-    must keep resolving to the same subject after this change."""
+    """derive_subject_key() must reproduce every shipped template's key exactly
+    (originally 5, at the R3 migration; more added since), with ZERO manual
+    input from any template -- an already-issued session cookie must keep
+    resolving to the same subject after this change."""
     for rel, expected in _EXPECTED.items():
         meta = load_template_meta(REPO_ROOT / rel)
         assert derive_subject_key(REPO_ROOT / rel, meta) == expected["key"], rel
@@ -90,6 +101,25 @@ def test_unregistered_item_source_is_detectable():
     registry = build_registry(REPO_ROOT / "curriculum" / "itembank" / "pilot_fractions.jsonl")
     assert "not_a_real_item_source" not in registry
     assert None not in registry  # a template with no item_source: field at all
+
+
+def test_no_skill_id_collides_across_any_shipped_template():
+    """R6.2/practice-pack guard: skill_id is NOT auto-namespaced the way the
+    subject_key is -- individual node ids inside a template's `concepts:`
+    list must be manually kept collision-free (AU's au3_/au4_ prefixes, the
+    practice pack's practice_ prefix). A collision would silently merge two
+    unrelated skills' skill_state mastery rows in the DB. Guards every
+    shipped template, not just the ones in _EXPECTED, so a new template
+    dropped in later is covered automatically."""
+    owners: dict[str, str] = {}
+    for path in sorted(_TPL.glob("**/*.md")):
+        curriculum = load_curriculum(path)
+        for skill_id in curriculum:
+            rel = str(path.relative_to(REPO_ROOT))
+            assert skill_id not in owners, (
+                f"skill_id {skill_id!r} used by both {owners.get(skill_id)!r} and {rel!r}"
+            )
+            owners[skill_id] = rel
 
 
 if __name__ == "__main__":

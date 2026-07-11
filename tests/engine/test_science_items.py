@@ -21,11 +21,9 @@ from mentar.engine.itemgen import (  # noqa: E402
     ARITHMETIC_GENERATORS,
     ItemGenerator,
     compose_mc_problem,
+    mc_which_is,
 )
-from mentar.engine.science_items import (  # noqa: E402
-    SCIENCE_GENERATORS,
-    _mc_which_is,
-)
+from mentar.engine.science_items import SCIENCE_GENERATORS  # noqa: E402
 from mentar.eval.verify_numeric import CheckResult, check  # noqa: E402
 
 
@@ -60,7 +58,7 @@ def test_mc_answer_letter_points_to_a_real_member():
     rng = random.Random(0)
     letters = "ABCD"
     for _ in range(100):
-        _, _, stem, letter, choices = _mc_which_is(rng, "Which is {label}?", classes)
+        _, _, stem, letter, choices = mc_which_is(rng, "Which is {label}?", classes)
         # R2.1: the 3rd element is the STEM only -- no inline "A) ..." options
         # (the web view shows stem + radios; CLI/transcript gets the composed
         # inline form via itemgen.compose_mc_problem, tested separately).
