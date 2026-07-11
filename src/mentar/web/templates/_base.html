@@ -8,7 +8,7 @@
 {% block header %}
 <div class="site-header">
   <a href="/" class="brand">🍕 Mentar{% if subject_label %} <span class="subject-label">· {{ subject_label }}</span>{% endif %}</a>
-  <button class="theme-toggle" type="button" aria-label="Toggle dark mode">🌙 Dark</button>
+  <a href="/settings" class="settings-link" aria-label="Settings">⚙️ Settings</a>
 </div>
 <p class="trust-strip">Runs entirely on this device · no cloud · no accounts</p>
 {% endblock %}

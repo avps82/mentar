@@ -469,7 +469,7 @@ maintainer said "note it, don't do anything" this round.**
 
 ---
 
-# R5 — Settings page: voice picker + relocate the theme toggle  `[G]`
+# R5 — Settings page: voice picker + relocate the theme toggle  `[G]` ✅ DONE 2026-07-11 — needs maintainer hands-on audio check (a)-(d) below
 **Maintainer ask, 2026-07-11.** New `/settings` page. Two decisions clarified via
 AskUserQuestion: (1) voice picker = the raw `speechSynthesis.getVoices()` list, not a
 simplified/grouped one; (2) Settings also becomes the new home for the existing dark/light

@@ -398,6 +398,14 @@ def frozen():
     )
 
 
+@app.route("/settings")
+def settings():
+    """R5: voice picker + the relocated theme toggle. Purely static -- the
+    voice list is client-side only (speechSynthesis.getVoices() can't be
+    queried server-side), so this route has no controller/session logic."""
+    return render_template("settings.html")
+
+
 _MD_BOLD_RE = re.compile(r"\*\*(.+?)\*\*")
 _MD_ITALIC_RE = re.compile(r"\*(.+?)\*")
 

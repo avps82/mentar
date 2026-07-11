@@ -70,6 +70,12 @@
 
       var utterance = new SpeechSynthesisUtterance(text);
       utterance.rate = 0.9; // slightly slower for a child listener
+      var storedVoiceURI = null;
+      try { storedVoiceURI = localStorage.getItem("mentar-tts-voice"); } catch (e) { /* storage unavailable */ }
+      if (storedVoiceURI) {
+        var match = window.speechSynthesis.getVoices().find(function (v) { return v.voiceURI === storedVoiceURI; });
+        if (match) utterance.voice = match;
+      }
       utterance.onend = reset;
       utterance.onerror = reset;
       window.speechSynthesis.speak(utterance);

@@ -672,6 +672,78 @@ def test_r4_brand_link_from_any_screen_lands_on_picker():
     assert "Choose a topic" in picker_html or "learn today" in picker_html
 
 
+def test_r5_settings_route_renders_voice_select_and_theme_toggle():
+    """R5: GET /settings is a plain static page containing the voice-picker
+    <select> and the theme toggle button, RELOCATED here from the shared
+    header (not duplicated)."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+
+    _app_mod, c = _client()
+    r = c.get("/settings")
+    assert r.status_code == 200
+    body = r.get_data(as_text=True)
+    assert '<select id="voice-select">' in body
+    assert 'id="test-voice-btn"' in body
+    assert 'class="theme-toggle"' in body
+
+
+def test_r5_theme_toggle_moved_out_of_shared_header_not_duplicated():
+    """R5: the shared header (_base.html) no longer contains .theme-toggle on
+    any page using the default header block -- it lives ONLY on /settings
+    now, replaced in the header by a Settings link."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+
+    app_mod, c = _client()
+    c.post("/choose", data={"subject": "fractions"})
+
+    for path in ("/", "/learn", "/progress"):
+        body = c.get(path).get_data(as_text=True)
+        assert 'class="theme-toggle"' not in body, f"{path} still has the header theme toggle"
+        assert 'class="settings-link"' in body, f"{path} is missing the Settings header link"
+
+    settings_body = c.get("/settings").get_data(as_text=True)
+    assert settings_body.count('class="theme-toggle"') == 1  # present exactly once, not duplicated
+
+
+def test_r5_footer_settings_link_on_learner_and_progress_not_frozen_or_parent():
+    """R5: a '⚙️ Settings' footer link is added to learner.html and
+    progress.html, but deliberately NOT frozen.html (U-60 zero-chrome
+    invariant) or parent.html (its existing minimal-header design call)."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+
+    app_mod, c = _client()
+    c.post("/choose", data={"subject": "fractions"})
+
+    learn_html = c.get("/learn").get_data(as_text=True)
+    assert 'href="/settings"' in learn_html
+
+    progress_html = c.get("/progress").get_data(as_text=True)
+    assert 'href="/settings"' in progress_html
+
+    parent_html = c.get("/parent").get_data(as_text=True)
+    assert 'href="/settings"' not in parent_html
+    assert "Settings" not in parent_html
+
+    # Trigger the frozen screen and confirm no settings link/chrome leaks in.
+    r = c.post("/answer", data={"answer": "I want to die"}, follow_redirects=True)
+    frozen_html = r.get_data(as_text=True)
+    assert 'href="/settings"' not in frozen_html
+    assert "theme-toggle" not in frozen_html
+    assert "settings-link" not in frozen_html
+
+
 if __name__ == "__main__":
     test_trust_strip_on_child_and_parent_screens()
     print("  ✓ test_trust_strip_on_child_and_parent_screens")
@@ -711,3 +783,9 @@ if __name__ == "__main__":
     print("  ✓ test_r4_no_js_answer_loop_stays_on_learn_never_bounces_to_picker")
     test_r4_brand_link_from_any_screen_lands_on_picker()
     print("  ✓ test_r4_brand_link_from_any_screen_lands_on_picker")
+    test_r5_settings_route_renders_voice_select_and_theme_toggle()
+    print("  ✓ test_r5_settings_route_renders_voice_select_and_theme_toggle")
+    test_r5_theme_toggle_moved_out_of_shared_header_not_duplicated()
+    print("  ✓ test_r5_theme_toggle_moved_out_of_shared_header_not_duplicated")
+    test_r5_footer_settings_link_on_learner_and_progress_not_frozen_or_parent()
+    print("  ✓ test_r5_footer_settings_link_on_learner_and_progress_not_frozen_or_parent")

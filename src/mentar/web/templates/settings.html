@@ -1,0 +1,23 @@
+{% extends "_base.html" %}
+{% block title %}Mentar — Settings{% endblock %}
+{% block content %}
+<h1 style="font-size:1.4rem">Settings</h1>
+
+<section class="settings-section">
+  <h2 style="font-size:1.1rem">Appearance</h2>
+  <button class="theme-toggle" type="button" aria-label="Toggle dark mode">🌙 Dark</button>
+</section>
+
+<section class="settings-section">
+  <h2 style="font-size:1.1rem">Read-aloud voice</h2>
+  <p class="hint">Choose which voice Mentar uses when reading a question aloud (🔊).</p>
+  <select id="voice-select"></select>
+  <button id="test-voice-btn" type="button">🔊 Test this voice</button>
+  <p id="voice-empty-hint" class="hint" style="display:none">No voices found yet — some browsers load voices slightly after the page.</p>
+</section>
+
+<script src="/static/settings.js"></script>
+{% endblock %}
+{% block footer %}
+<div class="footer-nav"><a href="/learn">Back to lesson</a></div>
+{% endblock %}

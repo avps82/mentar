@@ -78,7 +78,8 @@ a { color: var(--primary-strong); }
 
 .brand .subject-label { font-size: 1rem; font-weight: 400; color: var(--text-muted); }
 
-.theme-toggle {
+.theme-toggle,
+.settings-link {
   background: none;
   border: 2px solid var(--border);
   border-radius: 999px;
@@ -86,6 +87,7 @@ a { color: var(--primary-strong); }
   font-size: 0.95rem;
   cursor: pointer;
   color: var(--text);
+  text-decoration: none;
 }
 
 .trust-strip {
