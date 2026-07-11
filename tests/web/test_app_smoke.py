@@ -744,6 +744,50 @@ def test_r5_footer_settings_link_on_learner_and_progress_not_frozen_or_parent():
     assert "settings-link" not in frozen_html
 
 
+def test_llm_status_reports_ok_when_backend_reachable():
+    """The /settings/llm-status endpoint is a short-timeout reachability
+    check -- mocked here (no real network in tests) to cover both outcomes."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+    from unittest.mock import MagicMock, patch
+
+    app_mod, c = _client()
+    with patch("openai.OpenAI") as mock_openai_cls:
+        mock_client = MagicMock()
+        mock_openai_cls.return_value = mock_client
+        mock_client.models.list.return_value = []
+
+        r = c.get("/settings/llm-status")
+        assert r.status_code == 200
+        data = r.get_json()
+        assert data["ok"] is True
+        assert data["model"] == app_mod.LLM_MODEL
+        assert data["base_url"] == app_mod.LLM_BASE_URL
+        assert data["error"] is None
+        assert isinstance(data["latency_ms"], int)
+
+
+def test_llm_status_reports_not_ok_when_backend_unreachable():
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+    from unittest.mock import patch
+
+    app_mod, c = _client()  # noqa: F841
+    with patch("openai.OpenAI", side_effect=ConnectionError("Connection refused")):
+        r = c.get("/settings/llm-status")
+        assert r.status_code == 200
+        data = r.get_json()
+        assert data["ok"] is False
+        assert "Connection refused" in data["error"]
+        assert isinstance(data["latency_ms"], int)
+
+
 if __name__ == "__main__":
     test_trust_strip_on_child_and_parent_screens()
     print("  ✓ test_trust_strip_on_child_and_parent_screens")
@@ -789,3 +833,7 @@ if __name__ == "__main__":
     print("  ✓ test_r5_theme_toggle_moved_out_of_shared_header_not_duplicated")
     test_r5_footer_settings_link_on_learner_and_progress_not_frozen_or_parent()
     print("  ✓ test_r5_footer_settings_link_on_learner_and_progress_not_frozen_or_parent")
+    test_llm_status_reports_ok_when_backend_reachable()
+    print("  ✓ test_llm_status_reports_ok_when_backend_reachable")
+    test_llm_status_reports_not_ok_when_backend_unreachable()
+    print("  ✓ test_llm_status_reports_not_ok_when_backend_unreachable")

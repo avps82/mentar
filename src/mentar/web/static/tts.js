@@ -74,7 +74,7 @@
       try { storedVoiceURI = localStorage.getItem("mentar-tts-voice"); } catch (e) { /* storage unavailable */ }
       if (storedVoiceURI) {
         var match = window.speechSynthesis.getVoices().find(function (v) { return v.voiceURI === storedVoiceURI; });
-        if (match) utterance.voice = match;
+        if (match) { utterance.voice = match; utterance.lang = match.lang; }
       }
       utterance.onend = reset;
       utterance.onerror = reset;

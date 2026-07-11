@@ -27,7 +27,7 @@ import re
 import uuid
 from pathlib import Path
 
-from flask import Flask, redirect, render_template, request, session, url_for
+from flask import Flask, jsonify, redirect, render_template, request, session, url_for
 from markupsafe import escape
 
 from mentar.db.adapter import _DbStoreAdapter
@@ -418,6 +418,39 @@ def settings():
     voice list is client-side only (speechSynthesis.getVoices() can't be
     queried server-side), so this route has no controller/session logic."""
     return render_template("settings.html")
+
+
+@app.route("/settings/llm-status")
+def settings_llm_status():
+    """R5 follow-up: a short-timeout reachability check for the local LLM
+    backend, distinct from the app's own generation path (which uses a much
+    longer timeout) -- so a genuinely unreachable local model can't hang the
+    settings page while the parent tries to find out if it's even running."""
+    import time
+
+    from openai import OpenAI
+
+    start = time.monotonic()
+    try:
+        client = OpenAI(base_url=LLM_BASE_URL, api_key=LLM_CRED, timeout=5.0)
+        client.models.list()
+        latency_ms = round((time.monotonic() - start) * 1000)
+        return jsonify({
+            "ok": True,
+            "model": LLM_MODEL,
+            "base_url": LLM_BASE_URL,
+            "latency_ms": latency_ms,
+            "error": None,
+        })
+    except Exception as exc:
+        latency_ms = round((time.monotonic() - start) * 1000)
+        return jsonify({
+            "ok": False,
+            "model": LLM_MODEL,
+            "base_url": LLM_BASE_URL,
+            "latency_ms": latency_ms,
+            "error": str(exc),
+        })
 
 
 _MD_BOLD_RE = re.compile(r"\*\*(.+?)\*\*")

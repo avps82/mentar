@@ -9,9 +9,17 @@
 </section>
 
 <section class="settings-section">
+  <h2 style="font-size:1.1rem">Local AI model</h2>
+  <p class="hint">Checks whether Mentar can reach the local AI model running on this device.</p>
+  <p id="llm-status-line">Checking…</p>
+  <button id="llm-recheck-btn" type="button">🔄 Check again</button>
+</section>
+
+<section class="settings-section">
   <h2 style="font-size:1.1rem">Read-aloud voice</h2>
   <p class="hint">Choose which voice Mentar uses when reading a question aloud (🔊).</p>
   <select id="voice-select"></select>
+  <span id="voice-saved-hint" style="display:none" aria-live="polite">Saved ✓</span>
   <button id="test-voice-btn" type="button">🔊 Test this voice</button>
   <p id="voice-empty-hint" class="hint" style="display:none">No voices found yet — some browsers load voices slightly after the page.</p>
 </section>

@@ -7,10 +7,46 @@
 (function () {
     "use strict";
 
+    // ── Local LLM connectivity check (settings-page follow-up) ─────────────
+    function checkLlmStatus() {
+        var statusLine = document.getElementById("llm-status-line");
+        if (!statusLine) return;
+
+        statusLine.textContent = "Checking…";
+
+        fetch("/settings/llm-status")
+            .then(function (response) {
+                return response.json();
+            })
+            .then(function (data) {
+                if (data.ok) {
+                    statusLine.textContent = "🟢 Connected (" + data.model + ", " + data.latency_ms + "ms)";
+                } else {
+                    statusLine.textContent = "🔴 Not reachable at " + data.base_url + " (" + data.error + ")";
+                }
+            })
+            .catch(function () {
+                statusLine.textContent = "🔴 Could not check status.";
+            });
+    }
+
+    if (document.getElementById("llm-status-line")) {
+        checkLlmStatus();
+    }
+
+    var recheckBtn = document.getElementById("llm-recheck-btn");
+    if (recheckBtn) {
+        recheckBtn.addEventListener("click", function () {
+            checkLlmStatus();
+        });
+    }
+
     if ("speechSynthesis" in window) {
         const voiceSelect = document.getElementById("voice-select");
         const testVoiceBtn = document.getElementById("test-voice-btn");
         const emptyHint = document.getElementById("voice-empty-hint");
+        const savedHint = document.getElementById("voice-saved-hint");
+        let savedHintTimer = null;
 
         function populateVoices() {
             const voices = window.speechSynthesis.getVoices();
@@ -58,6 +94,15 @@
                 } catch (e) {
                     // storage unavailable
                 }
+                // No explicit Save button -- this flash is the only feedback
+                // that the choice actually persisted (auto-save on change).
+                if (savedHint) {
+                    savedHint.style.display = "inline";
+                    clearTimeout(savedHintTimer);
+                    savedHintTimer = setTimeout(function () {
+                        savedHint.style.display = "none";
+                    }, 2000);
+                }
             });
         }
 
@@ -75,6 +120,7 @@
 
                 if (selectedVoice) {
                     utterance.voice = selectedVoice;
+                    utterance.lang = selectedVoice.lang;
                 }
 
                 window.speechSynthesis.cancel();
