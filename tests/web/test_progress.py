@@ -127,11 +127,16 @@ def test_progress_switcher_filters_star_cards_to_selected_subject():
     au3 = c.get("/progress?subject=au_year3_maths").get_data(as_text=True)
     frac = c.get("/progress?subject=fractions").get_data(as_text=True)
 
-    assert "Au3 Place Value" in au3
-    assert "Whole Number Division" not in au3 and "Unit Fractions" not in au3
+    # R6.2: star-cards render the real curriculum label (display_name), never
+    # the raw namespaced skill_id or a naive "au3_place_value" -> "Au3 Place
+    # Value" transform. (AU3 has its OWN "Unit fractions (...)" node, so check
+    # the fractions pilot's distinct full label "Unit fractions (1/n)", not
+    # the shared substring both curricula's authors happened to use.)
+    assert "Place value to 999" in au3
+    assert "Whole-number division" not in au3 and "Unit fractions (1/n)" not in au3
 
-    assert "Whole Number Division" in frac
-    assert "Au3" not in frac
+    assert "Whole-number division" in frac
+    assert "Place value to 999" not in frac
 
     # The active tab is highlighted; a per-subject mastered/total count shows.
     assert 'href="/progress?subject=au_year3_maths" class="switcher-link active"' in au3
@@ -192,7 +197,7 @@ def test_progress_graph_labels_wrap_not_truncate_for_au_template():
     # Every node's full label is still available via the hover tooltip.
     curriculum = app_mod._SUBJECT_CURRICULA["au_year4_maths"]
     for node in curriculum.values():
-        assert f"<title>{node['concept']}" in body
+        assert f"<title>{node['label']}" in body
 
 
 def test_parent_mastery_table_appears_after_answer():
@@ -218,6 +223,63 @@ def test_parent_mastery_table_appears_after_answer():
     assert "Session summary" in body
     # At least one skill_id row inside the table (check for % sign from pct column).
     assert "%" in body
+
+
+def test_r6_2_display_name_unified_across_all_four_surfaces():
+    """R6.2 regression: skill_id (machine key, namespaced e.g. "au3_place_value")
+    and its human display name used to be conflated in 3 of 4 rendering sites
+    (progress.html star-cards + learner.html mastery bar did a naive
+    replace('_',' ')|title -- producing "Au3 Place Value"; parent.html showed
+    the raw skill_id verbatim; done.html did the same naive transform).
+    Only progress.html's concept-graph ever did it correctly. All four must
+    now render the SAME curriculum-authored label, sourced once via
+    app._display_name(), never re-derived per-template."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+
+    app_mod, c = _client()
+    c.post("/choose", data={"subject": "au_year3_maths"})
+    r = c.get("/learn")
+    learn_html = r.get_data(as_text=True)
+
+    with c.session_transaction() as sess:
+        learner_uuid = sess["learner_uuid"]
+    ctrl = app_mod._controllers[learner_uuid]
+    ctrl._ctx.current_node_id = "au3_place_value"
+
+    # 1. learner.html's per-skill mastery bar.
+    learn_html = c.get("/learn").get_data(as_text=True)
+    assert "Place value to 999" in learn_html
+    assert "Au3 Place Value" not in learn_html
+    assert "au3_place_value" not in learn_html
+
+    c.post("/answer", data={"answer": "A"})
+
+    # 2. progress.html's star-card list (the concept-graph SVG was already
+    # correct before R6.2 -- this covers the star-card list specifically).
+    progress_html = c.get("/progress?subject=au_year3_maths").get_data(as_text=True)
+    assert "Place value to 999" in progress_html
+    assert "Au3 Place Value" not in progress_html
+
+    # 3. parent.html's mastery table + answers table (previously the raw,
+    # unmodified skill_id -- arguably the worst of the four).
+    parent_html = c.get("/parent").get_data(as_text=True)
+    assert "Place value to 999" in parent_html
+    assert "au3_place_value" not in parent_html
+
+    # 4. done.html's session recap.
+    from mentar.dialogue.controller import TurnResult
+    ctrl.step = lambda answer_text: TurnResult(
+        state=ctrl.state, text="All done!", done=True, escalated=False
+    )
+    c.post("/answer", data={"answer": "A"})
+    done_html = c.get("/done").get_data(as_text=True)
+    assert "Place value to 999" in done_html
+    assert "Au3 Place Value" not in done_html
+    assert "au3_place_value" not in done_html
 
 
 def test_graph_layout_au_year3_bottom_row_no_longer_clipped():

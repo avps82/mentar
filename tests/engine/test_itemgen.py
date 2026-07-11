@@ -105,7 +105,7 @@ def test_controller_scores_generated_item():
         def update_skill_state(self, l, n, p, **k): self.skills[n] = p
 
     curriculum = {"adding_equal_denom": {
-        "concept": "Adding fractions", "answer_type": "fraction", "checker": "fraction_equiv",
+        "label": "Adding fractions", "answer_type": "fraction", "checker": "fraction_equiv",
         "expected_answer": "", "grounding": {}, "prerequisites": []}}
     gen = default_item_generator(rng=random.Random(3))
     ctrl = SessionController(

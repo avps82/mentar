@@ -14,7 +14,7 @@ from mentar.dialogue.controller import SessionController
 PROMPTS = REPO / "prompts"
 _CURRICULUM = {
     f"node_{i}": {
-        "concept": f"node {i}", "answer_type": "int", "checker": "int_exact",
+        "label": f"node {i}", "answer_type": "int", "checker": "int_exact",
         "expected_answer": "2", "grounding": {}, "prerequisites": [],
     }
     for i in range(5)

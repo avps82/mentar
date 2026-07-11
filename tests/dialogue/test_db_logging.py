@@ -52,7 +52,7 @@ def _curriculum() -> dict:
     nodes = {}
     for i in range(1, 5):
         nodes[f"n{i}"] = {
-            "concept": f"node {i}",
+            "label": f"node {i}",
             "answer_type": "int",
             "checker": "int_exact",
             "expected_answer": "2",

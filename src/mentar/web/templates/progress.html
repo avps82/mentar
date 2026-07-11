@@ -61,7 +61,7 @@
   {% set label = "Just beginning — every expert started here!" %}
 {% endif %}
 <div class="skill-card">
-  <div class="skill-name">{{ s.skill_id | replace("_", " ") | title }}</div>
+  <div class="skill-name">{{ s.display_name }}</div>
   <div class="stars">{{ stars }}</div>
   <div class="label">{{ label }}</div>
 </div>

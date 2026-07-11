@@ -27,11 +27,11 @@ from mentar.engine.itembank import Item
 PROMPTS = REPO / "prompts"
 _CURRICULUM = {
     "node_a": {
-        "concept": "node a", "answer_type": "int", "checker": "int_exact",
+        "label": "node a", "answer_type": "int", "checker": "int_exact",
         "expected_answer": "2", "grounding": {}, "prerequisites": [],
     },
     "node_b": {
-        "concept": "node b", "answer_type": "int", "checker": "int_exact",
+        "label": "node b", "answer_type": "int", "checker": "int_exact",
         "expected_answer": "2", "grounding": {}, "prerequisites": [],
     },
 }

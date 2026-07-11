@@ -733,7 +733,7 @@ class SessionController:
         # Fallback: LLM-generated question (nodes without a bank / legacy callers).
         ctx.current_item = None
         passage = resolve_grounding(node.get("grounding", {}), self._grounding_cfg)
-        system_text = self._render_system_prompt(node["concept"], passage)
+        system_text = self._render_system_prompt(node["label"], passage)
         pattern_text = self._render_template(ctx.current_pattern, node, passage)
         question = self._llm([
             {"role": "system", "content": system_text},
@@ -1009,7 +1009,7 @@ class SessionController:
         ctx = self._ctx
         node = self._curriculum[ctx.current_node_id]
         passage = resolve_grounding(node.get("grounding", {}), self._grounding_cfg)
-        system_text = self._render_system_prompt(node["concept"], passage)
+        system_text = self._render_system_prompt(node["label"], passage)
         help_text = self._render_template(
             ctx.current_pattern, node, passage,
             worked_example=self._worked_example_for(ctx.current_node_id),
@@ -1065,7 +1065,7 @@ class SessionController:
         ctx.current_item = None
         node = self._curriculum[ctx.current_node_id]
         passage = resolve_grounding(node.get("grounding", {}), self._grounding_cfg)
-        system_text = self._render_system_prompt(node["concept"], passage)
+        system_text = self._render_system_prompt(node["label"], passage)
         transfer_text = self._render_template(
             "transfer_question_gen", node, passage,
             worked_example=self._worked_example_for(ctx.current_node_id),
@@ -1171,7 +1171,7 @@ class SessionController:
         ctx.current_item = None
         node = self._curriculum[ctx.current_node_id]
         passage = resolve_grounding(node.get("grounding", {}), self._grounding_cfg)
-        system_text = self._render_system_prompt(node["concept"], passage)
+        system_text = self._render_system_prompt(node["label"], passage)
         transfer_text = self._render_template(
             "transfer_question_gen", node, passage,
             worked_example=self._worked_example_for(ctx.current_node_id),
@@ -1304,7 +1304,7 @@ class SessionController:
         tmpl = self._load_template(name)
         return (
             tmpl
-            .replace("{{concept}}", node.get("concept", "fractions"))
+            .replace("{{concept}}", node.get("label", "fractions"))
             .replace("{{answer_type}}", node.get("answer_type", "fraction"))
             .replace("{{grounding_passage}}", passage)
             .replace("{{worked_example}}", worked_example or "a simple example with small numbers")

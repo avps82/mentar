@@ -18,7 +18,7 @@ PROMPTS = REPO / "prompts"
 
 _CURRICULUM_UNCOVERED = {
     "unit_fractions": {
-        "concept": "unit fractions", "answer_type": "fraction", "checker": "fraction_equiv",
+        "label": "unit fractions", "answer_type": "fraction", "checker": "fraction_equiv",
         "expected_answer": "What is one third of nine?",  # a transfer-seed QUESTION, not "3"
         "grounding": {}, "prerequisites": [],
     },
@@ -26,7 +26,7 @@ _CURRICULUM_UNCOVERED = {
 
 _CURRICULUM_FREE_TEXT = {
     "open_reflection": {
-        "concept": "open reflection", "answer_type": "free_text", "checker": "none",
+        "label": "open reflection", "answer_type": "free_text", "checker": "none",
         "expected_answer": "", "grounding": {}, "prerequisites": [],
     },
 }

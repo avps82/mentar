@@ -16,7 +16,7 @@ from mentar.engine.itembank import Item
 PROMPTS = REPO / "prompts"
 _CURRICULUM = {
     "photosynthesis": {
-        "concept": "photosynthesis", "answer_type": "mc4", "checker": "mc_choice",
+        "label": "photosynthesis", "answer_type": "mc4", "checker": "mc_choice",
         "expected_answer": "A", "grounding": {}, "prerequisites": [],
     }
 }

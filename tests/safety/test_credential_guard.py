@@ -66,7 +66,7 @@ def test_redaction_leaves_clean_text_unchanged():
 def test_controller_redacts_llm_output():
     """A model that emits a key has it scrubbed before it reaches the child/logs."""
     from mentar.dialogue.controller import SessionController
-    curr = {"unit_fractions": {"concept": "unit fractions", "answer_type": "fraction",
+    curr = {"unit_fractions": {"label": "unit fractions", "answer_type": "fraction",
             "checker": "fraction_equiv", "expected_answer": "1/3", "grounding": {},
             "prerequisites": []}}
 

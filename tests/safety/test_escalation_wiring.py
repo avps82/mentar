@@ -21,7 +21,7 @@ from mentar.dialogue.controller import SessionController  # noqa: E402
 PROMPTS = REPO_ROOT / "prompts"
 CURRICULUM = {
     "unit_fractions": {
-        "concept": "unit fractions", "answer_type": "fraction", "checker": "fraction_equiv",
+        "label": "unit fractions", "answer_type": "fraction", "checker": "fraction_equiv",
         "expected_answer": "1/3", "grounding": {}, "prerequisites": [],
     }
 }

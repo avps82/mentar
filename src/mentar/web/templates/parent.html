@@ -55,7 +55,7 @@
     {% for s in skill_states %}
     {% set pct = (s.p_mastery * 100) | int %}
     <tr>
-      <td>{{ s.skill_id }}</td>
+      <td>{{ s.display_name }}</td>
       <td><span class="bar-wrap"><span class="bar-fill" style="width:{{ pct }}%;"></span></span></td>
       <td>{{ pct }}%</td>
     </tr>
@@ -72,7 +72,7 @@
     {% for a in answers %}
     <tr>
       <td>{{ loop.index }}</td>
-      <td>{{ a.skill_id }}</td>
+      <td>{{ a.display_name }}</td>
       <td>{{ a.answer }}</td>
       <td>{{ '✅ correct' if a.scored == 1 else '❌ wrong' }}</td>
       <td>{{ '🆘 yes' if a.hinted == 1 else '—' }}</td>

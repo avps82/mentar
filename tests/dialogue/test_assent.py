@@ -39,7 +39,7 @@ def _ctrl() -> SessionController:
         llm_call=lambda messages: "ok",
         prompt_dir=_PROMPTS,
         grounding_cfg={},
-        curriculum={"n1": {"concept": "n1", "answer_type": "int", "checker": "int_exact",
+        curriculum={"n1": {"label": "n1", "answer_type": "int", "checker": "int_exact",
                            "expected_answer": "2", "grounding": {}, "prerequisites": []}},
         db_store=_Store(),
         learner_id="L",

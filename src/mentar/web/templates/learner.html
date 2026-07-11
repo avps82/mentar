@@ -4,7 +4,7 @@
 {% block content %}
 {% if current_mastery %}
 <div class="hint" style="margin-bottom:6px">
-  {{ current_mastery.skill_id | replace("_", " ") | title }}
+  {{ current_mastery.display_name }}
   <span class="bar-wrap"><span class="bar-fill" style="width:{{ current_mastery.pct }}%;"></span></span>
   {{ current_mastery.pct }}%
 </div>

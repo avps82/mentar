@@ -28,7 +28,7 @@ PROMPTS = REPO / "prompts"
 
 _CURRICULUM = {
     "unit_fractions": {
-        "concept": "unit fractions",
+        "label": "unit fractions",
         "answer_type": "fraction",
         "checker": "fraction_equiv",
         "expected_answer": "1/3",
@@ -39,7 +39,7 @@ _CURRICULUM = {
 
 _MASTERED_CURRICULUM = {
     "unit_fractions": {
-        "concept": "unit fractions",
+        "label": "unit fractions",
         "answer_type": "fraction",
         "checker": "fraction_equiv",
         "expected_answer": "1/3",
@@ -357,7 +357,7 @@ def test_mc_gibberish_asks_for_a_letter_same_question():
     from mentar.engine.itemgen import ItemGenerator
     from mentar.engine.science_items import SCIENCE_GENERATORS
     curr = {"classify_animals": {
-        "concept": "Animal groups", "answer_type": "mc4", "checker": "mc_choice",
+        "label": "Animal groups", "answer_type": "mc4", "checker": "mc_choice",
         "expected_answer": "", "grounding": {}, "prerequisites": []}}
     ctrl = SessionController(
         llm_call=lambda m: "(unused)", prompt_dir=PROMPTS, grounding_cfg={},
@@ -398,7 +398,7 @@ def test_help_recheck_shows_answer_format_hint():
 
     # mc4 node -> letter guidance
     curr = {"classify_animals": {
-        "concept": "Animal groups", "answer_type": "mc4", "checker": "mc_choice",
+        "label": "Animal groups", "answer_type": "mc4", "checker": "mc_choice",
         "expected_answer": "", "grounding": {}, "prerequisites": []}}
     ctrl2 = SessionController(
         llm_call=lambda m: "expl", prompt_dir=PROMPTS, grounding_cfg={}, curriculum=curr,

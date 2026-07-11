@@ -566,7 +566,9 @@ spec now even though #2 needs more design first)
   y=83.3 > height=78) now passes; full suite + ruff green.
 
 ## R6.2 — skill display names: four inconsistent strategies for the same data, needs a
-ground-up unification, NOT a quick patch (per maintainer explicitly)
+ground-up unification, NOT a quick patch (per maintainer explicitly) ✅ DONE 2026-07-11 —
+resolved via `docs/design/MULTI_COUNTRY.md` §5 (the "ground up" design pass this needed),
+built same wave
 
 - **The reported symptom** ("Au3 Place Value ??? ... need a better way to identify this")
   is a visible symptom of a real structural gap: **skill_id (the machine-safe, namespaced

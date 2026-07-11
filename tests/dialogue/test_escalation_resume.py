@@ -49,7 +49,7 @@ def _ctrl() -> SessionController:
         grounding_cfg={},
         curriculum={
             "n1": {
-                "concept": "n1", "answer_type": "int", "checker": "int_exact",
+                "label": "n1", "answer_type": "int", "checker": "int_exact",
                 "expected_answer": "2", "grounding": {}, "prerequisites": [],
             }
         },

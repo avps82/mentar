@@ -22,7 +22,7 @@ from mentar.safety.output_guard import NEUTRAL_REDIRECT
 PROMPTS = REPO / "prompts"
 _CURRICULUM = {
     "unit_fractions": {
-        "concept": "unit fractions", "answer_type": "fraction", "checker": "fraction_equiv",
+        "label": "unit fractions", "answer_type": "fraction", "checker": "fraction_equiv",
         "expected_answer": "1/3", "grounding": {}, "prerequisites": [],
     }
 }

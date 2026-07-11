@@ -121,6 +121,20 @@ _SUBJECT_CURRICULA = {k: load_curriculum(v["curriculum"]) for k, v in SUBJECTS.i
 # A7: each subject's template `subject:` field, fed into the system prompt so a
 # science session doesn't inherit the (formerly hardcoded) "fractions" text.
 _SUBJECT_NAMES = {k: load_template_subject(v["curriculum"]) for k, v in SUBJECTS.items()}
+# R6.2: one skill_id -> label lookup across EVERY loaded curriculum (safe to
+# merge: R3.1's directory-namespace prefixing guarantees no id collisions
+# across subjects). skill_id is a machine key, never shown to a human; every
+# human-facing surface renders display_name, computed once via _display_name()
+# below, never re-derived per-template (was 4 inconsistent strategies).
+_ALL_NODE_LABELS = {
+    nid: node.get("label", nid)
+    for curriculum in _SUBJECT_CURRICULA.values()
+    for nid, node in curriculum.items()
+}
+
+
+def _display_name(skill_id: str) -> str:
+    return _ALL_NODE_LABELS.get(skill_id, skill_id)
 
 
 def _subject_groups() -> list[tuple[str, list[str]]]:
@@ -374,7 +388,7 @@ def done():
             "n_responses": len(responses),
             "n_correct": sum(1 for r in responses if r.get("scored") == 1),
             "n_help": len(help_events),
-            "skills_touched": sorted({r["skill_id"] for r in responses}),
+            "skills_touched": sorted(_display_name(sid) for sid in {r["skill_id"] for r in responses}),
         }
     return render_template("done.html", message=message, recap=recap)
 
@@ -528,7 +542,7 @@ def _compute_graph_layout(curriculum: dict, node_pct: dict[str, int]) -> dict:
             pos[node_id] = (x, y)
             pct = node_pct.get(node_id)
             status = "not_started" if pct is None else ("mastered" if pct >= 85 else "learning")
-            label = curriculum[node_id].get("concept", node_id)
+            label = curriculum[node_id].get("label", node_id)
             nodes.append({
                 "id": node_id,
                 "label": label,
@@ -565,6 +579,8 @@ def progress():
     curriculum = _SUBJECT_CURRICULA.get(subject, {})
     # Convert sqlite3.Row to plain dicts, filtered to THIS subject's nodes only.
     skills = [dict(r) for r in skill_states if r["skill_id"] in curriculum]
+    for s in skills:
+        s["display_name"] = _display_name(s["skill_id"])
     node_pct = {s["skill_id"]: int(s["p_mastery"] * 100) for s in skills}
     graph = _compute_graph_layout(curriculum, node_pct) if curriculum else None
 
@@ -596,8 +612,12 @@ def parent():
     answers: list[dict] = []
     if store and db_id is not None and session_id:
         skill_states = [dict(r) for r in store.all_skill_states(db_id)]
+        for s in skill_states:
+            s["display_name"] = _display_name(s["skill_id"])
         responses = store.session_responses(db_id, session_id)
         help_events = store.session_help_events(db_id, session_id)
+        for r in responses:
+            r["display_name"] = _display_name(r["skill_id"])
         answers = responses
         n_correct = sum(1 for r in responses if r.get("scored") == 1)
         session_summary = {
@@ -701,13 +721,17 @@ def _current_node_mastery(learner_uuid: str, ctrl: SessionController) -> dict | 
     node_id = ctrl.current_node_id
     if not node_id:
         return None
+    display_name = _display_name(node_id)
     store, db_id = _store_and_id(learner_uuid)
     if store is None or db_id is None:
-        return {"skill_id": node_id, "pct": 0}
+        return {"skill_id": node_id, "display_name": display_name, "pct": 0}
     for row in store.all_skill_states(db_id):
         if row["skill_id"] == node_id:
-            return {"skill_id": node_id, "pct": int(row["p_mastery"] * 100)}
-    return {"skill_id": node_id, "pct": 0}
+            return {
+                "skill_id": node_id, "display_name": display_name,
+                "pct": int(row["p_mastery"] * 100),
+            }
+    return {"skill_id": node_id, "display_name": display_name, "pct": 0}
 
 
 def _subjects_progress(learner_uuid: str) -> dict[str, dict]:

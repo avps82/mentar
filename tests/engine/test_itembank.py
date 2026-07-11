@@ -73,7 +73,7 @@ def _make_controller(item_bank, llm_reply="(unused)"):
     from mentar.dialogue.controller import SessionController
     curriculum = {
         "whole_number_division": {
-            "concept": "Whole-number division",
+            "label": "Whole-number division",
             "answer_type": "int", "checker": "int_exact",
             "expected_answer": "", "grounding": {}, "prerequisites": [],
         }

@@ -9,7 +9,7 @@
     &nbsp;·&nbsp; {{ recap.n_help }} help request(s)
     {% if recap.skills_touched %}
     <div style="margin-top:8px">Skills practised today:
-      {{ recap.skills_touched | map('replace', '_', ' ') | map('title') | join(', ') }}
+      {{ recap.skills_touched | join(', ') }}
     </div>
     {% endif %}
   </div>

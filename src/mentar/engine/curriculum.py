@@ -82,7 +82,11 @@ def load_curriculum(path: Path) -> dict:
         verifier = node.get("verifier", {})
         seeds = node.get("transfer_seeds", [])
         curriculum[nid] = {
-            "concept": node.get("label", nid),
+            # R6.2: key matches the YAML source field name (was "concept",
+            # a naming mismatch). skill_id is a machine key, never shown to
+            # a human; every human-facing surface renders display_name,
+            # sourced once here, never re-derived in a template.
+            "label": node.get("label", nid),
             "answer_type": verifier.get("answer_type", "free_text"),
             "checker": verifier.get("checker", "none"),
             "expected_answer": seeds[0] if seeds else "",
