@@ -412,7 +412,7 @@ fractions/science and AU Year 3/4 nodes mix into one undifferentiated list.
 
 ---
 
-# R4 — bug: homepage lands on a quiz, not the Year > Subject picker  `[G]`
+# R4 — bug: homepage lands on a quiz, not the Year > Subject picker  `[G]` ✅ DONE 2026-07-11
 **Reported 2026-07-11 (maintainer, live testing). Investigated + root-caused, NOT YET FIXED —
 maintainer said "note it, don't do anything" this round.**
 
@@ -538,7 +538,7 @@ from the app's offline-only design — flagged, not built, not asked for after c
 FIXED — maintainer said "note it for now" for both; #2 explicitly wants a ground-up pass,
 not a quick patch.**
 
-## R6.1 — concept-graph bottom row is clipped off  `[G]` (small, isolated, tight enough to
+## R6.1 — concept-graph bottom row is clipped off  `[G]` ✅ DONE 2026-07-11 (commit ba48ae2) — (small, isolated, tight enough to
 spec now even though #2 needs more design first)
 
 - **Root cause, confirmed by direct reproduction against the real AU Year 3 template:**
