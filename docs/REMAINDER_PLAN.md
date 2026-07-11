@@ -865,11 +865,33 @@ replacement.
   still written so the parent doesn't have to re-type everything once they fix
   connectivity), missing required fields are rejected before anything is written.
 - Full suite (553 tests) + ruff green.
-- **Not built this wave (explicitly, not silently dropped):** the CLI (`mentar
-  setup --runtime vllm --base-url ... --api-key ...`) still only supports local
-  models. Extending it to write a remote-API config the same way is a natural,
-  separate follow-up — the config-writing/reload core it would reuse is exactly
-  what `/setup` already exercises here.
+
+## R9.1 — CLI counterpart + ongoing-switch discoverability (2026-07-13 follow-up)
+
+- **`mentar setup --runtime vllm --base-url ... --model ... [--api-key ...]`** — the
+  CLI now supports remote-API setup too, not just local models. No roster/download
+  involved (`_setup_remote_api`, a separate branch in `_setup()` before the
+  roster-selection logic even runs). Reuses the exact same `write_inference_config()`
+  the local path already used, plus a NEWLY SHARED `upsert_dotenv_value()` (relocated
+  from `web/app.py`'s private copy into `inference/backend.py` and exported publicly
+  — one place that touches a credential file, not two independently-maintained
+  copies). `--dry-run` writes NOTHING to disk, including the `.env` — a real bug
+  caught while testing this manually: the first version wrote the `.env` file even
+  on a dry run, because the API-key write happened before the dry-run check instead
+  of after. Fixed; verified with a smoke test that checks the file genuinely isn't
+  created.
+- **Settings now links to `/setup`.** `/setup`'s own routes were already exempt from
+  the gate (reachable any time, not just when something's broken) — but nothing
+  linked to it once a family was past first-run, so there was no way to find your
+  way back to switch backends without knowing the URL. Added a "⚙️ Change AI model"
+  link in Settings' Local AI model section.
+- **Accept:** new `tests/cli/test_setup_cmd.py` (5 tests: missing required args,
+  dry-run writes nothing, successful write puts the key in `.env` not the yaml, a
+  blank key defaults to `no-key`, an unreachable backend still writes the config but
+  returns exit code 1) + 2 new `tests/inference/test_backend.py` tests for the
+  relocated `upsert_dotenv_value` + 1 new web test proving the Settings link exists
+  and `/setup` is genuinely reachable on a voluntary visit. **561 tests pass, ruff
+  clean.**
 
 ---
 
