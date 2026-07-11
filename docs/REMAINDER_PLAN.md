@@ -680,6 +680,112 @@ voice-picker bug.
 
 ---
 
+# R8 — content-download MVP + India (general Class 3 maths) pack  `[G]`
+
+**Maintainer ask, 2026-07-11.** In-app curriculum management from Settings: see what's
+installed, download what isn't, delete what you no longer want — the in-app counterpart to
+today's developer-only "drop a `.md` file in `curriculum/templates/`" mechanism. Confirmed
+via AskUserQuestion: git-pull-based fetch (repo is currently private; the design targets the
+repo's future PUBLIC url shape so nothing needs rework at launch); mechanism + India content
+built together; delete/uninstall built now, preserve-mastery-by-default only (the harder
+"fully erase" escape hatch explicitly deferred, see below).
+
+## R8.0 — licence gate: NCERT (India) flagged NO-DERIVATIVES, scope changed to a generic pack
+
+Attempted the same live-verification discipline as ACARA's clearance; `epathshala.nic.in`
+was unreachable both from the sandbox and by the maintainer. Two independently-converging
+web searches surfaced identical language: *"No person is permitted to adapt, translate,
+alter, summarize, or make any derivation of NCERT E-content... without the specific,
+written permission of NCERT."* Treated as confirmed per this project's own no-shortcut
+rule (`docs/CONTENT_LICENSES.md` §2b, v0.4) — materially stricter than ACARA's CC BY 4.0,
+and the restriction is NOT scoped to commercial use ("No person"), so an individual family's
+personal use doesn't change the analysis; Mentar shipping the template is a distributed
+feature, not a one-off personal act, either way.
+
+**Decision: no `IN_NCERT`/`IN_CBSE` pack this wave.** Instead, `IN_GENERIC` — universally-
+taught Class 3 maths topics (place value/addition/subtraction, times tables, basic
+fractions), 100% Mentar-authored via **existing, already-shipped generic generators**
+(zero new generator logic): `itemgen.py`'s `_gen_addition`/`_gen_subtraction`/
+`_gen_unit_fractions` + `practice_items.py`'s `_gen_times_tables`, re-registered under new
+`in_generic_*` node ids in a new small `engine/in_generic_items.py`. No NCERT/CBSE branding,
+codes, or claimed curriculum alignment anywhere — label reads "Maths — Class 3 🇮🇳
+(general)", description says plainly this is general content, not an official mapping.
+Re-verify `epathshala.nic.in`'s licence directly before ever attempting a real
+`IN_NCERT`/`IN_CBSE` pack.
+
+## R8.1 — manifest + fetch mechanism
+
+- **`curriculum/packs.json`** (new, lives in the repo, auto-discovered like everything
+  else): one entry per downloadable pack — `{id, dir, label, description, licence,
+  files: [{name, sha256}]}`. `AU` and `practice/` stay **in-tree** (ship with every
+  checkout, not downloadable — they're the base install); only NEW packs not yet in a
+  fresh checkout go in the manifest (`IN_GENERIC` is the first).
+- **Fetch is HTTPS against ONE pinned, hardcoded base URL**
+  (`https://raw.githubusercontent.com/avps82/mentar/main/`) — never a user-supplied URL,
+  never configurable from the UI. This is git-pull-shaped (same trust boundary you already
+  have via `origin`) but expressed as plain HTTPS raw-file fetches so it needs no local git
+  binary/credentials wrangling from Flask, and works unchanged the moment the repo goes
+  public (nothing to rework at launch — this was the point of designing against the
+  *future* public shape now).
+- **Security, same posture as R7.2's short-timeout discipline:** short per-file timeout;
+  every downloaded file's sha256 verified against the manifest BEFORE it's written to disk
+  (mismatch = reject, nothing written); content is markdown/YAML template data, parsed by
+  the EXISTING `yaml.safe_load` path — never executed as code; explicit user-initiated
+  action only (a button click), never automatic/background, matching the app's otherwise
+  fully-offline (U-80) design — this is the one deliberate, narrowly-scoped exception.
+- **New routes:** `GET /settings/curriculum-packs` (fetches `packs.json`, diffs against
+  what's locally present under `curriculum/templates/`, returns available vs. installed);
+  `POST /settings/curriculum-packs/<pack_id>/install` (fetch + verify + write); `POST
+  /settings/curriculum-packs/<pack_id>/uninstall` (remove the pack's directory).
+- **Known MVP limitation, flagged not silently absorbed:** `SUBJECTS`/`_SUBJECT_CURRICULA`
+  are built ONCE at `web/app.py` import time (R3.1's auto-discovery scans at startup, not
+  per-request) — a freshly-downloaded pack won't appear in the picker, and an uninstalled
+  one won't disappear, until Mentar is restarted. The UI says this explicitly after
+  install/uninstall ("Restart Mentar to start this new topic") rather than implying it's
+  immediate. Making discovery fully dynamic (re-scan per request) is a real but separate
+  change — not needed for this MVP and not built here.
+- **Uninstall semantics:** deletes the pack's `curriculum/templates/<DIR>/` (so it stops
+  being discovered) but the child's `skill_state` DB rows for that pack's node ids are
+  UNTOUCHED (they're a separate table, keyed by skill_id, never touched by a file delete —
+  this is the free, automatic default, not code that needs writing). **Deferred, not built
+  this wave:** a separate, harder-to-reach "also erase this child's mastery history for
+  this pack" action — flagged in the design doc §4 as a distinct escape hatch; scope-cut
+  for MVP since preserve-by-default (the safety-relevant default) is what actually matters
+  here, and a destructive erase action deserves its own careful confirm-flow design later.
+- **Settings UI:** a new "Curricula" section — installed packs listed with an "Uninstall"
+  button; available (not-yet-installed) packs listed with their licence + a "Download"
+  button; both actions show the restart note above.
+
+## R8.2 — IN_GENERIC Class 3 maths content
+
+- `curriculum/templates/IN_GENERIC/class3_maths.md` — 4 flat nodes (no prereqs):
+  `in_generic_addition`, `in_generic_subtraction`, `in_generic_times_tables`,
+  `in_generic_unit_fractions`. `country: IN`, `curriculum_standard: null` (deliberately —
+  no claimed board alignment).
+- `engine/in_generic_items.py` (new, ~15 lines): imports the 4 existing generator
+  functions named above from `itemgen.py`/`practice_items.py`, re-registers them under the
+  `in_generic_*` node ids in one `IN_GENERIC_MATHS_GENERATORS` dict — no new generator
+  logic written, matching this pack's "borrow proven, non-controversial content" posture.
+- `engine/item_sources.py`: new `"in_generic_maths"` registry entry.
+- Auto-derived subject key (via existing `derive_subject_key()`, zero code change):
+  `in_generic_class3_maths`.
+
+## Accept (both R8.1 and R8.2)
+
+- Manifest/fetch tested with a mocked HTTP layer (no real network in tests, same pattern
+  as R7.2's LLM-status mocking) — covers: available-vs-installed diffing, checksum
+  verification (both match and MISMATCH-rejects-the-write), install writes files,
+  uninstall removes the directory, mastery rows survive an uninstall.
+- `IN_GENERIC`'s 4 generators self-validate against the deterministic verifier (reused
+  functions, but re-verify under the new node ids/registry entry regardless).
+- Template passes `validate_or_raise`; no skill_id collision with any other shipped
+  template (existing cross-template guard test extends automatically).
+- Full suite + ruff green. JS/network-fetch UI pieces flagged for a maintainer hands-on
+  check (can't exercise a real download against the still-private repo from here) —
+  same ceiling as R5/R7.2's other unverifiable-in-sandbox features.
+
+---
+
 # Remainder Build Plan — v2
 
 Most of v1 shipped; **G0 is essentially validated** (model pick, safety, retrieval, E2E,

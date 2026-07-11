@@ -1,8 +1,8 @@
 ---
 title: "Mentar — Content Licence Audit (Pilot Sources)"
-version: v0.2
-status: "Pilot sources cleared; hosted-tier conflicts logged"
-last-updated: 2026-07-10
+version: v0.4
+status: "Pilot sources cleared; hosted-tier conflicts logged; NCERT (India) flagged no-derivatives"
+last-updated: 2026-07-11
 scope: "Phase-0 pilot grounding sources ONLY (W4.1). Not a full content-licensing policy."
 sources: "PHASE0.md W4.1; SPEC §18 (content stack), §24 #12; curriculum/templates/_pilot/fractions.md grounding anchors; REMAINDER_PLAN.md B1 (2026-07-05 re-point to Khan Academy)"
 ---
@@ -81,6 +81,7 @@ back or to another mounted ZIM needs no new licence work):
 | Source | Licence | Use in Mentar | Notes |
 |--------|---------|---------------|-------|
 | **ACARA — Australian Curriculum v9** (australiancurriculum.edu.au) | **CC BY 4.0** for core curriculum content (verified against the site's copyright/terms page 2026-07-10) | `curriculum/templates/AU/*.md` reference **content-description CODES only** (e.g. AC9M3N01) as alignment identifiers; all node labels, question text and generator fact tables are **Mentar-authored** — no ACARA descriptor text is reproduced. | Attribution format if descriptor text is ever quoted: "© Australian Curriculum, Assessment and Reporting Authority (ACARA) 2010 to present" + download date + modification note. ⚠️ The **National Literacy Learning Progressions are CC BY-NC 4.0** (non-commercial) and "Excluded Materials" (photos/videos/teacher resources) are view-only — do NOT pull from either. |
+| **NCERT (India) — e-content licence** (epathshala.nic.in) | ⚠️ **NO DERIVATIVES** — strictly stricter than ACARA. Two independent web searches (2026-07-11) converged on identical language: *"No person is permitted to adapt, translate, alter, summarize, or make any derivation of NCERT E-content... Any such act without the specific, written permission of NCERT will amount to infringement of copyright."* Free redistribution "as is" and non-commercial sharing are permitted; adaptation is not. **Not directly verified against the live page** — epathshala.nic.in was unreachable both from the sandbox and reported unreachable by the maintainer; treated as confirmed on the strength of two independently-converging search results, per this doc's own "no shortcut" rule (do not assume permissive just because unverifiable). | **Decision: do NOT author "NCERT-aligned" content.** `curriculum/templates/IN_GENERIC/` (not `IN_NCERT`) references NO NCERT codes, learning-outcome wording, or claimed curriculum alignment — universally-taught topics only (place value, addition, times tables, basic fractions), 100% Mentar-authored, same discipline as the evergreen `practice/` pack. | Re-verify directly against `epathshala.nic.in/pages.php?id=license&ln=en` if/when reachable, before ever attempting a real `IN_NCERT`/`IN_CBSE` pack. |
 
 ---
 
@@ -111,3 +112,4 @@ Khan content format/integration (ZIM vs Kolibri) is a separate open item — SPE
 |------|--------|
 | 2026-07-10 | v0.2 — Khan Academy promoted from §3-only (Phase-3 blocker note) to §1 (live pilot grounding source, cleared for local use) following B1's 2026-07-05 re-point. Vikidia/Simple-WP re-labelled cleared alternates, not currently mounted. Added the "no attribution UI exists yet, for any source" honesty note (D1, post-release-wave gap sweep). |
 | 2026-07-10 | v0.3 — new §2b: ACARA (Australian Curriculum v9) logged as a curriculum-ALIGNMENT source for the new `curriculum/templates/AU/` templates. Core content CC BY 4.0 (verified live against the site's copyright page); Mentar references codes only, reproduces no descriptor text; NC-licensed Literacy Progressions + view-only Excluded Materials flagged as off-limits. |
+| 2026-07-11 | v0.4 — §2b: NCERT (India) e-content licence flagged NO-DERIVATIVES (adapt/summarize/derive all prohibited without written permission) — a materially stricter posture than ACARA's CC BY 4.0. Could not verify live (epathshala.nic.in unreachable both from the sandbox and by the maintainer); treated as confirmed on two independently-converging web searches, per this doc's own no-shortcut discipline. Decision: `curriculum/templates/IN_GENERIC/` ships universally-taught, 100% Mentar-authored content with NO NCERT/CBSE branding, codes, or claimed alignment — same posture as the evergreen `practice/` pack. Re-verify directly before ever attempting a real `IN_NCERT`/`IN_CBSE` pack. |
