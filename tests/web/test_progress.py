@@ -54,7 +54,7 @@ def test_progress_shows_skill_after_answer():
 
     # Kick off the session and submit one answer so a skill_state row is written.
     c.post("/choose", data={"subject": "fractions"})
-    c.get("/")
+    c.get("/learn")
     c.post("/answer", data={"answer": "4"})
 
     r = c.get("/progress")
@@ -76,7 +76,7 @@ def test_progress_shows_concept_graph_for_pilot_curriculum():
 
     _app_mod, c = _client()
     c.post("/choose", data={"subject": "fractions"})
-    c.get("/")
+    c.get("/learn")
 
     body = c.get("/progress").get_data(as_text=True)
     assert "<svg" in body
@@ -117,11 +117,11 @@ def test_progress_switcher_filters_star_cards_to_selected_subject():
     _app_mod, c = _client()
 
     c.post("/choose", data={"subject": "fractions"})
-    c.get("/")
+    c.get("/learn")
     c.post("/answer", data={"answer": "4"})
 
     c.post("/choose", data={"subject": "au_year3_maths"})
-    c.get("/")
+    c.get("/learn")
     c.post("/answer", data={"answer": "A"})
 
     au3 = c.get("/progress?subject=au_year3_maths").get_data(as_text=True)
@@ -181,7 +181,7 @@ def test_progress_graph_labels_wrap_not_truncate_for_au_template():
 
     app_mod, c = _client()
     c.post("/choose", data={"subject": "au_year4_maths"})
-    c.get("/")
+    c.get("/learn")
 
     body = c.get("/progress").get_data(as_text=True)
     assert "<tspan" in body
@@ -206,7 +206,7 @@ def test_parent_mastery_table_appears_after_answer():
     _app_mod, c = _client()
 
     c.post("/choose", data={"subject": "fractions"})
-    c.get("/")
+    c.get("/learn")
     c.post("/answer", data={"answer": "4"})
 
     r = c.get("/parent")

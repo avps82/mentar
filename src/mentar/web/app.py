@@ -237,6 +237,26 @@ def _get_or_create_controller(learner_uuid: str, subject: str) -> SessionControl
 
 @app.route("/")
 def index():
+    """R4: picker-only, unconditionally -- no subject/controller logic here at
+    all, so a long-lived cookie with a stale subject key (a past dev test, a
+    prior day's session, or a server restart that wiped _controllers/_turn_logs
+    while the cookie survived) can never silently resume into a quiz. The
+    actual lesson view lives at /learn now."""
+    learner_uuid = session.get("learner_uuid")
+    if not learner_uuid:
+        learner_uuid = str(uuid.uuid4())
+        session["learner_uuid"] = learner_uuid
+    return render_template(
+        "subjects.html", subjects=SUBJECTS, subject_groups=SUBJECT_GROUPS,
+        subjects_progress=_subjects_progress(learner_uuid),
+    )
+
+
+@app.route("/learn")
+def learn():
+    """R4: everything index() used to do AFTER the subject-chosen check,
+    moved here unchanged. Reached only via /choose, /answer's non-htmx
+    redirect, or /parent/ack's resume redirect -- never a bare picker miss."""
     learner_uuid = session.get("learner_uuid")
     if not learner_uuid:
         learner_uuid = str(uuid.uuid4())
@@ -244,11 +264,8 @@ def index():
 
     subject = session.get("subject")
     if subject not in SUBJECTS:
-        # No topic chosen yet — show the picker.
-        return render_template(
-            "subjects.html", subjects=SUBJECTS, subject_groups=SUBJECT_GROUPS,
-            subjects_progress=_subjects_progress(learner_uuid),
-        )
+        # No topic chosen (or a stale cookie) -- the picker is the only safe place to send this.
+        return redirect(url_for("index"))
 
     ctrl = _get_or_create_controller(learner_uuid, subject)
 
@@ -288,7 +305,7 @@ def choose():
         subject = request.form.get("subject")
         if subject in SUBJECTS:
             session["subject"] = subject
-        return redirect(url_for("index"))
+        return redirect(url_for("learn"))
     return render_template(
         "subjects.html", subjects=SUBJECTS, subject_groups=SUBJECT_GROUPS,
         subjects_progress=_subjects_progress(session.get("learner_uuid", "")),
@@ -337,7 +354,7 @@ def answer():
     # split + U-32 markdown-lite), so the two never visually disagree.
     if hx:
         return _render_turn_fragment(learner_uuid, ctrl)
-    return redirect(url_for("index"))
+    return redirect(url_for("learn"))
 
 
 @app.route("/done")
@@ -628,7 +645,7 @@ def parent_ack():
         _last_messages[learner_uuid] = result.message or result.text
         if result.done:
             return render_template("done.html", message=result.text or "Session ended.")
-    return redirect(url_for("index"))
+    return redirect(url_for("learn"))
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────

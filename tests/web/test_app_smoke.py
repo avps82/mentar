@@ -45,7 +45,7 @@ def test_trust_strip_on_child_and_parent_screens():
 
     app_mod, c = _client()  # noqa: F841
     c.post("/choose", data={"subject": "fractions"})
-    learner_html = c.get("/").get_data(as_text=True)
+    learner_html = c.get("/learn").get_data(as_text=True)
     parent_html = c.get("/parent").get_data(as_text=True)
     assert "Runs entirely on this device" in learner_html
     assert "Runs entirely on this device" in parent_html
@@ -67,14 +67,14 @@ def test_web_learner_flow():
 
     # Choose a subject, then a question is presented.
     c.post("/choose", data={"subject": "fractions"})
-    r = c.get("/")
+    r = c.get("/learn")
     assert r.status_code == 200
     assert len(r.get_data(as_text=True)) > 100          # a question rendered
 
     r = c.post("/answer", data={"answer": "4"})
     assert r.status_code in (200, 302)                   # advanced (redirect or done page)
 
-    assert c.get("/").status_code == 200
+    assert c.get("/learn").status_code == 200
     assert c.get("/parent").status_code == 200           # parent view renders
 
     import sqlite3
@@ -99,7 +99,7 @@ def test_parent_view_reads_db_and_persists_ack():
 
     # A normal turn so the transcript + a scored response persist to the DB.
     c.post("/choose", data={"subject": "fractions"})
-    c.get("/")
+    c.get("/learn")
     c.post("/answer", data={"answer": "4"})
 
     db = sqlite3.connect(dbp)
@@ -120,12 +120,20 @@ def test_parent_view_reads_db_and_persists_ack():
     assert "<a " not in frozen_html                  # U-60: zero navigation on the frozen screen
     assert "theme-toggle" not in frozen_html          # U-60: zero chrome, not just zero nav
 
-    # Re-visiting / while still frozen (not just the triggering turn) also
-    # lands on /frozen, never on the last tutoring question or /parent.
-    r2 = c.get("/", follow_redirects=True)
+    # R4: / is picker-only, unconditionally -- re-visiting it while frozen
+    # never leaks the trigger text or an ack control either.
+    r2 = c.get("/")
     r2_html = r2.get_data(as_text=True)
     assert "I want to die" not in r2_html
     assert "confirm" not in r2_html.lower()
+
+    # /learn (the actual former quiz route) still lands on /frozen while
+    # still frozen (not just the triggering turn), never on the last
+    # tutoring question or /parent.
+    r3 = c.get("/learn", follow_redirects=True)
+    r3_html = r3.get_data(as_text=True)
+    assert "I want to die" not in r3_html
+    assert "confirm" not in r3_html.lower()
 
     db = sqlite3.connect(dbp)
     row = db.execute(
@@ -170,7 +178,7 @@ def test_learner_id_survives_server_restart():
     dbp = os.environ["MENTAR_DB_PATH"]  # fixed for both "processes" below
 
     c1.post("/choose", data={"subject": "fractions"})
-    c1.get("/")
+    c1.get("/learn")
     c1.post("/answer", data={"answer": "4"})  # persists a learner + skill_state row
 
     db = sqlite3.connect(dbp)
@@ -191,7 +199,7 @@ def test_learner_id_survives_server_restart():
     c2.set_cookie(domain="localhost", key="session", value=session_cookie.value)
 
     c2.post("/choose", data={"subject": "fractions"})
-    c2.get("/")
+    c2.get("/learn")
     c2.post("/answer", data={"answer": "4"})
 
     db = sqlite3.connect(dbp)
@@ -218,7 +226,7 @@ def test_answer_hx_request_returns_question_fragment():
 
     app_mod, c = _client()  # noqa: F841
     c.post("/choose", data={"subject": "fractions"})
-    c.get("/")
+    c.get("/learn")
 
     r = c.post(
         "/answer",
@@ -245,7 +253,7 @@ def test_answer_hx_fragment_escapes_html():
 
     app_mod, c = _client()
     c.post("/choose", data={"subject": "fractions"})
-    c.get("/")
+    c.get("/learn")
     with c.session_transaction() as sess:
         learner_uuid = sess["learner_uuid"]
     ctrl = app_mod._controllers[learner_uuid]
@@ -282,7 +290,7 @@ def test_structured_turn_renders_message_and_question_separately():
 
     app_mod, c = _client()
     c.post("/choose", data={"subject": "fractions"})
-    c.get("/")
+    c.get("/learn")
     with c.session_transaction() as sess:
         learner_uuid = sess["learner_uuid"]
     ctrl = app_mod._controllers[learner_uuid]
@@ -305,7 +313,7 @@ def test_structured_turn_renders_message_and_question_separately():
     assert "Half means sharing" not in q_text
 
     # Full-page GET / agrees with the fragment (same structured source).
-    html = c.get("/").get_data(as_text=True)
+    html = c.get("/learn").get_data(as_text=True)
     assert "Half means sharing" in html.split('<div class="feedback')[1].split("</div>")[0]
     assert "What is 1/2 of 8?" in html.split('<div class="question-text">')[1].split("</div>")[0]
 
@@ -322,7 +330,7 @@ def test_mc4_choices_render_as_radio_buttons():
 
     app_mod, c = _client()
     c.post("/choose", data={"subject": "science"})   # science = mc4 generators
-    html = c.get("/").get_data(as_text=True)
+    html = c.get("/learn").get_data(as_text=True)
     assert 'type="radio"' in html
     assert 'name="answer" value="A"' in html
     assert 'value="D"' in html
@@ -337,7 +345,7 @@ def test_mc4_choices_render_as_radio_buttons():
     # the widget when it's a fraction question.
     c2 = app_mod.app.test_client()
     c2.post("/choose", data={"subject": "fractions"})
-    body = c2.get("/").get_data(as_text=True)
+    body = c2.get("/learn").get_data(as_text=True)
     with c2.session_transaction() as sess:
         learner_uuid = sess["learner_uuid"]
     ctrl = app_mod._controllers[learner_uuid]
@@ -360,7 +368,7 @@ def test_mc4_question_box_shows_stem_only_not_options_thrice():
 
     app_mod, c = _client()
     c.post("/choose", data={"subject": "science"})
-    html = c.get("/").get_data(as_text=True)
+    html = c.get("/learn").get_data(as_text=True)
     q_text = html.split('<div class="question-text">')[1].split("</div>")[0]
 
     assert "A)" not in q_text and "B)" not in q_text
@@ -390,7 +398,7 @@ def test_fraction_inputs_compose_server_side():
 
     app_mod, c = _client()
     c.post("/choose", data={"subject": "fractions"})
-    c.get("/")
+    c.get("/learn")
     with c.session_transaction() as sess:
         learner_uuid = sess["learner_uuid"]
     ctrl = app_mod._controllers[learner_uuid]
@@ -436,7 +444,7 @@ def test_markdown_lite_renders_bold_italic_and_bullets():
     from mentar.dialogue.controller import TurnResult
 
     c.post("/choose", data={"subject": "fractions"})
-    c.get("/")
+    c.get("/learn")
     with c.session_transaction() as sess:
         learner_uuid = sess["learner_uuid"]
     ctrl = app_mod._controllers[learner_uuid]
@@ -461,7 +469,7 @@ def test_answer_hx_request_on_escalation_sends_hx_redirect():
 
     app_mod, c = _client()  # noqa: F841
     c.post("/choose", data={"subject": "fractions"})
-    c.get("/")
+    c.get("/learn")
 
     r = c.post(
         "/answer",
@@ -486,7 +494,7 @@ def test_done_route_shows_final_message_and_is_directly_navigable():
 
     app_mod, c = _client()
     c.post("/choose", data={"subject": "fractions"})
-    c.get("/")
+    c.get("/learn")
 
     # Force a done outcome without depending on real lesson-completion length:
     # stub the controller's step() to return a done TurnResult directly.
@@ -524,7 +532,7 @@ def test_done_recap_shows_questions_and_skills():
 
     app_mod, c = _client()
     c.post("/choose", data={"subject": "fractions"})
-    c.get("/")
+    c.get("/learn")
     c.post("/answer", data={"answer": "4"})  # a real scored response first
 
     with c.session_transaction() as sess:
@@ -553,7 +561,7 @@ def test_parent_view_shows_degraded_banner_when_fallback_log_present():
     dbp = os.environ["MENTAR_DB_PATH"]
 
     c.post("/choose", data={"subject": "fractions"})
-    c.get("/")
+    c.get("/learn")
 
     # No fallback file yet -> no banner.
     assert "Durable logging degraded" not in c.get("/parent").get_data(as_text=True)
@@ -563,6 +571,105 @@ def test_parent_view_shows_degraded_banner_when_fallback_log_present():
                          '"severity": "critical", "verbatim_text": "x"}\n')
 
     assert "Durable logging degraded" in c.get("/parent").get_data(as_text=True)
+
+
+def test_r4_stale_cookie_index_shows_picker_never_a_question():
+    """R4 regression: a long-lived cookie with session["subject"] ALREADY set
+    to a valid key (simulating a stale cookie from a past dev test, a prior
+    day's session, or a server restart that wiped _controllers/_turn_logs
+    while the cookie survived) used to make GET / silently resume straight
+    into a quiz question. / must now ALWAYS show the picker, unconditionally."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+
+    app_mod, c = _client()
+    c.post("/choose", data={"subject": "fractions"})
+    c.get("/learn")  # starts a real session, subject now set in the cookie
+
+    r = c.get("/")
+    assert r.status_code == 200
+    body = r.get_data(as_text=True)
+    assert "Choose a topic" in body or "learn today" in body
+    assert '<div class="question-text">' not in body  # never a quiz question
+
+
+def test_r4_learn_route_renders_quiz_with_subject_chosen():
+    """R4: GET /learn (the relocated former index() body) still renders the
+    quiz once a subject is chosen -- existing behaviour, just at a new URL."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+
+    app_mod, c = _client()
+    c.post("/choose", data={"subject": "fractions"})
+    r = c.get("/learn")
+    assert r.status_code == 200
+    body = r.get_data(as_text=True)
+    assert '<div class="question-text">' in body
+
+
+def test_r4_choose_post_redirects_to_learn():
+    """R4: /choose's POST redirect target moved from index to learn."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+
+    app_mod, c = _client()
+    r = c.post("/choose", data={"subject": "fractions"})
+    assert r.status_code == 302
+    assert r.headers["Location"].endswith("/learn")
+
+
+def test_r4_no_js_answer_loop_stays_on_learn_never_bounces_to_picker():
+    """R4: the JS-disabled (no HX-Request header) answer loop must keep
+    redirecting through /learn after every submitted answer, never bounce
+    back to the picker mid-quiz."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+
+    app_mod, c = _client()
+    c.post("/choose", data={"subject": "fractions"})
+    c.get("/learn")
+
+    for _ in range(3):
+        r = c.post("/answer", data={"answer": "4"})
+        assert r.status_code == 302
+        # Either advances to /learn (next question) or completes to /done --
+        # never back to / (the picker).
+        assert r.headers["Location"].endswith("/learn") or r.headers["Location"].endswith("/done")
+        if r.headers["Location"].endswith("/done"):
+            break
+        c.get(r.headers["Location"])  # follow, to keep answering
+
+
+def test_r4_brand_link_from_any_screen_lands_on_picker():
+    """R4 follow-up (maintainer, 2026-07-11): clicking the Mentar brand icon
+    from ANY screen, including mid-quiz, must land on the picker. The brand
+    link in _base.html already points at "/" -- R4 makes "/" picker-only, so
+    this needs no separate code change, just this explicit proof."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+
+    app_mod, c = _client()
+    c.post("/choose", data={"subject": "fractions"})
+    learn_html = c.get("/learn").get_data(as_text=True)
+    assert '<a href="/" class="brand">' in learn_html  # the brand link mid-quiz
+
+    picker_html = c.get("/").get_data(as_text=True)
+    assert "Choose a topic" in picker_html or "learn today" in picker_html
 
 
 if __name__ == "__main__":
@@ -594,3 +701,13 @@ if __name__ == "__main__":
     print("  ✓ test_parent_view_shows_degraded_banner_when_fallback_log_present")
     test_learner_id_survives_server_restart()
     print("  ✓ test_learner_id_survives_server_restart")
+    test_r4_stale_cookie_index_shows_picker_never_a_question()
+    print("  ✓ test_r4_stale_cookie_index_shows_picker_never_a_question")
+    test_r4_learn_route_renders_quiz_with_subject_chosen()
+    print("  ✓ test_r4_learn_route_renders_quiz_with_subject_chosen")
+    test_r4_choose_post_redirects_to_learn()
+    print("  ✓ test_r4_choose_post_redirects_to_learn")
+    test_r4_no_js_answer_loop_stays_on_learn_never_bounces_to_picker()
+    print("  ✓ test_r4_no_js_answer_loop_stays_on_learn_never_bounces_to_picker")
+    test_r4_brand_link_from_any_screen_lands_on_picker()
+    print("  ✓ test_r4_brand_link_from_any_screen_lands_on_picker")
