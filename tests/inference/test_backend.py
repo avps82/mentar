@@ -212,6 +212,36 @@ def test_cloud_backend_not_implemented():
     assert raised
 
 
+def test_resolve_http_endpoint_follows_the_configured_backend():
+    """R7.2 fix: resolve_http_endpoint(cfg) must return the SAME endpoint
+    make_llm_call(cfg) would hit -- the settings page's reachability check
+    tests this, so the original bug (checking env-default localhost:11434
+    while the yaml pointed at a remote proxy) can't reappear."""
+    vllm_cfg = {"backend": "vllm",
+                "vllm": {"base_url": "http://192.168.xx.xxx:4000/v1",
+                         "api_key": "tok", "model": "gemma2:9b"}}
+    ep = B.resolve_http_endpoint(vllm_cfg)
+    assert ep == {"base_url": "http://192.168.xx.xxx:4000/v1",
+                  "api_key": "tok", "model": "gemma2:9b"}
+
+    # Ollama: bare base gets /v1 appended, same as make_llm_call's own resolution.
+    ollama_cfg = {"backend": "ollama", "ollama": {"base_url": "http://localhost:11434",
+                                                  "model": "m"}}
+    assert B.resolve_http_endpoint(ollama_cfg)["base_url"] == "http://localhost:11434/v1"
+
+    # Missing block -> backend defaults (llamacpp server), not a crash.
+    assert B.resolve_http_endpoint({"backend": "llamacpp"})["base_url"] == "http://localhost:8080/v1"
+
+
+def test_resolve_http_endpoint_returns_none_when_no_http_endpoint_exists():
+    """In-process llamacpp and unknown/cloud backends have no HTTP endpoint to
+    probe -- None, so the status route reports 'nothing to check' honestly."""
+    in_proc = {"backend": "llamacpp", "llamacpp": {"mode": "in_process", "model_path": "x.gguf"}}
+    assert B.resolve_http_endpoint(in_proc) is None
+    assert B.resolve_http_endpoint({"backend": "claude", "claude": {"model": "x"}}) is None
+    assert B.resolve_http_endpoint({"backend": "vllm", "vllm": "not-a-mapping"}) is None
+
+
 # ── Inline smoke runner ───────────────────────────────────────────────────────
 
 if __name__ == "__main__":

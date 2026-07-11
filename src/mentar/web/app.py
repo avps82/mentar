@@ -42,7 +42,7 @@ from mentar.engine.curriculum import (
 from mentar.engine.item_sources import build_registry
 from mentar.engine.itembank import load_item_bank
 from mentar.engine.itemgen import CompositeItemSource, ItemGenerator
-from mentar.inference import load_inference_config, make_llm_call
+from mentar.inference import load_inference_config, make_llm_call, resolve_http_endpoint
 from mentar.tools.validate_template import validate_or_raise
 from mentar.web.answer_modes import mode_for
 
@@ -170,6 +170,10 @@ if _INFERENCE_CFG is None:
         "vllm": {"base_url": LLM_BASE_URL, "api_key": LLM_CRED, "model": LLM_MODEL},
     }
 _GROUNDING_CFG: dict = _INFERENCE_CFG.get("grounding", {})  # ZIM reader config (W7)
+# The endpoint the app will ACTUALLY call (yaml or env fallback, local or remote) --
+# the settings page's reachability check must test this, never a parallel default.
+# None = in-process llamacpp (no HTTP endpoint to probe).
+_LLM_STATUS_ENDPOINT = resolve_http_endpoint(_INFERENCE_CFG)
 
 # Built lazily: an in-process llama.cpp backend loads the GGUF on construction, so we
 # defer it until the first turn (keeps `import mentar.web.app` cheap for tests/CLI reuse).
@@ -422,23 +426,40 @@ def settings():
 
 @app.route("/settings/llm-status")
 def settings_llm_status():
-    """R5 follow-up: a short-timeout reachability check for the local LLM
-    backend, distinct from the app's own generation path (which uses a much
-    longer timeout) -- so a genuinely unreachable local model can't hang the
-    settings page while the parent tries to find out if it's even running."""
+    """R7.2: a short-timeout reachability check against the SAME endpoint the
+    app's own LLM calls resolve to (_LLM_STATUS_ENDPOINT, from
+    config/inference.yaml or the env fallback -- local or remote, one config,
+    one truth). Distinct from the generation path's much longer timeout so a
+    genuinely unreachable backend can't hang the settings page."""
     import time
 
     from openai import OpenAI
 
+    if _LLM_STATUS_ENDPOINT is None:
+        # In-process llamacpp (or an unprobeable backend): there is no HTTP
+        # endpoint to check -- report that honestly instead of green/red.
+        return jsonify({
+            "ok": None,
+            "model": None,
+            "base_url": None,
+            "latency_ms": 0,
+            "error": "In-process model -- no HTTP endpoint to check.",
+        })
+
+    endpoint = _LLM_STATUS_ENDPOINT
     start = time.monotonic()
     try:
-        client = OpenAI(base_url=LLM_BASE_URL, api_key=LLM_CRED, timeout=5.0)
+        client = OpenAI(
+            base_url=endpoint["base_url"],
+            api_key=endpoint["api_key"],
+            timeout=5.0,
+        )
         client.models.list()
         latency_ms = round((time.monotonic() - start) * 1000)
         return jsonify({
             "ok": True,
-            "model": LLM_MODEL,
-            "base_url": LLM_BASE_URL,
+            "model": endpoint["model"],
+            "base_url": endpoint["base_url"],
             "latency_ms": latency_ms,
             "error": None,
         })
@@ -446,8 +467,8 @@ def settings_llm_status():
         latency_ms = round((time.monotonic() - start) * 1000)
         return jsonify({
             "ok": False,
-            "model": LLM_MODEL,
-            "base_url": LLM_BASE_URL,
+            "model": endpoint["model"],
+            "base_url": endpoint["base_url"],
             "latency_ms": latency_ms,
             "error": str(exc),
         })

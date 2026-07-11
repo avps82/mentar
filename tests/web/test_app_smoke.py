@@ -746,7 +746,11 @@ def test_r5_footer_settings_link_on_learner_and_progress_not_frozen_or_parent():
 
 def test_llm_status_reports_ok_when_backend_reachable():
     """The /settings/llm-status endpoint is a short-timeout reachability
-    check -- mocked here (no real network in tests) to cover both outcomes."""
+    check -- mocked here (no real network in tests) to cover both outcomes.
+    It must test the endpoint the app ACTUALLY resolved (config/inference.yaml
+    or the env fallback -- app_mod._LLM_STATUS_ENDPOINT), never the raw
+    MENTAR_LLM_* env defaults (the original bug: with a yaml present it pinged
+    localhost:11434 while the app was really configured for a remote proxy)."""
     try:
         import flask  # noqa: F401
     except ImportError:
@@ -755,6 +759,7 @@ def test_llm_status_reports_ok_when_backend_reachable():
     from unittest.mock import MagicMock, patch
 
     app_mod, c = _client()
+    assert app_mod._LLM_STATUS_ENDPOINT is not None  # sandbox/CI configs are HTTP-backed
     with patch("openai.OpenAI") as mock_openai_cls:
         mock_client = MagicMock()
         mock_openai_cls.return_value = mock_client
@@ -764,10 +769,31 @@ def test_llm_status_reports_ok_when_backend_reachable():
         assert r.status_code == 200
         data = r.get_json()
         assert data["ok"] is True
-        assert data["model"] == app_mod.LLM_MODEL
-        assert data["base_url"] == app_mod.LLM_BASE_URL
+        assert data["model"] == app_mod._LLM_STATUS_ENDPOINT["model"]
+        assert data["base_url"] == app_mod._LLM_STATUS_ENDPOINT["base_url"]
         assert data["error"] is None
         assert isinstance(data["latency_ms"], int)
+        # The client was constructed against the RESOLVED endpoint.
+        assert mock_openai_cls.call_args.kwargs["base_url"] == app_mod._LLM_STATUS_ENDPOINT["base_url"]
+
+
+def test_llm_status_reports_info_for_in_process_backend():
+    """In-process llamacpp has no HTTP endpoint -- the check must say so
+    honestly (ok: null) instead of a false green/red."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+    from unittest.mock import patch
+
+    app_mod, c = _client()
+    with patch.object(app_mod, "_LLM_STATUS_ENDPOINT", None):
+        r = c.get("/settings/llm-status")
+        assert r.status_code == 200
+        data = r.get_json()
+        assert data["ok"] is None
+        assert "no HTTP endpoint" in data["error"]
 
 
 def test_llm_status_reports_not_ok_when_backend_unreachable():
@@ -837,3 +863,5 @@ if __name__ == "__main__":
     print("  ✓ test_llm_status_reports_ok_when_backend_reachable")
     test_llm_status_reports_not_ok_when_backend_unreachable()
     print("  ✓ test_llm_status_reports_not_ok_when_backend_unreachable")
+    test_llm_status_reports_info_for_in_process_backend()
+    print("  ✓ test_llm_status_reports_info_for_in_process_backend")

@@ -160,6 +160,24 @@ def _resolve_http(backend: str, block: dict) -> dict:
     }
 
 
+def resolve_http_endpoint(cfg: dict) -> dict | None:
+    """{base_url, api_key, model} for the HTTP endpoint ``make_llm_call(cfg)``
+    would actually hit -- ONE source of truth for "which server is my model
+    on", whether the config points local or remote (used by the web settings
+    page's reachability check, so it always tests the endpoint the app really
+    calls, never a parallel set of defaults). Returns None for the in-process
+    llamacpp mode (no HTTP endpoint to probe) and for unknown/cloud backends."""
+    backend = (cfg.get("backend") or "llamacpp").lower()
+    block = cfg.get(backend) or {}
+    if not isinstance(block, dict):
+        return None
+    if backend == "llamacpp" and block.get("mode", "server") == "in_process":
+        return None
+    if backend in ("llamacpp", "vllm", "ollama"):
+        return _resolve_http(backend, block)
+    return None
+
+
 def _gen_params(cfg: dict) -> dict:
     gen = cfg.get("generation") or {}
     return {

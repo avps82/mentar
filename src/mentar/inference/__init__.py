@@ -10,6 +10,7 @@ from mentar.inference.backend import (
     LLMCall,
     load_inference_config,
     make_llm_call,
+    resolve_http_endpoint,
 )
 
-__all__ = ["LLMCall", "load_inference_config", "make_llm_call"]
+__all__ = ["LLMCall", "load_inference_config", "make_llm_call", "resolve_http_endpoint"]

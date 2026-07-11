@@ -21,6 +21,9 @@
             .then(function (data) {
                 if (data.ok) {
                     statusLine.textContent = "🟢 Connected (" + data.model + ", " + data.latency_ms + "ms)";
+                } else if (data.ok === null) {
+                    // In-process model: nothing to probe over HTTP.
+                    statusLine.textContent = "ℹ️ " + data.error;
                 } else {
                     statusLine.textContent = "🔴 Not reachable at " + data.base_url + " (" + data.error + ")";
                 }
