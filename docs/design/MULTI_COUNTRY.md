@@ -1,6 +1,6 @@
 ---
 title: "Multi-Country Curriculum Platform — Design"
-version: v0.1
+version: v0.2
 status: "Design draft — NOT ratified. No code changes implied by this doc until maintainer sign-off."
 last-updated: 2026-07-11
 owner: Opus (drafted) / maintainer (ratification pending)
@@ -26,8 +26,9 @@ mostly hold up:
 
 **Already country-agnostic (built for R3.1, reused as-is):**
 - `curriculum/templates/<DIR>/*.md` directory-as-namespace convention
-  (`engine/curriculum.py::derive_subject_key`) — any `<COUNTRY>/` directory auto-prefixes its
-  templates' session keys. `_pilot/` is the one deliberate exception (legacy, unprefixed).
+  (`engine/curriculum.py::derive_subject_key`) — any directory auto-prefixes its templates'
+  session keys. `_pilot/` is the one deliberate exception (legacy, unprefixed). §2/§2b refine
+  this to `country_authority` naming plus a year sub-folder for content versioning.
 - Front-matter catalog fields (`label`, `icon`, `description`, `year_level`, `subject`) — the
   web picker already renders off these, generically, for every template regardless of country.
 - `item_source:` naming + `engine/item_sources.py`'s registry — a template names its item
@@ -70,14 +71,66 @@ shape survive contact, or does something break?
 | **US Common Core** | "Grade 3", "Grade 4"... | Highly structured: `CCSS.MATH.CONTENT.3.NBT.A.1` | `year_level: "Grade 3"` (free text, already works); code goes in the same trailing-comment position ACARA codes use today | None — best-case fit. Codes are the most code-shaped of any system here, so if this doesn't force a change, nothing will. |
 | **UK National Curriculum** | "Key Stage 2, Year 4" — a two-level hierarchy, not a flat year number | DfE reference codes exist but are less universally quoted than CCSS/ACARA | `year_level: "Key Stage 2, Year 4"` — free text absorbs the two-level naming fine, since nothing parses `year_level` structurally today (it's a display string) | **Confirms** `year_level` must stay a free-text display field forever, never parsed into an integer or split into (stage, year) — some countries genuinely have compound level names. |
 | **Singapore MOE** | "Primary 3" | No public standards-code scheme comparable to CCSS/ACARA — syllabus documents are prose, not enumerated codes | `curriculum_standard: "MOE Mathematics Syllabus (Primary)"` (free text); simply omit the per-node code comment | **Confirms** the content-description code must be OPTIONAL per node, not a required field with a fallback placeholder — some countries structurally don't have one, and inventing a fake code would be worse than having none. |
-| **India NCERT/CBSE** | "Class 3" (NCERT) — but state boards and CBSE can diverge on pacing/scope for the same class number | NCERT has learning outcome codes; CBSE syllabi reference NCERT but aren't identical | `country: IN`, but this is the case that breaks a hidden assumption | **Confirms** "one curriculum authority per country" cannot be assumed — India needs the same directory-namespace pattern to key on *board*, not just country (e.g. `templates/IN-NCERT/`, `templates/IN-CBSE/` as distinct namespaces under the same country), same way `_pilot` already coexists with `AU` today. This is a naming-convention decision, not a schema change: the existing `<DIR>/*.md` mechanism already supports arbitrary directory names: no code change needed, just don't assume `country` alone is a unique key when picking a directory name. |
+| **India NCERT/CBSE** | "Class 3" (NCERT) — but state boards and CBSE can diverge on pacing/scope for the same class number | NCERT has learning outcome codes; CBSE syllabi reference NCERT but aren't identical | `country: IN`, but this is the case that breaks a hidden assumption | **Confirms** "one curriculum authority per country" cannot be assumed — India needs the same directory-namespace pattern to key on *country + authority together*, not country alone (e.g. `templates/in_ncert/`, `templates/in_cbse/` as distinct namespaces under the same country), same way `_pilot` already coexists with `AU` today. This is a naming-convention decision, not a schema change: the existing `<DIR>/*.md` mechanism already supports arbitrary directory names: no code change needed, just don't assume `country` alone is a unique key when picking a directory name. |
 
 **Net result of the stress test:** the node schema requires **zero changes**. Two working
 conventions get *confirmed* (not invented): (a) `year_level` and `curriculum_standard` are
 always free-text display strings, never parsed; (b) per-node codes are optional, absent
-entirely for Singapore-shaped systems. One convention gets *added*: (c) the directory
-namespace key is "authority", not "country" — a country with multiple curriculum bodies
-gets multiple sibling directories, exactly like `_pilot` and `AU` already coexist.
+entirely for Singapore-shaped systems. Two conventions get *added*: (c) the directory
+namespace key is `country_authority` (e.g. `au_acara`, `in_ncert`, `in_cbse`), not country
+alone — clean even for single-authority countries, groups by country in a directory
+listing, and a country with multiple curriculum bodies gets multiple sibling directories
+the same way `_pilot` and `AU` already coexist; (d) each authority directory gets a
+publication-**year sub-folder** (§2b) so a curriculum revision never disrupts a family
+already partway through the previous version.
+
+---
+
+## 2b. Curriculum-year versioning — a sub-folder per publication year (maintainer ask, 2026-07-11)
+
+Curriculum authorities revise their content periodically (ACARA v9 today, a v10 someday;
+Common Core has had multiple revisions; NCERT/CBSE syllabi get periodic refreshes). The
+platform should always serve the **latest** version by default, without either (a) silently
+mutating an in-progress child's session onto different content mid-year, or (b) requiring a
+manual code change every time an authority publishes an update.
+
+**Layout:** `curriculum/templates/<country_authority>/<year>/*.md` — e.g.
+`curriculum/templates/au_acara/2023/year3_maths.md`. The year is the CURRICULUM
+**publication** year (when this revision of the standard was issued), not a school year and
+not the content-authoring date — same idea as `khanacademy_en_all_2023-03.zim`'s naming.
+
+**"Latest" resolution — an explicit pointer file, not a symlink or auto-detected max().**
+`curriculum/templates/au_acara/LATEST` contains a single line, the year to serve by default
+(e.g. `2023`). Rejected alternatives and why:
+- A symlink (`latest -> 2023/`) is simplest on paper but is genuine cross-platform friction
+  for an app that runs on a parent's own Windows/Mac/Linux machine, and this project already
+  avoids symlinks elsewhere for exactly that reason.
+- Auto-detecting the highest-numbered year folder present means a half-authored future-year
+  folder gets served the instant it's added to the repo, before anyone's reviewed it — risky
+  for kid-facing content, and silent (no diff shows the behaviour change).
+The pointer file is a one-line, diff-reviewable PR when an authority publishes an update
+("bump AU/ACARA to 2025") — same diff-reviewable spirit as the rest of this schema (W3.1).
+
+**Critical: the year must NOT leak into the skill_id/session-key namespace.**
+`derive_subject_key()` today prefixes by the *immediate parent directory* of the `.md` file
+— if the year folder becomes that immediate parent, keys would become `2023_place_value`
+instead of `au_acara_place_value`, and worse, if the year DID leak through, bumping the
+`LATEST` pointer would silently orphan every child's `skill_state` mastery history for that
+country (rows key on `skill_id`, which would now be pointing at a different, dated prefix).
+`derive_subject_key()` needs a small rework to resolve the **authority** directory (one level
+above the year folder), not simply `path.parent.name`, so the year folder stays a pure
+authoring/versioning device — invisible to everything at runtime. A genuinely restructured
+curriculum (not just a refreshed edition of the same standard) is a different, deliberate
+content decision that SHOULD get new node ids on purpose — that's an authoring choice, not
+something a year-folder bump should trigger by accident.
+
+**Open question this raises (needs a maintainer decision, not decided here):** when
+`LATEST` is bumped mid-year, does a child who is ALREADY partway through the previous
+revision (a) keep progressing on the version they started on until they finish or a parent
+explicitly opts them into the new one, or (b) get moved onto the new `LATEST` automatically
+on their next session? (a) is safer (no surprise mid-topic content swap) but means the app
+needs to remember which year a learner's *in-progress* work is pinned to, not just read
+`LATEST` fresh every time — a small but real piece of state to design if this gets built.
 
 ---
 
@@ -222,8 +275,15 @@ equals the YAML label ("Place value to 999") — never "Au3 Place Value", never 
 **Decided by this doc (ready to build/act on once ratified):**
 - Schema needs no changes; `year_level`/`curriculum_standard` stay free-text forever, codes
   stay optional per-node comments.
-- Directory namespace = "authority", not "country" — multi-authority countries (India) get
-  sibling directories, same mechanism `_pilot`/`AU` already use.
+- Directory namespace = `country_authority` (e.g. `au_acara`, `in_ncert`, `in_cbse`) — clean
+  even for single-authority countries, groups by country, multi-authority countries (India)
+  get sibling directories, same mechanism `_pilot`/`AU` already use.
+- A publication-year sub-folder per authority (§2b), resolved via an explicit `LATEST`
+  pointer file (not a symlink, not auto-max-detection) — a curriculum revision becomes a
+  one-line reviewable PR, never an implicit behaviour change. The year must stay OUT of the
+  skill_id/session-key namespace (`derive_subject_key()` needs a small rework to resolve the
+  authority directory, not the immediate parent) so a revision bump can never silently orphan
+  a child's mastery history.
 - A licence-onboarding checklist to add to `CONTENT_LICENSES.md` before any second country's
   content is authored.
 - Content-download's shape (manifest + static release hosting + pack-is-data-not-code +
@@ -238,3 +298,8 @@ equals the YAML label ("Place value to 999") — never "Au3 Place Value", never 
   paper; none is prioritized here — that's a product call, not a schema question).
 - Whether the India multi-authority case is common enough elsewhere to worry about now, or
   whether it's fine to solve only when a second multi-authority country actually shows up.
+- **New (§2b): when `LATEST` is bumped mid-year, does an already-in-progress child stay
+  pinned to the version they started on until they finish (safer, needs a small piece of new
+  state to remember which year a learner is on), or move onto the new `LATEST` automatically
+  on their next session (simpler, but a surprise mid-topic content swap)?** Not decided here
+  — a product/safety call, not a schema question.
