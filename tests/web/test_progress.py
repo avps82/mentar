@@ -218,3 +218,41 @@ def test_parent_mastery_table_appears_after_answer():
     assert "Session summary" in body
     # At least one skill_id row inside the table (check for % sign from pct column).
     assert "%" in body
+
+
+def test_graph_layout_au_year3_bottom_row_no_longer_clipped():
+    """R6.1 regression: _compute_graph_layout's y-position scale and its
+    returned viewBox height used to be two uncoupled scales. For the AU Year 3
+    template (3 levels), the bug put the bottom row at y=83.3 while height
+    was only 78 -- clipped off-screen. Reproduce the exact before/after."""
+    from mentar.web.app import _SUBJECT_CURRICULA, _compute_graph_layout
+
+    curriculum = _SUBJECT_CURRICULA["au_year3_maths"]
+    graph = _compute_graph_layout(curriculum, {})
+
+    # Old buggy formula for reference (must NOT match the new height).
+    old_height = 78
+    bottom_row_nodes = [n for n in graph["nodes"] if n["y"] == max(n2["y"] for n2 in graph["nodes"])]
+    assert bottom_row_nodes, "expected at least one bottom-row node"
+    for node in bottom_row_nodes:
+        assert node["y"] < old_height, "bottom row must sit above the OLD (buggy) height too now"
+    assert graph["height"] > old_height  # the new height has real padding, not the bare old value
+
+
+def test_graph_layout_bottom_row_within_viewbox_for_all_templates():
+    """R6.1: for every shipped template, the bottom-most node's y + circle
+    radius (4, per progress.html's <circle r="4">) + full wrapped-label
+    extent (up to 3 lines: 8 + (lines-1)*4, per progress.html's <text
+    y="{{ n.y + 8 }}"> / <tspan dy="4">) must stay <= the returned height."""
+    from mentar.web.app import _SUBJECT_CURRICULA, _compute_graph_layout
+
+    RADIUS = 4
+    for subject_key, curriculum in _SUBJECT_CURRICULA.items():
+        graph = _compute_graph_layout(curriculum, {})
+        for node in graph["nodes"]:
+            label_extent = 8 + (len(node["label_lines"]) - 1) * 4
+            bottom_edge = node["y"] + RADIUS + label_extent
+            assert bottom_edge <= graph["height"], (
+                f"{subject_key}: node {node['id']!r} bottom edge {bottom_edge} "
+                f"exceeds viewBox height {graph['height']}"
+            )

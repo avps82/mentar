@@ -490,7 +490,9 @@ def _compute_graph_layout(curriculum: dict, node_pct: dict[str, int]) -> dict:
         row.sort()
 
     n_levels = max(by_level, default=0) + 1
-    row_height = 100 / max(n_levels, 1)
+    base_height = max(n_levels * 26, 26)
+    row_height = base_height / n_levels
+    BOTTOM_MARGIN = 24  # circle radius (4) + up to 3 wrapped label lines (~16) + descender slack, so the last row's content never sits flush against the viewBox edge
     pos: dict[str, tuple[float, float]] = {}
     nodes = []
     for lvl in sorted(by_level):
@@ -519,7 +521,7 @@ def _compute_graph_layout(curriculum: dict, node_pct: dict[str, int]) -> dict:
             x1, y1 = pos[prereq]
             edges.append({"x1": round(x1, 1), "y1": round(y1, 1), "x2": round(x2, 1), "y2": round(y2, 1)})
 
-    return {"nodes": nodes, "edges": edges, "height": max(n_levels * 26, 26)}
+    return {"nodes": nodes, "edges": edges, "height": base_height + BOTTOM_MARGIN}
 
 
 @app.route("/progress")
