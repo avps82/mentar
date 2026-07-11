@@ -251,7 +251,19 @@ th { background: var(--bg); }
 }
 .switcher-link.active { border-color: var(--primary); background: var(--primary); color: #fff; }
 .switcher-count { opacity: 0.8; font-size: 0.8em; }
-.subject-grid { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; margin-top: 24px; }
+/* Grid, not flex-wrap: flex-wrap's justify-content:center centers each
+   wrapped ROW independently, so rows with different item counts (a 1-card
+   AU group next to a 5-card Try-out group) land at different horizontal
+   offsets from each other -- the "half-played jenga" look. Grid keeps every
+   row's columns aligned to the same tracks regardless of how many cards a
+   group has. */
+.subject-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 240px));
+  gap: 16px;
+  justify-content: center;
+  margin-top: 24px;
+}
 .subject-card {
   font-size: 1.1rem;
   padding: 22px 26px;
@@ -261,7 +273,6 @@ th { background: var(--bg); }
   border-radius: 14px;
   cursor: pointer;
   box-shadow: var(--shadow);
-  min-width: 200px;
   text-align: left;
 }
 .subject-card .subject-icon { font-size: 1.8rem; display: block; margin-bottom: 6px; }
