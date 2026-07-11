@@ -19,6 +19,15 @@
     return;
   }
 
+  // Prime the (often asynchronously-loaded) voice list as soon as this page
+  // loads, not at the moment of the first click -- Chrome and others return
+  // an EMPTY array from a cold getVoices() call and only populate it a
+  // moment later. Without this, the very first read on a fresh page always
+  // missed the saved voice (fell back to default) even though the choice
+  // was correctly saved on the Settings page -- the click handler's own
+  // getVoices() lookup just ran before the browser had loaded anything.
+  window.speechSynthesis.getVoices();
+
   var STATE_IDLE = "idle";
   var STATE_SPEAKING = "speaking";
   var STATE_PAUSED = "paused";
