@@ -680,7 +680,7 @@ voice-picker bug.
 
 ---
 
-# R8 — content-download MVP + India (general Class 3 maths) pack  `[G]` ✅ DONE 2026-07-12
+# R8 — content-download MVP + India (general Class 3 maths) pack  `[G]` ✅ DONE 2026-07-12 — ⚠️ delivery model SUPERSEDED by R10 (see below): shipped packs are now in-repo toggles, not downloads; the fetch machinery here is kept dormant for future remote packs only
 
 **Maintainer ask, 2026-07-11.** In-app curriculum management from Settings: see what's
 installed, download what isn't, delete what you no longer want — the in-app counterpart to
@@ -892,6 +892,59 @@ replacement.
   relocated `upsert_dotenv_value` + 1 new web test proving the Settings link exists
   and `/setup` is genuinely reachable on a voluntary visit. **561 tests pass, ruff
   clean.**
+
+---
+
+# R10 — curriculum packs: in-repo on/off toggles (supersedes R8's download model for shipped packs)  `[G]` ✅ DONE 2026-07-16
+
+**Maintainer critique, 2026-07-13→16.** R8 delivered curriculum packs as an HTTPS
+*download*, but the maintainer pointed out that for content **already shipped in the
+repo** a download is over-built — "it should be part of the repo where they activate
+it or deactivate it." Correct: R8's `IN_GENERIC` pack physically sat in the same
+checkout, two folders from where the download copied it. R10 reframes shipped packs
+as **local on/off toggles**; R8's fetch machinery is kept dormant for a genuine
+future need (content NOT in the repo — community packs, an oversized library).
+
+**Three decisions ratified via AskUserQuestion (2026-07-13):** keep R8's fetch code
+dormant (don't delete); toggles apply on the next restart (not live — matches
+scan-once-at-startup discovery); *everything* toggleable including the pilot/practice
+base (max parental control).
+
+## What changed
+
+- **`IN_GENERIC` moved** `curriculum/downloadable_packs/IN_GENERIC/` →
+  `curriculum/templates/IN_GENERIC/`, so it's auto-discovered like AU/practice and
+  becomes a toggle. `downloadable_packs/` is removed; `packs.json` ships **empty**
+  (a documented dormant manifest reserved for genuine remote packs).
+- **Per-install state:** a gitignored `curriculum/pack_state.json`
+  (`{"disabled": [subject_key, ...]}`), env-overridable via `MENTAR_PACK_STATE`
+  (like `MENTAR_DB_PATH`). Startup discovery skips disabled keys; a corrupt file
+  defaults to all-enabled (never breaks startup).
+- **New routes:** `GET /settings/curricula` (every in-repo pack + on/off state,
+  including disabled ones so they can be re-enabled) and
+  `POST /settings/curricula/<key>/<enable|disable>`. New Settings "Curricula" toggle
+  UI; the dormant R8 download list renders nothing when `packs.json` is empty.
+- **Turning a curriculum off preserves the child's mastery** (`skill_state` untouched
+  — disable only writes the state file), same preserve-by-default posture as R8's
+  uninstall. Re-enabling brings progress back.
+- **"Everything toggleable" edge:** a family *can* disable every pack. That's made a
+  recoverable state, not a dead end — the picker shows "No curricula are turned on →
+  go to Settings," and Settings (+ the toggle list) stays reachable to re-enable.
+
+## Accept
+
+- New `tests/web/test_curriculum_toggle.py` (8): list shows all packs enabled by
+  default; disable writes state + listing reflects it; enable removes from disabled;
+  a disabled pack is genuinely absent from `SUBJECTS` after a restart; unknown-key
+  and bad-action rejected; disabling preserves `skill_state`; all-disabled shows the
+  friendly picker message with Settings still reachable; a corrupt state file
+  defaults to all-enabled. R8's 8 download tests reworked to run against a
+  **synthetic** manifest (dormant machinery, no real download-gated pack). Env-var
+  isolation added to every web `_client()` so a toggle test can't leak
+  `MENTAR_PACK_STATE` into another file. **568 tests pass, ruff clean.**
+- **Open, still the maintainer's call (`[[project_r8_download_vs_toggle_question]]`):**
+  none — R10 *is* the resolution of that question. The dormant R8 fetch code stays
+  only for a real future "content not in this repo" need.
 
 ---
 
