@@ -47,6 +47,10 @@ _EXPECTED = {
     "curriculum/templates/practice/english.md": {
         "key": "practice_english", "label": "English practice 📖", "item_source": "english_practice",
     },
+    "curriculum/templates/IN_GENERIC/class3_maths.md": {
+        "key": "in_generic_class3_maths", "label": "Maths — Class 3 🇮🇳 (general)",
+        "item_source": "in_generic_maths",
+    },
 }
 
 
@@ -107,17 +111,14 @@ def test_no_skill_id_collides_across_any_shipped_template():
     """R6.2/practice-pack guard: skill_id is NOT auto-namespaced the way the
     subject_key is -- individual node ids inside a template's `concepts:`
     list must be manually kept collision-free (AU's au3_/au4_ prefixes, the
-    practice pack's practice_ prefix, R8's in_generic_ prefix). A collision
+    practice pack's practice_ prefix, the in_generic_ prefix). A collision
     would silently merge two unrelated skills' skill_state mastery rows in
-    the DB. Guards every shipped template AND every downloadable pack's
-    source (curriculum/downloadable_packs/ -- R8 -- which a fresh checkout
-    doesn't auto-discover but a download would still create the same
-    collision risk against), not just the ones in _EXPECTED, so a new
-    template/pack dropped in later is covered automatically."""
+    the DB. As of R10 every pack ships under curriculum/templates/ (India
+    moved there from the old downloadable_packs/), so scanning templates/
+    covers every shipped pack -- and a new one dropped in later is covered
+    automatically, not just the ones in _EXPECTED."""
     owners: dict[str, str] = {}
-    paths = sorted(_TPL.glob("**/*.md")) + sorted(
-        (REPO_ROOT / "curriculum" / "downloadable_packs").glob("**/*.md")
-    )
+    paths = sorted(_TPL.glob("**/*.md"))
     for path in paths:
         curriculum = load_curriculum(path)
         for skill_id in curriculum:

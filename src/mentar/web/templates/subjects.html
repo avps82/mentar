@@ -6,6 +6,13 @@
   Your private learning helper — everything stays on this computer.
 </p>
 <h2 style="text-align:center;color:var(--text)">What would you like to learn today?</h2>
+{% if not subject_groups %}
+{# R10: a family has turned every curriculum off in Settings. Not a dead end --
+   Settings is always reachable to turn one back on. #}
+<p class="hint" style="text-align:center">
+  No curricula are turned on. Go to <a href="/settings">⚙️ Settings</a> to turn one on.
+</p>
+{% endif %}
 {# R3.2: Year > Subject grouping (SUBJECT_GROUPS is derived server-side by
    R3.1's template-catalog scan, not hand-maintained here). #}
 {% for group_label, keys in subject_groups %}

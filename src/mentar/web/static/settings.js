@@ -44,7 +44,74 @@
         });
     }
 
-    // ── Curriculum packs: install/uninstall (R8) ────────────────────────────
+    // ── Curricula: on/off toggle for in-repo packs (R10) ────────────────────
+    function loadCurricula() {
+        var container = document.getElementById("curricula-toggle-list");
+        if (!container) return;
+
+        fetch("/settings/curricula")
+            .then(function (response) {
+                return response.json();
+            })
+            .then(function (data) {
+                container.innerHTML = "";
+                if (!data.curricula || data.curricula.length === 0) {
+                    container.textContent = "No curricula found.";
+                    return;
+                }
+
+                data.curricula.forEach(function (c) {
+                    var row = document.createElement("div");
+                    row.style.marginBottom = "12px";
+
+                    var label = document.createElement("strong");
+                    label.textContent = c.label;
+
+                    var btn = document.createElement("button");
+                    btn.style.marginLeft = "10px";
+                    function paint() {
+                        btn.textContent = c.enabled ? "On — turn off" : "Off — turn on";
+                    }
+                    paint();
+                    var status = document.createElement("span");
+                    status.className = "hint";
+                    status.style.marginLeft = "10px";
+
+                    btn.onclick = function () {
+                        var action = c.enabled ? "disable" : "enable";
+                        fetch("/settings/curricula/" + encodeURIComponent(c.key) + "/" + action, {
+                            method: "POST",
+                        }).then(function (r) {
+                            return r.json();
+                        }).then(function (res) {
+                            if (res.ok) {
+                                c.enabled = res.enabled;
+                                paint();
+                                status.textContent = "Saved — restart Mentar to apply.";
+                            } else {
+                                status.textContent = "Error: " + res.error;
+                            }
+                        });
+                    };
+
+                    row.appendChild(label);
+                    row.appendChild(btn);
+                    row.appendChild(status);
+                    container.appendChild(row);
+                });
+            })
+            .catch(function () {
+                container.textContent = "Could not load curricula.";
+            });
+    }
+
+    if (document.getElementById("curricula-toggle-list")) {
+        loadCurricula();
+    }
+
+    // ── Downloadable REMOTE packs (R8, dormant) ─────────────────────────────
+    // Empty today -- every authored pack ships in-repo and is toggled above.
+    // Renders nothing when there are none, rather than a confusing message.
     function loadCurriculumPacks() {
         var container = document.getElementById("curriculum-packs-list");
         if (!container) return;
@@ -56,8 +123,7 @@
             .then(function (data) {
                 container.innerHTML = "";
                 if (!data.packs || data.packs.length === 0) {
-                    container.textContent = "No curriculum packs available right now.";
-                    return;
+                    return;  // dormant -- show nothing
                 }
 
                 data.packs.forEach(function (pack) {

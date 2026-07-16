@@ -83,15 +83,44 @@ ITEMBANK_PATH = Path(os.environ.get(
 _TEMPLATES_DIR = _REPO / "curriculum" / "templates"
 _ITEM_SOURCE_REGISTRY = build_registry(ITEMBANK_PATH)
 
-# R8: content-download. ONE pinned, hardcoded source -- never user-supplied, never
-# configurable from the UI or from packs.json itself (that file only names files
-# WITHIN this fixed base, it can't redirect the fetch elsewhere). Source files for
-# a downloadable pack live at curriculum/downloadable_packs/<dir>/ in this same
-# repo -- deliberately NOT under curriculum/templates/, which _discover_template_paths
-# scans automatically (a pack living there would already be "installed" the moment
-# anyone clones the repo, defeating the point of a download step).
+# R8 (dormant as of R10): content-download for REMOTE packs -- content genuinely
+# NOT in this repo. ONE pinned, hardcoded source, never user-supplied. Every
+# authored pack now ships in-repo and is toggled locally instead (see R10 below),
+# so packs.json is empty today; this machinery stays for a real future need
+# (community packs, or a library too large to ship by default). A remote pack, if
+# ever added, is fetched into curriculum/templates/<dir>/ (checksum-verified first).
 _PACKS_BASE_URL = "https://raw.githubusercontent.com/avps82/mentar/main"
 _PACKS_MANIFEST_PATH = _REPO / "curriculum" / "packs.json"
+
+# R10: per-install curriculum enable/disable. A gitignored JSON file holds the
+# set of subject keys a family has turned OFF -- so every in-repo pack ships
+# discoverable (no download step for content already on disk) but a parent can
+# hide the ones that don't apply to their child. Disabled packs are simply
+# skipped during startup discovery, so the toggle is applied on the next
+# restart (deliberate -- discovery is scan-once-at-startup; see R8's same note).
+# Env-overridable (like MENTAR_DB_PATH) so a deployment can relocate it and tests
+# can point it at a scratch file BEFORE discovery reads it.
+_PACK_STATE_PATH = Path(
+    os.environ.get("MENTAR_PACK_STATE", str(_REPO / "curriculum" / "pack_state.json"))
+)
+
+
+def _load_disabled_packs() -> set[str]:
+    import json
+    if not _PACK_STATE_PATH.exists():
+        return set()
+    try:
+        data = json.loads(_PACK_STATE_PATH.read_text(encoding="utf-8"))
+        return set(data.get("disabled", []))
+    except Exception:
+        return set()  # a corrupt state file must never break startup -- default to all-enabled
+
+
+def _save_disabled_packs(disabled: set[str]) -> None:
+    import json
+    _PACK_STATE_PATH.write_text(
+        json.dumps({"disabled": sorted(disabled)}, indent=2) + "\n", encoding="utf-8"
+    )
 
 
 def _discover_template_paths() -> list[Path]:
@@ -104,16 +133,19 @@ def _discover_template_paths() -> list[Path]:
     return [CURRICULUM_PATH if p.resolve() == default_fractions else p for p in paths]
 
 
+_DISABLED_PACKS = _load_disabled_packs()
 SUBJECTS: dict[str, dict] = {}
 for _path in _discover_template_paths():
-    # A16: validate BEFORE anything else touches this template — a cyclic/bad-
-    # prereq template silently produces an empty fringe and a false "you've
-    # mastered everything!" completion for the child. Fail loud at startup.
-    validate_or_raise(_path)
     _meta = load_template_meta(_path)
     # derive_subject_key: fully automatic (directory = namespace) — no
     # per-template authoring step. See its docstring for the rule.
     _key = derive_subject_key(_path, _meta)
+    if _key in _DISABLED_PACKS:
+        continue  # R10: a family turned this curriculum off -- skip it entirely.
+    # A16: validate BEFORE anything else touches this template — a cyclic/bad-
+    # prereq template silently produces an empty fringe and a false "you've
+    # mastered everything!" completion for the child. Fail loud at startup.
+    validate_or_raise(_path)
     _source_name = _meta["item_source"]
     if _source_name not in _ITEM_SOURCE_REGISTRY:
         raise RuntimeError(
@@ -619,12 +651,63 @@ def _is_safe_path_component(name: str) -> bool:
     return bool(name) and "/" not in name and "\\" not in name and name not in (".", "..")
 
 
+def _all_packs_with_state() -> list[dict]:
+    """R10: every in-repo curriculum pack (discovered template), with its current
+    on/off state -- INCLUDING disabled ones (which SUBJECTS excludes), so the
+    Settings toggle list can show them for re-enabling. `enabled` reflects the
+    live _DISABLED_PACKS set (updated on toggle); whether that state is actually
+    APPLIED to the picker waits for the next restart (discovery is at startup)."""
+    out = []
+    for path in _discover_template_paths():
+        try:
+            meta = load_template_meta(path)
+            key = derive_subject_key(path, meta)
+        except Exception:
+            continue  # a malformed template shouldn't break the whole listing
+        out.append({
+            "key": key,
+            "label": meta["label"] or key,
+            "description": meta["description"] or "",
+            "country": meta["country"],
+            "year_level": meta["year_level"],
+            "enabled": key not in _DISABLED_PACKS,
+        })
+    out.sort(key=lambda p: (p["country"] or "", p["year_level"] or "", p["key"]))
+    return out
+
+
+@app.route("/settings/curricula")
+def curricula_list():
+    """R10: list every in-repo pack with its on/off state, for the Settings
+    toggle UI. Local-disk only, no network."""
+    return jsonify({"curricula": _all_packs_with_state()})
+
+
+@app.route("/settings/curricula/<key>/<action>", methods=["POST"])
+def curricula_toggle(key, action):
+    """R10: enable/disable one in-repo pack. Updates the gitignored
+    pack_state.json AND the in-memory _DISABLED_PACKS so the listing reflects
+    it at once; the picker itself updates on the next restart (discovery is
+    scan-once-at-startup -- same restart note R8 uses)."""
+    if action not in ("enable", "disable"):
+        return jsonify({"ok": False, "error": "unknown action"}), 404
+    known = {p["key"] for p in _all_packs_with_state()}
+    if key not in known:
+        return jsonify({"ok": False, "error": "unknown curriculum"}), 404
+
+    if action == "disable":
+        _DISABLED_PACKS.add(key)
+    else:
+        _DISABLED_PACKS.discard(key)
+    _save_disabled_packs(_DISABLED_PACKS)
+    return jsonify({"ok": True, "enabled": key not in _DISABLED_PACKS, "restart_required": True})
+
+
 @app.route("/settings/curriculum-packs")
 def curriculum_packs():
-    """R8: list downloadable packs (curriculum/packs.json) with install status --
-    whether curriculum/templates/<dir>/ already exists locally. Reading the
-    manifest is local-disk only, no network -- the network fetch only happens
-    on an explicit install."""
+    """R8 (dormant): list downloadable REMOTE packs (curriculum/packs.json) with
+    install status -- empty today (every authored pack ships in-repo and is
+    toggled via /settings/curricula instead). Local-disk only, no network."""
     packs = []
     for p in _load_packs_manifest():
         if not _is_safe_path_component(p.get("dir", "")):
@@ -663,7 +746,7 @@ def install_curriculum_pack(pack_id):
     for f in pack.get("files", []):
         if not _is_safe_path_component(f.get("name", "")):
             return jsonify({"ok": False, "error": "invalid pack manifest entry"}), 500
-        url = f"{_PACKS_BASE_URL}/curriculum/downloadable_packs/{pack['dir']}/{f['name']}"
+        url = f"{_PACKS_BASE_URL}/curriculum/remote_packs/{pack['dir']}/{f['name']}"
         try:
             with urllib.request.urlopen(url, timeout=10) as resp:  # noqa: S310 -- pinned base, HTTPS only
                 content = resp.read()

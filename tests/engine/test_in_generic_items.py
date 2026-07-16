@@ -1,5 +1,5 @@
 """Tests for the R8 India generic Class 3 maths pack (engine/in_generic_items.py
-+ curriculum/downloadable_packs/IN_GENERIC/class3_maths.md).
++ curriculum/templates/IN_GENERIC/class3_maths.md).
 
 Safety contract (same as itemgen/practice_items): reused generators must still
 self-validate under their NEW node ids/registry entry, and the template itself
@@ -24,7 +24,7 @@ from mentar.engine.itemgen import ItemGenerator  # noqa: E402
 from mentar.eval.verify_numeric import CheckResult, check  # noqa: E402
 from mentar.tools.validate_template import validate  # noqa: E402
 
-_PACK_PATH = REPO_ROOT / "curriculum" / "downloadable_packs" / "IN_GENERIC" / "class3_maths.md"
+_PACK_PATH = REPO_ROOT / "curriculum" / "templates" / "IN_GENERIC" / "class3_maths.md"
 
 
 def test_in_generic_generators_self_validate():

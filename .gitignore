@@ -70,6 +70,9 @@ config/*.local.yaml
 config/*.local.yml
 config/inference.yaml
 config/secrets.*
+# R10: per-install curriculum on/off state (which packs a family turned off) --
+# local state, not repo content.
+curriculum/pack_state.json
 # …but DO commit the example/template files:
 !*.example.yaml
 !*.example.yml

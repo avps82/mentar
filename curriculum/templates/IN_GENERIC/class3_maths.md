@@ -75,6 +75,6 @@ concepts:
 A generic Class 3 maths pack for families in India whose child's school follows any
 board -- deliberately NOT aligned to NCERT, CBSE, ICSE, or a specific state board (see
 `docs/CONTENT_LICENSES.md` §2b for why). Every item is parametrically generated and
-scored by the deterministic verifier; the LLM never decides correctness. This is the
-first pack shipped via the content-download mechanism (R8) rather than in-tree at
-checkout time.
+scored by the deterministic verifier; the LLM never decides correctness. Ships in-repo
+like every other pack; a family turns it on/off from Settings (R10) rather than
+downloading it.

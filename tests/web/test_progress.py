@@ -18,6 +18,7 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 def _client():
     """Return a freshly-reloaded (app_mod, test_client) pair backed by a temp DB."""
     os.environ["MENTAR_DB_PATH"] = os.path.join(tempfile.mkdtemp(), "test_progress.db")
+    os.environ.pop("MENTAR_PACK_STATE", None)  # isolation: don't inherit a toggle test's state file
     import importlib
 
     import mentar.web.app as app_mod

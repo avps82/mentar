@@ -23,6 +23,7 @@ def _client():
     patches app_mod._INFERENCE_CONFIG_PATH to its own scratch location so
     nothing ever touches the real repo's config/inference.yaml."""
     os.environ["MENTAR_DB_PATH"] = os.path.join(tempfile.mkdtemp(), "test_setup_gate.db")
+    os.environ.pop("MENTAR_PACK_STATE", None)  # isolation: don't inherit a toggle test's state file
     import importlib
 
     import mentar.web.app as app_mod

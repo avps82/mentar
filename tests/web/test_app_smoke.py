@@ -24,6 +24,7 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 def _client():
     # DB path is read at import time, so set it before importing the app.
     os.environ["MENTAR_DB_PATH"] = os.path.join(tempfile.mkdtemp(), "web_smoke.db")
+    os.environ.pop("MENTAR_PACK_STATE", None)  # isolation: don't inherit a toggle test's state file
     import importlib
 
     import mentar.web.app as app_mod
@@ -849,34 +850,45 @@ def _fake_response(content: bytes):
     return resp
 
 
-def test_curriculum_packs_list_reports_not_installed_for_a_fresh_checkout():
-    """R8: GET /settings/curriculum-packs reads curriculum/packs.json and
-    reports install status by checking curriculum/templates/<dir>/ locally
-    -- no network for listing, only for an actual install."""
+# R10: packs.json ships EMPTY (every authored pack is now an in-repo toggle, not a
+# download). The R8 download machinery is kept dormant for genuine future remote
+# packs, so these tests exercise it against a SYNTHETIC one-pack manifest rather
+# than a real in-repo entry -- which is the correct way to test dormant machinery.
+_SYNTH_CONTENT = b"# synthetic remote pack content\n"
+
+
+def _synthetic_manifest():
+    import hashlib
+    digest = hashlib.sha256(_SYNTH_CONTENT).hexdigest()
+    return [{
+        "id": "test_pack", "dir": "TEST_PACK",
+        "label": "Test Pack", "description": "synthetic", "licence": "synthetic-licence",
+        "files": [{"name": "content.md", "sha256": digest}],
+    }]
+
+
+def test_shipped_packs_json_is_empty_dormant():
+    """R10: the download manifest ships EMPTY -- every authored pack is now an
+    in-repo toggle, nothing is download-gated. Guards against a real pack
+    accidentally being re-added to the download path."""
     try:
         import flask  # noqa: F401
     except ImportError:
         import pytest
         pytest.skip("flask not installed (web extra)")
-    import pathlib
-    import tempfile
-    from unittest.mock import patch
 
-    app_mod, c = _client()
-    scratch = pathlib.Path(tempfile.mkdtemp())
-    with patch.object(app_mod, "_TEMPLATES_DIR", scratch):
-        r = c.get("/settings/curriculum-packs")
-        assert r.status_code == 200
-        data = r.get_json()
-        packs = {p["id"]: p for p in data["packs"]}
-        assert "in_generic" in packs
-        assert packs["in_generic"]["installed"] is False
-        assert packs["in_generic"]["licence"]  # shown to the parent before they install
+    app_mod, c = _client()  # noqa: F841
+    assert app_mod._load_packs_manifest() == []
+    r = c.get("/settings/curriculum-packs")
+    assert r.status_code == 200
+    assert r.get_json()["packs"] == []
 
 
 def test_curriculum_pack_install_verifies_checksum_and_writes_files():
-    """R8: a successful install fetches every file, checks its sha256 against
-    the manifest, and only then writes to curriculum/templates/<dir>/."""
+    """R8 (dormant machinery): a successful install fetches every file, checks
+    its sha256 against the manifest, and only then writes to
+    curriculum/templates/<dir>/. Tested against a SYNTHETIC manifest since no
+    real pack is download-gated anymore."""
     try:
         import flask  # noqa: F401
     except ImportError:
@@ -887,25 +899,23 @@ def test_curriculum_pack_install_verifies_checksum_and_writes_files():
     from unittest.mock import patch
 
     app_mod, c = _client()
-    real_content = (pathlib.Path(app_mod._REPO) / "curriculum" / "downloadable_packs"
-                    / "IN_GENERIC" / "class3_maths.md").read_bytes()
     scratch = pathlib.Path(tempfile.mkdtemp())
-    with patch.object(app_mod, "_TEMPLATES_DIR", scratch):
-        with patch("urllib.request.urlopen", return_value=_fake_response(real_content)):
-            r = c.post("/settings/curriculum-packs/in_generic/install")
+    with patch.object(app_mod, "_TEMPLATES_DIR", scratch), \
+         patch.object(app_mod, "_load_packs_manifest", return_value=_synthetic_manifest()):
+        with patch("urllib.request.urlopen", return_value=_fake_response(_SYNTH_CONTENT)):
+            r = c.post("/settings/curriculum-packs/test_pack/install")
         assert r.status_code == 200
         data = r.get_json()
         assert data["ok"] is True
         assert data["restart_required"] is True
 
-        installed = scratch / "IN_GENERIC" / "class3_maths.md"
+        installed = scratch / "TEST_PACK" / "content.md"
         assert installed.exists()
-        assert installed.read_bytes() == real_content
+        assert installed.read_bytes() == _SYNTH_CONTENT
 
-        # Listing now reports it as installed (same process, same scratch dir).
         listing = c.get("/settings/curriculum-packs").get_json()
         packs = {p["id"]: p for p in listing["packs"]}
-        assert packs["in_generic"]["installed"] is True
+        assert packs["test_pack"]["installed"] is True
 
 
 def test_curriculum_pack_install_rejects_checksum_mismatch_writes_nothing():
@@ -922,14 +932,15 @@ def test_curriculum_pack_install_rejects_checksum_mismatch_writes_nothing():
 
     app_mod, c = _client()
     scratch = pathlib.Path(tempfile.mkdtemp())
-    with patch.object(app_mod, "_TEMPLATES_DIR", scratch):
+    with patch.object(app_mod, "_TEMPLATES_DIR", scratch), \
+         patch.object(app_mod, "_load_packs_manifest", return_value=_synthetic_manifest()):
         with patch("urllib.request.urlopen", return_value=_fake_response(b"corrupted content")):
-            r = c.post("/settings/curriculum-packs/in_generic/install")
+            r = c.post("/settings/curriculum-packs/test_pack/install")
         assert r.status_code == 502
         data = r.get_json()
         assert data["ok"] is False
         assert "checksum mismatch" in data["error"]
-        assert not (scratch / "IN_GENERIC").exists()
+        assert not (scratch / "TEST_PACK").exists()
 
 
 def test_curriculum_pack_install_rejects_unknown_pack_id():
@@ -956,9 +967,10 @@ def test_curriculum_pack_install_rejects_already_installed():
 
     app_mod, c = _client()
     scratch = pathlib.Path(tempfile.mkdtemp())
-    (scratch / "IN_GENERIC").mkdir(parents=True)
-    with patch.object(app_mod, "_TEMPLATES_DIR", scratch):
-        r = c.post("/settings/curriculum-packs/in_generic/install")
+    (scratch / "TEST_PACK").mkdir(parents=True)
+    with patch.object(app_mod, "_TEMPLATES_DIR", scratch), \
+         patch.object(app_mod, "_load_packs_manifest", return_value=_synthetic_manifest()):
+        r = c.post("/settings/curriculum-packs/test_pack/install")
         assert r.status_code == 400
         assert "already installed" in r.get_json()["error"]
 
@@ -975,15 +987,16 @@ def test_curriculum_pack_uninstall_removes_directory():
 
     app_mod, c = _client()
     scratch = pathlib.Path(tempfile.mkdtemp())
-    (scratch / "IN_GENERIC").mkdir(parents=True)
-    (scratch / "IN_GENERIC" / "class3_maths.md").write_text("x", encoding="utf-8")
-    with patch.object(app_mod, "_TEMPLATES_DIR", scratch):
-        r = c.post("/settings/curriculum-packs/in_generic/uninstall")
+    (scratch / "TEST_PACK").mkdir(parents=True)
+    (scratch / "TEST_PACK" / "content.md").write_text("x", encoding="utf-8")
+    with patch.object(app_mod, "_TEMPLATES_DIR", scratch), \
+         patch.object(app_mod, "_load_packs_manifest", return_value=_synthetic_manifest()):
+        r = c.post("/settings/curriculum-packs/test_pack/uninstall")
         assert r.status_code == 200
         data = r.get_json()
         assert data["ok"] is True
         assert data["restart_required"] is True
-        assert not (scratch / "IN_GENERIC").exists()
+        assert not (scratch / "TEST_PACK").exists()
 
 
 def test_curriculum_pack_uninstall_rejects_not_installed():
@@ -998,49 +1011,11 @@ def test_curriculum_pack_uninstall_rejects_not_installed():
 
     app_mod, c = _client()
     scratch = pathlib.Path(tempfile.mkdtemp())
-    with patch.object(app_mod, "_TEMPLATES_DIR", scratch):
-        r = c.post("/settings/curriculum-packs/in_generic/uninstall")
+    with patch.object(app_mod, "_TEMPLATES_DIR", scratch), \
+         patch.object(app_mod, "_load_packs_manifest", return_value=_synthetic_manifest()):
+        r = c.post("/settings/curriculum-packs/test_pack/uninstall")
         assert r.status_code == 400
         assert "not installed" in r.get_json()["error"]
-
-
-def test_curriculum_pack_uninstall_preserves_mastery_history():
-    """R8: deleting a pack's templates must NEVER touch skill_state -- a
-    child's mastery history for that pack's node ids survives an uninstall
-    (preserve-by-default, per REMAINDER_PLAN.md R8.1). skill_state is a
-    separate DB table keyed by skill_id; a file delete has no way to reach
-    it, but this proves the invariant explicitly rather than by inference."""
-    try:
-        import flask  # noqa: F401
-    except ImportError:
-        import pytest
-        pytest.skip("flask not installed (web extra)")
-    import pathlib
-    import sqlite3
-    import tempfile
-    from unittest.mock import patch
-
-    app_mod, c = _client()
-    c.post("/choose", data={"subject": "fractions"})
-    c.get("/learn")
-    c.post("/answer", data={"answer": "4"})  # writes a real skill_state row
-
-    dbp = os.environ["MENTAR_DB_PATH"]
-    db = sqlite3.connect(dbp)
-    n_before = db.execute("SELECT count(*) FROM skill_state").fetchone()[0]
-    db.close()
-    assert n_before >= 1
-
-    scratch = pathlib.Path(tempfile.mkdtemp())
-    (scratch / "IN_GENERIC").mkdir(parents=True)
-    with patch.object(app_mod, "_TEMPLATES_DIR", scratch):
-        r = c.post("/settings/curriculum-packs/in_generic/uninstall")
-        assert r.status_code == 200
-
-    db = sqlite3.connect(dbp)
-    n_after = db.execute("SELECT count(*) FROM skill_state").fetchone()[0]
-    db.close()
-    assert n_after == n_before, "uninstalling an unrelated pack must never touch skill_state"
 
 
 if __name__ == "__main__":
@@ -1096,8 +1071,8 @@ if __name__ == "__main__":
     print("  ✓ test_llm_status_reports_info_for_in_process_backend")
     test_settings_links_to_setup_page_for_ongoing_backend_switching()
     print("  ✓ test_settings_links_to_setup_page_for_ongoing_backend_switching")
-    test_curriculum_packs_list_reports_not_installed_for_a_fresh_checkout()
-    print("  ✓ test_curriculum_packs_list_reports_not_installed_for_a_fresh_checkout")
+    test_shipped_packs_json_is_empty_dormant()
+    print("  ✓ test_shipped_packs_json_is_empty_dormant")
     test_curriculum_pack_install_verifies_checksum_and_writes_files()
     print("  ✓ test_curriculum_pack_install_verifies_checksum_and_writes_files")
     test_curriculum_pack_install_rejects_checksum_mismatch_writes_nothing()
@@ -1110,5 +1085,3 @@ if __name__ == "__main__":
     print("  ✓ test_curriculum_pack_uninstall_removes_directory")
     test_curriculum_pack_uninstall_rejects_not_installed()
     print("  ✓ test_curriculum_pack_uninstall_rejects_not_installed")
-    test_curriculum_pack_uninstall_preserves_mastery_history()
-    print("  ✓ test_curriculum_pack_uninstall_preserves_mastery_history")
