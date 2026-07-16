@@ -152,7 +152,7 @@ locked to the supervised pilot.
   fixtures).
 - `docs/design/W2.2_signposting_decision_prep.md` — the internal options analysis for Item B
   (Options A/B/C), already prepared for this decision.
-- `src/mentar/safety/escalation.py` — the actual pattern-check code (47 test cases in
+- `src/mentar/safety/escalation.py` — the actual pattern-check code (46 test cases in
   `tests/safety/test_escalation.py`).
 
 ---
