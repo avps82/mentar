@@ -41,6 +41,8 @@ stateDiagram-v2
         HELP_EXPLAIN --> HELP_RECHECK_PRESENT: rendered
         HELP_RECHECK_PRESENT --> HELP_RECHECK_AWAIT: rendered
         HELP_RECHECK_AWAIT --> HELP_RECHECK_SCORE: learner_answer
+        HELP_RECHECK_AWAIT --> HELP_ELABORATE: elaborate_request (R12.5)
+        HELP_ELABORATE --> HELP_RECHECK_PRESENT: rendered
         HELP_RECHECK_SCORE --> HELP_RECHECK_BKT_UPDATE: scored
         HELP_RECHECK_BKT_UPDATE --> HELP_RETRY_DECISION: enter
         HELP_RETRY_DECISION --> HELP_MODALITY_SELECT: retry_under_cap
@@ -159,8 +161,10 @@ reach, since T3.7 checks per-handler, not per-`hinted`-value.
 | `HELP_MODALITY_SELECT` | `chosen` | `HELP_EXPLAIN` | Modality recorded; must differ from prior modalities in this Help chain. |
 | `HELP_MODALITY_SELECT` | `modalities_exhausted` | `LINK_BACK` | All 5 modalities already used in this Help chain. |
 | `HELP_EXPLAIN` | `rendered` | `HELP_RECHECK_PRESENT` | Re-explanation logged; A14: arithmetic claims verified, regenerated (bounded) or replaced with the deterministic fallback hint on a verified-wrong claim. |
+| `HELP_ELABORATE` | `rendered` | `HELP_RECHECK_PRESENT` | R12.5 (2026-07-18): unpacks the SAME explanation one level deeper (`help_elaborate.md` over `previous_explanation`), same A14 guards as HELP_EXPLAIN (shared handler). |
 | `HELP_RECHECK_PRESENT` | `rendered` | `HELP_RECHECK_AWAIT` | Transfer-test question logged; numeric-literal overlap with re-explanation checked < threshold (T4.4). |
 | `HELP_RECHECK_AWAIT` | `learner_answer` | `HELP_RECHECK_SCORE` | Answer logged with `hinted=1`. |
+| `HELP_RECHECK_AWAIT` | `elaborate_request` ("more"/"explain more", web 💡 button) | `HELP_ELABORATE` | R12.5: only while an explanation is live; capped at ELABORATE_CAP=2 per Help chain (beyond the cap: gentle nudge, no transition). |
 | `HELP_RECHECK_AWAIT` | `learner_help_press` (or A21: don't-know / clarifying question) | `HELP_MODALITY_SELECT` | Another Help round instead of scoring it as an answer; `help_by_node` set (A5). |
 | `HELP_RECHECK_AWAIT` | `stop_request` | `SESSION_END_BY_LEARNER` | Learner ended explicitly. |
 | `HELP_RECHECK_SCORE` | `scored` | `HELP_RECHECK_BKT_UPDATE` | — |

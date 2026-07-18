@@ -323,6 +323,52 @@ def test_structured_turn_renders_message_and_question_separately():
     assert "What is 1/2 of 8?" in html.split('<div class="question-text">')[1].split("</div>")[0]
 
 
+def test_feedback_block_has_read_aloud_button():
+    """R12.1 (maintainer feedback 2026-07-18, confirmed bug): explanations were
+    not read-aloud-able — the 🔊 tts-btn existed only on the question block.
+    The feedback block must now carry its own tts-btn + a .feedback-text wrapper
+    (tts.js reads the clicked block's text)."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+
+    from mentar.dialogue.controller import TurnResult
+
+    app_mod, c = _client()
+    c.post("/choose", data={"subject": "fractions"})
+    c.get("/learn")
+    with c.session_transaction() as sess:
+        learner_uuid = sess["learner_uuid"]
+    ctrl = app_mod._controllers[learner_uuid]
+
+    ctrl._ctx.question_display = "What is 1/2 of 8? (answer with a number)"
+    ctrl.step = lambda answer_text: TurnResult(
+        state=ctrl.state, text="x", done=False, escalated=False,
+        message="Half means sharing into 2 equal parts.",
+        question="What is 1/2 of 8? (answer with a number)",
+    )
+    frag = c.post("/answer", data={"answer": "help"},
+                  headers={"HX-Request": "true"}).get_data(as_text=True)
+
+    fb_block = frag.split('<div class="feedback')[1].split('<div class="question')[0]
+    assert 'class="tts-btn"' in fb_block                 # the explanation's own 🔊
+    assert 'class="msg-text"' in fb_block                # tts.js reads this wrapper
+    # The question block keeps its own button too (two independent buttons).
+    q_block = frag.split('<div class="question"')[1].split("</div>")[0]
+    assert 'class="tts-btn"' in q_block
+
+    # A message-less turn renders NO feedback block at all (unchanged).
+    ctrl.step = lambda answer_text: TurnResult(
+        state=ctrl.state, text="x", done=False, escalated=False,
+        message="", question="What is 1/2 of 8? (answer with a number)",
+    )
+    frag2 = c.post("/answer", data={"answer": "4"},
+                   headers={"HX-Request": "true"}).get_data(as_text=True)
+    assert '<div class="feedback' not in frag2
+
+
 def test_mc4_choices_render_as_radio_buttons():
     """mc4 items with structured choices render a native radio group (A-D),
     no JS required; fraction answers render numerator/denominator inputs that

@@ -1083,6 +1083,8 @@ def _turn_context(learner_uuid: str, ctrl: SessionController, is_first_turn: boo
         "widget": mode.widget,
         "choices": choices,
         "choice_letters": ["A", "B", "C", "D"][: len(choices)] if choices else [],
+        # R12.5: show the "💡 Explain more" button while an explanation is live.
+        "can_elaborate": ctrl.can_elaborate,
     }
 
 

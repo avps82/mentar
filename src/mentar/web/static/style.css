@@ -305,6 +305,19 @@ th { background: var(--bg); }
 .done-box { background: var(--surface); border: 2px solid var(--mastered); border-radius: var(--radius); padding: 34px; text-align: center; font-size: 1.3rem; }
 .done-recap { font-size: 0.95rem; color: var(--text-muted); margin-top: 14px; text-align: left; }
 
+/* R12.2: curricula toggle switch (native checkbox, no lib) */
+.switch { position: relative; display: inline-block; width: 44px; height: 24px; vertical-align: middle; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.switch .slider { position: absolute; inset: 0; cursor: pointer; background: var(--border); border-radius: 24px; transition: background 0.15s; }
+.switch .slider::before { content: ""; position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px; background: var(--surface); border-radius: 50%; transition: transform 0.15s; }
+.switch input:checked + .slider { background: var(--mastered); }
+.switch input:checked + .slider::before { transform: translateX(20px); }
+.switch input:focus-visible + .slider { outline: 2px solid var(--learning); outline-offset: 2px; }
+
+/* R12.3: settings grouping */
+.curricula-group-heading { font-size: 1rem; margin: 14px 0 6px; color: var(--text-muted); }
+details.settings-section > summary { cursor: pointer; font-size: 1.1rem; font-weight: 600; margin-bottom: 8px; }
+
 @media (max-width: 480px) {
   body { padding: 0 12px 32px; }
   input[type=text] { width: 100%; margin-bottom: 8px; }

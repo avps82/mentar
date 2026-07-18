@@ -60,44 +60,72 @@
                     return;
                 }
 
+                // R12.3: group by country -- the list grows to dozens of packs
+                // as curriculum breadth ships (R14/R15).
+                var groups = {};
                 data.curricula.forEach(function (c) {
-                    var row = document.createElement("div");
-                    row.style.marginBottom = "12px";
+                    var key = c.country || "General";
+                    if (!groups[key]) groups[key] = [];
+                    groups[key].push(c);
+                });
 
-                    var label = document.createElement("strong");
-                    label.textContent = c.label;
+                Object.keys(groups).sort().forEach(function (groupName) {
+                    var heading = document.createElement("h3");
+                    heading.className = "curricula-group-heading";
+                    heading.textContent = groupName;
+                    container.appendChild(heading);
 
-                    var btn = document.createElement("button");
-                    btn.style.marginLeft = "10px";
-                    function paint() {
-                        btn.textContent = c.enabled ? "On — turn off" : "Off — turn on";
-                    }
-                    paint();
-                    var status = document.createElement("span");
-                    status.className = "hint";
-                    status.style.marginLeft = "10px";
+                    groups[groupName].forEach(function (c) {
+                        var row = document.createElement("div");
+                        row.style.marginBottom = "12px";
 
-                    btn.onclick = function () {
-                        var action = c.enabled ? "disable" : "enable";
-                        fetch("/settings/curricula/" + encodeURIComponent(c.key) + "/" + action, {
-                            method: "POST",
-                        }).then(function (r) {
-                            return r.json();
-                        }).then(function (res) {
-                            if (res.ok) {
-                                c.enabled = res.enabled;
-                                paint();
-                                status.textContent = "Saved — restart Mentar to apply.";
-                            } else {
-                                status.textContent = "Error: " + res.error;
-                            }
-                        });
-                    };
+                        var label = document.createElement("strong");
+                        label.textContent = c.label;
 
-                    row.appendChild(label);
-                    row.appendChild(btn);
-                    row.appendChild(status);
-                    container.appendChild(row);
+                        // R12.2: a real switch widget (native checkbox), not a text button.
+                        var sw = document.createElement("label");
+                        sw.className = "switch";
+                        sw.style.marginLeft = "10px";
+                        var input = document.createElement("input");
+                        input.type = "checkbox";
+                        input.checked = c.enabled;
+                        input.setAttribute("aria-label", "Turn " + c.label + " on or off");
+                        var slider = document.createElement("span");
+                        slider.className = "slider";
+                        sw.appendChild(input);
+                        sw.appendChild(slider);
+
+                        var status = document.createElement("span");
+                        status.className = "hint";
+                        status.style.marginLeft = "10px";
+
+                        input.onchange = function () {
+                            var action = input.checked ? "enable" : "disable";
+                            fetch("/settings/curricula/" + encodeURIComponent(c.key) + "/" + action, {
+                                method: "POST",
+                            }).then(function (r) {
+                                return r.json();
+                            }).then(function (res) {
+                                if (res.ok) {
+                                    c.enabled = res.enabled;
+                                    input.checked = res.enabled;
+                                    status.textContent = "Saved — restart Mentar to apply.";
+                                } else {
+                                    // Never show a state the server rejected.
+                                    status.textContent = "Error: " + res.error;
+                                    input.checked = c.enabled;
+                                }
+                            }).catch(function () {
+                                status.textContent = "Error: could not save.";
+                                input.checked = c.enabled;
+                            });
+                        };
+
+                        row.appendChild(label);
+                        row.appendChild(sw);
+                        row.appendChild(status);
+                        container.appendChild(row);
+                    });
                 });
             })
             .catch(function () {

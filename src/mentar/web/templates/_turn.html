@@ -5,7 +5,20 @@
    always agree. message/question come STRUCTURED from TurnResult.message /
    .question (never string-split from prose); both are pre-rendered by
    _render_markdown_lite (escape-first, whitelist-4-tags — U-32), hence | safe. #}
-{% if message_html %}<div class="feedback{% if is_first_turn %} first-turn{% endif %}">{{ message_html | safe }}</div>{% endif %}
+{% if message_html %}<div class="feedback{% if is_first_turn %} first-turn{% endif %}">
+  {# R12.1: explanations must be read-aloud-able too, not just the question. #}
+  <button class="tts-btn" type="button" aria-label="Read this aloud" title="Read aloud">🔊</button>
+  {# class deliberately NOT "feedback-*": tests split fragments on '<div class="feedback'. #}
+  <div class="msg-text">{{ message_html | safe }}</div>
+  {% if can_elaborate %}
+  {# R12.5: unpack the same explanation further — posts the deterministic
+     ELABORATE word the FSM understands; capped server-side (ELABORATE_CAP). #}
+  <form method="POST" action="/answer" class="elaborate-form"
+        hx-post="/answer" hx-target="#turn-area" hx-swap="innerHTML">
+    <button class="btn" type="submit" name="answer" value="more">💡 Explain more</button>
+  </form>
+  {% endif %}
+</div>{% endif %}
 <div class="question{% if is_first_turn and not message_html %} first-turn{% endif %}">
   <button class="tts-btn" type="button" aria-label="Read the question aloud" title="Read aloud">🔊</button>
   <div class="question-text">{{ question_html | safe }}</div>

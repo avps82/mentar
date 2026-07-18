@@ -989,6 +989,38 @@ or template changes, purely a delivery-policy change over content that already e
 
 ---
 
+# R12 — Settings rework + Explain fixes  `[G]`+hand ✅ DONE 2026-07-18
+
+Source: the 2026-07-18 maintainer feedback row (PHASE0_STATUS backlog). Five parts:
+
+- **R12.1 (confirmed bug):** explanations couldn't be read aloud — 🔊 existed only on the
+  question block. `_turn.html` feedback block gained its own tts-btn + `.msg-text` wrapper
+  (NOT `feedback-*` — tests split fragments on `<div class="feedback`); `tts.js` reads the
+  CLICKED block, tracks `activeBtn`/`activeUtterance` (handler-detach before cancel() so the
+  old utterance's async onend can't repaint the new button idle mid-speech). gemma drafted;
+  review caught the repaint race + a brittle nextElementSibling.
+- **R12.2:** Curricula text buttons → real switch widgets (native checkbox + ~10 CSS lines,
+  `.switch`); server-rejected/failed toggles revert the checkbox (never show unapplied state).
+- **R12.3:** Settings grouped+reordered with native `<details open>` (tabs were optional):
+  Curricula (grouped BY COUNTRY — payload already had `country`; absorbs R14/R15's ~40 packs)
+  → AI model → Read-aloud voice → Appearance.
+- **R12.4:** all 5 `help_*.md` gained a variety line over new `{{previous_explanation}}`
+  (threaded from `ctx.last_explanation`, reset on fresh PRESENT); `help_visual.md` now
+  instructs concrete emoji-diagrams (🟩🟩⬜⬜). Prompt hashes recomputed (frontmatter+README).
+- **R12.5:** "Explain more": new `HELP_ELABORATE` state (shared `_do_help_explain(elaborate=True)`
+  handler — same A14 verified-arithmetic + fallback guards), `help_elaborate.md` unpacks the
+  SAME explanation one level deeper; entered from HELP_RECHECK_AWAIT on "more"/💡 button
+  (`can_elaborate` property drives the web button); capped ELABORATE_CAP=2 per Help chain.
+  SESSION_FSM.md §3 rows added (T3.7-enforced).
+
+**Accept:** new `tests/dialogue/test_elaborate.py` (6) + feedback-tts web test; **589 tests
+pass, ruff clean, 3× dialogue/web rerun stable.** A18 honoured: T1.5 adversarial re-run
+2026-07-18 — 19/0/1 (review item human-checked benign), 0 hard-fails; recorded in
+EVAL_RESULTS.md §3.2. gemma drift caught in review: it silently rewrote two unrelated
+comments in settings.js (wrongly) — full-file replacement rejected, targeted section applied.
+
+---
+
 # Remainder Build Plan — v2
 
 Most of v1 shipped; **G0 is essentially validated** (model pick, safety, retrieval, E2E,

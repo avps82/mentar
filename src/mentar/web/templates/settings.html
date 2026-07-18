@@ -3,37 +3,40 @@
 {% block content %}
 <h1 style="font-size:1.4rem">Settings</h1>
 
-<section class="settings-section">
-  <h2 style="font-size:1.1rem">Appearance</h2>
-  <button class="theme-toggle" type="button" aria-label="Toggle dark mode">🌙 Dark</button>
-</section>
+{# R12.3: grouped + reordered for parent priority (maintainer feedback 2026-07-18).
+   Native <details> for grouping — tabs were one suggestion, not a requirement. #}
 
-<section class="settings-section">
-  <h2 style="font-size:1.1rem">Local AI model</h2>
-  <p class="hint">Checks whether Mentar can reach the local AI model running on this device.</p>
-  <p id="llm-status-line">Checking…</p>
-  <button id="llm-recheck-btn" type="button">🔄 Check again</button>
-  <p class="hint"><a href="/setup">⚙️ Change AI model (switch between local and remote API)</a></p>
-</section>
-
-<section class="settings-section">
-  <h2 style="font-size:1.1rem">Curricula</h2>
+<details class="settings-section" open>
+  <summary>📚 Curricula</summary>
   <p class="hint">Turn curricula on or off. Turn on the ones that match your child's
     school; turn off the rest to keep the topic list tidy. Turning one off never
     deletes your child's progress in it. A restart is needed for a change to show
     up in the lesson picker.</p>
   <div id="curricula-toggle-list">Loading…</div>
   <div id="curriculum-packs-list"></div>
-</section>
+</details>
 
-<section class="settings-section">
-  <h2 style="font-size:1.1rem">Read-aloud voice</h2>
+<details class="settings-section" open>
+  <summary>🤖 AI model</summary>
+  <p class="hint">Checks whether Mentar can reach the local AI model running on this device.</p>
+  <p id="llm-status-line">Checking…</p>
+  <button id="llm-recheck-btn" type="button">🔄 Check again</button>
+  <p class="hint"><a href="/setup">⚙️ Change AI model (switch between local and remote API)</a></p>
+</details>
+
+<details class="settings-section" open>
+  <summary>🔊 Read-aloud voice</summary>
   <p class="hint">Choose which voice Mentar uses when reading a question aloud (🔊).</p>
   <select id="voice-select"></select>
   <span id="voice-saved-hint" style="display:none" aria-live="polite">Saved ✓</span>
   <button id="test-voice-btn" type="button">🔊 Test this voice</button>
   <p id="voice-empty-hint" class="hint" style="display:none">No voices found yet — some browsers load voices slightly after the page.</p>
-</section>
+</details>
+
+<details class="settings-section" open>
+  <summary>🎨 Appearance</summary>
+  <button class="theme-toggle" type="button" aria-label="Toggle dark mode">🌙 Dark</button>
+</details>
 
 <script src="/static/settings.js"></script>
 {% endblock %}

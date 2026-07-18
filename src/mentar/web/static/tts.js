@@ -35,12 +35,18 @@
 
   var ICON = { idle: "🔊", speaking: "⏸", paused: "▶️" };
   var LABEL = {
-    idle: "Read the question aloud",
+    idle: "Read aloud",
     speaking: "Pause reading",
     paused: "Resume reading",
   };
 
+  // R12.1: two read-aloud buttons can coexist (question + feedback/explanation);
+  // track which one owns the current utterance so state paints the right button.
+  var activeBtn = null;
+  var activeUtterance = null;
+
   function paint(btn) {
+    if (!btn) return;
     btn.textContent = ICON[state];
     btn.setAttribute("aria-label", LABEL[state]);
     btn.setAttribute("title", LABEL[state]);
@@ -48,8 +54,22 @@
 
   function reset() {
     state = STATE_IDLE;
-    var btn = document.querySelector(".tts-btn");
-    if (btn) paint(btn);
+    if (activeBtn) {
+      paint(activeBtn); // harmless no-op if the htmx swap already detached it
+      activeBtn = null;
+    }
+    activeUtterance = null;
+  }
+
+  function cancelCurrent() {
+    // Detach the old utterance's handlers BEFORE cancel(): its onend fires
+    // asynchronously and would otherwise reset()/repaint AFTER a new utterance
+    // has already started, flipping the new button back to idle mid-speech.
+    if (activeUtterance) {
+      activeUtterance.onend = null;
+      activeUtterance.onerror = null;
+    }
+    window.speechSynthesis.cancel();
   }
 
   // A new question swapped in (htmx replaced #turn-area, including the
@@ -57,23 +77,42 @@
   // OVER the new one. The fresh button already renders idle/🔊 by construction
   // (server-rendered default); only the audio + module state need resetting.
   document.body.addEventListener("htmx:afterSwap", function () {
-    window.speechSynthesis.cancel();
+    cancelCurrent();
     state = STATE_IDLE;
+    activeBtn = null;
   });
 
   document.addEventListener("click", function (evt) {
     var btn = evt.target.closest(".tts-btn");
     if (!btn) return;
 
+    // A DIFFERENT button clicked while speaking/paused: stop the old read and
+    // fall through to start this block's read immediately (no second click).
+    if (state !== STATE_IDLE && activeBtn && activeBtn !== btn) {
+      cancelCurrent();
+      var prev = activeBtn;
+      state = STATE_IDLE;
+      activeBtn = null;
+      paint(prev); // repaint old button idle (safe if already swapped out)
+    }
+
     if (state === STATE_IDLE) {
-      window.speechSynthesis.cancel(); // clear any stale queue first
+      cancelCurrent(); // clear any stale queue first
 
       var parts = [];
-      var q = document.querySelector(".question-text");
-      if (q) parts.push(q.textContent.trim());
-      document.querySelectorAll(".choice-option").forEach(function (opt) {
-        parts.push(opt.textContent.trim());
-      });
+      // R12.1: read the clicked block (question OR feedback/explanation), not
+      // always the question.
+      var feedbackBlock = btn.closest(".feedback");
+      if (feedbackBlock) {
+        var f = feedbackBlock.querySelector(".msg-text");
+        if (f) parts.push(f.textContent.trim());
+      } else {
+        var q = document.querySelector(".question-text");
+        if (q) parts.push(q.textContent.trim());
+        document.querySelectorAll(".choice-option").forEach(function (opt) {
+          parts.push(opt.textContent.trim());
+        });
+      }
       var text = parts.join(". ").replace(/\s+/g, " ").trim();
       if (!text) return;
 
@@ -88,6 +127,8 @@
       utterance.onend = reset;
       utterance.onerror = reset;
       window.speechSynthesis.speak(utterance);
+      activeUtterance = utterance;
+      activeBtn = btn;
       state = STATE_SPEAKING;
       paint(btn);
     } else if (state === STATE_SPEAKING) {

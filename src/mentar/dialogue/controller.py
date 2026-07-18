@@ -137,6 +137,10 @@ def _raise_on_uncovered_nodes(curriculum: dict, item_bank) -> None:
 
 
 HELP_RETRY_CAP = 3
+# R12.5: child asks to unpack the SAME explanation further ("Explain more" button /
+# typed). Bounded per Help chain — see ELABORATE_CAP.
+ELABORATE_WORDS = {"more", "explain more", "tell me more"}
+ELABORATE_CAP = 2
 UNREADABLE_STREAK_CAP = 3  # A9: consecutive SAFE_REJECT/EXTRACT_FAIL before routing to Help
 PROBE_EVERY_N = 5  # W5.3 pilot default
 # When a proactive probe shows mastery was overestimated (false_confidence /
@@ -156,6 +160,7 @@ class FSMState(str, Enum):
     BRANCH_DECISION       = "BRANCH_DECISION"
     HELP_MODALITY_SELECT  = "HELP_MODALITY_SELECT"
     HELP_EXPLAIN          = "HELP_EXPLAIN"
+    HELP_ELABORATE        = "HELP_ELABORATE"
     HELP_RECHECK_PRESENT  = "HELP_RECHECK_PRESENT"
     HELP_RECHECK_AWAIT    = "HELP_RECHECK_AWAIT"
     HELP_RECHECK_SCORE    = "HELP_RECHECK_SCORE"
@@ -235,6 +240,8 @@ class _SessionCtx:
     help_modalities_used: list = field(default_factory=list)
     help_answer: str | None = None
     help_scored_correct: bool | None = None
+    last_explanation: str = ""     # R12.4/12.5: last help explanation shown (variety + elaborate)
+    elaborate_count: int = 0       # R12.5: elaborations used this Help chain (cap = ELABORATE_CAP)
     # A5: per-node, CHILD-INITIATED help only (never the auto-help branch in
     # _do_bkt_update) — the false-confidence probe signal must not be polluted by
     # a previous node's help use or by the system's own auto-help scaffolding.
@@ -534,6 +541,16 @@ class SessionController:
         return getattr(item, "stem", None)
 
     @property
+    def can_elaborate(self) -> bool:
+        """R12.5: True when an explanation is live and the child may ask to
+        unpack it further — drives the web view's "💡 Explain more" button."""
+        return (
+            self._ctx.state is FSMState.HELP_RECHECK_AWAIT
+            and bool(self._ctx.last_explanation)
+            and self._ctx.elaborate_count < ELABORATE_CAP
+        )
+
+    @property
     def session_id(self) -> str:
         """The id of this controller's tutoring session (for durable-log reads)."""
         return self._session_id
@@ -655,6 +672,8 @@ class SessionController:
                 return self._do_help_modality_select()
             case FSMState.HELP_EXPLAIN:
                 return self._do_help_explain()
+            case FSMState.HELP_ELABORATE:
+                return self._do_help_explain(elaborate=True)
             case FSMState.HELP_RECHECK_PRESENT:
                 return self._do_help_recheck_present()
             case FSMState.HELP_RECHECK_AWAIT:
@@ -736,6 +755,8 @@ class SessionController:
     def _do_present(self) -> tuple[str, bool]:
         ctx = self._ctx
         ctx.unreadable_streak = 0  # A9: fresh question, fresh streak
+        ctx.last_explanation = ""  # R12.4: fresh question — variety/elaborate context resets
+        ctx.elaborate_count = 0
         node = self._curriculum[ctx.current_node_id]
         item = self._sample_item(ctx.current_node_id)
         if item is not None:
@@ -1031,15 +1052,21 @@ class SessionController:
 
     _MAX_EXPLAIN_ATTEMPTS = 2  # A14: bounded regeneration on a verified-wrong claim
 
-    def _do_help_explain(self) -> tuple[str, bool]:
+    def _do_help_explain(self, elaborate: bool = False) -> tuple[str, bool]:
+        """One Help explanation turn. With elaborate=True (R12.5, HELP_ELABORATE)
+        the child asked to unpack the SAME explanation further — renders
+        help_elaborate.md over the previous explanation instead of a fresh
+        modality template; all the same safety guards apply."""
         ctx = self._ctx
         node = self._curriculum[ctx.current_node_id]
         passage = resolve_grounding(node.get("grounding", {}), self._grounding_cfg)
         system_text = self._render_system_prompt(node["label"], passage)
+        template_name = "help_elaborate" if elaborate else ctx.current_pattern
         help_text = self._render_template(
-            ctx.current_pattern, node, passage,
+            template_name, node, passage,
             worked_example=self._worked_example_for(ctx.current_node_id),
             question=ctx.current_question or "",
+            previous_explanation=ctx.last_explanation,
         )
         messages = [
             {"role": "system", "content": system_text},
@@ -1071,6 +1098,9 @@ class SessionController:
             # LLM unavailable/empty, or every attempt had a verified-wrong claim —
             # never leave the child with no hint, and never with a wrong one.
             explanation = self._fallback_hint(ctx.current_node_id)
+        # R12.4/12.5: remember what was shown — the variety line in the help
+        # templates and the elaborate flow both build on the previous explanation.
+        ctx.last_explanation = explanation
         # (No "Q) {question}" recap prefix any more — the pending question is carried
         # structurally in TurnResult.question and stays visible in its own display
         # block; the recap prefix was what broke the old string-split display.)
@@ -1113,6 +1143,15 @@ class SessionController:
         if _is_stop(stripped):
             ctx.state = FSMState.SESSION_END_BY_LEARNER
             return ("OK, see you next time!", False)
+        # R12.5: "explain more" — unpack the SAME explanation one level deeper.
+        # Only meaningful while an explanation is live; bounded per Help chain so
+        # a child typing "more" forever still reaches the question.
+        if stripped.lower() in ELABORATE_WORDS and ctx.last_explanation:
+            if ctx.elaborate_count >= ELABORATE_CAP:
+                return ("Let's give the question a try now — you can do it! ✏️", False)
+            ctx.elaborate_count += 1
+            ctx.state = FSMState.HELP_ELABORATE
+            return ("", True)
         # A help request at the re-check must NOT be scored as an answer — give
         # another Help round instead (HELP_MODALITY_SELECT self-limits once all
         # modalities are exhausted -> LINK_BACK). A21: "I don't know" / a
@@ -1326,6 +1365,7 @@ class SessionController:
     def _render_template(
         self, name: str, node: dict, passage: str,
         worked_example: str = "", question: str = "",
+        previous_explanation: str = "",
     ) -> str:
         tmpl = self._load_template(name)
         return (
@@ -1335,6 +1375,7 @@ class SessionController:
             .replace("{{grounding_passage}}", passage)
             .replace("{{worked_example}}", worked_example or "a simple example with small numbers")
             .replace("{{question}}", question or "the question they're working on")
+            .replace("{{previous_explanation}}", previous_explanation or "(none yet — this is the first explanation)")
         )
 
     def _worked_example_for(self, node_id: str) -> str:
