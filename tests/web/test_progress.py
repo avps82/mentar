@@ -101,7 +101,7 @@ def test_picker_groups_subjects_by_year():
     # AU subjects sit under their own year headings, pilot topics under try-out.
     year3_idx = html.find("Year 3 (AU)")
     tryout_idx = html.find("Try-out topics")
-    assert year3_idx < html.find("au_year3_maths") < tryout_idx
+    assert year3_idx < html.find("au_acara_year3_maths") < tryout_idx
     assert tryout_idx < html.find('value="fractions"')
 
 
@@ -146,11 +146,11 @@ def test_progress_switcher_filters_star_cards_to_selected_subject():
     c.get("/learn")
     c.post("/answer", data={"answer": "4"})
 
-    c.post("/choose", data={"subject": "au_year3_maths"})
+    c.post("/choose", data={"subject": "au_acara_year3_maths"})
     c.get("/learn")
     c.post("/answer", data={"answer": "A"})
 
-    au3 = c.get("/progress?subject=au_year3_maths").get_data(as_text=True)
+    au3 = c.get("/progress?subject=au_acara_year3_maths").get_data(as_text=True)
     frac = c.get("/progress?subject=fractions").get_data(as_text=True)
 
     # R6.2: star-cards render the real curriculum label (display_name), never
@@ -165,12 +165,12 @@ def test_progress_switcher_filters_star_cards_to_selected_subject():
     assert "Place value to 999" not in frac
 
     # The active tab is highlighted; a per-subject mastered/total count shows.
-    assert 'href="/progress?subject=au_year3_maths" class="switcher-link active"' in au3
+    assert 'href="/progress?subject=au_acara_year3_maths" class="switcher-link active"' in au3
     assert "(0/6)" in au3  # attempted once, not yet past the 0.85 mastery threshold
 
     # No query param -> defaults to the session's active subject (au3, chosen last).
     default = c.get("/progress").get_data(as_text=True)
-    assert 'href="/progress?subject=au_year3_maths" class="switcher-link active"' in default
+    assert 'href="/progress?subject=au_acara_year3_maths" class="switcher-link active"' in default
 
 
 def test_wrap_label_never_cuts_a_word():
@@ -211,7 +211,7 @@ def test_progress_graph_labels_wrap_not_truncate_for_au_template():
         pytest.skip("flask not installed (web extra)")
 
     app_mod, c = _client()
-    c.post("/choose", data={"subject": "au_year4_maths"})
+    c.post("/choose", data={"subject": "au_acara_year4_maths"})
     c.get("/learn")
 
     body = c.get("/progress").get_data(as_text=True)
@@ -221,7 +221,7 @@ def test_progress_graph_labels_wrap_not_truncate_for_au_template():
     assert "Place value to" in body
 
     # Every node's full label is still available via the hover tooltip.
-    curriculum = app_mod._SUBJECT_CURRICULA["au_year4_maths"]
+    curriculum = app_mod._SUBJECT_CURRICULA["au_acara_year4_maths"]
     for node in curriculum.values():
         assert f"<title>{node['label']}" in body
 
@@ -267,7 +267,7 @@ def test_r6_2_display_name_unified_across_all_four_surfaces():
         pytest.skip("flask not installed (web extra)")
 
     app_mod, c = _client()
-    c.post("/choose", data={"subject": "au_year3_maths"})
+    c.post("/choose", data={"subject": "au_acara_year3_maths"})
     r = c.get("/learn")
     learn_html = r.get_data(as_text=True)
 
@@ -286,7 +286,7 @@ def test_r6_2_display_name_unified_across_all_four_surfaces():
 
     # 2. progress.html's star-card list (the concept-graph SVG was already
     # correct before R6.2 -- this covers the star-card list specifically).
-    progress_html = c.get("/progress?subject=au_year3_maths").get_data(as_text=True)
+    progress_html = c.get("/progress?subject=au_acara_year3_maths").get_data(as_text=True)
     assert "Place value to 999" in progress_html
     assert "Au3 Place Value" not in progress_html
 
@@ -315,7 +315,7 @@ def test_graph_layout_au_year3_bottom_row_no_longer_clipped():
     was only 78 -- clipped off-screen. Reproduce the exact before/after."""
     from mentar.web.app import _SUBJECT_CURRICULA, _compute_graph_layout
 
-    curriculum = _SUBJECT_CURRICULA["au_year3_maths"]
+    curriculum = _SUBJECT_CURRICULA["au_acara_year3_maths"]
     graph = _compute_graph_layout(curriculum, {})
 
     # Old buggy formula for reference (must NOT match the new height).

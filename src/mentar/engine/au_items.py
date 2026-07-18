@@ -6,7 +6,7 @@ the deterministic verifier scores every item and the LLM stays out of the
 correctness path. mc4 generators return the structured `choices` 5th element
 (A/B/C/D order) that drives the web radio buttons.
 
-Curriculum alignment: node ids in curriculum/templates/AU/*.md carry ACARA v9
+Curriculum alignment: node ids in curriculum/templates/AU_ACARA/*.md carry ACARA v9
 content-description codes (e.g. AC9M3N01) as alignment REFERENCES only — all
 question text, labels and fact tables here are Mentar-authored (ACARA core
 content is CC BY 4.0; see docs/CONTENT_LICENSES.md).

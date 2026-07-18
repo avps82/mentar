@@ -1021,6 +1021,46 @@ comments in settings.js (wrongly) — full-file replacement rejected, targeted s
 
 ---
 
+# R-MC — Multi-country ratification: AU→AU_ACARA rename + derive_subject_key rework ✅ DONE 2026-07-19
+
+Wave 2 of the 2026-07-18 release-backlog plan (R12 was wave 1) — done BEFORE R14/R15 author
+~40 new templates, so the rename happens once, now, while zero external users exist.
+
+- **`docs/design/MULTI_COUNTRY.md` ratified** (maintainer, 2026-07-19). §2's
+  `country_authority` naming convention built; §2b's year-subfolder + `LATEST` pointer
+  mechanism stays explicitly UNBUILT (nothing to point at until a second publication year
+  exists).
+- **`git mv curriculum/templates/AU curriculum/templates/AU_ACARA`.** Audited the 4
+  lowercase `au/in/uk/us` dirs found under `curriculum/templates/` — confirmed empty AND
+  untracked by git (`git ls-files` returned nothing; no history either) — removed as stray
+  local cruft, not a migration.
+- **`engine/curriculum.py::derive_subject_key`** reworked: resolves the AUTHORITY directory
+  (the one directly under `templates/`) via a new `_authority_dir_name()` helper that walks
+  up past any future `<AUTHORITY>/<year>/` subfolder, instead of assuming the immediate
+  parent. Produces the IDENTICAL key as before for every shipped template today (no
+  subfolders exist yet) — the rework is pure future-proofing for the deferred §2b mechanism.
+- **Blast-radius check done properly, not assumed:** traced every subject-key consumer
+  (`SUBJECTS` dict — rebuilt from disk each start; `_DISABLED_PACKS`/`pack_state.json` —
+  persisted; `session["subject"]` cookie; `_learner_subject` — in-memory) vs. every
+  `country="AU"`/`"AU"` DB-column reference (unrelated — ISO country code, not the directory
+  name, untouched). Confirmed `skill_state` mastery is keyed by NODE id (`au3_*`), never by
+  subject_key — genuinely unaffected. One real one-time impact, documented not migrated (2
+  templates, zero external users): a `pack_state.json` disabled-entry for the old key
+  silently stops matching post-rename (pack re-enables); a stale session cookie already
+  degrades gracefully to the picker (pre-existing code).
+- **`docs/CONTENT_LICENSES.md`**: §2b's ACARA row path updated; new §2c licence-onboarding
+  checklist (MULTI_COUNTRY §3, verbatim) added — run before any R14/R15 template is authored.
+- Updated the templates the rename actually touched: `tests/engine/test_template_catalog.py`
+  (`_EXPECTED` + new authority-past-a-year-subfolder test), `tests/web/test_curriculum_toggle.py`,
+  `tests/web/test_progress.py` (10 key-string refs), `engine/au_items.py` docstring. Historical
+  dated changelog/spec entries referencing the old `AU/` path (PHASE0_STATUS.md, UI_REQUIREMENTS.md,
+  REMAINDER_PLAN.md's own R2/R3 sections) deliberately left as-is — they're a record of what was
+  true then, not live paths.
+
+**Accept:** **590 tests pass, ruff clean.**
+
+---
+
 # Remainder Build Plan — v2
 
 Most of v1 shipped; **G0 is essentially validated** (model pick, safety, retrieval, E2E,

@@ -1,10 +1,10 @@
 ---
 title: "Multi-Country Curriculum Platform — Design"
-version: v0.4
-status: "Design draft — NOT formally ratified, but its content-download design (§4) and the India-pack/second-country decision (§6) are already built and shipped (R8, R9, R9.1)."
-last-updated: 2026-07-13
-owner: Opus (drafted) / maintainer (ratification pending)
-sources: "PHASE0_STATUS.md backlog row (2026-07-11, ratified strategic goal); curriculum/templates/AU/*.md; engine/curriculum.py; engine/item_sources.py; docs/CONTENT_LICENSES.md; REMAINDER_PLAN.md R6.2"
+version: v0.5
+status: "RATIFIED 2026-07-19 (maintainer, as part of the release-backlog planning pass). §2's country_authority naming convention + §2b's subject-key robustness are BUILT (R-MC, 2026-07-19): AU/ renamed to AU_ACARA/, derive_subject_key resolves the authority dir past a future year-subfolder. §4's content-download design + §6's India/second-country decision were already built and shipped (R8, R9, R9.1). §2b's year-subfolder + LATEST pointer mechanism stays UNBUILT — deferred until a second publication year genuinely exists (nothing to point at yet)."
+last-updated: 2026-07-19
+owner: Opus (drafted) / maintainer (ratified 2026-07-19)
+sources: "PHASE0_STATUS.md backlog row (2026-07-11, ratified strategic goal); curriculum/templates/AU_ACARA/*.md; engine/curriculum.py; engine/item_sources.py; docs/CONTENT_LICENSES.md; REMAINDER_PLAN.md R6.2/R-MC"
 ---
 
 # Multi-Country Curriculum Platform — Design
@@ -20,7 +20,8 @@ data-shape design, not a separate concern.
 
 ## 1. What already generalizes vs what's AU-specific
 
-The AU templates (`curriculum/templates/AU/year3_maths.md`, `year4_maths.md`) were authored
+The AU templates (`curriculum/templates/AU_ACARA/year3_maths.md`, `year4_maths.md` — renamed
+from `AU/` 2026-07-19, R-MC) were authored
 without a multi-country abstraction in mind, but the shape that exists today turns out to
 mostly hold up:
 
@@ -313,6 +314,16 @@ equals the YAML label ("Place value to 999") — never "Au3 Place Value", never 
 - **Second country to build: India** (maintainer, 2026-07-11) — deliberately picked as the
   harder case (multi-authority + state boards) over Singapore, to stress-test the naming
   convention early rather than defer its hardest edge to later.
+
+**Ratified 2026-07-19 (R-MC):** the `country_authority` directory convention (§2) — done as
+`AU_ACARA/` (was `AU/`); `derive_subject_key` reworked to resolve the authority directory past
+a future year-subfolder rather than just the immediate parent, so the deferred §2b mechanism
+below can land later without a second key-breaking rename. One-time impact of the rename,
+documented rather than migrated (YAGNI for 2 templates with zero external users): any
+`pack_state.json` disabled-set entry keyed on the old `au_year3_maths`/`au_year4_maths` strings
+silently stops matching post-rename (the pack re-enables) — a stale `session["subject"]`
+cookie already degrades gracefully to the picker (pre-existing code, `web/app.py:473`), so no
+crash risk either way.
 
 **Left open for the maintainer to ratify or push back on:**
 - ~~Whether content-download is worth building at all in the near term~~ — **answered by

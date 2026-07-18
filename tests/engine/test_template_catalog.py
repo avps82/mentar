@@ -35,11 +35,11 @@ _EXPECTED = {
     "curriculum/templates/_pilot/science.md": {
         "key": "science", "label": "Science 🔬", "item_source": "science",
     },
-    "curriculum/templates/AU/year3_maths.md": {
-        "key": "au_year3_maths", "label": "Maths — Year 3 🇦🇺", "item_source": "au_year3",
+    "curriculum/templates/AU_ACARA/year3_maths.md": {
+        "key": "au_acara_year3_maths", "label": "Maths — Year 3 🇦🇺", "item_source": "au_year3",
     },
-    "curriculum/templates/AU/year4_maths.md": {
-        "key": "au_year4_maths", "label": "Maths — Year 4 🇦🇺", "item_source": "au_year4",
+    "curriculum/templates/AU_ACARA/year4_maths.md": {
+        "key": "au_acara_year4_maths", "label": "Maths — Year 4 🇦🇺", "item_source": "au_year4",
     },
     "curriculum/templates/practice/maths.md": {
         "key": "practice_maths", "label": "Maths practice ➗", "item_source": "maths_practice",
@@ -86,7 +86,21 @@ def test_derived_keys_match_the_pre_r3_hardcoded_dict():
 def test_subject_key_front_matter_still_wins_when_present():
     """The escape hatch itself still works, for the rare genuine collision."""
     meta = {"subject_key": "custom_key"}
-    assert derive_subject_key(REPO_ROOT / "curriculum/templates/AU/year3_maths.md", meta) == "custom_key"
+    assert derive_subject_key(REPO_ROOT / "curriculum/templates/AU_ACARA/year3_maths.md", meta) == "custom_key"
+
+
+def test_authority_dir_resolved_past_a_year_subfolder():
+    """R-MC: derive_subject_key must resolve the AUTHORITY dir (the one
+    directly under templates/), not just the immediate parent -- so a future
+    templates/<AUTHORITY>/<year>/*.md shape (MULTI_COUNTRY.md §2b, not built
+    yet) can't silently change a template's key. Simulated with a path that
+    doesn't need to exist on disk (derive_subject_key does no I/O)."""
+    meta = {"subject_key": None}
+    flat = derive_subject_key(REPO_ROOT / "curriculum/templates/AU_ACARA/year3_maths.md", meta)
+    nested = derive_subject_key(
+        REPO_ROOT / "curriculum/templates/AU_ACARA/2027/year3_maths.md", meta
+    )
+    assert flat == nested == "au_acara_year3_maths"
 
 
 def test_item_source_registry_has_every_referenced_name():

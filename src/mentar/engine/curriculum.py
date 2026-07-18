@@ -48,25 +48,43 @@ def load_template_meta(path: Path) -> dict:
     }
 
 
+def _authority_dir_name(path: Path) -> str:
+    """The name of the directory directly under templates/ that owns *path*
+    -- the "authority" directory (e.g. AU_ACARA, IN_GENERIC, _pilot) -- even
+    if the file itself sits one or more publication-year subfolders deeper
+    (templates/<AUTHORITY>/<year>/*.md; not built yet, MULTI_COUNTRY.md §2b
+    reserves the shape). Walks up from the file until it finds the ancestor
+    whose OWN parent is literally named "templates"; falls back to the
+    immediate parent if no such ancestor exists (e.g. a path outside a real
+    templates/ tree, as some unit tests construct)."""
+    d = path.parent
+    while d.parent.name != "templates" and d.parent != d:
+        d = d.parent
+    return d.name if d.parent.name == "templates" else path.parent.name
+
+
 def derive_subject_key(path: Path, meta: dict) -> str:
     """The web subject/session key for a template -- fully automatic, no
-    per-template authoring step: the DIRECTORY is the namespace. A template
-    directly under templates/_pilot/ (the original, pre-namespaced pilot
-    content) keys off its filename alone, matching the keys already baked
-    into existing session cookies ("fractions", "arithmetic", "science").
-    Any OTHER directory (AU/, and any future US/, UK/, ...) auto-prefixes
-    with its own lowercased name, so "AU/year3_maths.md" always becomes
-    "au_year3_maths" with zero manual input -- drop a file in the right
-    folder and the correct, collision-free key falls out. `subject_key:`
-    front matter, if present, wins outright (verified: none of the 5
-    shipped templates need it under this rule -- see
-    tests/engine/test_template_catalog.py)."""
+    per-template authoring step: the AUTHORITY DIRECTORY is the namespace
+    (R-MC: resolved via `_authority_dir_name`, not just the immediate
+    parent, so a future per-year subfolder can't silently change a
+    template's key and orphan its session cookies / pack_state.json
+    entries). A template directly under templates/_pilot/ (the original,
+    pre-namespaced pilot content) keys off its filename alone, matching the
+    keys already baked into existing session cookies ("fractions",
+    "arithmetic", "science"). Any OTHER authority directory (AU_ACARA/, and
+    any future US/, UK/, ...) auto-prefixes with its own lowercased name, so
+    "AU_ACARA/year3_maths.md" always becomes "au_acara_year3_maths" with
+    zero manual input -- drop a file in the right folder and the correct,
+    collision-free key falls out. `subject_key:` front matter, if present,
+    wins outright (verified: none of the shipped templates need it under
+    this rule -- see tests/engine/test_template_catalog.py)."""
     if meta.get("subject_key"):
         return meta["subject_key"]
     path = Path(path)
     stem = path.stem
-    parent = path.parent.name
-    return stem if parent == "_pilot" else f"{parent.lower()}_{stem}"
+    authority = _authority_dir_name(path)
+    return stem if authority == "_pilot" else f"{authority.lower()}_{stem}"
 
 
 def load_curriculum(path: Path) -> dict:

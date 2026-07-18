@@ -53,7 +53,7 @@ def test_curricula_list_reports_all_in_repo_packs_enabled_by_default():
     data = c.get("/settings/curricula").get_json()
     keys = {x["key"]: x["enabled"] for x in data["curricula"]}
     # The base packs + AU + India all present, all enabled by default.
-    for k in ("fractions", "au_year3_maths", "in_generic_class3_maths", "practice_maths"):
+    for k in ("fractions", "au_acara_year3_maths", "in_generic_class3_maths", "practice_maths"):
         assert keys.get(k) is True, f"{k} should be listed and enabled by default"
 
 
