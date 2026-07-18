@@ -27,7 +27,7 @@ from pathlib import Path
 
 from mentar.engine.bkt import P_L0, bkt_update, params_for
 from mentar.engine.explain_check import has_verified_failure
-from mentar.engine.fringe import DEFAULT_MASTERY_THRESHOLD, outer_fringe
+from mentar.engine.fringe import DEFAULT_MASTERY_THRESHOLD, is_mastered, select_next
 from mentar.engine.probe_classify import ProbeClass, classify_probe
 from mentar.eval.verify_numeric import CheckResult, check
 from mentar.grounding import resolve_grounding
@@ -228,6 +228,7 @@ class _SessionCtx:
     current_answer: str | None = None             # child's latest answer
     last_scored_correct: bool | None = None
     items_since_probe: int = 0
+    items_completed: int = 0       # R11: completed item cycles (drives interleave/review/cap)
     unreadable_streak: int = 0     # A9: consecutive SAFE_REJECT/EXTRACT_FAIL on this question
     # Help loop
     help_n: int = 0                                  # retry counter (1-indexed)
@@ -265,6 +266,7 @@ class SessionController:
         subject: str = "maths",
         scope_line: str | None = None,
         rng_seed: int | None = None,
+        max_items: int | None = None,
     ) -> None:
         self._llm = self._make_safe_llm(llm_call)
         self._prompt_dir = Path(prompt_dir)
@@ -278,6 +280,8 @@ class SessionController:
         # prompt hardcoded "fractions" regardless of the active subject (REVIEW §2.1).
         self._subject = subject
         self._scope_line = scope_line or subject
+        # R11 micro-session cap: end warmly after this many completed items (None = uncapped).
+        self._max_items = max_items
         # One tutoring session per controller instance. A session row is created lazily
         # on the first step() and closed at a terminal state (both best-effort).
         self._session_id = session_id or uuid.uuid4().hex
@@ -702,11 +706,23 @@ class SessionController:
     def _do_node_select(self) -> tuple[str, bool]:
         ctx = self._ctx
         graph = {nid: n.get("prerequisites", []) for nid, n in self._curriculum.items()}
-        fringe = outer_fringe(graph, ctx.mastery)
-        if not fringe:
+        # R11 micro-learning: interleave among ready concepts + inject spaced review of
+        # mastered-but-stale nodes (makes the FORGETTING_SUSPECT probe path reachable).
+        stale_mastered = {
+            nid for nid, p in ctx.mastery.items()
+            if is_mastered(p) and _is_stale_mastery(ctx.mastery_updated_at.get(nid))
+        }
+        next_node = select_next(
+            graph, ctx.mastery,
+            stale_mastered=stale_mastered,
+            current=ctx.current_node_id,
+            items_completed=ctx.items_completed,
+            rng=self._rng,
+        )
+        if next_node is None:
             ctx.state = FSMState.SESSION_END_COMPLETE
             return ("Well done — you've mastered all the fractions concepts for today! Great work.", False)
-        ctx.current_node_id = next(iter(sorted(fringe)))
+        ctx.current_node_id = next_node
         ctx.state = FSMState.PATTERN_SELECT
         return ("", True)
 
@@ -953,6 +969,11 @@ class SessionController:
         )
         p_new = bkt_update(p_prior, correct=correct or False, hinted=hinted, params=bkt_params)
         ctx.mastery[ctx.current_node_id] = p_new
+        # R11: refresh the in-session staleness clock — a just-reviewed node must not
+        # keep being re-picked as "stale" every REVIEW_EVERY_N items.
+        ctx.mastery_updated_at[ctx.current_node_id] = (
+            datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+        )
         try:
             self._store.update_skill_state(
                 self._learner_id, ctx.current_node_id, p_new
@@ -975,6 +996,11 @@ class SessionController:
 
     def _do_branch_decision(self) -> tuple[str, bool]:
         ctx = self._ctx
+        ctx.items_completed += 1
+        if self._max_items is not None and ctx.items_completed >= self._max_items:
+            # R11 micro-session: bite-sized by design — end on a high note, not exhaustion.
+            ctx.state = FSMState.SESSION_END_COMPLETE
+            return ("That's a great session — see you next time!", False)
         ctx.items_since_probe += 1
         mastery = ctx.mastery.get(ctx.current_node_id, 0.0)
         probe_due = (ctx.items_since_probe >= PROBE_EVERY_N) or (mastery >= DEFAULT_MASTERY_THRESHOLD)

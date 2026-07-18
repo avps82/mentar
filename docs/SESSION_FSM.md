@@ -32,6 +32,7 @@ stateDiagram-v2
     BKT_UPDATE --> BRANCH_DECISION: enter
     BRANCH_DECISION --> NODE_SELECT: advance
     BRANCH_DECISION --> PROBE: probe_due
+    BRANCH_DECISION --> SESSION_END_COMPLETE: max_items_reached (R11)
     BRANCH_DECISION --> SESSION_END_BY_LEARNER: stop_request
 
     state HELP_LOOP {
@@ -139,8 +140,8 @@ reach, since T3.7 checks per-handler, not per-`hinted`-value.
 |------|-------|-----|--------------|
 | `SESSION_START` | `enter` (no pending resume) | `NODE_SELECT` | Load profile, BKT priors, template. |
 | `SESSION_START` | `enter` (pending resume found) | (persisted state) | Resume into the persisted state with its checkpoint context. |
-| `NODE_SELECT` | `fringe_nonempty` | `PATTERN_SELECT` | Chosen node id recorded in transition log. |
-| `NODE_SELECT` | `fringe_empty_or_completion_met` | `SESSION_END_COMPLETE` | Completion criteria evaluated per parent config. |
+| `NODE_SELECT` | `fringe_nonempty` | `PATTERN_SELECT` | Chosen node id recorded in transition log. **R11 (2026-07-18):** selection policy is `engine/fringe.select_next` — interleaves among fringe nodes (prefers a node ≠ the one just practised) and every `REVIEW_EVERY_N`-th completed item injects spaced review of a mastered-but-stale node (makes the `forgetting_suspect` probe path reachable). Was: first sorted fringe node until mastery. |
+| `NODE_SELECT` | `fringe_empty_or_completion_met` | `SESSION_END_COMPLETE` | Completion criteria evaluated per parent config. R11: fires when `select_next` returns None (fringe empty AND no stale-mastered review candidates). |
 | `PATTERN_SELECT` | `enter` | `PRESENT` | Chosen pattern id recorded. |
 | `PRESENT` | `rendered` | `AWAIT_ANSWER` | Prompt text + template id + version hash logged (per T4.6). |
 | `AWAIT_ANSWER` | `learner_answer` | `SCORE` | Answer text + timestamp logged. |
@@ -154,6 +155,7 @@ reach, since T3.7 checks per-handler, not per-`hinted`-value.
 | `BKT_UPDATE` | *(over-approximation — see note above)* | `HELP_RETRY_DECISION` | Not actually reachable from `BKT_UPDATE` (only from `HELP_RECHECK_BKT_UPDATE`'s `hinted=True` call) — listed because both share `_do_bkt_update` and T3.7 checks per-handler. |
 | `BRANCH_DECISION` | `advance` | `NODE_SELECT` | — |
 | `BRANCH_DECISION` | `probe_due` | `PROBE_PRESENT` | Probe trigger rule fired per W5.3. |
+| `BRANCH_DECISION` | `max_items_reached` | `SESSION_END_COMPLETE` | R11 micro-session cap: after `max_items` completed items the session ends warmly (web default 10 via `MENTAR_SESSION_ITEMS`; `None` = uncapped). Checked before the probe rule. |
 | `HELP_MODALITY_SELECT` | `chosen` | `HELP_EXPLAIN` | Modality recorded; must differ from prior modalities in this Help chain. |
 | `HELP_MODALITY_SELECT` | `modalities_exhausted` | `LINK_BACK` | All 5 modalities already used in this Help chain. |
 | `HELP_EXPLAIN` | `rendered` | `HELP_RECHECK_PRESENT` | Re-explanation logged; A14: arithmetic claims verified, regenerated (bounded) or replaced with the deterministic fallback hint on a verified-wrong claim. |

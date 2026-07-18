@@ -14,6 +14,7 @@ This module is stdlib-only and side-effect-free. The dialogue controller calls
 
 from __future__ import annotations
 
+import random
 from collections.abc import Mapping
 
 DEFAULT_MASTERY_THRESHOLD = 0.85   # PHASE0 W5.3 pilot default
@@ -57,6 +58,47 @@ def outer_fringe(
         if all(is_mastered(mastery.get(pr, 0.0), threshold) for pr in prereqs):
             fringe.add(concept_id)
     return fringe
+
+
+REVIEW_EVERY_N = 4   # every Nth completed item, inject a spaced-review of a stale-mastered node
+
+
+def select_next(
+    graph: Graph,
+    mastery: Mastery,
+    *,
+    stale_mastered: set[str],
+    current: str | None,
+    items_completed: int,
+    rng: random.Random,
+    threshold: float = DEFAULT_MASTERY_THRESHOLD,
+) -> str | None:
+    """Micro-learning NODE_SELECT policy (R11).
+
+    Interleaves among ready (outer-fringe) concepts instead of drilling one until
+    mastery, and every REVIEW_EVERY_N-th completed item injects spaced review of a
+    mastered-but-stale concept so the forgetting probe path can actually fire.
+    Returns None when nothing is left to work on (session complete).
+
+    Every rng.choice draws from a sorted list — same seeded rng, same sequence
+    (A19 session replay).
+    """
+    fringe = outer_fringe(graph, mastery, threshold)
+
+    # Review injection
+    if items_completed > 0 and items_completed % REVIEW_EVERY_N == 0 and stale_mastered:
+        return rng.choice(sorted(stale_mastered))
+
+    if not fringe:
+        if stale_mastered:
+            return rng.choice(sorted(stale_mastered))
+        return None
+
+    # Interleave: prefer a ready concept other than the one just practised
+    others = fringe - {current}
+    if others:
+        return rng.choice(sorted(others))
+    return next(iter(fringe))
 
 
 def roots(graph: Graph) -> set[str]:

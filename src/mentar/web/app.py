@@ -17,6 +17,7 @@ Config via environment (never commit values):
     MENTAR_DB_PATH        SQLite path               (default: mentar_pilot.db)
     MENTAR_PROMPT_DIR     prompts/ directory        (default: auto-detected from repo root)
     MENTAR_CURRICULUM     Curriculum YAML           (default: auto-detected pilot fractions.md)
+    MENTAR_SESSION_ITEMS  R11 micro-session length  (default: 10 completed items; 0 = uncapped)
     SECRET_KEY            Flask session secret      (default: dev-only insecure key)
 """
 
@@ -68,6 +69,9 @@ CURRICULUM_PATH = Path(os.environ.get(
     "MENTAR_CURRICULUM",
     str(_REPO / "curriculum" / "templates" / "_pilot" / "fractions.md"),
 ))
+# R11 micro-sessions: end each web session warmly after this many completed items
+# (bite-sized by default; set 0 to disable the cap).
+SESSION_ITEMS = int(os.environ.get("MENTAR_SESSION_ITEMS", "10") or 0)
 ITEMBANK_PATH = Path(os.environ.get(
     "MENTAR_ITEMBANK",
     str(_REPO / "curriculum" / "itembank" / "pilot_fractions.jsonl"),
@@ -369,6 +373,7 @@ def _get_or_create_controller(learner_uuid: str, subject: str) -> SessionControl
             learner_id=learner_uuid,
             item_bank=item_source,
             subject=_SUBJECT_NAMES[subject],
+            max_items=SESSION_ITEMS or None,
         )
         _turn_logs[learner_uuid] = []
     return _controllers[learner_uuid]

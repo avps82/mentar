@@ -99,10 +99,11 @@ def test_help_on_one_node_does_not_leak_to_another():
     ctrl = _ctrl(store)
     ctx = ctrl._ctx
 
-    ctrl.step(None)          # fringe={node_a, node_b}, alphabetical -> node_a presented
-    assert ctx.current_node_id == "node_a"
-    ctrl.step("?")           # child-initiated help -> help_by_node["node_a"] = True
-    ctx.mastery["node_a"] = 0.9   # simulate node_a at the probe threshold
+    ctrl.step(None)          # R11: first pick among equal fringe nodes is rng-based —
+    helped = ctx.current_node_id      # capture whichever node was presented
+    unhelped = "node_b" if helped == "node_a" else "node_a"
+    ctrl.step("?")           # child-initiated help -> help_by_node[helped] = True
+    ctx.mastery[helped] = 0.9     # simulate the helped node at the probe threshold
     ctrl.step("2")           # correct hinted recheck -> BRANCH_DECISION -> probe fires
     assert ctrl.state == FSMState.PROBE_AWAIT_ANSWER.value
     ctrl.step("wrong")       # first probe attempt wrong; help_pressed=True suppresses
@@ -110,27 +111,26 @@ def test_help_on_one_node_does_not_leak_to_another():
     assert ctrl.state == FSMState.PROBE_AWAIT_ANSWER.value  # confirms the retry, not NODE_SELECT
     ctrl.step("wrong")       # retry also wrong -> logs slip_suspect, demotes, advances
 
-    # Force the node switch directly (NODE_SELECT would otherwise re-pick node_a,
-    # since it's alphabetically first and demoted back below threshold — not
-    # what this test is exercising).
-    ctx.current_node_id = "node_b"
-    ctx.mastery["node_b"] = 0.9
+    # Force the node switch directly (NODE_SELECT's re-pick among the demoted
+    # helped node and the fresh one is orthogonal to what this test exercises).
+    ctx.current_node_id = unhelped
+    ctx.mastery[unhelped] = 0.9
     ctx.state = FSMState.PATTERN_SELECT
-    result = ctrl.step(None)  # drives PATTERN_SELECT -> PRESENT -> node_b's Q_B
-    assert ctx.current_node_id == "node_b"
-    assert "Q_B" in result.text
+    result = ctrl.step(None)  # drives PATTERN_SELECT -> PRESENT -> the unhelped node's Q
+    assert ctx.current_node_id == unhelped
+    assert _ITEMS[unhelped].problem in result.text
 
-    ctrl.step("2")            # node_b answered correctly, unaided -> probe fires (mastery 0.9)
+    ctrl.step("2")            # unhelped node answered correctly, unaided -> probe fires (mastery 0.9)
     assert ctrl.state == FSMState.PROBE_AWAIT_ANSWER.value
-    ctrl.step("wrong")        # node_b's probe wrong, help NEVER pressed on node_b ->
+    ctrl.step("wrong")        # probe wrong, help NEVER pressed on this node ->
                               # false_confidence immediately (no retry, since help_pressed=False)
 
     classes = dict(store.probe_events)
-    assert classes.get("node_a") == "slip_suspect", (
-        f"node_a (help pressed) must not classify false_confidence: {store.probe_events}"
+    assert classes.get(helped) == "slip_suspect", (
+        f"{helped} (help pressed) must not classify false_confidence: {store.probe_events}"
     )
-    assert classes.get("node_b") == "false_confidence", (
-        f"node_b (help never pressed) should classify false_confidence: {store.probe_events}"
+    assert classes.get(unhelped) == "false_confidence", (
+        f"{unhelped} (help never pressed) should classify false_confidence: {store.probe_events}"
     )
 
 
@@ -143,20 +143,21 @@ def test_auto_help_alone_still_classifies_false_confidence():
     ctrl = _ctrl(store)
     ctx = ctrl._ctx
 
-    ctrl.step(None)           # presents node_a
+    ctrl.step(None)           # presents whichever node the R11 policy picked first
+    node = ctx.current_node_id
     ctrl.step("wrong")        # WRONG unaided answer -> auto-help scaffolding kicks in
                               # (help_modalities_used reset, but help_by_node NOT set)
-    assert not ctx.help_by_node.get("node_a"), (
+    assert not ctx.help_by_node.get(node), (
         "auto-help must not set help_by_node — only a child-initiated request should"
     )
-    ctx.mastery["node_a"] = 0.9
+    ctx.mastery[node] = 0.9
     ctrl.step("2")            # correct hinted recheck -> BRANCH_DECISION -> probe fires
     assert ctrl.state == FSMState.PROBE_AWAIT_ANSWER.value
     ctrl.step("wrong")        # failed probe, help_pressed=False (auto-help doesn't count) ->
                               # false_confidence immediately
 
     classes = dict(store.probe_events)
-    assert classes.get("node_a") == "false_confidence", (
+    assert classes.get(node) == "false_confidence", (
         f"auto-help-only node at threshold must still classify false_confidence: "
         f"{store.probe_events}"
     )

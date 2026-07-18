@@ -948,6 +948,47 @@ base (max parental control).
 
 ---
 
+# R11 — Micro-learning: interleaving + spaced review + micro-sessions  `[G]` ✅ DONE 2026-07-18
+
+**Maintainer ask, 2026-07-18:** "see if micro-learning can be applied … concepts switched
+together." The three pillars of micro-learning map onto three one-point gaps — no curriculum
+or template changes, purely a delivery-policy change over content that already exists.
+
+## What changed
+
+- **Interleaving:** `NODE_SELECT` used to pick `sorted(fringe)[0]` — the child drilled ONE
+  concept until mastered (blocked practice). New pure policy `engine/fringe.select_next`
+  (gemma-drafted, `[G]`): prefers a ready concept ≠ the one just practised; every
+  `rng.choice` draws from a `sorted(...)` list so A19 seed-replay still holds.
+- **Spaced review:** mastered nodes used to leave the fringe forever, which made the shipped
+  forgetting machinery (`STALE_MASTERY_DAYS`, `ProbeClass.FORGETTING_SUSPECT`, probe demote)
+  **unreachable**. Every `REVIEW_EVERY_N=4`-th completed item, `select_next` injects a
+  mastered-but-stale node for review; `_do_bkt_update` now refreshes the in-session
+  staleness clock so a just-reviewed node isn't re-picked all session. A still-mastered
+  review node makes `probe_due` fire → probe classifies with `mastery_is_stale=True` →
+  forgetting path live, by design, zero new BKT/probe code.
+- **Micro-sessions:** new `SessionController(max_items=…)` (default `None` = uncapped);
+  `BRANCH_DECISION` ends the session warmly ("That's a great session — see you next time!")
+  after that many completed items, checked before the probe rule. Web passes
+  `MENTAR_SESSION_ITEMS` (default **10**, `0` disables).
+
+## Accept
+
+- New `tests/engine/test_select_next.py` (7, gemma-drafted): interleave switches away from
+  current; sticks when it's the only fringe node; review fires exactly on multiples of
+  `REVIEW_EVERY_N` (not at 0/off-cycle); fringe-empty→stale-review fallback; all-done→None;
+  same-seed determinism.
+- New `tests/dialogue/test_micro_learning.py` (7, hand-written — FSM wiring): alternation
+  over two roots; stale-mastered injection at item 4 (and NOT when fresh); BKT stamps the
+  staleness clock; `max_items` ends warmly at `SESSION_END_COMPLETE`; no cap by default;
+  same-seed node-sequence replay.
+- `tests/dialogue/test_probe_help_pressed.py` made node-agnostic (it assumed the old
+  alphabetical first-pick; with interleaving the first pick among equal roots is rng-based).
+- `SESSION_FSM.md` §3: NODE_SELECT policy note + new `BRANCH_DECISION → SESSION_END_COMPLETE`
+  (`max_items_reached`) edge — kept honest by the T3.7 conformance test.
+
+---
+
 # Remainder Build Plan — v2
 
 Most of v1 shipped; **G0 is essentially validated** (model pick, safety, retrieval, E2E,
