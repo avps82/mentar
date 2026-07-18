@@ -66,6 +66,23 @@ def reset_state():
 
 # ── Tests ─────────────────────────────────────────────────────────────────────
 
+def test_empty_grounding_does_not_warn(caplog):
+    """R12-fix (2026-07-19 feedback): a node with NO grounding configured at
+    all (`grounding: {}` -- the common case for AU/IN_GENERIC/practice packs,
+    29 shipped templates) must degrade to "" WITHOUT a WARNING-level log --
+    that read as an error in the console on every turn. Still logged at
+    DEBUG (the return-empty contract itself is unchanged), just not at a
+    level a maintainer reads as something broken."""
+    import logging
+
+    from mentar.grounding.resolve import resolve_grounding_inner
+    with caplog.at_level(logging.DEBUG, logger="mentar.grounding.resolve"):
+        result = resolve_grounding_inner({}, {})
+    assert result == ""
+    assert not any(r.levelno >= logging.WARNING for r in caplog.records)
+    assert any(r.levelno == logging.DEBUG for r in caplog.records)
+
+
 def test_resolve_vikidia_fraction():
     """A vikidia Fraction grounding block returns a non-empty passage."""
     from mentar.grounding.resolve import resolve_grounding_inner

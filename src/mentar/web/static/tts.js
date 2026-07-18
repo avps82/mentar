@@ -61,6 +61,15 @@
     activeUtterance = null;
   }
 
+  // R12-fix (2026-07-19 feedback): feedback/explanation text carries emoji
+  // (praise variants, the visual-modality help template's emoji diagrams) --
+  // most speech engines vocalize them literally ("green square emoji"...).
+  // Strip for the SPOKEN copy only; the visible text is untouched.
+  var EMOJI_RE = new RegExp("[\\u200d\\ufe0f\\p{Extended_Pictographic}]", "gu");
+  function stripEmoji(text) {
+    return text.replace(EMOJI_RE, "").replace(/\s+/g, " ").trim();
+  }
+
   function cancelCurrent() {
     // Detach the old utterance's handlers BEFORE cancel(): its onend fires
     // asynchronously and would otherwise reset()/repaint AFTER a new utterance
@@ -113,7 +122,7 @@
           parts.push(opt.textContent.trim());
         });
       }
-      var text = parts.join(". ").replace(/\s+/g, " ").trim();
+      var text = stripEmoji(parts.join(". "));
       if (!text) return;
 
       var utterance = new SpeechSynthesisUtterance(text);

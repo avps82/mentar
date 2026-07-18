@@ -120,8 +120,15 @@ def resolve_grounding_inner(node_grounding: dict, cfg: dict) -> str:
     passage_hint: str = node_grounding.get("passage_hint", "")
 
     if not source or not anchor:
-        logger.warning(
-            "resolve: missing source or anchor in node_grounding=%r — returning empty",
+        # NOT a failure -- most nodes across the AU/IN_GENERIC/practice packs
+        # deliberately ship `grounding: {}` (parametric generators, no ZIM
+        # passage needed). Warning here on every turn for those packs was log
+        # noise a maintainer read as an error (2026-07-19 feedback). Genuine
+        # resolution failures (ZIM missing, extraction failed, scope
+        # violation) still warn below -- this is only the "not configured at
+        # all" case, which is the common, expected one.
+        logger.debug(
+            "resolve: no source/anchor in node_grounding=%r — returning empty (no grounding configured)",
             node_grounding,
         )
         return ""

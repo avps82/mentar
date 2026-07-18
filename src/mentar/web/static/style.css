@@ -173,9 +173,19 @@ input[type=text], input[type=number] {
   font-size: 1.05rem;
   line-height: 1.5;
   margin-bottom: 12px;
-  white-space: pre-wrap;
+  /* R12-fix (2026-07-19 feedback): same button+text side-by-side layout as
+     .question below -- the 🔊 button and .msg-text previously just stacked
+     with default spacing, leaving no proper gap. */
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: flex-start;
 }
+.feedback .msg-text { flex: 1; white-space: pre-wrap; }
 .feedback.first-turn { border-left-color: var(--accent); }
+/* The "Explain more" button, when present, sits below the text -- full width
+   of the flex item, not squeezed beside the 🔊 button. */
+.feedback .elaborate-form { flex-basis: 100%; margin-top: 8px; }
 
 /* Question block internals: read-aloud button + text side by side */
 .question { display: flex; gap: 10px; align-items: flex-start; }
