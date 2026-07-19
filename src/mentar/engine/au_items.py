@@ -43,10 +43,14 @@ def _mc(problem_stem: str, options: list[str], correct_index: int):
 # ── Year 3 (AC9M3N01, AC9M3N02, AC9M3N03, AC9M3N04 alignment) ─────────────────
 
 def gen_place_value_3digit(rng: random.Random):
-    """AC9M3N01-aligned: what a digit stands for in a 3-digit number."""
+    """AC9M3N01-aligned: what a digit stands for in a 3-digit number. Only
+    asks about the hundreds/tens digit -- the ones digit's "value" trivially
+    equals itself (digit x 10^0), which tests nothing about place value and
+    lets a child pattern-match the question text to the right answer without
+    any reasoning (2026-07-19 maintainer feedback)."""
     digits = rng.sample(range(1, 10), 3)
     number = digits[0] * 100 + digits[1] * 10 + digits[2]
-    pos = rng.randrange(3)                      # 0=hundreds, 1=tens, 2=ones
+    pos = rng.randrange(2)                      # 0=hundreds, 1=tens (ones excluded)
     digit = digits[pos]
     correct = digit * (10 ** (2 - pos))
     options = [str(digit), str(digit * 10), str(digit * 100)]
@@ -85,12 +89,15 @@ def gen_mult_facts_3_4_5_10(rng: random.Random):
 # ── Year 4 (AC9M4N01, AC9M4N03, AC9M4N05 alignment) ───────────────────────────
 
 def gen_place_value_4digit(rng: random.Random):
-    """AC9M4N01-aligned: what a digit stands for in a 4-digit number. The four
-    options are the digit at each of the four places — always distinct (a value
-    factors uniquely as digit × 10^p for digit 1-9)."""
+    """AC9M4N01-aligned: what a digit stands for in a 4-digit number. Only
+    asks about thousands/hundreds/tens digits -- the ones digit's "value"
+    trivially equals itself, excluded for the same reason as the 3-digit
+    generator (2026-07-19 maintainer feedback). The four options are the
+    digit at each of the four places — always distinct (a value factors
+    uniquely as digit × 10^p for digit 1-9)."""
     digits = rng.sample(range(1, 10), 4)
     number = digits[0] * 1000 + digits[1] * 100 + digits[2] * 10 + digits[3]
-    pos = rng.randrange(4)
+    pos = rng.randrange(3)                      # 0=thousands,1=hundreds,2=tens (ones excluded)
     digit = digits[pos]
     correct = digit * (10 ** (3 - pos))
     options = [str(digit * (10 ** p)) for p in range(4)]
@@ -119,12 +126,17 @@ def gen_division_facts(rng: random.Random):
 # below are the pilot's first use of the R13 "decimal" answer type.
 
 def gen_place_value_2digit(rng: random.Random):
-    """AC9M2N01-aligned: identify the value of a digit in a two-digit number."""
+    """AC9M2N01-aligned: identify the value of the TENS digit in a two-digit
+    number. Always the tens digit, never the ones digit -- the ones digit's
+    "value" trivially equals itself (digit x 10^0), which tests nothing about
+    place value and lets a child pattern-match the question text to the right
+    answer without any reasoning (2026-07-19 maintainer feedback: for "In the
+    number 37, what is the value of the digit 7?" the mathematically correct
+    answer IS 7 -- not a scoring bug -- but it's a degenerate question)."""
     digits = rng.sample(range(1, 10), 2)
     number = digits[0] * 10 + digits[1]
-    pos = rng.randrange(2)
-    digit = digits[pos]
-    correct = digit * 10 if pos == 0 else digit
+    digit = digits[0]
+    correct = digit * 10
     options = [str(digits[0]), str(digits[1]), str(digits[0] * 10), str(digits[1] * 10)]
     rng.shuffle(options)
     return _mc(f"In the number {number}, what is the value of the digit {digit}?", options, options.index(str(correct)))

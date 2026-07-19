@@ -24,6 +24,7 @@ from mentar.engine.au_items import (  # noqa: E402
     AU_YEAR6_GENERATORS,
     AU_YEAR7_GENERATORS,
     AU_YEAR8_GENERATORS,
+    gen_place_value_2digit,
     gen_place_value_3digit,
     gen_place_value_4digit,
 )
@@ -72,6 +73,23 @@ def test_year6_generators_self_validate():
 def test_year7_generators_self_validate():
     """R15: first coverage of negative-integer content + a 'solve for x' node."""
     _self_validate(AU_YEAR7_GENERATORS, seed=7)
+
+
+def test_place_value_never_asks_about_the_ones_digit():
+    """2026-07-19 maintainer feedback: 'In the number 37, what is the value of
+    the digit 7?' -> A) 7 is mathematically correct (7 is in the ones place,
+    value = digit x 10^0 = digit itself) -- NOT a scoring bug -- but it's a
+    degenerate question: a child can match the answer to the digit named in
+    the question text with zero place-value reasoning. All three place-value
+    generators now restrict which digit gets asked about so the answer is
+    never numerically identical to the digit named in the question."""
+    import re
+    rng = random.Random(2026)
+    for fn in (gen_place_value_2digit, gen_place_value_3digit, gen_place_value_4digit):
+        for _ in range(300):
+            _, _, problem, answer = fn(rng)[:4]
+            asked_digit = re.search(r"digit (\d+)\?", problem).group(1)
+            assert asked_digit != answer, (fn.__name__, problem, answer)
 
 
 def test_year8_generators_self_validate():
