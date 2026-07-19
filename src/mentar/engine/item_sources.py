@@ -19,7 +19,18 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from mentar.engine.au_items import AU_YEAR3_GENERATORS, AU_YEAR4_GENERATORS
+from mentar.engine.au_english_items import (
+    AU_ENGLISH_YEAR2_GENERATORS,
+    AU_ENGLISH_YEAR5_GENERATORS,
+    AU_ENGLISH_YEAR6_GENERATORS,
+)
+from mentar.engine.au_items import (
+    AU_YEAR2_GENERATORS,
+    AU_YEAR3_GENERATORS,
+    AU_YEAR4_GENERATORS,
+    AU_YEAR5_GENERATORS,
+    AU_YEAR6_GENERATORS,
+)
 from mentar.engine.in_generic_items import IN_GENERIC_MATHS_GENERATORS
 from mentar.engine.itemgen import ARITHMETIC_GENERATORS, DEFAULT_GENERATORS
 from mentar.engine.practice_items import ENGLISH_PRACTICE_GENERATORS, MATHS_PRACTICE_GENERATORS
@@ -34,8 +45,14 @@ def build_registry(pilot_itembank_path: Path) -> dict[str, dict]:
         "pilot_fractions": {"generators": DEFAULT_GENERATORS, "itembank": pilot_itembank_path},
         "arithmetic": {"generators": ARITHMETIC_GENERATORS, "itembank": None},
         "science": {"generators": SCIENCE_GENERATORS, "itembank": None},
+        "au_year2": {"generators": AU_YEAR2_GENERATORS, "itembank": None},
         "au_year3": {"generators": AU_YEAR3_GENERATORS, "itembank": None},
         "au_year4": {"generators": AU_YEAR4_GENERATORS, "itembank": None},
+        "au_year5": {"generators": AU_YEAR5_GENERATORS, "itembank": None},
+        "au_year6": {"generators": AU_YEAR6_GENERATORS, "itembank": None},
+        "au_english_year2": {"generators": AU_ENGLISH_YEAR2_GENERATORS, "itembank": None},
+        "au_english_year5": {"generators": AU_ENGLISH_YEAR5_GENERATORS, "itembank": None},
+        "au_english_year6": {"generators": AU_ENGLISH_YEAR6_GENERATORS, "itembank": None},
         "maths_practice": {"generators": MATHS_PRACTICE_GENERATORS, "itembank": None},
         "english_practice": {"generators": ENGLISH_PRACTICE_GENERATORS, "itembank": None},
         # IN_GENERIC ships in-repo under curriculum/templates/ like every other

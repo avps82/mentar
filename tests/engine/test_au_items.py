@@ -17,8 +17,11 @@ REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from mentar.engine.au_items import (  # noqa: E402
+    AU_YEAR2_GENERATORS,
     AU_YEAR3_GENERATORS,
     AU_YEAR4_GENERATORS,
+    AU_YEAR5_GENERATORS,
+    AU_YEAR6_GENERATORS,
     gen_place_value_3digit,
     gen_place_value_4digit,
 )
@@ -48,6 +51,20 @@ def test_year3_generators_self_validate():
 
 def test_year4_generators_self_validate():
     _self_validate(AU_YEAR4_GENERATORS, seed=4)
+
+
+def test_year2_generators_self_validate():
+    _self_validate(AU_YEAR2_GENERATORS, seed=2)
+
+
+def test_year5_generators_self_validate():
+    """R14a/R13: also the first self-validate coverage of decimal-type generators
+    -- exercises _check_decimal_exact end-to-end, not just int/fraction/mc4."""
+    _self_validate(AU_YEAR5_GENERATORS, seed=5)
+
+
+def test_year6_generators_self_validate():
+    _self_validate(AU_YEAR6_GENERATORS, seed=6)
 
 
 def test_place_value_answer_letter_is_the_digit_value():

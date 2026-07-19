@@ -41,6 +41,24 @@ _EXPECTED = {
     "curriculum/templates/AU_ACARA/year4_maths.md": {
         "key": "au_acara_year4_maths", "label": "Maths — Year 4 🇦🇺", "item_source": "au_year4",
     },
+    "curriculum/templates/AU_ACARA/year2_maths.md": {
+        "key": "au_acara_year2_maths", "label": "Maths — Year 2 🇦🇺", "item_source": "au_year2",
+    },
+    "curriculum/templates/AU_ACARA/year5_maths.md": {
+        "key": "au_acara_year5_maths", "label": "Maths — Year 5 🇦🇺", "item_source": "au_year5",
+    },
+    "curriculum/templates/AU_ACARA/year6_maths.md": {
+        "key": "au_acara_year6_maths", "label": "Maths — Year 6 🇦🇺", "item_source": "au_year6",
+    },
+    "curriculum/templates/AU_ACARA/year2_english.md": {
+        "key": "au_acara_year2_english", "label": "English — Year 2 🇦🇺", "item_source": "au_english_year2",
+    },
+    "curriculum/templates/AU_ACARA/year5_english.md": {
+        "key": "au_acara_year5_english", "label": "English — Year 5 🇦🇺", "item_source": "au_english_year5",
+    },
+    "curriculum/templates/AU_ACARA/year6_english.md": {
+        "key": "au_acara_year6_english", "label": "English — Year 6 🇦🇺", "item_source": "au_english_year6",
+    },
     "curriculum/templates/practice/maths.md": {
         "key": "practice_maths", "label": "Maths practice ➗", "item_source": "maths_practice",
     },

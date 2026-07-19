@@ -1200,6 +1200,68 @@ outright); extending `explain_check.py`'s arithmetic-claim verification to decim
 
 ---
 
+# R14a — AU_ACARA breadth: Year 2/5/6, Maths + English  ✅ DONE 2026-07-19  (India deferred to R14b)
+
+Maintainer asked to split R14 (originally AU Y2/5/6 + IN Y2/4/5) and do AU first. R13 (decimal
+verifier) shipped the same day specifically to unblock this — Year 5/6 maths needs decimal
+answers (place value, add/sub/mult/div) the pilot's int/fraction-only grammar couldn't honestly
+support before. 6 new templates, 21 new generator functions, 2 registry entries per file.
+
+## What shipped
+
+- **Maths:** `AU_ACARA/year2_maths.md` (5 nodes: place value, add/sub within 100, times
+  tables 2/5/10, halves/quarters), `year5_maths.md` (5 nodes: decimal place value, add/sub
+  decimals, fraction×whole, percentage-of-quantity, negative numbers — the pilot's FIRST use
+  of R13's decimal type in real content), `year6_maths.md` (5 nodes: order of operations,
+  mult/div decimals, rectangle area/perimeter, fraction-to-decimal). All in
+  `engine/au_items.py`'s new `AU_YEAR2/5/6_GENERATORS` dicts.
+- **English:** `AU_ACARA/year2_english.md`/`year5_english.md`/`year6_english.md` (4 nodes
+  each — word classes, synonyms/antonyms, plurals/rhyming/compound-words/figurative-language),
+  ALL built on the ALREADY-PROVEN `mc_which_is` helper (R7) over new, hand-verified
+  pairwise-disjoint curated tables — zero new generator shapes needed, only new content, in a
+  new `engine/au_english_items.py`.
+- `engine/item_sources.py`: 6 new registry rows (`au_year2/5/6`, `au_english_year2/5/6`).
+
+## Correctness discipline (this is where the real risk lives, not the YAML)
+
+- **Every one of the 21 new generators self-validated 300–3000 draws through the REAL
+  verifier** (not just "does it run") — 0 failures. Caught and fixed a real bug myself before
+  it ever reached a test: `Decimal(N) / 10` silently drops the trailing zero on an exact
+  division (`Decimal(40) / 10 == Decimal('4')`, not `'4.0'`) — cosmetically wrong next to a
+  genuinely-one-decimal-place sibling value in the same question (e.g. "What is 4 + 2.1?").
+  New `_one_dp(tenths: int) -> Decimal` helper (string-constructed, not divided) fixes every
+  call site; verified with 3000 more samples that the display bug is gone.
+- Every English curated table hand-verified pairwise-disjoint by me before it shipped (R7's
+  own discipline) — confirmed programmatically too (`test_au_english_items.py` asserts 4
+  distinct MC choices on every one of 3600 draws across the 12 tables).
+- **Two gemma structural failures caught in review, not shipped:** the Year 5 maths draft
+  dropped `grounding: {}` + every inline ACARA-code comment and mis-scoped a comment inside
+  the frontmatter block; the **Year 6 maths draft put the entire `concepts:` list OUTSIDE the
+  YAML frontmatter, after a second stray `---`** — would not have parsed as a valid curriculum
+  template at all. Both rebuilt directly by hand using the Year 2 template's proven-correct
+  structure as the reference, rather than re-prompting a second time.
+- Manually drove full FSM round-trips (not just unit tests) for a decimal node (Year 5
+  `au5_add_sub_decimals`: presented "What is 2.9 + 7.9?", submitted the generator's own
+  ground truth, scored correct, advanced) and an English node (Year 6 preposition
+  classification) — both real, live, end-to-end.
+
+## Accept
+
+New `tests/engine/test_au_english_items.py` (3 self-validate tests, 12 nodes × 200 draws each
+via `ItemGenerator`); `tests/engine/test_au_items.py` gained 3 more self-validate tests (Y2/5/6
+maths); `tests/engine/test_template_catalog.py`'s `_EXPECTED` dict gained 6 rows. All 6 new
+templates pass `validate_or_raise` (DAG/schema check). Auto-discovery (R3.1) means zero picker
+code changes — confirmed the 6 new subject keys appear in `SUBJECTS` after a fresh app import.
+**637 tests pass, ruff clean, 3× engine/web rerun stable (190 passed each run).**
+
+**Explicitly deferred (this is R14a of R14, not the whole thing):** India (R14b, Class 2/4/5,
+`IN_GENERIC`) — separate wave, separate plan, once picked up. Ratio/rate content (Y6) — no
+ratio-string checker in the verifier grammar, dropped rather than force-fit. Punctuation/
+spelling-with-full-sentences (Y6 English) — would need a new hand-curated sentence-bank shape,
+not the proven word-table mechanism everything else this wave used.
+
+---
+
 # Remainder Build Plan — v2
 
 Most of v1 shipped; **G0 is essentially validated** (model pick, safety, retrieval, E2E,
