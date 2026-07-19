@@ -1,8 +1,9 @@
 # Year 7-12 mathematics visual templates (2026-07-19)
 
 Maintainer dump, LOGGED ONLY (same pattern as the other reference docs logged
-the same session — no action requested). 15 ASCII templates across 5
-sections, spanning Year 7 through senior secondary (Years 11-12), including
+the same session — no action requested). 19 ASCII templates across 6
+sections (15 in the original dump + a 4-template supplemental round, Section
+6), spanning Year 7 through senior secondary (Years 11-12), including
 calculus, trigonometry, matrices, and financial mathematics — well beyond
 anything currently scoped for this project (Phase 0 pilot is fractions;
 shipped curriculum breadth tops out around Year 7-8, see
@@ -236,6 +237,94 @@ For annuities, compound interest periods, reducing-balance loans.
      |--------|--------|--------|--------|--------|--------|
      t0       t1       t2       t3       t4       t5       tn
            [ PMT ]  [ PMT ]  [ PMT ]  [ PMT ]  [ PMT ]  <-- Recurring Payment
+```
+
+## Section 6: Supplemental — probability, set theory & core senior equations
+
+A follow-up dump, same session, same day — 4 more templates, explicitly
+Years 11-12. "Do not work on this.. just update only" (log-only, same as
+every round above).
+
+### Template 16 — probability tree diagram
+
+For multi-stage independent/dependent events, conditional probability,
+Bernoulli trials.
+
+```text
+                                         [ Event A1 ]  ==> P(A1 ∩ B1)
+                                        /
+                         [ Stage B1 ]--<
+                        /  P(B1)        \
+                       /                 [ Event A2 ]  ==> P(A1 ∩ B2)
+     [ START NODE ] --<
+                       \                 [ Event A3 ]  ==> P(A2 ∩ B1)
+                        \  P(B2)        /
+                         [ Stage B2 ]--<
+                                        \
+                                         [ Event A4 ]  ==> P(A2 ∩ B2)
+```
+
+### Template 17 — two-set Venn diagram (set theory)
+
+For intersections (∩), unions (∪), complements ('), inclusion-exclusion.
+
+```text
+  Universal Set (ξ) _________________________________________
+
+  |                                                         |
+  |     Circle A                Circle B                    |
+  |    __________              __________                   |
+  |   /          \            /          \                  |
+  |  /            \          /            \                 |
+  | |   Only A     |  A ∩ B |     Only B   |                |
+  | |  Elements    | Elements|   Elements  |                |
+  |  \            /          \            /                 |
+  |   \__________/            \__________/                  |
+  |                                                         |
+  |                 Outside Elements (A ∪ B)'               |
+  |_________________________________________________________|
+```
+
+### Template 18 — the quadratic formula reference box
+
+For Advanced Algebra / Mathematical Methods, locating exact roots.
+
+```text
+    Given a Quadratic Equation:  ax² + bx + c = 0
+
+    The Roots are calculated as:
+
+                     -b  ±  √[ b² - 4ac ]
+                x = ----------------------
+                             2a
+
+    Discriminant (Δ) Check:  b² - 4ac
+    * If Δ > 0  ==>  2 Real Roots
+    * If Δ = 0  ==>  1 Repeated Root
+    * If Δ < 0  ==>  0 Real Roots (Complex Conjugates)
+```
+
+### Template 19 — compound interest & reducing-balance loans
+
+For Further Mathematics / General Mathematics, discrete growth over periods.
+
+```text
+    Future Value Equation:
+
+                             ( r )^( n × t )
+                A =  P × ( 1 + --- )
+                             ( k )
+
+    Variable Directory Map:
+    +-------------------------------------------------------------+
+
+    |  A = Final Accrued Balance (Future Value total amount)       |
+    |  P = Principal Starting Deposit Amount                      |
+    |  r = Annual Nominal Interest Rate (Written as a Decimal)    |
+    |  k = Number of Compounding Periods per calendar year         |
+    |  n = Number of Total Compounding Cycles                     |
+    |  t = Total Duration Elapsed (Measured in fractional years)  |
+    +-------------------------------------------------------------+
 ```
 
 ## Related files
