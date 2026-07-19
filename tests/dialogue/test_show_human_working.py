@@ -39,6 +39,20 @@ _SUBTRACTION_CURRICULUM = {
     },
 }
 
+_MULTIPLICATION_CURRICULUM = {
+    "multiplication": {
+        "label": "multiplication", "answer_type": "int", "checker": "int_exact",
+        "expected_answer": "5", "grounding": {}, "prerequisites": [],
+    },
+}
+
+_DIVISION_CURRICULUM = {
+    "division": {
+        "label": "division", "answer_type": "int", "checker": "int_exact",
+        "expected_answer": "5", "grounding": {}, "prerequisites": [],
+    },
+}
+
 _FRACTION_CURRICULUM = {
     "unit_fractions": {
         "label": "unit fractions", "answer_type": "fraction", "checker": "fraction_equiv",
@@ -75,6 +89,16 @@ def _subtraction_bank():
     return ItemGenerator(generators={"subtraction": _gen_subtraction})
 
 
+def _multiplication_bank():
+    from mentar.engine.itemgen import _gen_multiplication
+    return ItemGenerator(generators={"multiplication": _gen_multiplication})
+
+
+def _division_bank():
+    from mentar.engine.au_items import gen_division_facts
+    return ItemGenerator(generators={"division": gen_division_facts})
+
+
 def test_elaborate_on_addition_node_produces_a_real_step_grid():
     llm = _PromptCapturingLlm()
     ctrl = SessionController(
@@ -103,6 +127,38 @@ def test_elaborate_on_subtraction_node_produces_a_real_step_grid():
         llm_call=llm, prompt_dir=PROMPTS, grounding_cfg={},
         curriculum=_SUBTRACTION_CURRICULUM, db_store=_FakeStore(), learner_id="L",
         item_bank=_subtraction_bank(), rng_seed=7,
+    )
+    ctrl.step(None)
+    ctrl.step("?")
+    calls_before_elaborate = llm.calls
+    ctrl.step("more")
+    assert llm.calls == calls_before_elaborate, "step-display must skip the LLM entirely"
+    grid = ctrl.elaborate_steps_grid
+    assert isinstance(grid, StepGrid)
+
+
+def test_elaborate_on_multiplication_node_produces_a_real_step_grid():
+    llm = _PromptCapturingLlm()
+    ctrl = SessionController(
+        llm_call=llm, prompt_dir=PROMPTS, grounding_cfg={},
+        curriculum=_MULTIPLICATION_CURRICULUM, db_store=_FakeStore(), learner_id="L",
+        item_bank=_multiplication_bank(), rng_seed=7,
+    )
+    ctrl.step(None)
+    ctrl.step("?")
+    calls_before_elaborate = llm.calls
+    ctrl.step("more")
+    assert llm.calls == calls_before_elaborate, "step-display must skip the LLM entirely"
+    grid = ctrl.elaborate_steps_grid
+    assert isinstance(grid, StepGrid)
+
+
+def test_elaborate_on_division_node_produces_a_real_step_grid():
+    llm = _PromptCapturingLlm()
+    ctrl = SessionController(
+        llm_call=llm, prompt_dir=PROMPTS, grounding_cfg={},
+        curriculum=_DIVISION_CURRICULUM, db_store=_FakeStore(), learner_id="L",
+        item_bank=_division_bank(), rng_seed=7,
     )
     ctrl.step(None)
     ctrl.step("?")

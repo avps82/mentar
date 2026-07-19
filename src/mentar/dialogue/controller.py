@@ -28,8 +28,12 @@ from pathlib import Path
 from mentar.engine.arithmetic_steps import (
     StepGrid,
     build_addition_steps,
+    build_long_division_steps,
+    build_multiplication_partial_products_steps,
     build_subtraction_steps,
     extract_addition_operands,
+    extract_division_operands,
+    extract_multiplication_operands,
     extract_subtraction_operands,
 )
 from mentar.engine.bkt import P_L0, bkt_update, params_for
@@ -1478,11 +1482,13 @@ class SessionController:
     def _build_steps_grid_if_eligible(self) -> StepGrid | None:
         """"Show human working": build a deterministic step grid for the
         current item's problem text, or None if the node's shape isn't
-        step-eligible (plain non-negative addition/subtraction so far --
-        Phase 1/2). Uses ctx.current_item.problem when a real item is live
-        (the normal case), falling back to ctx.current_question for the
-        legacy LLM-generated-question path (which never matches either
-        extraction regex anyway, since that text isn't one of our own
+        step-eligible (plain non-negative addition/subtraction/integer
+        multiplication/exact-terminating division so far -- Phase
+        1/2/3/4). Uses ctx.current_item.problem
+        when a real item is live (the normal case), falling back to
+        ctx.current_question for the legacy LLM-generated-question path
+        (which never matches any extraction regex anyway, since that text
+        isn't one of our own
         f-string phrasings -- returns None there, same as any other
         ineligible node)."""
         ctx = self._ctx
@@ -1494,6 +1500,12 @@ class SessionController:
         sub_operands = extract_subtraction_operands(problem)
         if sub_operands is not None:
             return build_subtraction_steps(*sub_operands)
+        mult_operands = extract_multiplication_operands(problem)
+        if mult_operands is not None:
+            return build_multiplication_partial_products_steps(*mult_operands)
+        div_operands = extract_division_operands(problem)
+        if div_operands is not None:
+            return build_long_division_steps(*div_operands)
         return None
 
     def _worked_example_for(self, node_id: str) -> str:

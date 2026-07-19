@@ -13,6 +13,8 @@ import pathlib
 import random
 import sys
 
+import pytest
+
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
@@ -26,8 +28,12 @@ from mentar.engine.arithmetic_steps import (  # noqa: E402
     OPERATOR,
     POINT,
     build_addition_steps,
+    build_long_division_steps,
+    build_multiplication_partial_products_steps,
     build_subtraction_steps,
     extract_addition_operands,
+    extract_division_operands,
+    extract_multiplication_operands,
     extract_subtraction_operands,
 )
 from mentar.eval.verify_numeric import CheckResult, check  # noqa: E402
@@ -289,3 +295,221 @@ def test_extract_subtraction_allows_equal_operands():
 def test_extract_subtraction_rejects_non_subtraction_nodes():
     assert extract_subtraction_operands("What is 2/5 - 1/5?") is None
     assert extract_subtraction_operands("What is 47 + 19?") is None
+
+
+# ── Multiplication (partial products) ───────────────────────────────────────
+
+def test_multiplication_hand_example_64_times_32():
+    """The maintainer's own worked example: partial products 128 and 1920,
+    summed with exactly one carry (hundreds -> thousands)."""
+    grid = build_multiplication_partial_products_steps(64, 32)
+    assert _result_from_grid(grid) == "2048"
+    carry_cells = [c for row in grid.rows for c in row if c.kind == CARRY]
+    assert [c.text for c in carry_cells if c.text] == ["1"]
+    # The two partial products must appear verbatim, in ones-place-first order.
+    digit_rows = [
+        "".join(c.text for c in row if c.kind == DIGIT)
+        for row in grid.rows if any(c.kind == DIGIT for c in row)
+    ]
+    assert "128" in digit_rows
+    assert "1920" in digit_rows
+    assert digit_rows.index("128") < digit_rows.index("1920")
+
+
+def test_multiplication_single_digit_multiplier_has_no_sum_step():
+    """7 x 8 = 56: only ONE partial product, so it IS the answer -- no
+    separate carry/summation rows should appear."""
+    grid = build_multiplication_partial_products_steps(7, 8)
+    assert _result_from_grid(grid) == "56"
+    carry_cells = [c for row in grid.rows for c in row if c.kind == CARRY]
+    assert not carry_cells
+
+
+def test_multiplication_trailing_zero_multiplier_skips_the_zero_digit():
+    """50 x 20 = 1000: the tens digit of 20 is the ONLY nonzero digit, so
+    there's a single partial product (1000) and no summation step."""
+    grid = build_multiplication_partial_products_steps(50, 20)
+    assert _result_from_grid(grid) == "1000"
+    carry_cells = [c for row in grid.rows for c in row if c.kind == CARRY]
+    assert not carry_cells
+
+
+def test_multiplication_by_zero():
+    assert _result_from_grid(build_multiplication_partial_products_steps(0, 5)) == "0"
+    assert _result_from_grid(build_multiplication_partial_products_steps(5, 0)) == "0"
+
+
+def test_multiplication_three_digit_multiplier():
+    grid = build_multiplication_partial_products_steps(123, 45)
+    assert _result_from_grid(grid) == "5535"
+
+
+def test_multiplication_self_validates_against_real_verifier():
+    rng = random.Random(2030)
+    for _ in range(300):
+        a, b = rng.randint(0, 999), rng.randint(0, 999)
+        grid = build_multiplication_partial_products_steps(a, b)
+        reconstructed = _result_from_grid(grid)
+        outcome = check(answer_type="int", checker="int_exact",
+                         llm_output=reconstructed, ground_truth=str(a * b))
+        assert outcome.result is CheckResult.PASS, (a, b, reconstructed)
+
+
+def test_multiplication_grid_shape_is_rectangular():
+    for a, b in [(64, 32), (7, 8), (50, 20), (0, 5), (123, 45)]:
+        grid = build_multiplication_partial_products_steps(a, b)
+        for row in grid.rows:
+            assert len(row) == grid.n_cols, (a, b, row)
+
+
+def test_extract_multiplication_matches_real_phrasing():
+    assert extract_multiplication_operands("What is 64 × 32?") == (64, 32)
+
+
+def test_extract_multiplication_rejects_negative_operands():
+    assert extract_multiplication_operands("What is -3 × 4?") is None
+
+
+def test_extract_multiplication_rejects_decimal_operands():
+    """Decimal multiplication (gen_mult_decimals, gen_mult_decimal_by_decimal)
+    needs its own place-value handling (result decimal places = SUM of the
+    operands', not max) -- deferred, not silently mis-rendered."""
+    assert extract_multiplication_operands("What is 4.5 × 2?") is None
+    assert extract_multiplication_operands("What is 1.2 × 3.4?") is None
+
+
+def test_extract_multiplication_rejects_non_multiplication_nodes():
+    assert extract_multiplication_operands("What is 47 + 19?") is None
+    assert extract_multiplication_operands("What is 6 squared (6²)?") is None
+
+
+# ── Long division (bus-stop) ─────────────────────────────────────────────────
+
+def _quotient_from_grid(grid) -> str:
+    """Unlike add/sub/mult, division's result (the quotient) is the FIRST
+    row, not the last."""
+    top_row = grid.rows[0]
+    return "".join(c.text for c in top_row if c.kind in (DIGIT, POINT) and c.text)
+
+
+def test_division_hand_example_225_div_5():
+    """The maintainer's own 5-step worked example: quotient 45 (the leading
+    zero digit is computed but not drawn), two shown steps."""
+    grid = build_long_division_steps(225, 5)
+    assert _quotient_from_grid(grid) == "45"
+
+
+def test_division_original_motivating_example_8_96_div_3_2():
+    """The maintainer's ORIGINAL example from the very first note: a
+    decimal-by-decimal division requiring the scale-to-whole-divisor step."""
+    grid = build_long_division_steps(Decimal("8.96"), Decimal("3.2"))
+    assert _quotient_from_grid(grid) == "2.8"
+
+
+def test_division_decimal_dividend_whole_divisor():
+    grid = build_long_division_steps(Decimal("17.0"), 5)
+    assert _quotient_from_grid(grid) == "3.4"
+
+
+def test_division_internal_zero_quotient_digit_is_shown():
+    """896 / 8 = 112 -- no internal zero here, but 408 / 4 = 102 has one:
+    once a step has started, an internal zero quotient digit must still get
+    its own drawn work row (per the algorithm, not per this specific
+    assertion -- checked via the reconstructed quotient string)."""
+    grid = build_long_division_steps(408, 4)
+    assert _quotient_from_grid(grid) == "102"
+
+
+def test_division_single_digit_quotient():
+    grid = build_long_division_steps(30, 5)
+    assert _quotient_from_grid(grid) == "6"
+
+
+def test_division_exact_no_remainder_shows_final_zero():
+    grid = build_long_division_steps(225, 5)
+    last_row = grid.rows[-1]
+    remainder_text = "".join(c.text for c in last_row if c.kind == DIGIT and c.text)
+    assert remainder_text == "0"
+
+
+def test_division_by_larger_number_still_terminates():
+    grid = build_long_division_steps(896, 8)
+    assert _quotient_from_grid(grid) == "112"
+
+
+def test_division_non_terminating_raises():
+    """1 / 3 = 0.333... never terminates -- must raise, not loop forever or
+    silently truncate to a wrong quotient."""
+    with pytest.raises(ValueError):
+        build_long_division_steps(1, 3)
+
+
+def test_division_insufficient_given_precision_raises():
+    """4 / 20 = 0.2 exactly, but the dividend "4" as WRITTEN carries no
+    decimal digits to carry the process into -- this builder deliberately
+    does not synthesize extra trailing zeros (see its docstring), so this
+    must raise rather than guess."""
+    with pytest.raises(ValueError):
+        build_long_division_steps(4, 20)
+
+
+def test_division_self_validates_against_real_verifier():
+    """Same discipline as every other builder: construct dividends FROM a
+    clean quotient (matching how gen_division_facts/gen_div_decimals build
+    their content), so every case is guaranteed exact."""
+    rng = random.Random(2031)
+    for _ in range(300):
+        divisor = rng.randint(2, 999)
+        quotient = rng.randint(0, 999)
+        dividend = divisor * quotient
+        grid = build_long_division_steps(dividend, divisor)
+        reconstructed = _quotient_from_grid(grid)
+        outcome = check(answer_type="int", checker="int_exact",
+                         llm_output=reconstructed, ground_truth=str(quotient))
+        assert outcome.result is CheckResult.PASS, (dividend, divisor, reconstructed)
+
+
+def test_division_decimal_self_validates_against_real_verifier():
+    rng = random.Random(2032)
+    for _ in range(200):
+        divisor = rng.randint(2, 99)
+        quotient = Decimal(rng.randint(1, 999)) / 10
+        dividend = quotient * divisor
+        grid = build_long_division_steps(dividend, divisor)
+        reconstructed = _quotient_from_grid(grid)
+        outcome = check(answer_type="decimal", checker="decimal_exact",
+                         llm_output=reconstructed, ground_truth=str(quotient))
+        assert outcome.result is CheckResult.PASS, (dividend, divisor, reconstructed)
+
+
+def test_division_decimal_by_decimal_self_validates_against_real_verifier():
+    """Mirrors gen_div_decimal_by_decimal: dividend AND divisor both
+    one-decimal-place -- exercises the scale-to-whole-divisor step on every
+    single case, not just the one hand example."""
+    rng = random.Random(2033)
+    for _ in range(200):
+        divisor = Decimal(rng.randint(10, 99)) / 10
+        quotient = Decimal(rng.randint(10, 99)) / 10
+        dividend = quotient * divisor
+        grid = build_long_division_steps(dividend, divisor)
+        reconstructed = _quotient_from_grid(grid)
+        outcome = check(answer_type="decimal", checker="decimal_exact",
+                         llm_output=reconstructed, ground_truth=str(quotient))
+        assert outcome.result is CheckResult.PASS, (dividend, divisor, reconstructed)
+
+
+def test_extract_division_matches_real_phrasing():
+    assert extract_division_operands("What is 225 ÷ 5?") == (Decimal("225"), Decimal("5"))
+
+
+def test_extract_division_rejects_negative_or_zero_divisor():
+    assert extract_division_operands("What is -10 ÷ 5?") is None
+    assert extract_division_operands("What is 10 ÷ 0?") is None
+
+
+def test_extract_division_rejects_non_terminating():
+    assert extract_division_operands("What is 1 ÷ 3?") is None
+
+
+def test_extract_division_rejects_non_division_nodes():
+    assert extract_division_operands("What is 47 + 19?") is None
