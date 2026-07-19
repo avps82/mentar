@@ -274,6 +274,7 @@ class SessionController:
         scope_line: str | None = None,
         rng_seed: int | None = None,
         max_items: int | None = None,
+        resume_checkpoint: dict | None = None,
     ) -> None:
         self._llm = self._make_safe_llm(llm_call)
         self._prompt_dir = Path(prompt_dir)
@@ -289,8 +290,14 @@ class SessionController:
         self._scope_line = scope_line or subject
         # R11 micro-session cap: end warmly after this many completed items (None = uncapped).
         self._max_items = max_items
+        # R-RES: a checkpoint from a session a server-process restart interrupted --
+        # {"current_node_id", "frozen", "items_completed", "items_since_probe"} or None
+        # for a genuinely fresh session. Consumed once, in _do_session_start.
+        self._resume_checkpoint = resume_checkpoint
         # One tutoring session per controller instance. A session row is created lazily
-        # on the first step() and closed at a terminal state (both best-effort).
+        # on the first step() and closed at a terminal state (both best-effort). A
+        # resumed session reuses its ORIGINAL id (passed in by the caller) so durable
+        # logging keeps accumulating under the same row.
         self._session_id = session_id or uuid.uuid4().hex
         self._session_created = False
         self._session_ended = False
@@ -345,6 +352,7 @@ class SessionController:
             self._log_transcript("tutor", result.text)
         if result.done:
             self._maybe_end_session(self._ctx.state)
+        self._write_checkpoint()
         return result
 
     def parent_acknowledge(self, action: str) -> TurnResult:
@@ -380,7 +388,24 @@ class SessionController:
             self._log_transcript("tutor", result.text)
         if result.done:
             self._maybe_end_session(ctx.state)
+        self._write_checkpoint()
         return result
+
+    def _write_checkpoint(self) -> None:
+        """R-RES: best-effort per-turn checkpoint so a server-process restart can
+        resume onto the same topic instead of losing all session context. Mirrors
+        the existing best-effort persistence posture (_log_transcript etc.) — a DB
+        failure here must never block or corrupt a tutoring turn."""
+        ctx = self._ctx
+        checkpoint = {
+            "current_node_id": ctx.current_node_id,
+            "frozen": ctx.state is FSMState.ESCALATION_FREEZE,
+            "items_completed": ctx.items_completed,
+            "items_since_probe": ctx.items_since_probe,
+        }
+        self._safe_store(
+            "update_session_checkpoint", self._session_id, json.dumps(checkpoint),
+        )
 
     def _step_core(self, learner_input: str | None) -> TurnResult:
         """Advance the FSM by one logical turn.
@@ -728,7 +753,34 @@ class SessionController:
             except Exception:
                 ctx.mastery[node_id] = P_L0
                 ctx.mastery_updated_at[node_id] = None
-        ctx.state = FSMState.NODE_SELECT
+        # R-RES: where SESSION_START lands, given an optional resume checkpoint from a
+        # session a server-process restart interrupted (self._resume_checkpoint). Kept
+        # INLINE (not a helper) so T3.7's AST-based conformance test can see the literal
+        # ctx.state = FSMState.X assignments -- it only walks _do_ handler bodies.
+        #   - no checkpoint (the common case)                    -> NODE_SELECT
+        #   - checkpoint says the session was frozen              -> ESCALATION_FREEZE,
+        #     UNCONDITIONALLY (SAFETY §3.x: only the parent control plane may ever lift
+        #     a freeze -- a restart must never silently resume one unfrozen).
+        #   - checkpoint names a node still valid + unmastered in THIS curriculum
+        #                                                          -> PATTERN_SELECT,
+        #     seeded onto that SAME node (skips NODE_SELECT's own selection so R11's
+        #     interleave policy -- which prefers switching AWAY from `current` -- can't
+        #     override "resume onto the same topic"); a fresh item/question is
+        #     presented, not the literal one that was on screen.
+        #   - checkpoint names a node that's gone stale (template changed, already
+        #     mastered since, or missing entirely)                 -> NODE_SELECT
+        #     (safe degrade, not an error -- the checkpoint just wasn't trustworthy).
+        cp = self._resume_checkpoint
+        node_id = cp.get("current_node_id") if cp else None
+        if cp and cp.get("frozen"):
+            ctx.state = FSMState.ESCALATION_FREEZE
+        elif cp and node_id in self._curriculum and not is_mastered(ctx.mastery.get(node_id, 0.0)):
+            ctx.current_node_id = node_id
+            ctx.items_completed = int(cp.get("items_completed") or 0)
+            ctx.items_since_probe = int(cp.get("items_since_probe") or 0)
+            ctx.state = FSMState.PATTERN_SELECT
+        else:
+            ctx.state = FSMState.NODE_SELECT
         return ("", True)
 
     def _do_node_select(self) -> tuple[str, bool]:

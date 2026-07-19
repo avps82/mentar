@@ -27,12 +27,14 @@ from pathlib import Path
 # Path to the schema DDL file alongside this module.
 _SCHEMA_PATH = Path(__file__).parent / "schema.sql"
 
-_EXPECTED_VERSION = 3
+_EXPECTED_VERSION = 4
 
 # v1 -> v2 (A3, 2026-07-04): escalation_log gained severity/session_id/turn_index so
 # SAFETY §3.3/§3.5's claim that every escalation row carries these is actually true.
 # v2 -> v3 (A19, 2026-07-05): session gained rng_seed, so a session's non-deterministic
 # choices (pattern/modality/praise-variant selection) can be replayed given the same seed.
+# v3 -> v4 (R-RES, 2026-07-19): session gained checkpoint_state, so a session can resume
+# onto the same topic after a server-process restart instead of losing all context.
 _MIGRATIONS: dict[int, list[str]] = {
     1: [
         "ALTER TABLE escalation_log ADD COLUMN severity TEXT "
@@ -42,6 +44,9 @@ _MIGRATIONS: dict[int, list[str]] = {
     ],
     2: [
         "ALTER TABLE session ADD COLUMN rng_seed INTEGER;",
+    ],
+    3: [
+        "ALTER TABLE session ADD COLUMN checkpoint_state TEXT;",
     ],
 }
 
@@ -199,11 +204,40 @@ class LearnerStore:
         constructed with — recorded so a session's non-deterministic choices
         can be replayed exactly given the same seed.
         """
+        # R-RES: OR IGNORE -- a resumed session reuses its ORIGINAL session_id (so
+        # response_log/transcript/help_event/probe_event keep accumulating under the
+        # same row); the row already exists in that case, and re-inserting must be a
+        # safe no-op, not a PRIMARY KEY violation. A genuinely new id always inserts
+        # exactly as before.
         self._conn.execute(
-            "INSERT INTO session (id, learner_id, rng_seed) VALUES (?, ?, ?);",
+            "INSERT OR IGNORE INTO session (id, learner_id, rng_seed) VALUES (?, ?, ?);",
             (session_id, learner_id, rng_seed),
         )
         self._conn.commit()
+
+    def update_session_checkpoint(
+        self, learner_id: int, session_id: str, checkpoint_json: str,
+    ) -> None:
+        """R-RES: best-effort per-turn checkpoint (current node, frozen flag, session
+        counters) so a server-process restart can resume onto the same topic."""
+        self._conn.execute(
+            "UPDATE session SET checkpoint_state = ? WHERE id = ? AND learner_id = ?;",
+            (checkpoint_json, session_id, learner_id),
+        )
+        self._conn.commit()
+
+    def get_open_session(self, learner_id: int) -> sqlite3.Row | None:
+        """R-RES: the most recent session this learner never explicitly ended
+        (``ended_at IS NULL``) -- the signal that a server-process restart (or a
+        crash) interrupted it mid-flight, and there may be a checkpoint to resume."""
+        return self._conn.execute(
+            """
+            SELECT * FROM session
+             WHERE learner_id = ? AND ended_at IS NULL
+             ORDER BY started_at DESC LIMIT 1;
+            """,
+            (learner_id,),
+        ).fetchone()
 
     def end_session(self, learner_id: int, session_id: str, ended_reason: str) -> None:
         """Mark a session as ended."""

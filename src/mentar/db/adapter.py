@@ -61,6 +61,9 @@ class _DbStoreAdapter:
     def end_session(self, session_id: str, ended_reason: str) -> None:
         self._store.end_session(self._db_id, session_id, ended_reason)
 
+    def update_session_checkpoint(self, session_id: str, checkpoint_json: str) -> None:
+        self._store.update_session_checkpoint(self._db_id, session_id, checkpoint_json)
+
     def write_transcript(self, session_id: str, turn_index: int, role: str, text: str) -> int:
         return self._store.write_transcript(self._db_id, session_id, turn_index, role, text)
 

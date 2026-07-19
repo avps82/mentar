@@ -218,6 +218,95 @@ def test_learner_id_survives_server_restart():
     assert n_responses >= 2, "both pre- and post-restart answers should be under the same learner"
 
 
+def test_session_resumes_same_topic_after_server_restart():
+    """R-RES: a server-process restart (simulated via module reload, same pattern
+    as A6's test above) must resume onto the SAME topic the child was on, with
+    the session counters carried over -- not silently reset to a fresh session
+    (the 'start from the last session end midway' gap, 2026-07-19 feedback)."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+    import sqlite3
+
+    app_mod, c1 = _client()
+    dbp = os.environ["MENTAR_DB_PATH"]
+
+    c1.post("/choose", data={"subject": "fractions"})
+    c1.get("/learn")
+    with c1.session_transaction() as sess:
+        learner_uuid = sess["learner_uuid"]
+    ctrl_before = app_mod._controllers[learner_uuid]
+    node_before = ctrl_before.current_node_id
+    session_id_before = ctrl_before.session_id
+    assert node_before is not None
+
+    session_cookie = c1.get_cookie("session")
+    assert session_cookie is not None
+
+    # Simulate a restart: reload the module (fresh _controllers/_stores/etc.) but
+    # keep MENTAR_DB_PATH unchanged -- the checkpoint the first controller wrote
+    # on its step(None) above is the only thing carrying context across the "gap".
+    import importlib
+    app_mod = importlib.reload(app_mod)
+    app_mod._llm_call_cached = lambda messages: "stub tutor reply"
+    app_mod._SETUP_GATE_BYPASS = True
+    c2 = app_mod.app.test_client()
+    c2.set_cookie(domain="localhost", key="session", value=session_cookie.value)
+
+    c2.post("/choose", data={"subject": "fractions"})
+    c2.get("/learn")
+    with c2.session_transaction() as sess:
+        learner_uuid2 = sess["learner_uuid"]
+    ctrl_after = app_mod._controllers[learner_uuid2]
+
+    assert ctrl_after.current_node_id == node_before, (
+        "resume must land on the SAME topic, not wherever fresh NODE_SELECT would go"
+    )
+    assert ctrl_after.session_id == session_id_before, (
+        "resume must reuse the original session_id so logging keeps accumulating under it"
+    )
+
+    db = sqlite3.connect(dbp)
+    n_sessions = db.execute("SELECT count(*) FROM session").fetchone()[0]
+    db.close()
+    assert n_sessions == 1, "resume must NOT create a second session row"
+
+
+def test_frozen_session_resumes_frozen_after_server_restart():
+    """R-RES hard safety constraint: a session frozen when the process stopped
+    must resume frozen -- never silently unfrozen by a restart."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+
+    app_mod, c1 = _client()
+    c1.post("/choose", data={"subject": "fractions"})
+    c1.get("/learn")
+    r = c1.post("/answer", data={"answer": "I want to die"}, headers={"HX-Request": "true"})
+    assert r.headers.get("HX-Redirect") == "/frozen"
+
+    session_cookie = c1.get_cookie("session")
+    assert session_cookie is not None
+
+    import importlib
+    app_mod = importlib.reload(app_mod)
+    app_mod._llm_call_cached = lambda messages: "stub tutor reply"
+    app_mod._SETUP_GATE_BYPASS = True
+    c2 = app_mod.app.test_client()
+    c2.set_cookie(domain="localhost", key="session", value=session_cookie.value)
+
+    # Reopening the SAME subject after the "restart" must land back on /frozen,
+    # not a fresh, unfrozen question.
+    c2.post("/choose", data={"subject": "fractions"})
+    r3 = c2.get("/learn", follow_redirects=False)
+    assert r3.status_code in (301, 302, 303, 307, 308)
+    assert r3.headers.get("Location", "").endswith("/frozen")
+
+
 def test_answer_hx_request_returns_question_fragment():
     """U-90 plumbing: htmx (vendored static/htmx.min.js) sends HX-Request: true
     to get a bare HTML fragment swapped into hx-target=".question" (no page

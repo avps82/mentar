@@ -21,7 +21,9 @@ When this document and the controller disagree, **this document is authoritative
 ```mermaid
 stateDiagram-v2
     [*] --> SESSION_START
-    SESSION_START --> NODE_SELECT: enter
+    SESSION_START --> NODE_SELECT: enter (no/invalid checkpoint)
+    SESSION_START --> PATTERN_SELECT: pending_resume_valid_node (R-RES)
+    SESSION_START --> ESCALATION_FREEZE: pending_resume_frozen (R-RES)
     NODE_SELECT --> PATTERN_SELECT: fringe_nonempty
     NODE_SELECT --> SESSION_END_COMPLETE: fringe_empty_or_completion_met
     PATTERN_SELECT --> PRESENT: enter
@@ -141,7 +143,8 @@ reach, since T3.7 checks per-handler, not per-`hinted`-value.
 | From | Event | To | Side effects |
 |------|-------|-----|--------------|
 | `SESSION_START` | `enter` (no pending resume) | `NODE_SELECT` | Load profile, BKT priors, template. |
-| `SESSION_START` | `enter` (pending resume found) | (persisted state) | Resume into the persisted state with its checkpoint context. |
+| `SESSION_START` | `pending_resume_valid_node` | `PATTERN_SELECT` | **R-RES (2026-07-19, BUILT — see §4 note below).** A server-process restart interrupted a session; the checkpointed `current_node_id` is still present and unmastered in this curriculum. Seeds `current_node_id`/`items_completed`/`items_since_probe` from the checkpoint and re-enters the SAME node — but a FRESH item/question, not the literal one on screen (scope decision: same topic, not exact mid-question replay). |
+| `SESSION_START` | `pending_resume_frozen` | `ESCALATION_FREEZE` | **R-RES.** The interrupted session was frozen when the process stopped — resumes frozen, UNCONDITIONALLY, regardless of curriculum/node validity (SAFETY §3.x: only the parent control plane may ever lift a freeze). No handoff message is re-sent; `/frozen` renders its fixed message independent of `step()`'s output either way. |
 | `NODE_SELECT` | `fringe_nonempty` | `PATTERN_SELECT` | Chosen node id recorded in transition log. **R11 (2026-07-18):** selection policy is `engine/fringe.select_next` — interleaves among fringe nodes (prefers a node ≠ the one just practised) and every `REVIEW_EVERY_N`-th completed item injects spaced review of a mastered-but-stale node (makes the `forgetting_suspect` probe path reachable). Was: first sorted fringe node until mastery. |
 | `NODE_SELECT` | `fringe_empty_or_completion_met` | `SESSION_END_COMPLETE` | Completion criteria evaluated per parent config. R11: fires when `select_next` returns None (fringe empty AND no stale-mastered review candidates). |
 | `PATTERN_SELECT` | `enter` | `PRESENT` | Chosen pattern id recorded. |
@@ -208,7 +211,7 @@ is a legitimate follow-up, not done in this pass.
 
 1. **Total documentation.** Every transition implemented in `src/mentar/dialogue/controller.py` corresponds to a row in §3. Every row in §3 is implemented in code. (Bi-directional — drift in either direction = test failure.) **Automated: `test_session_fsm.py`.**
 2. **Absorbing escalation.** From `ESCALATION_FREEZE`, no child-input event advances state — only the parent control plane (`parent_acknowledge()`) can. Covered by `tests/dialogue/test_escalation_resume.py` (fixed scenarios, not a fuzzer).
-3. **Persistence completeness.** Every state marked "persisted" in §2 must be re-enterable from `SESSION_START` after a `session_close` checkpoint, with the pending input and counters intact. **Not automated** — no `session_resume` code path exists yet (persisted rows exist for parent review; mid-session process-restart resume is not implemented).
+3. **Persistence completeness.** **BUILT 2026-07-19 (R-RES), deliberately SCOPED DOWN from the original invariant.** A server-process restart resumes onto the SAME topic (`current_node_id`) with the session counters (`items_completed`/`items_since_probe`) intact, and an `ESCALATION_FREEZE` unconditionally resumes frozen — but this is NOT the exact "pending input and counters" byte-for-byte replay the original wording implied: the literal on-screen question, live `Item`, and any in-progress Help/probe sub-state are NOT restored — a fresh item/question is presented for that same node instead. This was a scope decision (simpler, no `Item` serialization or RNG mid-replay, no template-drift edge cases), not an oversight. Covered by `tests/dialogue/test_session_resume.py`, `tests/db/test_datamodel.py` (checkpoint persistence), `tests/web/test_app_smoke.py` (restart simulation).
 4. **Help retry cap.** The Help chain length from `HELP_MODALITY_SELECT` entries to `LINK_BACK` is ≤ 3 (SPEC §13.1, W5.3 pilot default N=3). Covered by `tests/dialogue/test_controller.py`'s Help-loop tests.
 5. **Probe non-skippability.** From both `HELP_RECHECK_AWAIT` and `PROBE_AWAIT_ANSWER`, `learner_skip_attempt` is a self-loop only — never advances to a downstream tutoring state without a scoreable answer.
 6. **Modality diversity.** `HELP_MODALITY_SELECT` MUST pick a modality not already used in the current Help chain; if all 5 are exhausted before retry cap is hit, force `LINK_BACK` early.

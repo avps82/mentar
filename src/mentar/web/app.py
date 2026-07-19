@@ -23,6 +23,7 @@ Config via environment (never commit values):
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import uuid
@@ -364,6 +365,27 @@ def _get_or_create_controller(learner_uuid: str, subject: str) -> SessionControl
             else None
         )
         item_source = CompositeItemSource(ItemGenerator(generators=subj["generators"]), bank)
+        # R-RES: a session a server-process restart interrupted is still "open"
+        # (ended_at IS NULL) in the DB. Reuse its id + checkpoint ONLY when the
+        # checkpointed node actually belongs to THIS subject's curriculum -- a
+        # learner's open session could be for a different subject entirely (they
+        # switched topics and never explicitly ended the old one), and reusing that
+        # session_id here would wrongly mix two subjects' rows under one id.
+        # NOTE: even pre-R-RES, switching subjects already discards/bypasses a frozen
+        # SAME-PROCESS controller (the `_learner_subject` check above pops it) -- an
+        # escalation freeze has always been per-subject, not global. Gating resume on
+        # curriculum membership keeps that behaviour identical across a restart: a
+        # frozen Maths session resumes frozen when Maths is reopened, but doesn't
+        # block a family from opening English.
+        resume_session_id, resume_checkpoint = None, None
+        open_session = store.get_open_session(db_id)
+        if open_session is not None and open_session["checkpoint_state"]:
+            try:
+                cp = json.loads(open_session["checkpoint_state"])
+            except (ValueError, TypeError):
+                cp = None
+            if cp and cp.get("current_node_id") in _SUBJECT_CURRICULA[subject]:
+                resume_session_id, resume_checkpoint = open_session["id"], cp
         _controllers[learner_uuid] = SessionController(
             llm_call=_llm_call,
             prompt_dir=PROMPT_DIR,
@@ -374,6 +396,8 @@ def _get_or_create_controller(learner_uuid: str, subject: str) -> SessionControl
             item_bank=item_source,
             subject=_SUBJECT_NAMES[subject],
             max_items=SESSION_ITEMS or None,
+            session_id=resume_session_id,
+            resume_checkpoint=resume_checkpoint,
         )
         _turn_logs[learner_uuid] = []
     return _controllers[learner_uuid]

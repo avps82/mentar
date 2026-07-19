@@ -1061,6 +1061,80 @@ Wave 2 of the 2026-07-18 release-backlog plan (R12 was wave 1) — done BEFORE R
 
 ---
 
+# R-RES — Session resume across a server-process restart  `[O]` ✅ DONE 2026-07-19
+
+**Why:** documented, known, never-built gap — `docs/SESSION_FSM.md` §4 invariant 3 literally
+said *"Not automated — no `session_resume` code path exists yet."* Reproducing the "Explain
+more" bug live surfaced the real trigger: while the server process keeps running, navigating
+away and back already resumes perfectly (`_controllers` holds the live `SessionController`
+in memory). Mastery already survives a restart too (A6). What's actually lost on a
+server-process restart (dev-server restart, crash, redeploy) is the in-memory controller
+itself — a fresh one starts a new session_id, a fresh `items_completed` counter, and
+re-derives NODE_SELECT from scratch, landing on *a* sensible node but not necessarily the one
+the child was just on.
+
+**Scope decision (AskUserQuestion, 2026-07-19): same topic, fresh question.** Re-enter the
+exact node the child was on, but present a NEW item for it rather than the literal on-screen
+question — avoids `Item` serialization, RNG mid-replay, and template-drift edge cases, while
+fixing what's actually felt (wrong topic + a reset counter). **Hard safety constraint,
+non-negotiable:** a session frozen when the process stopped resumes FROZEN, unconditionally —
+no code path may silently unfreeze on restart.
+
+## What changed
+
+- **Schema (v3→v4):** `session` gained `checkpoint_state TEXT` (JSON:
+  `current_node_id`/`frozen`/`items_completed`/`items_since_probe`), written best-effort every
+  turn. New `LearnerStore.update_session_checkpoint()` / `.get_open_session()` (most recent
+  `ended_at IS NULL` row). `create_session`'s INSERT became `INSERT OR IGNORE` — a resumed
+  session reuses its ORIGINAL id so `response_log`/`transcript`/`help_event`/`probe_event` keep
+  accumulating under one row.
+  - **Bug found + fixed in the same pass:** `schema.sql` hardcodes its OWN
+    `PRAGMA user_version`, independent of `store.py`'s `_EXPECTED_VERSION` — bumping only the
+    latter left a fresh DB one version behind, colliding with the migration on next open
+    ("duplicate column name"). Both must move together now (documented inline in schema.sql).
+- **Controller:** new `resume_checkpoint: dict | None` ctor param. `_do_session_start`'s
+  outcome, inlined (not a helper — T3.7's AST-based conformance test only sees literal
+  `ctx.state = FSMState.X` assignments inside `_do_` handler bodies): no checkpoint →
+  `NODE_SELECT` (unchanged); `frozen: True` → `ESCALATION_FREEZE`, unconditionally; a valid
+  unmastered checkpointed node → seeds `current_node_id`/counters, `PATTERN_SELECT` directly
+  (skips `NODE_SELECT`'s own `select_next` — which would otherwise prefer switching AWAY from
+  `current` per R11's interleave policy, defeating "same topic"); a stale/missing/now-mastered
+  node → safe degrade to `NODE_SELECT`. New `_write_checkpoint()` called from both `step()` and
+  `parent_acknowledge()`.
+- **Web wiring:** `_get_or_create_controller` looks up `store.get_open_session()` before
+  constructing a new controller; reuses its session_id + checkpoint ONLY when the checkpointed
+  node belongs to the CURRENT subject's curriculum (a learner's open session could be for a
+  different, still-abandoned subject — reusing that id here would wrongly mix two subjects'
+  rows under one session; this also matches PRE-EXISTING behaviour where switching subjects
+  same-process already discards/bypasses a frozen controller — escalation freeze has always
+  been per-subject, not global).
+- **`docs/SESSION_FSM.md`:** two new backtick-quoted transition rows (T3.7-enforced) +
+  mermaid diagram lines; §4 invariant 3 updated to record what shipped vs. what was
+  deliberately scoped down (same-topic-fresh-question, not exact mid-question replay).
+
+## Accept
+
+New `tests/dialogue/test_session_resume.py` (8): no-checkpoint unchanged; frozen resumes
+frozen + stays absorbing; frozen ignores node validity (unconditional); valid node resumes
+same topic with seeded counters; mastered-since / missing node both degrade safely to
+`NODE_SELECT`; `step()` writes a checkpoint every turn; the checkpoint reflects `frozen: True`
+after a real escalation trigger. New `tests/web/test_app_smoke.py` tests (2, same
+`importlib.reload` restart-simulation pattern as A6): a restarted process resumes the SAME
+node + reuses the SAME session_id (no duplicate session row); a frozen session redirects
+straight back to `/frozen` after "restart", never a fresh unfrozen question.
+`tests/db/test_datamodel.py`'s migration suite extended to v3→v4 (schema_version 3→4
+throughout, `test_v1_to_current_migration_adds_new_columns` now also exercises
+`checkpoint_state`, `test_no_migration_path_raises` retargeted to the next genuinely
+unregistered gap). **603 tests pass, ruff clean, 3× dialogue/web/db rerun stable.**
+
+**Explicitly skipped (per the scope decision):** exact mid-question resume (literal on-screen
+question + live Help/probe sub-state) — bigger, riskier, not chosen; scoping the open-session
+lookup by a new subject DB column — the curriculum-membership check does the same job simpler;
+resuming an older stale session if a MORE RECENT one for a different subject was also left
+open — narrow edge case, not worth a multi-row scan for a single-family pilot.
+
+---
+
 # Remainder Build Plan — v2
 
 Most of v1 shipped; **G0 is essentially validated** (model pick, safety, retrieval, E2E,

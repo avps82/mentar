@@ -3,7 +3,10 @@
 -- Safety: docs/SAFETY.md Layer 4 (data/privacy) and Layer 5 (parental oversight)
 --
 -- Design decisions (defensible defaults):
---   * PRAGMA user_version = 1 — migration tracker per W3.6; bump on every schema change.
+--   * PRAGMA user_version — migration tracker per W3.6; bump both this file's own
+--     PRAGMA (below) AND store.py's _EXPECTED_VERSION/_MIGRATIONS on every schema change,
+--     or a fresh DB lands one version behind and a later reopen mis-applies migrations
+--     the fresh DDL already covered (hit exactly this in R-RES, 2026-07-19).
 --   * All timestamps stored as ISO-8601 TEXT (UTC).  SQLite has no native DATETIME type;
 --     TEXT with CHECK ensures ISO-8601 pattern; comparisons work lexicographically.
 --   * transcript rows are immutable: AFTER UPDATE / AFTER DELETE triggers RAISE(ABORT, …).
@@ -18,7 +21,7 @@
 --     than a FK to session, because the session may be ended/deleted independently of
 --     the escalation record (escalation_log is intentionally harder to purge).
 
-PRAGMA user_version = 3;
+PRAGMA user_version = 4;
 PRAGMA foreign_keys = ON;
 
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -43,12 +46,18 @@ CREATE TABLE IF NOT EXISTS learner_profile (
 --     selection) can be replayed exactly given the same seed.
 -- ─────────────────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS session (
-    id           TEXT    PRIMARY KEY,          -- caller-supplied UUID or slug
-    learner_id   INTEGER NOT NULL REFERENCES learner_profile(id) ON DELETE CASCADE,
-    started_at   TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
-    ended_at     TEXT,                         -- NULL while session is live
-    ended_reason TEXT,                         -- 'completed'|'abandoned'|'escalation_freeze'|…
-    rng_seed     INTEGER
+    id               TEXT    PRIMARY KEY,      -- caller-supplied UUID or slug
+    learner_id       INTEGER NOT NULL REFERENCES learner_profile(id) ON DELETE CASCADE,
+    started_at       TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+    ended_at         TEXT,                     -- NULL while session is live
+    ended_reason     TEXT,                     -- 'completed'|'abandoned'|'escalation_freeze'|…
+    rng_seed         INTEGER,
+    -- checkpoint_state (v4, R-RES): small JSON blob {"current_node_id", "frozen",
+    -- "items_completed", "items_since_probe"} written best-effort every turn, so a
+    -- server-process restart can resume onto the SAME topic (fresh question, not the
+    -- literal one on screen) instead of losing all session context. NULL = no
+    -- checkpoint yet (a session that never got a first turn, or predates this column).
+    checkpoint_state TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_session_learner ON session(learner_id);
