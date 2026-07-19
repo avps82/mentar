@@ -50,6 +50,12 @@ _EXPECTED = {
     "curriculum/templates/AU_ACARA/year6_maths.md": {
         "key": "au_acara_year6_maths", "label": "Maths — Year 6 🇦🇺", "item_source": "au_year6",
     },
+    "curriculum/templates/AU_ACARA/year7_maths.md": {
+        "key": "au_acara_year7_maths", "label": "Maths — Year 7 🇦🇺", "item_source": "au_year7",
+    },
+    "curriculum/templates/AU_ACARA/year8_maths.md": {
+        "key": "au_acara_year8_maths", "label": "Maths — Year 8 🇦🇺", "item_source": "au_year8",
+    },
     "curriculum/templates/AU_ACARA/year2_english.md": {
         "key": "au_acara_year2_english", "label": "English — Year 2 🇦🇺", "item_source": "au_english_year2",
     },

@@ -1262,6 +1262,43 @@ not the proven word-table mechanism everything else this wave used.
 
 ---
 
+# R15 (partial) — AU Year 7-8 maths, shipped fast for a same-day demo  2026-07-19
+
+Maintainer was time-pressured (kids arriving for a demo same day) and asked for R15 scoped to
+AU only, "at least Year 7 or 8." Deliberately shipped Y7+Y8 solidly rather than stretch to Y9
+and risk something untested for a live audience — same pattern as R14a (self-validate every
+generator through the real verifier, gemma drafts generators from an exact spec, templates
+hand-written directly after R14a's Year 6 near-miss taught that gemma has real structural risk
+assembling YAML frontmatter).
+
+**Shipped:** `year7_maths.md` (integers add/sub, order-of-operations-with-negatives,
+unlike-denominator fraction addition via `fractions.Fraction`, one-step equations — the
+pilot's first "solve for x" content, still a plain int answer — multiplying decimals) and
+`year8_maths.md` (two-step equations, squares, negative-number multiplication, percentage
+change, dividing decimals). 10 new generators in `engine/au_items.py`
+(`AU_YEAR7_GENERATORS`/`AU_YEAR8_GENERATORS`), 2 new `item_sources.py` rows.
+
+**Verification, compressed for time but not skipped on correctness:** every one of the 10
+generators self-validated 500 draws through the real deterministic verifier (0 failures);
+eyeballed a sample of each for display sense (negative numbers, multi-decimal-place results
+render correctly, no repeat of R14a's `Decimal(N)/10` trailing-zero bug since `_one_dp()` was
+reused throughout); drove one live FSM round-trip per year (present → answer with the
+generator's own ground truth → scored correct → advanced) through the real
+`SessionController`. Skipped the usual 3× flake-rerun given time pressure — justified because
+the self-validate draw count (500/generator) is a stronger correctness signal than rerun count
+for this kind of pure-function content, and nothing here touches session/RNG-replay logic
+(R11's actual flakiness source).
+
+**Explicitly deferred, not forgotten:** English Y7/8, Year 9 (only "at least Y7/8" was
+promised), India (R14b), the maintainer-checkpoint structure the original R15 plan called for
+between phases (skipped under time pressure — worth reinstating once the demo pressure is
+off). `docs/PHASE0_STATUS.md`/memory updated; a fuller retrospective write-up can follow once
+today's demo is done.
+
+**Accept:** 639 tests pass, ruff clean.
+
+---
+
 # Remainder Build Plan — v2
 
 Most of v1 shipped; **G0 is essentially validated** (model pick, safety, retrieval, E2E,

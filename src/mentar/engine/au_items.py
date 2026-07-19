@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import random
 from decimal import Decimal
+from fractions import Fraction
 
 from mentar.engine.itemgen import (
     _gen_adding_equal_denom,
@@ -288,6 +289,102 @@ def gen_fraction_decimal_equiv(rng: random.Random):
     return ("decimal", "decimal_exact", f"Write {frac} as a decimal.", dec)
 
 
+# ── Year 7 (AC9M7N/A alignment) ───────────────────────────────────────────────
+# R15, 2026-07-19.
+
+def gen_integers_add_sub(rng: random.Random):
+    """AC9M7N01-aligned: add or subtract two integers, either may be negative."""
+    a = rng.randint(-15, 15)
+    b = rng.randint(-15, 15)
+    if rng.random() < 0.5:
+        return ("int", "int_exact", f"What is {a} + {b}?", str(a + b))
+    return ("int", "int_exact", f"What is {a} - {b}?", str(a - b))
+
+
+def gen_order_of_ops_negatives(rng: random.Random):
+    """AC9M7N01-aligned: order of operations where the leading term may be negative."""
+    op_low = rng.choice(["+", "-"])
+    a = rng.randint(-20, 20)
+    if rng.random() < 0.5:
+        b, c = rng.randint(2, 9), rng.randint(2, 9)
+        high_val = b * c
+        expr = f"{a} {op_low} {b} × {c}"
+    else:
+        c = rng.randint(2, 9)
+        q = rng.randint(2, 9)
+        b = c * q
+        high_val = q
+        expr = f"{a} {op_low} {b} ÷ {c}"
+    result = a + high_val if op_low == "+" else a - high_val
+    return ("int", "int_exact", f"What is {expr}?", str(result))
+
+
+def gen_unlike_denom_fractions(rng: random.Random):
+    """AC9M7N04-aligned: adding two fractions with different denominators.
+    fractions.Fraction reduces automatically -- the answer is always canonical."""
+    n1, d1 = rng.randint(1, 4), rng.randint(2, 6)
+    n2, d2 = rng.randint(1, 4), rng.randint(2, 6)
+    result = Fraction(n1, d1) + Fraction(n2, d2)
+    return ("fraction", "fraction_equiv", f"What is {n1}/{d1} + {n2}/{d2}?", f"{result.numerator}/{result.denominator}")
+
+
+def gen_one_step_equations(rng: random.Random):
+    """AC9M7A02-aligned: solving a one-step linear equation for x."""
+    a = rng.randint(1, 20)
+    x_true = rng.randint(1, 20)
+    b = x_true + a
+    return ("int", "int_exact", f"If x + {a} = {b}, what is x?", str(x_true))
+
+
+def gen_mult_decimal_by_decimal(rng: random.Random):
+    """AC9M7N06-aligned: multiplying two one-decimal-place numbers."""
+    a = _one_dp(rng.randint(10, 50))
+    b = _one_dp(rng.randint(10, 50))
+    return ("decimal", "decimal_exact", f"What is {a} × {b}?", str(a * b))
+
+
+# ── Year 8 (AC9M8N/A alignment) ───────────────────────────────────────────────
+
+def gen_two_step_equations(rng: random.Random):
+    """AC9M8A02-aligned: solving a two-step linear equation for x."""
+    x_true = rng.randint(1, 15)
+    coef = rng.randint(2, 5)
+    a = rng.randint(1, 20)
+    b = coef * x_true + a
+    return ("int", "int_exact", f"If {coef}x + {a} = {b}, what is x?", str(x_true))
+
+
+def gen_squares(rng: random.Random):
+    """AC9M8N01-aligned: squaring a small integer."""
+    n = rng.randint(2, 15)
+    return ("int", "int_exact", f"What is {n} squared ({n}²)?", str(n * n))
+
+
+def gen_negative_multiplication(rng: random.Random):
+    """AC9M8N01-aligned: multiplying two integers, either sign."""
+    a = rng.choice([-1, 1]) * rng.randint(2, 12)
+    b = rng.choice([-1, 1]) * rng.randint(2, 12)
+    return ("int", "int_exact", f"What is {a} × {b}?", str(a * b))
+
+
+def gen_percentage_change(rng: random.Random):
+    """AC9M8N03-aligned: a percentage increase, constructed to be exact."""
+    base = rng.randint(1, 20) * 10
+    pct = rng.choice([10, 20, 50])
+    increase = base * pct // 100
+    new_val = base + increase
+    return ("int", "int_exact", f"A price of ${base} increases by {pct}%. What is the new price?", str(new_val))
+
+
+def gen_div_decimal_by_decimal(rng: random.Random):
+    """AC9M8N05-aligned: dividend constructed FROM a clean quotient, so the
+    division of one decimal by another is always exact."""
+    quotient = _one_dp(rng.randint(10, 50))
+    divisor = _one_dp(rng.randint(10, 50))
+    dividend = quotient * divisor
+    return ("decimal", "decimal_exact", f"What is {dividend} ÷ {divisor}?", str(quotient))
+
+
 # ── Registries (node_id -> generator) ─────────────────────────────────────────
 # Fraction nodes reuse the pilot's verified generator functions — identical maths,
 # ACARA-aligned node ids.
@@ -332,4 +429,20 @@ AU_YEAR6_GENERATORS = {
     "au6_div_decimals": gen_div_decimals,                       # AC9M6N02
     "au6_area_perimeter": gen_area_perimeter,                   # AC9M6M01
     "au6_fraction_decimal_equiv": gen_fraction_decimal_equiv,   # AC9M6N03
+}
+
+AU_YEAR7_GENERATORS = {
+    "au7_integers_add_sub": gen_integers_add_sub,                # AC9M7N01
+    "au7_order_of_ops_negatives": gen_order_of_ops_negatives,    # AC9M7N01
+    "au7_unlike_denom_fractions": gen_unlike_denom_fractions,    # AC9M7N04
+    "au7_one_step_equations": gen_one_step_equations,            # AC9M7A02
+    "au7_mult_decimal_by_decimal": gen_mult_decimal_by_decimal,  # AC9M7N06
+}
+
+AU_YEAR8_GENERATORS = {
+    "au8_two_step_equations": gen_two_step_equations,            # AC9M8A02
+    "au8_squares": gen_squares,                                  # AC9M8N01
+    "au8_negative_multiplication": gen_negative_multiplication,  # AC9M8N01
+    "au8_percentage_change": gen_percentage_change,              # AC9M8N03
+    "au8_div_decimal_by_decimal": gen_div_decimal_by_decimal,    # AC9M8N05
 }

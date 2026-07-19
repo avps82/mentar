@@ -22,6 +22,8 @@ from mentar.engine.au_items import (  # noqa: E402
     AU_YEAR4_GENERATORS,
     AU_YEAR5_GENERATORS,
     AU_YEAR6_GENERATORS,
+    AU_YEAR7_GENERATORS,
+    AU_YEAR8_GENERATORS,
     gen_place_value_3digit,
     gen_place_value_4digit,
 )
@@ -65,6 +67,15 @@ def test_year5_generators_self_validate():
 
 def test_year6_generators_self_validate():
     _self_validate(AU_YEAR6_GENERATORS, seed=6)
+
+
+def test_year7_generators_self_validate():
+    """R15: first coverage of negative-integer content + a 'solve for x' node."""
+    _self_validate(AU_YEAR7_GENERATORS, seed=7)
+
+
+def test_year8_generators_self_validate():
+    _self_validate(AU_YEAR8_GENERATORS, seed=8)
 
 
 def test_place_value_answer_letter_is_the_digit_value():
