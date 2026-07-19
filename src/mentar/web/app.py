@@ -1110,6 +1110,9 @@ def _turn_context(learner_uuid: str, ctrl: SessionController, is_first_turn: boo
         "choice_letters": ["A", "B", "C", "D"][: len(choices)] if choices else [],
         # R12.5: show the "💡 Explain more" button while an explanation is live.
         "can_elaborate": ctrl.can_elaborate,
+        # "Show human working": deterministic step grid for step-eligible nodes
+        # (Phase 1: addition). None for anything else -- template shows nothing.
+        "steps_grid": ctrl.elaborate_steps_grid,
         # R12-fix2: mastery bar + session counter live INSIDE the swap target so
         # every htmx turn refreshes them (they froze at page-load state before).
         "current_mastery": _current_node_mastery(learner_uuid, ctrl),

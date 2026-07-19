@@ -25,6 +25,11 @@ from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
 
+from mentar.engine.arithmetic_steps import (
+    StepGrid,
+    build_addition_steps,
+    extract_addition_operands,
+)
 from mentar.engine.bkt import P_L0, bkt_update, params_for
 from mentar.engine.explain_check import has_verified_failure
 from mentar.engine.fringe import DEFAULT_MASTERY_THRESHOLD, is_mastered, select_next
@@ -242,6 +247,7 @@ class _SessionCtx:
     help_scored_correct: bool | None = None
     last_explanation: str = ""     # R12.4/12.5: last help explanation shown (variety + elaborate)
     elaborate_count: int = 0       # R12.5: elaborations used this Help chain (cap = ELABORATE_CAP)
+    elaborate_steps_grid: StepGrid | None = None  # "show human working", set on HELP_ELABORATE
     # A5: per-node, CHILD-INITIATED help only (never the auto-help branch in
     # _do_bkt_update) — the false-confidence probe signal must not be polluted by
     # a previous node's help use or by the system's own auto-help scaffolding.
@@ -585,6 +591,14 @@ class SessionController:
         )
 
     @property
+    def elaborate_steps_grid(self) -> StepGrid | None:
+        """"Show human working": the deterministic step grid for the current
+        Explain-more press, or None when the live node isn't step-eligible
+        (falls back to the LLM-prose explanation) or no elaborate press has
+        happened yet this question."""
+        return self._ctx.elaborate_steps_grid
+
+    @property
     def session_id(self) -> str:
         """The id of this controller's tutoring session (for durable-log reads)."""
         return self._session_id
@@ -818,6 +832,7 @@ class SessionController:
         ctx.unreadable_streak = 0  # A9: fresh question, fresh streak
         ctx.last_explanation = ""  # R12.4: fresh question — variety/elaborate context resets
         ctx.elaborate_count = 0
+        ctx.elaborate_steps_grid = None  # "show human working": stale grid must not linger
         node = self._curriculum[ctx.current_node_id]
         item = self._sample_item(ctx.current_node_id)
         if item is not None:
@@ -1117,8 +1132,27 @@ class SessionController:
         """One Help explanation turn. With elaborate=True (R12.5, HELP_ELABORATE)
         the child asked to unpack the SAME explanation further — renders
         help_elaborate.md over the previous explanation instead of a fresh
-        modality template; all the same safety guards apply."""
+        modality template; all the same safety guards apply.
+
+        "Show human working" (2026-07-19): on an ELABORATE press specifically
+        (never the initial Help modality explanations — maintainer's explicit
+        placement ask), a step-eligible node (currently: plain non-negative
+        column addition) skips the LLM entirely and renders a deterministic,
+        provably-correct step grid instead — same reasoning as A14's
+        verified-arithmetic guard below: an LLM asked to "show its steps" is
+        exactly the failure class this project guards against, so the steps
+        are computed, never composed. Non-eligible nodes fall through
+        unchanged to the existing LLM-prose explanation."""
         ctx = self._ctx
+        if elaborate:
+            ctx.elaborate_steps_grid = self._build_steps_grid_if_eligible()
+            if ctx.elaborate_steps_grid is not None:
+                explanation = "Let's see the steps! 👇"
+                ctx.last_explanation = explanation
+                ctx.state = FSMState.HELP_RECHECK_PRESENT
+                return (explanation, True)
+        else:
+            ctx.elaborate_steps_grid = None  # a fresh Help round -- clear any stale grid
         node = self._curriculum[ctx.current_node_id]
         passage = resolve_grounding(node.get("grounding", {}), self._grounding_cfg)
         system_text = self._render_system_prompt(node["label"], passage)
@@ -1438,6 +1472,23 @@ class SessionController:
             .replace("{{question}}", question or "the question they're working on")
             .replace("{{previous_explanation}}", previous_explanation or "(none yet — this is the first explanation)")
         )
+
+    def _build_steps_grid_if_eligible(self) -> StepGrid | None:
+        """"Show human working": build a deterministic step grid for the
+        current item's problem text, or None if the node's shape isn't
+        step-eligible (only plain non-negative addition so far — Phase 1).
+        Uses ctx.current_item.problem when a real item is live (the normal
+        case), falling back to ctx.current_question for the legacy
+        LLM-generated-question path (which never matches the extraction
+        regex anyway, since that text isn't one of our own f-string
+        phrasings -- returns None there, same as any other ineligible node)."""
+        ctx = self._ctx
+        item = ctx.current_item
+        problem = item.problem if item is not None else (ctx.current_question or "")
+        operands = extract_addition_operands(problem)
+        if operands is None:
+            return None
+        return build_addition_steps(*operands)
 
     def _worked_example_for(self, node_id: str) -> str:
         """A solved example string for the worked-example slot in Help/transfer prompts.

@@ -1,0 +1,12 @@
+{# "Show human working" (2026-07-19): renders a StepGrid (engine/arithmetic_steps.py)
+   from its own structural fields (cell.text / cell.kind), NOT through
+   _render_markdown_lite (U-32's LLM-prose whitelist) -- this content is
+   deterministic/computed, never model text, same trust boundary as the mc4
+   radio group / fraction inputs above. Autoescaped by Jinja's default. #}
+<div class="steps-grid" style="grid-template-columns: repeat({{ steps_grid.n_cols }}, 1fr);">
+  {% for row in steps_grid.rows %}
+  {% for cell in row %}
+  <div class="steps-cell steps-cell-{{ cell.kind }}">{{ cell.text }}</div>
+  {% endfor %}
+  {% endfor %}
+</div>
