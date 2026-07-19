@@ -27,6 +27,7 @@ from mentar.engine.arithmetic_steps import (  # noqa: E402
     LINE,
     OPERATOR,
     POINT,
+    QUOTIENT_HIT,
     build_addition_steps,
     build_long_division_steps,
     build_multiplication_partial_products_steps,
@@ -387,28 +388,34 @@ def test_extract_multiplication_rejects_non_multiplication_nodes():
 
 def _quotient_from_grid(grid) -> str:
     """Unlike add/sub/mult, division's result (the quotient) is the FIRST
-    row, not the last."""
+    row, not the last. Quotient digits carry kind DIGIT (a "0" step) or
+    QUOTIENT_HIT (a nonzero step) -- both must be read back."""
     top_row = grid.rows[0]
-    return "".join(c.text for c in top_row if c.kind in (DIGIT, POINT) and c.text)
+    return "".join(c.text for c in top_row if c.kind in (DIGIT, POINT, QUOTIENT_HIT) and c.text)
 
 
 def test_division_hand_example_225_div_5():
-    """The maintainer's own 5-step worked example: quotient 45 (the leading
-    zero digit is computed but not drawn), two shown steps."""
+    """The maintainer's own 5-step worked example, matched to a reference
+    image: EVERY digit is drawn, including the leading "0" -- the raw
+    quotient reads "045" (the mechanical process), which is still the
+    numeric value 45 (the maintainer's own "045 -> 45" framing)."""
     grid = build_long_division_steps(225, 5)
-    assert _quotient_from_grid(grid) == "45"
+    assert _quotient_from_grid(grid) == "045"
+    assert int(_quotient_from_grid(grid)) == 45
 
 
 def test_division_original_motivating_example_8_96_div_3_2():
     """The maintainer's ORIGINAL example from the very first note: a
     decimal-by-decimal division requiring the scale-to-whole-divisor step."""
     grid = build_long_division_steps(Decimal("8.96"), Decimal("3.2"))
-    assert _quotient_from_grid(grid) == "2.8"
+    assert _quotient_from_grid(grid) == "02.8"
+    assert Decimal(_quotient_from_grid(grid)) == Decimal("2.8")
 
 
 def test_division_decimal_dividend_whole_divisor():
     grid = build_long_division_steps(Decimal("17.0"), 5)
-    assert _quotient_from_grid(grid) == "3.4"
+    assert _quotient_from_grid(grid) == "03.4"
+    assert Decimal(_quotient_from_grid(grid)) == Decimal("3.4")
 
 
 def test_division_internal_zero_quotient_digit_is_shown():
@@ -421,8 +428,11 @@ def test_division_internal_zero_quotient_digit_is_shown():
 
 
 def test_division_single_digit_quotient():
+    """30 / 5 = 6, but the dividend has TWO digits ("30"), so the raw
+    quotient is "06" -- one digit per input digit, per the new convention."""
     grid = build_long_division_steps(30, 5)
-    assert _quotient_from_grid(grid) == "6"
+    assert _quotient_from_grid(grid) == "06"
+    assert int(_quotient_from_grid(grid)) == 6
 
 
 def test_division_exact_no_remainder_shows_final_zero():

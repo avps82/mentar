@@ -205,6 +205,9 @@ input[type=text], input[type=number] {
 .steps-cell { text-align: center; min-width: 1.1em; }
 .steps-cell-carry { color: var(--accent); font-size: 0.75em; align-self: end; }
 .steps-cell-borrow { color: var(--danger); font-size: 0.75em; align-self: end; }
+/* Division: links a quotient digit to the "-product" row that produced it
+   (2026-07-19 maintainer feedback, matched to a reference image). */
+.steps-cell-quotient-hit { color: var(--primary); font-weight: bold; }
 .steps-cell-operator { text-align: left; font-weight: bold; }
 .steps-cell-line { border-bottom: 2px solid var(--text); align-self: end; height: 0.4em; }
 .steps-cell-point { align-self: end; }

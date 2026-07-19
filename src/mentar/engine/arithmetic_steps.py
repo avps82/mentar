@@ -38,6 +38,9 @@ OPERATOR = "operator"
 BLANK = "blank"
 LINE = "line"          # a full-width horizontal rule row
 POINT = "point"         # a decimal point
+QUOTIENT_HIT = "quotient-hit"  # a division step whose quotient digit is nonzero --
+                                # colours the digit and its "-product" row the same,
+                                # so a child can trace which subtraction produced it
 
 
 @dataclass(frozen=True)
@@ -386,12 +389,20 @@ def build_multiplication_partial_products_steps(a: int, b: int) -> StepGrid:
 
 def build_long_division_steps(dividend: Decimal | int, divisor: Decimal | int) -> StepGrid:
     """Bus-stop ("long") division -- the maintainer's own 5-step worked
-    example, 225 / 5: divisor and dividend separated by ')' under a
-    vinculum; process dividend digits left to right over a running
-    remainder. A leading digit smaller than the divisor produces quotient
-    digit 0 -- by textbook convention this ISN'T given its own work row
-    until the first NONZERO quotient digit appears, after which every step
-    is drawn (including a later internal zero, e.g. 408 / 4).
+    example, 225 / 5, matched against a reference image they supplied
+    (2026-07-19, after finding the first version's layout "weird and
+    confusing"): EVERY digit gets its own drawn step, including a leading
+    quotient digit of 0 (the reference explicitly draws "-0") -- there is
+    no "don't show the leading zero" simplification here. Before each step
+    after the first, a "bring-down" row shows the value actually being
+    divided at that point (the previous remainder combined with the newly
+    brought-down digit, e.g. "22"), THEN the "-product" subtraction below
+    it, THEN a rule -- this is the row the first version was missing,
+    which is what made the old layout jump straight from a bare remainder
+    digit to a subtraction that looked unconnected to it. A step whose
+    quotient digit is nonzero (a "real" division, not a trivial 0) colours
+    that quotient digit and its "-product" row the same (QUOTIENT_HIT),
+    matching the reference image's blue linking a "4" to its "-20".
 
     A non-integer divisor is scaled to a whole number first (multiply both
     operands by the same power of 10 -- the standard technique). This
@@ -425,18 +436,19 @@ def build_long_division_steps(dividend: Decimal | int, divisor: Decimal | int) -
     point_at = n - dividend_frac_digits if dividend_frac_digits else None
 
     quotient_digits = []
-    steps = []  # (end_idx, product_str, remainder_str)
+    # (i, dividend_slice_str, product_str, is_hit) -- dividend_slice is the
+    # "bring-down" value THIS step divides (None for i == 0, whose slice is
+    # already visible as the header row's own leading digit(s)).
+    steps = []
     remainder = 0
-    started = False
     for i, ch in enumerate(dividend_digit_str):
         remainder = remainder * 10 + int(ch)
+        dividend_slice_str = str(remainder) if i > 0 else None
         q_digit = remainder // divisor_int
         product = q_digit * divisor_int
         remainder -= product
         quotient_digits.append(q_digit)
-        if q_digit != 0 or started:
-            started = True
-            steps.append((i, str(product), str(remainder)))
+        steps.append((i, dividend_slice_str, str(product), q_digit != 0))
     if remainder != 0:
         raise ValueError("division does not terminate within the given dividend's precision")
 
@@ -449,50 +461,61 @@ def build_long_division_steps(dividend: Decimal | int, divisor: Decimal | int) -
             return cells
         return cells[:point_at] + [point_cell] + cells[point_at:]
 
-    def _region_row(digits_by_pos: dict[int, str], kind: str, point_cell: Cell) -> list[Cell]:
-        return _at_point([Cell(digits_by_pos.get(i, ""), kind) for i in range(n)], point_cell)
+    def _region_row(digits_by_pos: dict[int, tuple[str, str]], point_cell: Cell) -> list[Cell]:
+        """digits_by_pos maps position -> (text, kind)."""
+        cells = [Cell(*digits_by_pos.get(i, ("", DIGIT))) for i in range(n)]
+        return _at_point(cells, point_cell)
 
     blank_lead = [Cell("", BLANK)] * (divisor_width + 1)
     minus_lead = [Cell("", BLANK)] * (divisor_width - 1) + [Cell("−", OPERATOR)] + [Cell("", BLANK)]
 
-    # Quotient row: leading zero digits (before the first drawn step) are
-    # blanked, same "never show a leading zero" convention as add/sub/mult --
-    # but the LAST digit must always show (whole quotient is 0), and so must
-    # the ones-place digit immediately before the point when there is one
-    # (e.g. 10.2 / 34 = 0.3 -- must read "0.3", not ".3").
-    # (A dividend < 1, e.g. "0.34 / 2", would need point_at == 0 -- no
-    # ones-place column exists to force-show at all in that case. None of
-    # the shipped division generators ever produce a dividend < 1, so this
-    # is an intentionally out-of-scope edge case, not silently mishandled:
-    # guarded here rather than indexing quotient_digits[-1] by accident.)
-    first_shown = min(steps[0][0], n - 1) if steps else n - 1
-    if point_at:
-        first_shown = min(first_shown, point_at - 1)
-    quotient_by_pos = {i: str(quotient_digits[i]) for i in range(first_shown, n)}
-    quotient_row = blank_lead + _region_row(quotient_by_pos, DIGIT, Cell(".", POINT))
+    # Quotient row: every digit shown, INCLUDING leading zeros -- this is
+    # the raw mechanical process (matches the reference image's visible
+    # "0" before "4"), not the polished final answer.
+    quotient_by_pos = {
+        i: (str(quotient_digits[i]), QUOTIENT_HIT if is_hit else DIGIT)
+        for i, _, _, is_hit in steps
+    }
+    quotient_row = blank_lead + _region_row(quotient_by_pos, Cell(".", POINT))
 
     # The point column stays a plain blank continuation on the rule, not an
     # actual "." glyph.
     vinculum_row = blank_lead + _at_point([Cell("", LINE) for _ in range(n)], Cell("", BLANK))
 
     divisor_cells = [Cell(ch, DIGIT) for ch in divisor_str]
-    dividend_by_pos = {i: dividend_digit_str[i] for i in range(n)}
-    header_row = divisor_cells + [Cell(")", OPERATOR)] + _region_row(dividend_by_pos, DIGIT, Cell(".", POINT))
+    dividend_by_pos = {i: (dividend_digit_str[i], DIGIT) for i in range(n)}
+    header_row = divisor_cells + [Cell(")", OPERATOR)] + _region_row(dividend_by_pos, Cell(".", POINT))
 
     rows = [quotient_row, vinculum_row, header_row]
-    for end_idx, product_str, remainder_str in steps:
-        product_by_pos = {end_idx - len(product_str) + 1 + k: c for k, c in enumerate(product_str)}
-        remainder_by_pos = {end_idx - len(remainder_str) + 1 + k: c for k, c in enumerate(remainder_str)}
+    for i, dividend_slice_str, product_str, is_hit in steps:
         # Working rows treat the point column as a plain blank continuation,
         # not an actual "." glyph -- these are intermediate integer
-        # quantities (a product/remainder is never itself "decimal"), even
+        # quantities (a slice/product is never itself "decimal"), even
         # though they sit at dividend-region columns that may straddle
         # where the point falls in the dividend/quotient rows above.
-        rows.append(minus_lead + _region_row(product_by_pos, DIGIT, Cell("", BLANK)))
+        if dividend_slice_str is not None:
+            slice_by_pos = {
+                i - len(dividend_slice_str) + 1 + k: (c, DIGIT)
+                for k, c in enumerate(dividend_slice_str)
+            }
+            rows.append(blank_lead + _region_row(slice_by_pos, Cell("", BLANK)))
+        product_kind = QUOTIENT_HIT if is_hit else DIGIT
+        product_by_pos = {
+            i - len(product_str) + 1 + k: (c, product_kind)
+            for k, c in enumerate(product_str)
+        }
+        rows.append(minus_lead + _region_row(product_by_pos, Cell("", BLANK)))
         rows.append(blank_lead + _at_point(
-            [Cell("", LINE) if i in product_by_pos else Cell("", BLANK) for i in range(n)],
+            [Cell("", LINE) if pos in product_by_pos else Cell("", BLANK) for pos in range(n)],
             Cell("", BLANK),
         ))
-        rows.append(blank_lead + _region_row(remainder_by_pos, DIGIT, Cell("", BLANK)))
+
+    # Final confirmation row: the leftover after the LAST step (0, for an
+    # exact division) -- shown once at the very end, not per-step (each
+    # intermediate remainder instead feeds directly into the NEXT step's
+    # bring-down row, which is what makes this read as one continuous
+    # process rather than a series of disconnected leftovers).
+    final_by_pos = {n - 1: (str(remainder), DIGIT)}
+    rows.append(blank_lead + _region_row(final_by_pos, Cell("", BLANK)))
 
     return StepGrid(rows=rows, n_cols=n_cols)
