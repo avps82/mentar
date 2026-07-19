@@ -32,6 +32,13 @@ _ADDITION_CURRICULUM = {
     },
 }
 
+_SUBTRACTION_CURRICULUM = {
+    "subtraction": {
+        "label": "subtraction", "answer_type": "int", "checker": "int_exact",
+        "expected_answer": "5", "grounding": {}, "prerequisites": [],
+    },
+}
+
 _FRACTION_CURRICULUM = {
     "unit_fractions": {
         "label": "unit fractions", "answer_type": "fraction", "checker": "fraction_equiv",
@@ -63,6 +70,11 @@ def _addition_bank():
     return ItemGenerator(generators={"addition": _gen_addition})
 
 
+def _subtraction_bank():
+    from mentar.engine.itemgen import _gen_subtraction
+    return ItemGenerator(generators={"subtraction": _gen_subtraction})
+
+
 def test_elaborate_on_addition_node_produces_a_real_step_grid():
     llm = _PromptCapturingLlm()
     ctrl = SessionController(
@@ -83,6 +95,22 @@ def test_elaborate_on_addition_node_produces_a_real_step_grid():
     grid = ctrl.elaborate_steps_grid
     assert isinstance(grid, StepGrid)
     assert ctrl.state == FSMState.HELP_RECHECK_AWAIT.value
+
+
+def test_elaborate_on_subtraction_node_produces_a_real_step_grid():
+    llm = _PromptCapturingLlm()
+    ctrl = SessionController(
+        llm_call=llm, prompt_dir=PROMPTS, grounding_cfg={},
+        curriculum=_SUBTRACTION_CURRICULUM, db_store=_FakeStore(), learner_id="L",
+        item_bank=_subtraction_bank(), rng_seed=7,
+    )
+    ctrl.step(None)
+    ctrl.step("?")
+    calls_before_elaborate = llm.calls
+    ctrl.step("more")
+    assert llm.calls == calls_before_elaborate, "step-display must skip the LLM entirely"
+    grid = ctrl.elaborate_steps_grid
+    assert isinstance(grid, StepGrid)
 
 
 def test_elaborate_on_fraction_node_still_uses_llm_prose():

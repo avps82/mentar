@@ -19,13 +19,16 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 from decimal import Decimal  # noqa: E402
 
 from mentar.engine.arithmetic_steps import (  # noqa: E402
+    BORROW,
     CARRY,
     DIGIT,
     LINE,
     OPERATOR,
     POINT,
     build_addition_steps,
+    build_subtraction_steps,
     extract_addition_operands,
+    extract_subtraction_operands,
 )
 from mentar.eval.verify_numeric import CheckResult, check  # noqa: E402
 
@@ -137,6 +140,14 @@ def test_addition_decimal_exactly_one_point_per_row():
         assert len(points) == 1, row
 
 
+def test_addition_decimal_whole_part_is_zero():
+    """0.2 + 0.3 = 0.5 -- every operand AND the result has a zero whole
+    part, so the plain integer-scaling (2 + 3 = 5) carries no record of a
+    ones-place column at all. Must still render '0.5', not '.5'."""
+    grid = build_addition_steps(Decimal("0.2"), Decimal("0.3"))
+    assert _result_from_grid(grid) == "0.5"
+
+
 def test_addition_decimal_self_validates_against_real_verifier():
     rng = random.Random(2027)
     for _ in range(200):
@@ -180,3 +191,101 @@ def test_extract_rejects_non_addition_nodes():
     assert extract_addition_operands("What is 25% of 80?") is None
     assert extract_addition_operands("If x + 5 = 12, what is x?") is None
     assert extract_addition_operands("What is 6 squared (6²)?") is None
+
+
+# ── Subtraction ───────────────────────────────────────────────────────────────
+
+def test_subtraction_hand_example_47_minus_19():
+    """The maintainer's own worked example: a single borrow mark, '−1' above
+    the tens column (the ones column, 7 − 9, had to borrow from it)."""
+    grid = build_subtraction_steps(47, 19)
+    assert _result_from_grid(grid) == "28"
+    borrow_cells = [c for row in grid.rows for c in row if c.kind == BORROW]
+    assert [c.text for c in borrow_cells if c.text] == ["−1"]
+
+
+def test_subtraction_no_borrow():
+    grid = build_subtraction_steps(88, 23)
+    assert _result_from_grid(grid) == "65"
+    borrow_cells = [c for row in grid.rows for c in row if c.kind == BORROW]
+    assert all(not c.text for c in borrow_cells)
+
+
+def test_subtraction_borrow_chain_through_zeros():
+    """500 − 8 = 492: the borrow must cascade left through the zero tens
+    digit into the hundreds column, marking BOTH columns."""
+    grid = build_subtraction_steps(500, 8)
+    assert _result_from_grid(grid) == "492"
+    borrow_cells = [c for row in grid.rows for c in row if c.kind == BORROW]
+    assert sum(1 for c in borrow_cells if c.text) == 2
+
+
+def test_subtraction_equal_operands_is_zero():
+    grid = build_subtraction_steps(19, 19)
+    assert _result_from_grid(grid) == "0"
+
+
+def test_subtraction_unequal_length_operands():
+    grid = build_subtraction_steps(100, 7)
+    assert _result_from_grid(grid) == "93"
+
+
+def test_subtraction_operator_is_minus_sign():
+    grid = build_subtraction_steps(47, 19)
+    op_column_texts = [row[0].text for row in grid.rows if row[0].kind == OPERATOR]
+    assert op_column_texts.count("−") == 1
+
+
+def test_subtraction_self_validates_against_real_verifier():
+    rng = random.Random(2028)
+    for _ in range(300):
+        a = rng.randint(0, 99999)
+        b = rng.randint(0, a)
+        grid = build_subtraction_steps(a, b)
+        reconstructed = _result_from_grid(grid)
+        outcome = check(answer_type="int", checker="int_exact",
+                         llm_output=reconstructed, ground_truth=str(a - b))
+        assert outcome.result is CheckResult.PASS, (a, b, reconstructed)
+
+
+def test_subtraction_decimal_borrow_across_the_point():
+    """1.2 − 0.5 = 0.7: the tenths column (2 − 5) must borrow from the ones
+    column across the decimal point."""
+    grid = build_subtraction_steps(Decimal("1.2"), Decimal("0.5"))
+    assert _result_from_grid(grid) == "0.7"
+
+
+def test_subtraction_decimal_self_validates_against_real_verifier():
+    rng = random.Random(2029)
+    for _ in range(200):
+        a = Decimal(rng.randint(0, 9999)) / 10
+        b = Decimal(rng.randint(0, int(a * 10))) / 10
+        grid = build_subtraction_steps(a, b)
+        reconstructed = _result_from_grid(grid)
+        outcome = check(answer_type="decimal", checker="decimal_exact",
+                         llm_output=reconstructed, ground_truth=str(a - b))
+        assert outcome.result is CheckResult.PASS, (a, b, reconstructed)
+
+
+def test_extract_subtraction_matches_real_phrasing():
+    assert extract_subtraction_operands("What is 47 − 19?") == (Decimal("47"), Decimal("19"))
+    assert extract_subtraction_operands("What is 47 - 19?") == (Decimal("47"), Decimal("19"))
+
+
+def test_extract_subtraction_rejects_negative_operands():
+    assert extract_subtraction_operands("What is -8 - 3?") is None
+
+
+def test_extract_subtraction_rejects_negative_result():
+    """5 - 12 = -7 -- the unsigned borrow method doesn't apply; falls back
+    to LLM prose (this is exactly what Y7's gen_integers_add_sub can produce)."""
+    assert extract_subtraction_operands("What is 5 - 12?") is None
+
+
+def test_extract_subtraction_allows_equal_operands():
+    assert extract_subtraction_operands("What is 19 - 19?") == (Decimal("19"), Decimal("19"))
+
+
+def test_extract_subtraction_rejects_non_subtraction_nodes():
+    assert extract_subtraction_operands("What is 2/5 - 1/5?") is None
+    assert extract_subtraction_operands("What is 47 + 19?") is None

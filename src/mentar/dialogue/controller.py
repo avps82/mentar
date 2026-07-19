@@ -28,7 +28,9 @@ from pathlib import Path
 from mentar.engine.arithmetic_steps import (
     StepGrid,
     build_addition_steps,
+    build_subtraction_steps,
     extract_addition_operands,
+    extract_subtraction_operands,
 )
 from mentar.engine.bkt import P_L0, bkt_update, params_for
 from mentar.engine.explain_check import has_verified_failure
@@ -1476,19 +1478,23 @@ class SessionController:
     def _build_steps_grid_if_eligible(self) -> StepGrid | None:
         """"Show human working": build a deterministic step grid for the
         current item's problem text, or None if the node's shape isn't
-        step-eligible (only plain non-negative addition so far — Phase 1).
-        Uses ctx.current_item.problem when a real item is live (the normal
-        case), falling back to ctx.current_question for the legacy
-        LLM-generated-question path (which never matches the extraction
-        regex anyway, since that text isn't one of our own f-string
-        phrasings -- returns None there, same as any other ineligible node)."""
+        step-eligible (plain non-negative addition/subtraction so far --
+        Phase 1/2). Uses ctx.current_item.problem when a real item is live
+        (the normal case), falling back to ctx.current_question for the
+        legacy LLM-generated-question path (which never matches either
+        extraction regex anyway, since that text isn't one of our own
+        f-string phrasings -- returns None there, same as any other
+        ineligible node)."""
         ctx = self._ctx
         item = ctx.current_item
         problem = item.problem if item is not None else (ctx.current_question or "")
-        operands = extract_addition_operands(problem)
-        if operands is None:
-            return None
-        return build_addition_steps(*operands)
+        add_operands = extract_addition_operands(problem)
+        if add_operands is not None:
+            return build_addition_steps(*add_operands)
+        sub_operands = extract_subtraction_operands(problem)
+        if sub_operands is not None:
+            return build_subtraction_steps(*sub_operands)
+        return None
 
     def _worked_example_for(self, node_id: str) -> str:
         """A solved example string for the worked-example slot in Help/transfer prompts.
