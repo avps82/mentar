@@ -9,9 +9,14 @@ Supports T1.3 (eval-time scoring) and T3.5 (runtime serve-time gate).
 Stdlib only — fractions.Fraction + re.  No third-party deps.
 
 Design decisions documented inline:
-- Decimals (e.g. "0.5"): SAFE_REJECT.  Not in pilot scope (SPEC §23, fractions.md
-  "Out of scope: decimal/fraction conversion").  Accepting decimals silently could
-  produce a false-pass if the LLM gives "0.5" when the expected form is "1/2".
+- Decimals (e.g. "0.5") given to the `int`/`fraction` answer types: SAFE_REJECT.  Not in
+  pilot scope for those two types (SPEC §23, fractions.md "Out of scope: decimal/fraction
+  conversion").  Accepting decimals silently could produce a false-pass if the LLM gives
+  "0.5" when the expected form is "1/2".  R13 (2026-07-19) adds a genuinely separate,
+  dedicated `decimal`/`decimal_exact` answer type/checker for content that legitimately
+  needs decimal answers (Y5+ measurement/currency) — the `int`/`fraction` decimal-reject
+  guards below are UNCHANGED and remain load-bearing; `decimal_exact` is a pure addition,
+  not a relaxation of them.
 - Unicode vulgar fractions (½ ¼ ¾ etc.): mapped to their a/b equivalents before
   parsing — cheap via a small lookup table and avoids SAFE_REJECT on copy-paste input.
 - Mixed numbers ("1 1/2"): parsed as whole + fraction; ambiguous forms with more than
@@ -25,6 +30,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from decimal import Decimal, InvalidOperation
 from enum import Enum
 from fractions import Fraction
 
@@ -196,6 +202,11 @@ def extract_answer(text: str, answer_type: str) -> str | None:
           4. Else last integer.
           Ambiguity rule: if two candidates of EQUAL precedence appear at the same
           'last position' (e.g. "1/2 or 3/4"), return None (SAFE_REJECT upstream).
+      - "decimal" (R13):
+          1. Last <answer>…</answer> tag content if present.
+          2. Else last decimal-dotted token (e.g. "2.5").
+          3. Else last integer (a bare int is a valid decimal-type answer too).
+          Same 'or'-connective ambiguity rule as above.
       - "mc4":
           Last single letter A-D or digit 1-4 (case-insensitive), possibly in parens.
       - Other: None.
@@ -213,6 +224,9 @@ def extract_answer(text: str, answer_type: str) -> str | None:
 
     if answer_type in ("fraction", "int"):
         return _extract_numeric(text_expanded, answer_type)
+
+    if answer_type == "decimal":
+        return _extract_decimal(text_expanded)
 
     return None
 
@@ -354,9 +368,10 @@ def check(
     Parameters
     ----------
     answer_type : str
-        One of "int", "fraction", "mc4", "free_text" (matches fractions.md verifier.answer_type).
+        One of "int", "fraction", "decimal", "mc4", "free_text" (matches the curriculum
+        template's verifier.answer_type).
     checker : str
-        One of "int_exact", "fraction_equiv", "mc_choice", "none".
+        One of "int_exact", "fraction_equiv", "decimal_exact", "mc_choice", "none".
     llm_output : str
         The raw LLM-generated text containing (or purportedly containing) the answer.
     ground_truth : str
@@ -387,6 +402,8 @@ def check(
             return _check_fraction_equiv(llm_output, ground_truth)
         elif checker == "mc_choice":
             return _check_mc_choice(llm_output, ground_truth)
+        elif checker == "decimal_exact":
+            return _check_decimal_exact(llm_output, ground_truth)
         else:
             return CheckOutcome(
                 result=CheckResult.SAFE_REJECT,
@@ -575,6 +592,121 @@ def _check_fraction_equiv(llm_output: str, ground_truth: str) -> CheckOutcome:
         f"Extracted '{candidate}' → {canonical}; "
         f"expected '{ground_truth}' → {gt_canonical}: "
         f"{'equivalent' if result == CheckResult.PASS else 'not equivalent'}."
+    )
+    return CheckOutcome(result=result, extracted=candidate, canonical=canonical, detail=detail)
+
+
+# ---------------------------------------------------------------------------
+# decimal answer type (R13, 2026-07-19) — a genuinely separate, additive path.
+# Does NOT touch normalise_fraction's or _check_int_exact/_check_fraction_equiv's
+# decimal-reject guards above; those stay exactly as they were.
+# ---------------------------------------------------------------------------
+
+# Strict pre-parse gate: fullmatch only, no exponent/NaN/Infinity. Decimal(s) on
+# its own would silently ACCEPT "NaN", "Infinity", and "5E2" -- none of which a
+# child would type and none of which should ever compare equal to a ground
+# truth. This regex, not Decimal's own leniency, is the actual safety boundary.
+_DECIMAL_STRICT_RE = re.compile(r"-?\d+(\.\d+)?$")
+_DECIMAL_TOKEN_RE = re.compile(r"-?\d+\.\d+")
+
+
+def normalise_decimal(s: str) -> Decimal | None:
+    """Parse a strict decimal (or bare integer) string, or None on failure."""
+    if not s or not s.strip():
+        return None
+    s = s.strip()
+    if not _DECIMAL_STRICT_RE.fullmatch(s):
+        return None
+    try:
+        return Decimal(s)
+    except InvalidOperation:
+        return None
+
+
+def _extract_decimal(text: str) -> str | None:
+    """Extract a decimal (priority) or bare-integer (fallback) candidate, same
+    last-occurrence + 'or'-ambiguity rules as _extract_numeric."""
+    tag_match = _ANSWER_TAG_RE.search(text)
+    if tag_match:
+        res = tag_match.group(1).strip()
+        return _strip_punct(res) if res else None
+
+    dec_matches = list(_DECIMAL_TOKEN_RE.finditer(text))
+    if dec_matches:
+        last = dec_matches[-1]
+        if len(dec_matches) > 1:
+            prev = dec_matches[-2]
+            between = text[prev.end():last.start()]
+            if re.search(r"\bor\b", between, re.IGNORECASE) or (last.start() - prev.end() <= 5):
+                return None
+        return _strip_punct(last.group())
+
+    int_matches = list(_INT_RE.finditer(text))
+    if int_matches:
+        last = int_matches[-1]
+        if len(int_matches) > 1:
+            prev = int_matches[-2]
+            between = text[prev.end():last.start()]
+            if re.search(r"\bor\b", between, re.IGNORECASE) or (last.start() - prev.end() <= 5):
+                return None
+        return _strip_punct(last.group())
+
+    return None
+
+
+def _canonical_decimal_str(d: Decimal) -> str:
+    """Fixed-point canonical string (never exponential) with trailing zeros stripped."""
+    return format(d.normalize(), "f")
+
+
+def _check_decimal_exact(llm_output: str, ground_truth: str) -> CheckOutcome:
+    """Extract a decimal/integer from llm_output and compare exactly to ground_truth."""
+    gt_dec = normalise_decimal(ground_truth.strip())
+    if gt_dec is None:
+        return CheckOutcome(
+            result=CheckResult.SAFE_REJECT,
+            extracted=None,
+            canonical=None,
+            detail=f"ground_truth {ground_truth!r} could not be normalised to a decimal — safe-reject.",
+        )
+
+    candidate = extract_answer(llm_output, "decimal")
+    if candidate is None:
+        # Distinguish "genuinely nothing decimal-shaped" (EXTRACT_FAIL) from "a
+        # decimal-shaped token IS present but extraction couldn't pick one
+        # unambiguously" (SAFE_REJECT) -- same heuristic _check_fraction_equiv
+        # uses for fractions. Only the decimal-dotted tier signals ambiguity
+        # here; the bare-int fallback tier is too common in ordinary prose to
+        # use as an ambiguity signal on its own.
+        if _DECIMAL_TOKEN_RE.search(_expand_unicode_fractions(llm_output)):
+            return CheckOutcome(
+                result=CheckResult.SAFE_REJECT,
+                extracted=None,
+                canonical=None,
+                detail="Multiple decimal candidates found but could not unambiguously select one — safe-reject.",
+            )
+        return CheckOutcome(
+            result=CheckResult.EXTRACT_FAIL,
+            extracted=None,
+            canonical=None,
+            detail="No decimal or integer candidate found in llm_output.",
+        )
+
+    cand_dec = normalise_decimal(candidate)
+    if cand_dec is None:
+        return CheckOutcome(
+            result=CheckResult.SAFE_REJECT,
+            extracted=candidate,
+            canonical=None,
+            detail=f"Extracted {candidate!r} could not be normalised — safe-reject.",
+        )
+
+    canonical = _canonical_decimal_str(cand_dec)
+    gt_canonical = _canonical_decimal_str(gt_dec)
+    result = CheckResult.PASS if cand_dec == gt_dec else CheckResult.FAIL
+    detail = (
+        f"Extracted {candidate!r} -> {canonical}; expected {ground_truth!r} -> "
+        f"{gt_canonical}: {'match' if result == CheckResult.PASS else 'mismatch'}."
     )
     return CheckOutcome(result=result, extracted=candidate, canonical=canonical, detail=detail)
 

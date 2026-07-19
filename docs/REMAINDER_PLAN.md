@@ -1135,6 +1135,71 @@ open — narrow edge case, not worth a multi-row scan for a single-family pilot.
 
 ---
 
+# R13 — Verifier grammar extension: `decimal` answer type  ✅ DONE 2026-07-19
+
+Gates Y5+ curriculum content for R14/R15: decimal-flavoured maths (currency, measurement,
+division-with-remainder-as-decimal) needed a verifier grammar the pilot never had —
+`eval/verify_numeric.py` safe-rejects any decimal-shaped output for `int`/`fraction`, and that
+rejection is correct and load-bearing ([[decision_verifier_decimal_safe_reject]]). Built as a
+pure extension: new functions, two new one-line dispatch branches, **zero edits** to the
+existing int/fraction code paths — proven by running `tests/eval/test_verify_numeric.py` +
+`tests/engine/test_verifier.py` byte-identical (confirmed via `git diff --stat`, both empty).
+
+## What shipped
+
+- **`eval/verify_numeric.py`:** new `answer_type="decimal"` / `checker="decimal_exact"`.
+  `normalise_decimal()` gates through a **strict pre-parse regex**
+  (`-?\d+(\.\d+)?$`, `fullmatch`) BEFORE ever calling `Decimal(...)` — Python's `Decimal()`
+  constructor otherwise silently accepts `NaN`/`Infinity`/exponent notation (`5E2`), none of
+  which should ever compare "equal" to a ground truth for a kids' arithmetic answer; the regex,
+  not `Decimal`'s own leniency, is the real safety boundary. `_extract_decimal()` mirrors
+  `_extract_numeric`'s priority/ambiguity shape (`<answer>` tag → decimal-dotted token →
+  bare-int fallback, "or"-connective ambiguity → SAFE_REJECT). `_check_decimal_exact()`
+  mirrors `_check_fraction_equiv`'s stricter SAFE_REJECT-on-bad-candidate posture (not
+  `_check_int_exact`'s laxer FAIL posture) — matches the file's own "err on safe-reject"
+  philosophy. `Decimal("0.50") == Decimal("0.5")` gives trailing-zero AND int/decimal
+  equivalence for free (`2` == `2.0`), no special-casing needed.
+- **`web/answer_modes.py` + `_turn.html`:** new `"decimal"` widget —
+  `inputmode="decimal" step="any"`, deliberately NOT the existing `"number"` widget's
+  `inputmode="numeric"` (which suppresses the decimal-point key on some mobile keyboards).
+- **Already correctly plumbed, verified not touched:** `bkt.py`'s `_NUMERIC_TYPES` already had
+  `"decimal"`; `controller.py`'s `_answer_format_hint` already had a `"decimal"` entry;
+  `validate_template.py` has no answer_type/checker allow-list to extend.
+
+## Gemma routing (corrected mid-plan — [[feedback_local_generate_sonnet_verify]])
+
+First draft of this plan declared the whole file "not gemma-routed" purely because it's
+safety-critical — maintainer corrected that as an over-broad exclusion: safety-critical gates
+who DECIDES and VERIFIES, not who types, once the judgment itself is pinned. Split actually
+used: the safety decisions (strict-regex-before-`Decimal`, SAFE_REJECT-vs-FAIL parity with
+`fraction_equiv`) and the two dispatch-chokepoint insertions were authored directly; the four
+new additive functions and the full test battery were gemma-drafted from an exact spec, then
+reviewed. **Two real issues caught in review:** the ambiguity check used a bare `"or" in
+text.lower()` substring test (would misfire on "before"/"corridor") instead of the file's own
+`\bor\b` word-boundary convention — fixed; `_check_decimal_exact` called the private
+`_extract_decimal` directly instead of the public `extract_answer()` dispatcher every sibling
+checker uses — fixed, and this also surfaced a genuine spec gap (ambiguous-candidate had
+collapsed into `EXTRACT_FAIL` instead of `SAFE_REJECT`, contradicting the plan's own promised
+test case) — closed to match `_check_fraction_equiv`'s precedent. The test file also had one
+bizarre gemma artifact (`normalise_diamond_none := ... is None`, functionally correct by
+operator precedence but clearly a mistake) — cleaned up during review, not left in.
+
+## Accept
+
+New `tests/eval/test_verify_numeric_decimal.py` (28: 15 `normalise_decimal` unit tests incl.
+NaN/Infinity/exponent/comma rejection, 11 `check()` integration tests, 2 explicit
+regression-intent markers for the untouched int/fraction paths). Manually verified: a real
+`check("decimal", "decimal_exact", ...)` round-trip PASS/FAIL, and `_turn.html` rendered
+directly via Jinja with `widget="decimal"` produces the `inputmode="decimal" step="any"`
+input. **631 tests pass, ruff clean, 3× eval/web rerun stable.**
+
+**Explicitly skipped:** tolerance-based comparison (exact match only — no decimal-answer
+template exists yet to prove tolerance is needed); locale-aware decimal separators (rejected
+outright); extending `explain_check.py`'s arithmetic-claim verification to decimal claims
+(separate, unrequested scope).
+
+---
+
 # Remainder Build Plan — v2
 
 Most of v1 shipped; **G0 is essentially validated** (model pick, safety, retrieval, E2E,

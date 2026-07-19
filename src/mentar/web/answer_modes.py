@@ -29,7 +29,7 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class AnswerMode:
-    widget: str              # _turn.html branch key: "radio" | "fraction" | "number" | "text"
+    widget: str              # _turn.html branch key: "radio" | "fraction" | "number" | "decimal" | "text"
     show_format_hint: bool   # whether question_display's "(answer like ...)" hint is shown
     compose: Callable[[Mapping[str, str]], str]  # request.form -> the answer string for ctrl.step()
 
@@ -51,6 +51,10 @@ ANSWER_MODES: dict[str, AnswerMode] = {
     "mc4": AnswerMode("radio", show_format_hint=False, compose=_compose_default),
     "fraction": AnswerMode("fraction", show_format_hint=True, compose=_compose_fraction),
     "int": AnswerMode("number", show_format_hint=True, compose=_compose_default),
+    # R13: inputmode="decimal" (not "numeric") is deliberate -- "numeric" suppresses the
+    # decimal-point key on some mobile keyboards, which would make a decimal question
+    # unanswerable on a phone/tablet.
+    "decimal": AnswerMode("decimal", show_format_hint=True, compose=_compose_default),
     "free_text": AnswerMode("text", show_format_hint=True, compose=_compose_default),
 }
 DEFAULT_MODE = ANSWER_MODES["free_text"]

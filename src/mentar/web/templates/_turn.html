@@ -74,6 +74,11 @@
   {% elif widget == "number" %}
   <input type="number" inputmode="numeric" name="answer" autofocus placeholder="Type your answer…">
   <button class="btn" type="submit">Send ✓</button>
+  {% elif widget == "decimal" %}
+  {# R13: inputmode="decimal" (not "numeric") keeps the decimal-point key visible
+     on mobile keyboards; step="any" lets the native input accept a fractional value. #}
+  <input type="number" inputmode="decimal" step="any" name="answer" autofocus placeholder="Type your answer…">
+  <button class="btn" type="submit">Send ✓</button>
   {% else %}
   <input type="text" name="answer" autofocus placeholder="Type your answer…">
   <button class="btn" type="submit">Send ✓</button>
