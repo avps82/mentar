@@ -247,6 +247,8 @@ th { background: var(--bg); }
 
 .bar-wrap { background: var(--not-started); border-radius: 4px; height: 12px; width: 120px; display: inline-block; vertical-align: middle; }
 .bar-fill { background: var(--mastered); border-radius: 4px; height: 12px; }
+.turn-mastery { margin-bottom: 6px; }
+.session-progress { margin-left: 6px; }
 
 .year-group-heading { text-align: center; color: var(--text-muted); font-size: 1rem; margin: 28px 0 4px; }
 

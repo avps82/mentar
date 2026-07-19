@@ -5,6 +5,18 @@
    always agree. message/question come STRUCTURED from TurnResult.message /
    .question (never string-split from prose); both are pre-rendered by
    _render_markdown_lite (escape-first, whitelist-4-tags — U-32), hence | safe. #}
+{# R12-fix2 (2026-07-19): the per-topic mastery bar must live INSIDE the htmx
+   swap target — outside it, the bar froze at page-load state while R11's
+   interleaving changed the topic every question (wrong topic name + stale %
+   against every new question = "all visual aspects of progress broken"). #}
+{% if current_mastery %}
+<div class="hint turn-mastery">
+  {{ current_mastery.display_name }}
+  <span class="bar-wrap"><span class="bar-fill" style="width:{{ current_mastery.pct }}%;"></span></span>
+  {{ current_mastery.pct }}%
+  {% if session_progress %}<span class="session-progress">· Question {{ session_progress.n }} of {{ session_progress.total }}</span>{% endif %}
+</div>
+{% endif %}
 {% if message_html %}<div class="feedback{% if is_first_turn %} first-turn{% endif %}">
   {# R12.1: explanations must be read-aloud-able too, not just the question. #}
   <button class="tts-btn" type="button" aria-label="Read this aloud" title="Read aloud">🔊</button>
@@ -12,10 +24,16 @@
   <div class="msg-text">{{ message_html | safe }}</div>
   {% if can_elaborate %}
   {# R12.5: unpack the same explanation further — posts the deterministic
-     ELABORATE word the FSM understands; capped server-side (ELABORATE_CAP). #}
+     ELABORATE word the FSM understands; capped server-side (ELABORATE_CAP).
+     R12-fix2: the word rides a HIDDEN input (the Help/Stop quick-action
+     pattern), NOT the submit button's name/value — a button's value reaches
+     the server only where event.submitter is supported, and when it was
+     dropped the POST arrived empty and the child just got the "give it a
+     try" nudge (the reported "Explain more does nothing" bug). #}
   <form method="POST" action="/answer" class="elaborate-form"
         hx-post="/answer" hx-target="#turn-area" hx-swap="innerHTML">
-    <button class="btn" type="submit" name="answer" value="more">💡 Explain more</button>
+    <input type="hidden" name="answer" value="more">
+    <button class="btn" type="submit">💡 Explain more</button>
   </form>
   {% endif %}
 </div>{% endif %}

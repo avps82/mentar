@@ -498,9 +498,10 @@ def learn():
             return redirect(url_for("frozen"))
 
     # Re-display the last Mentar turn from the log (don't call step again).
+    # R12-fix2: current_mastery now comes from _turn_context (inside the htmx
+    # swap target) — no separate kwarg, or the two copies could disagree.
     return render_template(
         "learner.html", subject_label=SUBJECTS[subject]["label"],
-        current_mastery=_current_node_mastery(learner_uuid, ctrl),
         **_turn_context(learner_uuid, ctrl, is_first_turn=is_first_turn),
     )
 
@@ -1085,6 +1086,13 @@ def _turn_context(learner_uuid: str, ctrl: SessionController, is_first_turn: boo
         "choice_letters": ["A", "B", "C", "D"][: len(choices)] if choices else [],
         # R12.5: show the "💡 Explain more" button while an explanation is live.
         "can_elaborate": ctrl.can_elaborate,
+        # R12-fix2: mastery bar + session counter live INSIDE the swap target so
+        # every htmx turn refreshes them (they froze at page-load state before).
+        "current_mastery": _current_node_mastery(learner_uuid, ctrl),
+        "session_progress": (
+            {"n": ctrl.session_progress[0], "total": ctrl.session_progress[1]}
+            if ctrl.session_progress else None
+        ),
     }
 
 

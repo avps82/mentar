@@ -2,13 +2,9 @@
 {% block extra_head %}<script src="/static/htmx.min.js" defer></script>
 <script src="/static/tts.js" defer></script>{% endblock %}
 {% block content %}
-{% if current_mastery %}
-<div class="hint" style="margin-bottom:6px">
-  {{ current_mastery.display_name }}
-  <span class="bar-wrap"><span class="bar-fill" style="width:{{ current_mastery.pct }}%;"></span></span>
-  {{ current_mastery.pct }}%
-</div>
-{% endif %}
+{# R12-fix2: the mastery bar moved INSIDE _turn.html / #turn-area — outside the
+   swap target it froze at page-load state (wrong topic + stale % every htmx
+   turn once R11's interleaving started switching topics per question). #}
 <!-- U-90: htmx (vendored, static/htmx.min.js) swaps #turn-area in place on
      submit. JS disabled -> plain form POST, same routes/responses either way
      (see /answer in web/app.py). #turn-area holds message + question + the

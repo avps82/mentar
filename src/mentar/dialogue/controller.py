@@ -541,6 +541,15 @@ class SessionController:
         return getattr(item, "stem", None)
 
     @property
+    def session_progress(self) -> tuple[int, int] | None:
+        """R12-fix2: (current question number, session length) for the web
+        session-progress indicator — (items_completed + 1, max_items), or None
+        when the session is uncapped (no stable denominator to show)."""
+        if self._max_items is None:
+            return None
+        return (min(self._ctx.items_completed + 1, self._max_items), self._max_items)
+
+    @property
     def can_elaborate(self) -> bool:
         """R12.5: True when an explanation is live and the child may ask to
         unpack it further — drives the web view's "💡 Explain more" button."""

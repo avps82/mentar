@@ -369,6 +369,58 @@ def test_feedback_block_has_read_aloud_button():
     assert '<div class="feedback' not in frag2
 
 
+def test_mastery_bar_lives_inside_swap_fragment():
+    """R12-fix2 (2026-07-19 hands-on): the per-topic mastery bar used to sit
+    OUTSIDE #turn-area, so htmx turns never refreshed it — with R11's
+    interleaving switching topics per question, the bar showed the wrong topic
+    + a frozen % against every new question. It must render inside the /answer
+    fragment (and carry the session-progress counter when a cap is set)."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+
+    app_mod, c = _client()
+    c.post("/choose", data={"subject": "fractions"})
+    c.get("/learn")
+    with c.session_transaction() as sess:
+        learner_uuid = sess["learner_uuid"]
+    ctrl = app_mod._controllers[learner_uuid]
+
+    ans = ctrl._ctx.current_item.answer if ctrl._ctx.current_item else "1/2"
+    frag = c.post("/answer", data={"answer": ans},
+                  headers={"HX-Request": "true"}).get_data(as_text=True)
+    assert 'class="hint turn-mastery"' in frag          # bar IS in the fragment
+    assert "bar-fill" in frag
+    # And the full page renders it exactly once (via the same include).
+    html = c.get("/learn").get_data(as_text=True)
+    assert html.count('class="hint turn-mastery"') == 1
+
+
+def test_elaborate_form_uses_hidden_input():
+    """R12-fix2: the ELABORATE word must ride a hidden input (the Help/Stop
+    quick-action pattern), never the submit button's name/value — a button
+    value is only submitted where event.submitter is supported, and when it
+    was dropped the POST arrived empty and 'Explain more' silently did
+    nothing (the reported live bug)."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+
+    app_mod, c = _client()
+    c.post("/choose", data={"subject": "fractions"})
+    c.get("/learn")
+    frag = c.post("/answer", data={"answer": "no idea"},
+                  headers={"HX-Request": "true"}).get_data(as_text=True)
+    assert "Explain more" in frag
+    form = frag.split('class="elaborate-form"')[1].split("</form>")[0]
+    assert '<input type="hidden" name="answer" value="more">' in form
+    assert 'name="answer"' not in form.split("<button")[1]  # nothing on the button
+
+
 def test_mc4_choices_render_as_radio_buttons():
     """mc4 items with structured choices render a native radio group (A-D),
     no JS required; fraction answers render numerator/denominator inputs that
