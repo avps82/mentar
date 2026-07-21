@@ -47,6 +47,7 @@ def _build_controller(args):
         repo / "curriculum" / "templates" / "_pilot" / "fractions.md"
     )
     prompt_dir = Path(args.prompt_dir) if args.prompt_dir else (repo / "prompts")
+    scaffold_dir = repo / "curriculum" / "visual_scaffolds"
 
     cfg = load_inference_config(args.config)  # None -> default config/inference.yaml
     if cfg is None:
@@ -89,6 +90,7 @@ def _build_controller(args):
     ctrl = SessionController(
         llm_call=llm_call,
         prompt_dir=prompt_dir,
+        scaffold_dir=scaffold_dir,
         grounding_cfg=cfg.get("grounding", {}),
         curriculum=curriculum,
         db_store=_DbStoreAdapter(store, db_id),

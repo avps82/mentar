@@ -28,7 +28,7 @@ reproduce every hash below or the test FAILS (stale registry).
 | `help_elaborate.md` | `help_elaborate` | R12.5 "Explain more" — unpack the SAME explanation one level deeper at the child's requ… | `5dfef0f47e4f` |
 | `help_formal.md` | `help_formal` | Help re-explanation in the FORMAL representation (symbols/notation/steps), then a trans… | `6336975f3a40` |
 | `help_story.md` | `help_story` | Help re-explanation as a short STORY (narrative with characters), then a transfer re-ch… | `97d1700528e6` |
-| `help_visual.md` | `help_visual` | Help re-explanation in the VISUAL representation (shapes/pictures), then a transfer re-… | `94d1166ae64d` |
+| `help_visual.md` | `help_visual` | Help re-explanation in the VISUAL representation (shapes/pictures), then a transfer re-… | `732905f7242a` |
 | `pattern_problem_first.md` | `pattern_problem_first` | Interaction pattern — pose a problem first, then probe the child's reasoning. Best for … | `99be00694e8e` |
 | `pattern_read_then_question.md` | `pattern_read_then_question` | Interaction pattern — present a short grounded passage, then ask a checking question. B… | `5d924c54d035` |
 | `pattern_state_and_challenge.md` | `pattern_state_and_challenge` | Interaction pattern — child states what they learned, system gently challenges an assum… | `7b3bbf3285c3` |

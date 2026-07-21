@@ -66,6 +66,9 @@ LLM_CRED     = os.environ.get("MENTAR_LLM_API_KEY") or "no-key"
 LLM_MODEL    = os.environ.get("MENTAR_LLM_MODEL", "gemma2:9b")
 DB_PATH      = os.environ.get("MENTAR_DB_PATH", str(_REPO / "mentar_pilot.db"))
 PROMPT_DIR   = Path(os.environ.get("MENTAR_PROMPT_DIR", str(_REPO / "prompts")))
+SCAFFOLD_DIR = Path(os.environ.get(
+    "MENTAR_SCAFFOLD_DIR", str(_REPO / "curriculum" / "visual_scaffolds"),
+))
 CURRICULUM_PATH = Path(os.environ.get(
     "MENTAR_CURRICULUM",
     str(_REPO / "curriculum" / "templates" / "_pilot" / "fractions.md"),
@@ -390,6 +393,7 @@ def _get_or_create_controller(learner_uuid: str, subject: str) -> SessionControl
         _controllers[learner_uuid] = SessionController(
             llm_call=_llm_call,
             prompt_dir=PROMPT_DIR,
+            scaffold_dir=SCAFFOLD_DIR,
             grounding_cfg=_GROUNDING_CFG,
             curriculum=_SUBJECT_CURRICULA[subject],
             db_store=_DbStoreAdapter(store, db_id),

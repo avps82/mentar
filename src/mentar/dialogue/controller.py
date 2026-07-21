@@ -40,6 +40,7 @@ from mentar.engine.bkt import P_L0, bkt_update, params_for
 from mentar.engine.explain_check import has_verified_failure
 from mentar.engine.fringe import DEFAULT_MASTERY_THRESHOLD, is_mastered, select_next
 from mentar.engine.probe_classify import ProbeClass, classify_probe
+from mentar.engine.visual_scaffold import load_visual_scaffold
 from mentar.eval.verify_numeric import CheckResult, check
 from mentar.grounding import resolve_grounding
 from mentar.safety.credential_guard import redact_credentials
@@ -287,9 +288,14 @@ class SessionController:
         rng_seed: int | None = None,
         max_items: int | None = None,
         resume_checkpoint: dict | None = None,
+        scaffold_dir: Path | None = None,
     ) -> None:
         self._llm = self._make_safe_llm(llm_call)
         self._prompt_dir = Path(prompt_dir)
+        # Optional: curriculum/visual_scaffolds/ root -- fills {{visual_scaffold}} in
+        # help/pattern templates with a short, topic-routed hint instead of the whole
+        # bundle (keeps a small local model's context tight). None -> slot renders "".
+        self._scaffold_dir = Path(scaffold_dir) if scaffold_dir is not None else None
         self._grounding_cfg = grounding_cfg
         self._curriculum = curriculum          # node_id -> {concept, answer_type, checker, expected_answer, grounding, prerequisites, bkt_priors?}
         self._store = db_store
@@ -1469,6 +1475,9 @@ class SessionController:
         previous_explanation: str = "",
     ) -> str:
         tmpl = self._load_template(name)
+        scaffold = ""
+        if self._scaffold_dir is not None:
+            scaffold = load_visual_scaffold(self._scaffold_dir, self._subject, node.get("label", ""))
         return (
             tmpl
             .replace("{{concept}}", node.get("label", "fractions"))
@@ -1477,6 +1486,7 @@ class SessionController:
             .replace("{{worked_example}}", worked_example or "a simple example with small numbers")
             .replace("{{question}}", question or "the question they're working on")
             .replace("{{previous_explanation}}", previous_explanation or "(none yet — this is the first explanation)")
+            .replace("{{visual_scaffold}}", scaffold)
         )
 
     def _build_steps_grid_if_eligible(self) -> StepGrid | None:
