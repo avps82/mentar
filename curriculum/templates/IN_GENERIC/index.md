@@ -1,5 +1,4 @@
 ---
-type: OKF Index
 title: IN_GENERIC — India Board-Agnostic
 description: Board-agnostic Indian curriculum templates (no NCERT/CBSE/ICSE alignment — see docs/CONTENT_LICENSES.md §2b). Universally-taught topics only.
 tags: [IN, india, curriculum, mathematics]

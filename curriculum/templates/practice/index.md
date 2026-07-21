@@ -1,5 +1,4 @@
 ---
-type: OKF Index
 title: practice — Evergreen Practice Content
 description: Country-agnostic drill content, always available in the picker under "Try-out topics". Items come from parametric generators; no curriculum authority alignment.
 tags: [practice, mathematics, english, country-agnostic]

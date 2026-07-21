@@ -1,5 +1,4 @@
 ---
-type: OKF Index
 title: AU_ACARA — Australian Curriculum v9
 description: Mentar curriculum templates for Australia (ACARA v9), Years 2–8. Content licensed CC BY 4.0 (ACARA). Codes are alignment references only; questions are Mentar-authored.
 tags: [AU, ACARA, curriculum, mathematics, english]

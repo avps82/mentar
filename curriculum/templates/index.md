@@ -1,5 +1,4 @@
 ---
-type: OKF Index
 title: Mentar Curriculum Templates
 description: Curriculum and practice templates powering the Mentar AI tutor. Each file defines a subject/year pack with concept nodes, BKT priors, and verifier configuration.
 tags: [mentar, curriculum, templates, education]

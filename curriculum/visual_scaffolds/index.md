@@ -1,5 +1,4 @@
 ---
-type: OKF Index
 title: Mentar Visual Scaffolds
 description: Per-topic visual scaffold hints injected into question-generation prompts. Keeps small-model context minimal — only the matched topic file is loaded, not this whole bundle.
 tags: [mentar, visual-scaffold, prompt, education]

@@ -1,5 +1,4 @@
 ---
-type: OKF Index
 title: Maths Visual Scaffolds
 description: Visual scaffold hints for mathematics topics.
 tags: [mathematics, visual-scaffold]

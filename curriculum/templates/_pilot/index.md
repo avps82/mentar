@@ -1,5 +1,4 @@
 ---
-type: OKF Index
 title: _pilot — Phase 0 Pilot Content
 description: Cross-country pilot templates (Phase 0). Not bound to any curriculum authority. Used for initial testing of the Mentar FSM and BKT engine.
 tags: [pilot, cross-country, mathematics, science]

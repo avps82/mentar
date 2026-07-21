@@ -1,5 +1,4 @@
 ---
-type: OKF Index
 title: English Visual Scaffolds
 description: Visual scaffold hints for English topics including vocabulary, grammar, and writing.
 tags: [english, visual-scaffold]
