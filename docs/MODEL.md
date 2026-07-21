@@ -96,6 +96,8 @@ final pick into the Decision section** below.
 | `qwen3.5:9b` | Qwen | ~9B | <8 GB | mid | **candidate** | confirm exact base+quant |
 | `qwen3:14b` | Qwen | 14B (9.3GB) | <10 GB | capable-GPU | **candidate** | bad trade — slow (31s), mid accuracy |
 | `gemma4:12b` | Gemma 4 | 12B | <8 GB | capable-GPU | **candidate** (added 2026-06-18) | 4-bit quant; claimed ~26B-class quality — eval queued |
+| `gemma-4-E2B-it-qat` | Gemma 4 QAT | ~2B eff. | 3 GB RAM | low-end / broad-HW | **candidate** *(queued, added 2026-07-22)* | llama.cpp only, no Ollama tag — `unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q4_K_XL`; host setup pending |
+| `gemma-4-E4B-it-qat` | Gemma 4 QAT | ~4B eff. | 5 GB RAM | low-end / broad-HW | **candidate** *(queued, added 2026-07-22)* | llama.cpp only, no Ollama tag — `unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q4_K_XL`; host setup pending |
 | `mistral-small3.1` | Mistral | ~24B (15GB) | ~16 GB (CPU-offload) | — | **CEILING, not candidate** | quality upper-bound; too big/slow for the pilot envelope — do **not** pick as the tutor |
 | `claude-sonnet-4-6` | Anthropic (cloud) | — | n/a | n/a | **judge / oracle** | grades candidate outputs; Phase-2 LLM-as-judge |
 | `claude-haiku-4-5` | Anthropic (cloud) | — | n/a | n/a | **dev / cheap judge** | not a tutor candidate |
