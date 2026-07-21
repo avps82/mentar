@@ -2,9 +2,10 @@
 template_id: pattern_state_and_challenge
 purpose: Interaction pattern — child states what they learned, system gently challenges an assumption. Best for consolidation / early critical thinking (SPEC §12).
 fsm_state: PRESENT (pattern = state-and-challenge)
-version: 7b3bbf3285c3
+version: eb701d1f2cb0
 ---
 The child is learning: {{concept}}.
+{{visual_scaffold}}
 
 Step 1 — Invite a statement.
 Ask the child to tell you, in their own words, what they think is true about {{concept}}

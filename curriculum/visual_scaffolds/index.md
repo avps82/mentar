@@ -15,3 +15,4 @@ Routing: `topic_keywords` match is substring, case-insensitive, first-match wins
 
 * [maths](maths/index.md) — Mathematics visual scaffolds
 * [english](english/index.md) — English visual scaffolds
+* [science](science/index.md) — Science visual scaffolds

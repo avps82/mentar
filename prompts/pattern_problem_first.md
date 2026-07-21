@@ -2,9 +2,10 @@
 template_id: pattern_problem_first
 purpose: Interaction pattern — pose a problem first, then probe the child's reasoning. Best for STEM application (SPEC §12).
 fsm_state: PRESENT (pattern = problem-first)
-version: 99be00694e8e
+version: b045d54ca85f
 ---
 The child is learning: {{concept}}.
+{{visual_scaffold}}
 
 Step 1 — Pose.
 Give the child ONE small, concrete fractions problem about {{concept}}, set in an everyday

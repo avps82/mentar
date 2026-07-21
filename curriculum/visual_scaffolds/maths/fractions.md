@@ -4,7 +4,7 @@ title: Fractions — Number Line and Bar Model
 description: Visual scaffold hints for fraction concepts including unit fractions, equivalent fractions, and comparing fractions.
 tags: [mathematics, fractions, visual-scaffold, number-line, bar-model]
 subject: mathematics
-topic_keywords: [fraction, fractions, equivalent, numerator, denominator, comparing fractions, unit fraction, half, third, quarter]
+topic_keywords: [fraction, fractions, equivalent, numerator, denominator, comparing fractions, unit fraction, half, third, quarter, equal parts, unequal parts, equal vs]
 timestamp: "2026-07-22T00:00:00Z"
 ---
 

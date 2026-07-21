@@ -19,6 +19,7 @@ _SUBJECT_TO_SCAFFOLD_DIR = {
     "mathematics": "maths",
     "maths": "maths",
     "english": "english",
+    "science": "science",
 }
 
 _RESERVED_NAMES = {"index.md", "log.md"}

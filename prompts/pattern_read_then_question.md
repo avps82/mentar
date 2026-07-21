@@ -2,9 +2,10 @@
 template_id: pattern_read_then_question
 purpose: Interaction pattern — present a short grounded passage, then ask a checking question. Best for concept introduction / comprehension (SPEC §12).
 fsm_state: PRESENT (pattern = read-then-question)
-version: 5d924c54d035
+version: 4743ea70953b
 ---
 The child is learning: {{concept}}.
+{{visual_scaffold}}
 
 Step 1 — Present.
 Using only the grounded reference text you were given, write a SHORT explanation of
