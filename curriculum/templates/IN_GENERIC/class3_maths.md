@@ -1,4 +1,8 @@
 ---
+type: Mentar Curriculum Template
+title: "Maths — Class 3 (IN generic)"
+tags: [IN, mathematics, "Class 3"]
+timestamp: "2026-07-22T00:00:00Z"
 # Mentar curriculum template — India, generic (board-agnostic) Class 3 Maths.
 # NOT tied to NCERT, CBSE, ICSE, or any specific state board -- NCERT's e-content
 # licence was found to prohibit adaptation/derivation (docs/CONTENT_LICENSES.md §2b),

@@ -1,4 +1,8 @@
 ---
+type: Mentar Curriculum Template
+title: "Pilot — Arithmetic"
+tags: [pilot, mathematics]
+timestamp: "2026-07-22T00:00:00Z"
 # Mentar testing template — whole-number arithmetic (Phase 0 testing variety)
 # Subject sibling to the fractions pilot; all items come from parametric generators
 # (engine/itemgen.py ARITHMETIC_GENERATORS) so the deterministic verifier scores them.

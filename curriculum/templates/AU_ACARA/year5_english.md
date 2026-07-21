@@ -1,4 +1,8 @@
 ---
+type: Mentar Curriculum Template
+title: "English — Year 5 (AU)"
+tags: [AU, english, "Year 5"]
+timestamp: "2026-07-22T00:00:00Z"
 # Mentar curriculum template — Australia, Year 5 English (Language/Literacy strands)
 # Aligned to ACARA Australian Curriculum v9 content descriptions (codes below are
 # alignment REFERENCES; all labels/questions are Mentar-authored — see

@@ -129,7 +129,8 @@ def _save_disabled_packs(disabled: set[str]) -> None:
 
 
 def _discover_template_paths() -> list[Path]:
-    paths = sorted(_TEMPLATES_DIR.glob("**/*.md"))
+    # OKF reserved filenames (index.md, log.md) are bundle metadata, not templates.
+    paths = sorted(p for p in _TEMPLATES_DIR.glob("**/*.md") if p.name not in ("index.md", "log.md"))
     # MENTAR_CURRICULUM env override (CLI/tests) replaces whichever discovered
     # path IS the default pilot fractions template -- preserves the existing
     # override point (tests/web/test_startup_validation.py points this at a

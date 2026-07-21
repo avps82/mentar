@@ -1,4 +1,8 @@
 ---
+type: Mentar Curriculum Template
+title: "Practice — Maths"
+tags: [practice, mathematics]
+timestamp: "2026-07-22T00:00:00Z"
 # Mentar curriculum template — evergreen maths practice sampler.
 # Country-agnostic drill content (never expires, no curriculum authority owns it) --
 # always available under the picker's "Try-out topics" group, separate from any

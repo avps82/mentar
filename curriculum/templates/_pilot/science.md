@@ -1,4 +1,8 @@
 ---
+type: Mentar Curriculum Template
+title: "Pilot — Science"
+tags: [pilot, science]
+timestamp: "2026-07-22T00:00:00Z"
 # Mentar testing template — science (Phase 0 testing variety)
 # Multiple-choice only: the deterministic verifier (mc_choice) scores the child's
 # letter against ground truth from curated fact tables (engine/science_items.py).

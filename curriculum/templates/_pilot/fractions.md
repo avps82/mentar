@@ -1,4 +1,8 @@
 ---
+type: Mentar Curriculum Template
+title: "Pilot — Fractions"
+tags: [pilot, mathematics]
+timestamp: "2026-07-22T00:00:00Z"
 # Mentar pilot template — fractions (Phase 0)
 # Spec: docs/SPEC.md §23 (sample graph); schema: docs/PHASE0.md W3.1; authoring: W3.2.
 

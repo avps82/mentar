@@ -79,7 +79,12 @@ _EXPECTED = {
 
 
 def test_all_shipped_templates_discovered_with_expected_meta():
-    found = sorted(str(p.relative_to(REPO_ROOT)) for p in _TPL.glob("**/*.md"))
+    # OKF reserved filenames (index.md, log.md) are bundle metadata, not curriculum concepts.
+    found = sorted(
+        str(p.relative_to(REPO_ROOT))
+        for p in _TPL.glob("**/*.md")
+        if p.name not in ("index.md", "log.md")
+    )
     assert found == sorted(_EXPECTED), found
 
     for rel, expected in _EXPECTED.items():
