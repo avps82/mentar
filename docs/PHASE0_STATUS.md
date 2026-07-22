@@ -2,7 +2,7 @@
 title: "Mentar — Phase 0 Status"
 version: living-doc
 status: "Active"
-last-updated: 2026-07-11
+last-updated: 2026-07-22
 ---
 
 # Phase 0 — Status
@@ -158,13 +158,10 @@ Canonical remaining-work plan: **[REMAINDER_PLAN.md](REMAINDER_PLAN.md)**. Done/
 register: **[DOC_AUDIT.md](DOC_AUDIT.md)**. The earlier autonomous build list (grounding reader,
 dialogue controller, web app, eval dataset, FSM caller wiring) has **all shipped** — see the changelog.
 
-**Maintainer-gated (not locally doable):**
-- **W1.3** — final model pick. The first eval run landed 2026-06-16 (`EVAL_RESULTS.md`; gemma2:9b
-  front-runner); the pick decision + any fuller dimensions remain.
-- **W4.2** — LICENSE ratification (audit → AGPL-3.0; GPL `libzim` core). See `LICENSE_AUDIT.md`.
-- **W5.6** — distress/runway thresholds (decision).
-- **W2.2** — emergency-services signposting decision + professional handoff-wording review.
-- **W7.4** — real Vikidia/Simple-WP ZIM download + reader path verification (needs NAS/ZIMs).
+**Maintainer-gated still open (2026-07-22):**
+- **W2.2** — emergency-services signposting design + professional handoff-wording review. Interim trigger→freeze path is live and sufficient for the supervised pilot (W2.2 interim ✅); the professional review is the remaining blocker for broader rollout. See SAFETY.md §3.4/§3.5 + SECURITY.md.
+
+*Previously listed here — all ✅ done (2026-06-27):* W1.3 (gemma2:9b pick), W4.2 (AGPL-3.0-only licence), W5.6 (kill criteria), W7.4 (ZIM acquisition + re-pointed to KA 2026-07-05).
 
 ### Known defects (found in testing)
 - **✅ RESOLVED 2026-07-05 — Escalation logging is best-effort — a DB failure silently drops

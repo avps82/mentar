@@ -22,7 +22,7 @@ graph, not just a strategy preference.
 | Package | Scope | License | Distributed with Mentar? | Verdict |
 |---|---|---|---|---|
 | **libzim** | core | **GPL-3.0-or-later** | yes (import) | ⚠️ **copyleft — drives the license choice** (see TL;DR) |
-| pyBKT | core | MIT | yes | ✅ permissive |
+| pyBKT | offline eval only (not in runtime hot path — see W3.3) | MIT | optional dev dependency | ✅ permissive |
 | openai (client) | core | Apache-2.0 | yes | ✅ permissive |
 | pyyaml | core (+ vendored) | MIT | yes | ✅ permissive; `.vendor/yaml` ships its LICENSE |
 | flask | optional `web` | BSD-3-Clause | only if `web` installed | ✅ permissive |

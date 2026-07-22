@@ -1,8 +1,8 @@
 ---
 title: "Mentar — Child Safety Specification"
-version: v0.1
-status: "Draft — Pilot Pending"
-last-updated: 2026-07-10
+version: v0.2
+status: "Pilot in progress (supervised single-family pilot; W2.2 professional-review gate still open)"
+last-updated: 2026-07-22
 sources: >
   SPEC v0.3 §15–16 (primary); PHASE0.md §W2.1–W2.6;
   safety/age-modes.md (folded in); safety/guardrails.md (folded in)
@@ -10,9 +10,9 @@ sources: >
 
 # Mentar — Child Safety Specification
 
-**Version:** v0.1  
-**Status:** Draft — Pilot Pending  
-**Last updated:** 2026-07-10  
+**Version:** v0.2  
+**Status:** Pilot in progress — supervised single-family pilot. W2.2 professional-review gate (handoff wording + emergency-services signposting) still open; broader rollout blocked until it closes.  
+**Last updated:** 2026-07-22  
 **Sources:** SPEC v0.3 §15–16; PHASE0.md W2.1–W2.6; `safety/age-modes.md` and `safety/guardrails.md` (prior drafts folded in)
 
 ---

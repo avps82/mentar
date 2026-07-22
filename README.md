@@ -28,7 +28,7 @@ Mentar is an open-source tutoring framework that lets parents run an AI tutor on
 Mentar is, candidly, **AI-built software**. The great majority of the code, tests, and docs in this
 repo are written by AI agents working under a human maintainer's direction, decisions, and review —
 **not hand-written by a person**. In that sense it is close to "vibe coding," even though it follows
-deliberate engineering discipline: spec-first design, test-driven development (450+ tests gating
+deliberate engineering discipline: spec-first design, test-driven development (717+ tests gating
 changes), design docs before code, versioned prompts, and code review. Those principles raise the
 quality bar — but they don't change that underlying fact, and we'd rather be upfront about it.
 

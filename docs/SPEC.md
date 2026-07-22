@@ -2,8 +2,8 @@
 
 **Project:** Mentar — OSS-first, local-first AI tutor for children  
 **Version:** 0.3 — Integrated (project memory + design session + decisions 2026-06-11)  
-**Status:** Design Phase — Pilot Pending  
-**Last Updated: 12 June 2026
+**Status:** Pilot in progress (single-family supervised pilot)  
+**Last Updated:** 2026-07-22
 
 > **Provenance note.** This version merges two sources:  
 > **(A) Project memory** — decisions, principles, research and blockers recorded in earlier Mentar sessions (dated 2026-06). These define product identity, safety, regulatory posture, business model.  
@@ -474,7 +474,7 @@ OSS is **borrowed plumbing, not the spine**. It covers ~40% (structured space, m
 
 ### 19.2 Pedagogical Engine
 - **KST (concept graph):** `kst`, `kstMatrix`, `pks` (maintained, updated 03/2026), `DAKS` (infers graph from data) — R/CRAN; port fringe/path logic to Python.
-- **BKT (mastery):** `pyBKT` (Python, UC Berkeley CAHL).
+- **BKT (mastery):** Mentar's own deterministic recurrence in `src/mentar/engine/bkt.py` for the per-turn hot path (W3.3). `pyBKT` (Python, UC Berkeley CAHL) is reserved for **offline parameter fitting** post-pilot (N ≥ 100 scored responses/skill).
 - **Reference ITS:** OATutor (UC Berkeley CAHL, MIT, React, static/offline). Use as architectural reference for mastery→content wiring; **do not** adopt its authored OpenStax content model.
 - **LLM-native (watch, research-stage):** Open TutorAI (modular, learner/educator/parent interfaces — closest to vision), CLASS (Rice/OpenStax), OATutor-GPT.
 - **W3.5 verdict (2026-06-14): Open TutorAI = REFERENCE-ONLY** (do not fork) — borrow its learner/educator/parent module split as a reference, build our own surface. Desk assessment (confirm with a hands-on spike); full rationale in `docs/design/W3.5_build_vs_adopt.md`.
@@ -537,7 +537,7 @@ A new class of large-unified-memory "local AI" hardware is arriving fast, raisin
 | **AMD** | Strix Halo / Ryzen AI Max+ 395 (128GB unified) → Ryzen AI Halo box (~Jun 2026) → Gorgon (2026) → Medusa Halo (2027) | Consumer/prosumer | 128GB unified at $1.5–3.3k; runs 70B locally; runs on standard Linux/Windows x86; Medusa ~2× bandwidth 2027 |
 | **Apple** | Foundation Models framework + MLX (Apple Silicon) | Consumer | Open *in principle* (WWDC 2026) — but **integration cost is the open question**: on-device system model is **Swift-only**; the Python path is **MLX (`mlx-lm`) / OpenAI-compatible MLX server**, not Apple's system model directly. "Open" ≠ "drop-in for a Python stack." |
 
-**Implication for Mentar:** the industry is converging on (a) big-unified-memory local boxes and (b) backend-abstraction patterns — both of which the 20.1 pluggable-backend layer already anticipates. **But "a backend exists" ≠ "Mentar can call it cheaply."** Two integration caveats now flagged for W1.6: (1) **RTX Spark is Windows-on-Arm** — confirm the Python local-inference stack (Ollama/llama.cpp/vLLM) runs *natively* on Win-on-Arm vs via x86 emulation (Prism), and at what latency cost. (2) **Apple is Swift-first** — targeting Apple's *system* on-device model needs Swift glue; the realistic Python route is MLX-served open weights behind an OpenAI-compatible endpoint. The W1.6 deliverable is a **per-backend integration-effort matrix** (drop-in / shim / native-code-needed), not just a hardware list. No purchase decision needed for the pilot (eval host sorted, 20.3). Living note: `docs/HARDWARE.md`.
+**Implication for Mentar:** the industry is converging on (a) big-unified-memory local boxes and (b) backend-abstraction patterns — both of which the 20.1 pluggable-backend layer already anticipates. **But "a backend exists" ≠ "Mentar can call it cheaply."** Two integration caveats now flagged for W1.6: (1) **RTX Spark is Windows-on-Arm** — confirm the Python local-inference stack (Ollama/llama.cpp/vLLM) runs *natively* on Win-on-Arm vs via x86 emulation (Prism), and at what latency cost. (2) **Apple is Swift-first** — targeting Apple's *system* on-device model needs Swift glue; the realistic Python route is MLX-served open weights behind an OpenAI-compatible endpoint. The W1.6 deliverable is a **per-backend integration-effort matrix** (drop-in / shim / native-code-needed), not just a hardware list. No purchase decision needed for the pilot (eval host sorted, 20.3). Living note: `docs/hardware-requirements.md`.
 
 ---
 
@@ -675,7 +675,7 @@ test and is itself a kill condition.
 | **Curriculum template** | Country + grade-level Markdown file defining in-scope concepts (learning guidelines). |
 | **Concept graph (KST)** | Prerequisite graph imposing ordering on the in-scope concepts; computes the fringe. |
 | **Fringe (outer)** | Concepts whose prerequisites are all met — what the learner is ready to learn now. |
-| **BKT** | Bayesian Knowledge Tracing — per-skill mastery estimate from scored responses (`pyBKT`). |
+| **BKT** | Bayesian Knowledge Tracing — per-skill mastery estimate from scored responses. Hot path: Mentar's own deterministic recurrence (`engine/bkt.py`). Offline fitting: `pyBKT` post-pilot. |
 | **Hinted-win discount** | A correct answer after Help weighted as weaker mastery evidence than an unaided one. |
 | **Transfer test** | Re-check using a new surface of the concept (tests grasp, not mimicry). |
 | **Echo test** | Re-check repeating what was just shown (measures mimicry — to be avoided). |

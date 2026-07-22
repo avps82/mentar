@@ -91,3 +91,40 @@ dates bumped 2026-07-03; stale sections still present). §C7 is resolved (`licen
 `docs/CONTENT_LICENSES.md`, `docs/LICENSE_AUDIT.md`, `docs/PILOT_CONSENT.md`, `CONTRIBUTING.md`,
 `docs/TESTS.md` (flat paths are a *documented* pre-src-layout convention — ARCHITECTURE §7),
 `docs/TESTING_NOTES.md` (raw by design), `docs/design/*` (point-in-time records).
+
+---
+
+# Addendum — 2026-07-22 (post-R15/R-RES/graphify audit pass)
+
+Full codebase audit using graphify (code graph), OKF frontmatter sweep, and grep. 717 tests passing at time of audit.
+
+## G. Fixes applied 2026-07-22
+
+| Doc | Staleness | Fix |
+|-----|-----------|-----|
+| `docs/ARCHITECTURE.md` | Module map last updated 2026-06-13; missing ~18 engine/safety/web/grounding sub-modules added after that date; pyBKT described as "wiring" in hot path (wrong — offline only); generate() signature outdated; HARDWARE.md filename wrong; import examples referenced non-existent classes | Module map expanded to cover all current modules; pyBKT wording corrected to "offline only (W3.3)"; inference abstraction section rewritten to match actual `backend.py` API; filename corrected to `hardware-requirements.md`; import examples fixed. Version bumped v0.1→v0.3, `last-updated` bumped to 2026-07-22. |
+| `docs/SESSION_FSM.md` | S6/H5 state descriptions said "via pyBKT" (wrong — `engine/bkt.py`); status still "Draft — Pilot Pending" despite pilot being active | S6/H5 corrected to "Mentar's own deterministic BKT recurrence (`engine/bkt.py`)". Status changed to "Active — Pilot in progress". Version v0.2→v0.3, `last-updated` bumped. |
+| `docs/TESTS.md` | T3.3 pre-condition said "PRE: pyBKT installed"; GOAL/CONTEXT described pyBKT API exploration; all superseded by the 2026-06-14 W3.3 decision | T3.3 rewritten to describe the actual implementation (`engine/bkt.py` deterministic recurrence, no pyBKT dependency). |
+| `docs/SPEC.md` | §19.2 listed `pyBKT` as the BKT library with no offline-only caveat; glossary entry same; `HARDWARE.md` filename wrong | Both pyBKT references updated to distinguish hot-path (bkt.py) from offline-fit (pyBKT). Filename corrected. |
+| `docs/LICENSE_AUDIT.md` | `pyBKT` listed as scope="core" (incorrect — not a runtime dependency) | Scope corrected to "offline eval only". |
+| `docs/PHASE0_STATUS.md` | `last-updated: 2026-07-11` while changelog has entries through 2026-07-22 | Bumped to 2026-07-22. |
+| `docs/MODEL.md` | `last-updated: 2026-06-27` while roster has entries added 2026-07-22 | Bumped to 2026-07-22. |
+| `docs/REMAINDER_PLAN.md` | `updated: 2026-07-05`, header "status as of 2026-07-10" | Both bumped to 2026-07-22. |
+| `README.md` | Test count said "450+" (actual 717) | Updated to "717+". |
+| `docs/SPEC.md` | Status "Design Phase — Pilot Pending" despite pilot being active; Last Updated: "12 June 2026" | Status updated to "Pilot in progress (single-family supervised pilot)"; date bumped to 2026-07-22. |
+| `docs/SAFETY.md` | Status "Draft — Pilot Pending"; `last-updated: 2026-07-10`; version v0.1 | Status updated to reflect pilot in progress + W2.2 gate still open; date bumped; version v0.1→v0.2. |
+
+## H. Confirmed not stale (2026-07-22)
+
+- `docs/SAFETY.md` — W2.2 open items (handoff wording + emergency signposting) correctly marked as known gaps with a rollout guard; no overclaims (this row added after the status-only bump above).
+- `docs/design/W3.3_bkt.md` — accurately describes pyBKT offline-only decision.
+- `docs/design/W2.2_escalation.md`, `docs/design/W6.3_pilot_interface.md` — point-in-time design records, not living docs.
+- `REMAINDER_PLAN.md` R2–R15 + R-RES + R-MC task entries — all accurately reflect shipped/open states.
+- `curriculum/visual_scaffolds/` — frontmatter timestamps consistent with build dates.
+- `prompts/README.md` — hashes match current prompt files.
+
+## I. Open / not fixed (design decisions, out of scope for a doc-only pass)
+
+- `docs/PHASE0.md` W2.2 professional-review gate — still open by design; noted in SECURITY.md + README.md (correct).
+- `docs/TESTS.md` T3.4 (false-confidence classifier) — the test spec references a W3.4 decision table that exists; test implementation path `tests/engine/test_probe_classify.py` needs verification on next test-suite audit.
+- `docs/SPEC.md` §24 overall — verified not to overclaim; open §24 items are tagged "Open" or "Pilot path live". No false "done" claims found.

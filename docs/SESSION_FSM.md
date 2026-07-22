@@ -1,8 +1,8 @@
 ---
 title: "Mentar — Session State Machine"
-version: v0.2
-status: "Draft — Pilot Pending"
-last-updated: 2026-07-05
+version: v0.3
+status: "Active — Pilot in progress"
+last-updated: 2026-07-22
 sources: "PHASE0.md W6.1; SPEC.md §13-14; SAFETY.md L3 (escalation absorbing state)"
 ---
 
@@ -97,14 +97,14 @@ Both pre-empts are encoded as **transitions on every non-terminal state** in §3
 | S3 | `PRESENT` | no | Render the question via the prompt template (W6.2 registry). |
 | S4 | `AWAIT_ANSWER` | **yes** | Block on learner input. |
 | S5 | `SCORE` | no | Run deterministic verifier (`src/mentar/eval/verify_numeric.py`); if SAFE_REJECT, treat as a regeneration request (not a learner failure). |
-| S6 | `BKT_UPDATE` | no | Update `skill_state` via pyBKT with hinted=0 (cold-correct) for this branch. |
+| S6 | `BKT_UPDATE` | no | Update `skill_state` via Mentar's own deterministic BKT recurrence (`engine/bkt.py`, `bkt_update(hinted=0)`), cold-correct. pyBKT is **not** called here — it is reserved for offline parameter fitting post-pilot (W3.3). |
 | S7 | `BRANCH_DECISION` | no | Choose: advance / probe / end. Probe trigger rule per [SPEC §14.2 + PHASE0 W5.3]: every 5 items OR (mastery≥0.85 ∧ Help-rate<1 per 10 items), whichever first; respect `probe_frequency_cap`. |
 | H0 | `HELP_MODALITY_SELECT` | no | Pick a modality NOT used in this Help chain (SPEC §13.2(1); 5 modalities: visual, concrete, analogy, story, formal). |
 | H1 | `HELP_EXPLAIN` | no | Render re-explanation grounded in the node's `grounding` passage (RAG, not free recall). |
 | H2 | `HELP_RECHECK_PRESENT` | no | Render a transfer-test (new-surface) re-check question. |
 | H3 | `HELP_RECHECK_AWAIT` | **yes** | Block on learner input. **Skip attempts MUST be rejected** (T4.3) — non-scoreable input does not advance. |
 | H4 | `HELP_RECHECK_SCORE` | no | Verifier runs. |
-| H5 | `HELP_RECHECK_BKT_UPDATE` | no | BKT update with `hinted=1` — applies the hinted-win discount (SPEC §13.2(4); per W3.3 mechanism). |
+| H5 | `HELP_RECHECK_BKT_UPDATE` | no | BKT update via `engine/bkt.py` `bkt_update(hinted=1)` — applies the hinted-win discount (elevated-guess class, SPEC §13.2(4); W3.3 mechanism). |
 | H6 | `HELP_RETRY_DECISION` | no | Inspect re-check result and retry counter `n`. n≤2 + failed → retry; n=3 + failed → LINK_BACK; passed → return to BRANCH_DECISION. |
 | H7 | `LINK_BACK` | no | Render grounded reference to source material (not a new generation); flag concept `sticking_point`; write parent-alert row. BKT is NOT further penalised by this event. |
 | P0 | `PROBE_PRESENT` | no | Render proactive transfer probe (per W5.3 rule + W2.4 frequency cap). |

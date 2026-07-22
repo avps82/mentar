@@ -167,12 +167,12 @@
 - **REFS:** 10, W5.3 threshold.
 
 ### T3.3 BKT integration & hinted-win mechanism tests
-- **GOAL:** Verify pyBKT wiring, cold-start priors, and the hinted-win discount.
-- **CONTEXT:** pyBKT (https://github.com/CAHLR/pyBKT, `pip install pyBKT`) fits learns/forgets/guess/slip from data — impossible from one learner's first sessions, hence W3.3 hand-set priors: guess 0.2 (mc4) / 0.05 (free-numeric), slip 0.1, learns 0.2, forgets 0. 11 overclaim is CORRECTED here: standard BKT has no native hint handling. Chosen mechanism (W3.3) is expected to be a separate observation class (hinted-correct as distinct response type with elevated guess) OR a post-hoc update discount — verify which the current pyBKT API supports; if neither cleanly, implement the discount in Mentar's update wrapper and document. [⚠️ Verify pyBKT API at execution time — check `multigs` model variant]
-- **PRE:** pyBKT installed; priors table written.
-- **STEPS:** 1. Smoke: construct model with hand-set priors, run `predict` on a synthetic 20-response sequence, assert monotone mastery rise on all-correct and fall/stall on all-wrong. 2. Hinted-win: identical sequences differing only in hinted flags → assert hinted sequence yields strictly lower mastery at every step after first hint. 3. Cold-start boundary: assert system uses priors when per-skill N<100 and logs `prior_mode=true`. 4. Determinism: same input → same output (seeded).
-- **PASS:** All assertions green; mechanism choice + API verification documented in `docs/bkt_notes.md`.
-- **OUT:** `tests/test_bkt.py`, `docs/bkt_notes.md`, `reports/T3.3/result.json`.
+- **GOAL:** Verify Mentar's own deterministic BKT recurrence, cold-start priors, and the hinted-win discount.
+- **CONTEXT:** **Decision (W3.3, 2026-06-14):** pyBKT is NOT in the per-turn hot path (it cannot fit a single learner's cold-start sessions). The per-turn BKT update is Mentar's own deterministic recurrence in `src/mentar/engine/bkt.py` (`bkt_update()`). Hand-set cold-start priors: guess 0.2 (mc4) / 0.05 (free-numeric), slip 0.1, learns 0.2, forgets 0. Hinted-win discount implemented as an **elevated-guess observation class** (`guess_hinted = guess + (1−guess)×0.5`) — a hinted-correct raises mastery strictly less than a cold-correct. pyBKT is reserved for **offline parameter fitting** after the pilot (N ≥ 100 scored responses/skill) — do not add pyBKT to the hot-path test prerequisites.
+- **PRE:** `src/mentar/engine/bkt.py` exists; priors table implemented. No pyBKT dependency needed.
+- **STEPS:** 1. Smoke: call `bkt_update()` on a synthetic 20-response sequence, assert monotone mastery rise on all-correct and fall/stall on all-wrong. 2. Hinted-win: identical sequences differing only in hinted flags → assert hinted sequence yields strictly lower mastery at every step after first hint. 3. Cold-start boundary: assert system uses priors when per-skill N<100 and logs `prior_mode=true`. 4. Determinism: same input → same output (seeded, stdlib random only).
+- **PASS:** All assertions green. **Implemented:** `tests/engine/test_bkt.py` (7 invariant tests, T3.3 ✅ 2026-06-14).
+- **OUT:** `tests/engine/test_bkt.py`, `docs/design/W3.3_bkt.md` (design notes), `reports/T3.3/result.json`.
 - **REFS:** 11, W3.3.
 
 ### T3.4 False-confidence classifier tests

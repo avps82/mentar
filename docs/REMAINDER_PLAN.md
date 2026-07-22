@@ -2,10 +2,10 @@
 title: "Mentar — Remainder Build Plan v2 (post-G0-validation)"
 version: living-doc
 status: "Active"
-updated: 2026-07-05
+updated: 2026-07-22
 ---
 
-# Release Wave — pilot-ready main (status as of 2026-07-10)
+# Release Wave — pilot-ready main (status as of 2026-07-22)
 
 **A1–A21 + B1 + B2 are ALL merged to `main`** (PRs #55–#74, all human-reviewed and merged by
 the maintainer). B1 (re-pointed pilot grounding to Khan Academy — see B1's row below) merged

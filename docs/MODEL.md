@@ -2,7 +2,7 @@
 title: "Mentar — Model Selection & Eval Plan (W1.2 / W1.3)"
 version: living-doc
 status: "W1.3 DECIDED 2026-06-27 — pilot model = gemma2:9b (see W1.3 Decision below)."
-last-updated: 2026-06-27
+last-updated: 2026-07-22
 owner: Opus
 refs: "SPEC §20 (local LLM), §20.3 (eval host), §15 (RAG/quality), docs/design/W1.2_eval_tooling.md, eval/niah/, docs/PHASE0_STATUS.md (W1)"
 ---
