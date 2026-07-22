@@ -114,10 +114,21 @@ Full codebase audit using graphify (code graph), OKF frontmatter sweep, and grep
 | `docs/SPEC.md` | Status "Design Phase — Pilot Pending" despite pilot being active; Last Updated: "12 June 2026" | Status updated to "Pilot in progress (single-family supervised pilot)"; date bumped to 2026-07-22. |
 | `docs/SAFETY.md` | Status "Draft — Pilot Pending"; `last-updated: 2026-07-10`; version v0.1 | Status updated to reflect pilot in progress + W2.2 gate still open; date bumped; version v0.1→v0.2. |
 
+## J. Second-pass fixes (from multi-agent workflow scan, same date)
+
+| Doc | Issue | Fix |
+|-----|-------|-----|
+| `docs/SESSION_FSM.md` | HELP_ELABORATE state in diagram+§3 but not §2 state table; unreachable BRANCH_DECISION→SESSION_END_BY_LEARNER Mermaid edge; probe trigger help-rate clause not implemented; counter table listed `probes_this_session`/`help_rate_window`/`modalities_used` with wrong field names; LINK_BACK sticking_point+parent-alert claimed as implemented (they aren't); LOW severity safety_trigger path undocumented; PROBE_CLASSIFY retry implied for all classes (only SLIP_SUSPECT); v0.3 changelog entry missing | All 8 corrected. Counter table fields aligned to `_SessionCtx` names; unimplemented design placeholders noted. LOW severity path added to pre-empts table. v0.3 changelog entry added. |
+| `docs/MODEL.md` | `gemma4:12b` row said "eval queued" (evaluation was done — profile in §6); hardware-limited TODO note (full-GPU run had already resolved it); `qwen2.5:3b`/`qwen2.5:0.5b` in roster (ranks 7/8) but absent from candidate table | `gemma4:12b` row updated to reference actual eval results; TODO note updated to ✅ resolved; two missing models added to candidate table. |
+| `docs/RUNNING.md` | `--runtime` flag listed `ollama\|llama_app\|gguf` (missing `auto` and `vllm`); `phi3.5` (not in roster) instead of `phi4-mini` | Fixed both. |
+| `docs/PHASE0_STATUS.md` | "No CI" known-defect not marked ✅ RESOLVED (CI shipped as A12); Science visual templates row claimed "no science curriculum ships AT ALL" (wrong — `science.md`+`science_items.py` exist); R12 follow-up item (2) "Explain more unreproduced" not marked fixed | All 3 corrected. |
+| `docs/design/UI_REQUIREMENTS.md` | Status "U-2a still pending" when §9 body documents U-2a as completed | Status updated to reflect completion; date bumped. |
+| `docs/design/W3.3_bkt.md` | last-updated: 2026-06-14 contradicted by git history (last commit 2026-07-05) | Date corrected to 2026-07-05. |
+| `docs/design/W7_grounding_reader.md` | last-updated: 2026-06-15 contradicted by git; status "Sonnet builds B1-B5" (B1+B2 are done) | Date corrected; status updated. |
+
 ## H. Confirmed not stale (2026-07-22)
 
 - `docs/SAFETY.md` — W2.2 open items (handoff wording + emergency signposting) correctly marked as known gaps with a rollout guard; no overclaims (this row added after the status-only bump above).
-- `docs/design/W3.3_bkt.md` — accurately describes pyBKT offline-only decision.
 - `docs/design/W2.2_escalation.md`, `docs/design/W6.3_pilot_interface.md` — point-in-time design records, not living docs.
 - `REMAINDER_PLAN.md` R2–R15 + R-RES + R-MC task entries — all accurately reflect shipped/open states.
 - `curriculum/visual_scaffolds/` — frontmatter timestamps consistent with build dates.
@@ -128,3 +139,7 @@ Full codebase audit using graphify (code graph), OKF frontmatter sweep, and grep
 - `docs/PHASE0.md` W2.2 professional-review gate — still open by design; noted in SECURITY.md + README.md (correct).
 - `docs/TESTS.md` T3.4 (false-confidence classifier) — the test spec references a W3.4 decision table that exists; test implementation path `tests/engine/test_probe_classify.py` needs verification on next test-suite audit.
 - `docs/SPEC.md` §24 overall — verified not to overclaim; open §24 items are tagged "Open" or "Pilot path live". No false "done" claims found.
+- `docs/SESSION_FSM.md` — LINK_BACK `sticking_point` flag + parent-alert row: design placeholder, not implemented. Documenting the gap is the right call; building it is a separate task.
+- `docs/SESSION_FSM.md` — `probe_frequency_cap` (W2.4) and help-rate probe clause (W5.3): not implemented. Noted in doc but not built; needs a design decision before implementation.
+- `compliance/` — `docs/research/compliance/australia.md` is referenced in `compliance/README.md` but the file does not exist. Low-risk gap (compliance/ is supplementary); log for next audit.
+- `docs/PHASE0_STATUS.md` line counts (W2.1/W2.2/W3.6/W6.1/W6.2/W7) in ✅-done rows are point-in-time delivery snapshots — files have grown since delivery. Not corrected (historical record, not overclaims).

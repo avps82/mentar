@@ -36,7 +36,7 @@ prefix — activate the venv first, per step 3.)
   runtime and will `pip install llama-cpp-python` (a compiled package — needs Xcode CLT on a Mac;
   can take a few minutes).
 - Preview without downloading: `./mentar setup --dry-run`. Force a runtime:
-  `--runtime ollama|llama_app|gguf`. Override the model: `--model gemma2:9b`.
+  `--runtime auto|ollama|llama_app|gguf|vllm`. Override the model: `--model gemma2:9b`.
 - **Runtime auto-order:** Ollama → **llama.app** → in-process GGUF. [llama.app](https://llama.app)
   is the official llama.cpp distro (`curl -LsSf https://llama.app/install.sh | sh`); its installer
   auto-picks a prebuilt binary matched to your **CPU instruction set + GPU**, so it Just Works on
@@ -132,7 +132,7 @@ Install Ollama (link above), then pull a model. Ollama starts a server at
 ollama pull gemma2:9b        # good default for 16 GB machines (incl. MacBook Pro M1 16 GB)
 # smaller / faster alternatives:
 ollama pull qwen2.5:3b       # ~2 GB, runs on almost anything
-ollama pull phi3.5           # ~2.2 GB
+ollama pull phi4-mini         # ~2.2 GB
 ```
 
 ### Where Ollama stores models (per OS)

@@ -95,7 +95,9 @@ final pick into the Decision section** below.
 | `gemma2:9b` | Gemma | 9B | <8 GB | mid | **candidate** | **front-runner** — correctness 100% |
 | `qwen3.5:9b` | Qwen | ~9B | <8 GB | mid | **candidate** | confirm exact base+quant |
 | `qwen3:14b` | Qwen | 14B (9.3GB) | <10 GB | capable-GPU | **candidate** | bad trade — slow (31s), mid accuracy |
-| `gemma4:12b` | Gemma 4 | 12B | <8 GB | capable-GPU | **candidate** (added 2026-06-18) | 4-bit quant; claimed ~26B-class quality — eval queued |
+| `gemma4:12b` | Gemma 4 | 12B | <8 GB | capable-GPU | **candidate** (added 2026-06-18) | 4-bit quant; eval done (full-GPU profile below — safety 1.00, sycophancy 1.00, latency 14.6s) |
+| `qwen2.5:3b` | Qwen 2.5 | ~3B | <4 GB | low-end | **candidate** (in roster rank 7) | broad-HW small model; not yet formally eval'd through T1 suite |
+| `qwen2.5:0.5b` | Qwen 2.5 | ~0.5B | <2 GB | low-end | **candidate** (in roster rank 8) | minimum-RAM fallback; not yet formally eval'd through T1 suite |
 | `gemma-4-E2B-it-qat` | Gemma 4 QAT | ~2B eff. | 3 GB RAM | low-end / broad-HW | **candidate** *(queued, added 2026-07-22)* | llama.cpp only, no Ollama tag — `unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q4_K_XL`; host setup pending |
 | `gemma-4-E4B-it-qat` | Gemma 4 QAT | ~4B eff. | 5 GB RAM | low-end / broad-HW | **candidate** *(queued, added 2026-07-22)* | llama.cpp only, no Ollama tag — `unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q4_K_XL`; host setup pending |
 | `mistral-small3.1` | Mistral | ~24B (15GB) | ~16 GB (CPU-offload) | — | **CEILING, not candidate** | quality upper-bound; too big/slow for the pilot envelope — do **not** pick as the tutor |
@@ -106,13 +108,10 @@ final pick into the Decision section** below.
 > `falcon:7b-instruct`, `vicuna:7b`, `mistral:7b-instruct` — pull on the eval host and run through the
 > same criteria (T1.1–T1.6). All <6 GB — good for the broad-hardware tier *if* any clears the gates.
 
-> 📌 **gemma4:12b — hardware-limited, revisit with full-GPU (2026-06-18):**
-> Correctness **100% (31/31)** — passes the gate. Pipeline latency **~95s/item** (thinking model,
-> 36%/64% CPU/GPU offload on the 10GB-vRAM eval host, context 262144). Consistently hangs on
-> pipeline runs — CPU threads saturate mid-reasoning-chain and urllib blocks indefinitely.
-> **Not viable on current hardware for real-time tutoring (20× slower than gemma2:9b's 4.7s).**
-> Rubric/safety eval skipped — latency alone disqualifies it at this tier. Revisit if a full-GPU
-> (≥16GB vRAM) host becomes available; pure-GPU it would likely be fast and high-quality.
+> ✅ **gemma4:12b — full-GPU run done (2026-06-18, context 16384):** Initial CPU-offload run
+> (context 262144) hung due to CPU saturation. Rerun at context 16384 on 100% GPU resolved it:
+> latency 14.6s/item (pipeline), safety 20/20 = 1.00, sycophancy 12/12 = 1.00, rubric 0.720.
+> Full profile in the section below. Viable on a full-GPU (≥10 GB vRAM) host.
 
 ## Queued-model results — nemotron-3-nano (2026-06-16, CORRECTED)
 

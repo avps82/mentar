@@ -35,7 +35,6 @@ stateDiagram-v2
     BRANCH_DECISION --> NODE_SELECT: advance
     BRANCH_DECISION --> PROBE: probe_due
     BRANCH_DECISION --> SESSION_END_COMPLETE: max_items_reached (R11)
-    BRANCH_DECISION --> SESSION_END_BY_LEARNER: stop_request
 
     state HELP_LOOP {
         [*] --> HELP_MODALITY_SELECT
@@ -80,7 +79,8 @@ Two **global pre-empt events** can fire from any non-terminal state:
 
 | Event | Goes to | Notes |
 |---|---|---|
-| `safety_trigger` | `ESCALATION_FREEZE` | Layer 1 input filter OR Layer 3 trigger classifier matched. Logged verbatim per SAFETY.md §3.3. |
+| `safety_trigger` (CRITICAL/HIGH) | `ESCALATION_FREEZE` | Layer 1 input filter OR Layer 3 trigger classifier matched. Fixed handoff message rendered. Logged verbatim per SAFETY.md §3.3. |
+| `safety_trigger` (LOW — `adversarial_jailbreak`) | (continues — no freeze) | Logged only. Gentle redirect shown ("Let's keep going with our maths! 😊"); lesson continues with the SAME question. Never reaches ESCALATION_FREEZE. |
 | `session_close` | (suspended; state persisted) | Learner or system closes the app. The current state and pending input are written to the response log; next `session_resume` re-enters the persisted state. |
 
 Both pre-empts are encoded as **transitions on every non-terminal state** in §3 — they aren't free-floating.
@@ -98,7 +98,8 @@ Both pre-empts are encoded as **transitions on every non-terminal state** in §3
 | S4 | `AWAIT_ANSWER` | **yes** | Block on learner input. |
 | S5 | `SCORE` | no | Run deterministic verifier (`src/mentar/eval/verify_numeric.py`); if SAFE_REJECT, treat as a regeneration request (not a learner failure). |
 | S6 | `BKT_UPDATE` | no | Update `skill_state` via Mentar's own deterministic BKT recurrence (`engine/bkt.py`, `bkt_update(hinted=0)`), cold-correct. pyBKT is **not** called here — it is reserved for offline parameter fitting post-pilot (W3.3). |
-| S7 | `BRANCH_DECISION` | no | Choose: advance / probe / end. Probe trigger rule per [SPEC §14.2 + PHASE0 W5.3]: every 5 items OR (mastery≥0.85 ∧ Help-rate<1 per 10 items), whichever first; respect `probe_frequency_cap`. |
+| S7 | `BRANCH_DECISION` | no | Choose: advance / probe / end. Probe trigger rule (code: `items_since_probe >= 5 OR mastery >= 0.85`). Note: help-rate clause from original design spec (W5.3) is **not implemented** — `help_rate_window` counter does not exist; probe_frequency_cap (W2.4) is also not implemented. |
+| H_E | `HELP_ELABORATE` | no | Unpacks the same explanation one level deeper using `help_elaborate.md` over `previous_explanation`. Same A14 arithmetic-claim guards as HELP_EXPLAIN. Capped at `ELABORATE_CAP=2` per Help chain. (R12.5) |
 | H0 | `HELP_MODALITY_SELECT` | no | Pick a modality NOT used in this Help chain (SPEC §13.2(1); 5 modalities: visual, concrete, analogy, story, formal). |
 | H1 | `HELP_EXPLAIN` | no | Render re-explanation grounded in the node's `grounding` passage (RAG, not free recall). |
 | H2 | `HELP_RECHECK_PRESENT` | no | Render a transfer-test (new-surface) re-check question. |
@@ -106,7 +107,7 @@ Both pre-empts are encoded as **transitions on every non-terminal state** in §3
 | H4 | `HELP_RECHECK_SCORE` | no | Verifier runs. |
 | H5 | `HELP_RECHECK_BKT_UPDATE` | no | BKT update via `engine/bkt.py` `bkt_update(hinted=1)` — applies the hinted-win discount (elevated-guess class, SPEC §13.2(4); W3.3 mechanism). |
 | H6 | `HELP_RETRY_DECISION` | no | Inspect re-check result and retry counter `n`. n≤2 + failed → retry; n=3 + failed → LINK_BACK; passed → return to BRANCH_DECISION. |
-| H7 | `LINK_BACK` | no | Render grounded reference to source material (not a new generation); flag concept `sticking_point`; write parent-alert row. BKT is NOT further penalised by this event. |
+| H7 | `LINK_BACK` | no | Render grounded reference to source material (not a new generation); go to BRANCH_DECISION. BKT is NOT further penalised. Note: `sticking_point` flag and parent-alert row are **design placeholders — not implemented** in `_do_link_back` (renders text + transitions only). |
 | P0 | `PROBE_PRESENT` | no | Render proactive transfer probe (per W5.3 rule + W2.4 frequency cap). |
 | P1 | `PROBE_AWAIT_ANSWER` | **yes** | Block on learner input. Skip-attempt rejection same as H3. |
 | P2 | `PROBE_SCORE` | no | Verifier runs. |
@@ -177,14 +178,14 @@ reach, since T3.7 checks per-handler, not per-`hinted`-value.
 | `HELP_RETRY_DECISION` | `recheck_passed` | `BRANCH_DECISION` | Exit Help loop. |
 | `HELP_RETRY_DECISION` | `retry_under_cap` (n < 3, failed) | `HELP_MODALITY_SELECT` | n += 1; pick a different unused modality. |
 | `HELP_RETRY_DECISION` | `retry_cap_hit` (n = 3, failed) | `LINK_BACK` | — |
-| `LINK_BACK` | `enter` | `BRANCH_DECISION` | Grounded reference rendered; concept flagged `sticking_point`; parent-alert row written; BKT untouched. |
+| `LINK_BACK` | `enter` | `BRANCH_DECISION` | Grounded reference rendered; BKT untouched. (Note: `sticking_point` flag and parent-alert row are design placeholders — not implemented in `_do_link_back`.) |
 | `PROBE_PRESENT` | `rendered` | `PROBE_AWAIT_ANSWER` | Probe text logged. |
 | `PROBE_AWAIT_ANSWER` | `learner_answer` | `PROBE_SCORE` | — |
 | `PROBE_AWAIT_ANSWER` | `learner_help_press` (or A21: don't-know / clarifying question) | `HELP_MODALITY_SELECT` | The probe is abandoned; a child needing help is itself useful signal and help must never be refused. `help_by_node` set (A5). |
 | `PROBE_AWAIT_ANSWER` | `stop_request` | `SESSION_END_BY_LEARNER` | Learner ended explicitly. |
 | `PROBE_SCORE` | `scored` | `PROBE_CLASSIFY` | — |
 | `PROBE_CLASSIFY` | `clean_pass` | `NODE_SELECT` | `probe_event` row with class=`clean_pass`; must NOT return to `BRANCH_DECISION` (with mastery ≥ threshold, `probe_due` would re-fire forever). **Corrected 2026-07-05** — was documented as `BRANCH_DECISION`. |
-| `PROBE_CLASSIFY` | `retry_needed` (first failure, no retry yet) | `PROBE_PRESENT` | Render second transfer variant before classifying (W3.4 decision table). |
+| `PROBE_CLASSIFY` | `retry_needed` (`SLIP_SUSPECT` only, first probe) | `PROBE_PRESENT` | One retry allowed for SLIP_SUSPECT before classifying (W3.4 decision table). `false_confidence` and `forgetting_suspect` are classified immediately — no retry. |
 | `PROBE_CLASSIFY` | `classified_as_class` (final, after any retry) | `NODE_SELECT` | `probe_event` row with class ∈ {`false_confidence`, `slip_suspect`, `forgetting_suspect`}; mastery demoted (probe-demote) so the node returns to normal practice instead of being re-probed endlessly. **Corrected 2026-07-05** — was documented as `BRANCH_DECISION`. |
 | `ESCALATION_FREEZE` | `alert_sent_and_acked_resume` (parent control plane, not child input) | `NODE_SELECT` | `escalation_log.parent_ack_at` set; outcome=`resumed`. |
 | `ESCALATION_FREEZE` | `alert_sent_and_acked_end` (parent control plane) | `SESSION_END_BY_PARENT` | `escalation_log.parent_ack_at` set; outcome=`ended_by_parent`. |
@@ -225,12 +226,12 @@ These flow alongside the FSM and are NOT modeled as separate FSM states (they wo
 
 | Counter / timer | Scope | Set | Read | Reset |
 |---|---|---|---|---|
-| `help_retry_n` | per Help chain on a single concept | on `learner_help_press` (init 1) | in `HELP_RETRY_DECISION` | when leaving Help loop (pass or LINK_BACK) |
+| `help_n` (`_SessionCtx.help_n`) | per Help chain on a single concept | on `learner_help_press` (init 1) | in `HELP_RETRY_DECISION` | when leaving Help loop (pass or LINK_BACK) |
 | `items_since_probe` | per session | incr in `BRANCH_DECISION` after advance | in `BRANCH_DECISION` to evaluate W5.3 rule | on `PROBE_*` exit |
-| `probes_this_session` | per session | incr on `PROBE_PRESENT` entry | in `BRANCH_DECISION` to evaluate `probe_frequency_cap` (W2.4) | per session |
-| `help_rate_window` | rolling per skill (last 10 items) | append on `learner_help_press` | in `BRANCH_DECISION` for W5.3 rule | windowed |
-| `modalities_used` | per Help chain | append on `HELP_MODALITY_SELECT` | in `HELP_MODALITY_SELECT` for diversity | when leaving Help loop |
-| `probe_retry_seen` | per probe pair | set on first probe failure | in `PROBE_CLASSIFY` for retry decision | per probe pair |
+| `help_modalities_used` (`_SessionCtx.help_modalities_used`) | per Help chain | append on `HELP_MODALITY_SELECT` | in `HELP_MODALITY_SELECT` for diversity | when leaving Help loop |
+| `probe_variant` (`_SessionCtx.probe_variant`) | per probe pair | set to 1 on first SLIP_SUSPECT failure | in `PROBE_CLASSIFY` for retry decision | per probe pair |
+| ~~`probes_this_session`~~ | — | **NOT IMPLEMENTED** — W2.4 probe frequency cap is a design placeholder; `probe_frequency_cap` is not checked in code. | — | — |
+| ~~`help_rate_window`~~ | — | **NOT IMPLEMENTED** — help-rate clause from original W5.3 spec is not in the probe trigger code. | — | — |
 
 ---
 
@@ -258,4 +259,5 @@ These flow alongside the FSM and are NOT modeled as separate FSM states (they wo
 | Date | Version | Change |
 |------|---------|--------|
 | 2026-06-13 | v0.1 | Initial draft (Opus) — owns PHASE0 W6.1. |
+| 2026-07-22 | v0.3 | **Doc/code accuracy pass.** Corrected: (1) removed unreachable `BRANCH_DECISION → SESSION_END_BY_LEARNER` edge from Mermaid diagram (BRANCH_DECISION is transient, never receives learner input); (2) S7 probe trigger rule corrected — help-rate clause from W5.3 spec is NOT implemented; (3) added HELP_ELABORATE (R12.5) to §2 state table; (4) §5 counter table: renamed `help_retry_n`→`help_n`, `modalities_used`→`help_modalities_used`, `probe_retry_seen`→`probe_variant` (matching `_SessionCtx`), marked `probes_this_session`+`help_rate_window` as NOT IMPLEMENTED; (5) H7/LINK_BACK side-effects corrected — `sticking_point` flag and parent-alert row are design placeholders, not in `_do_link_back`; (6) added LOW severity `safety_trigger` path (→ redirect, no freeze); (7) PROBE_CLASSIFY retry row: only SLIP_SUSPECT gets a retry, not false_confidence/forgetting_suspect. Status updated to "Active — Pilot in progress". |
 | 2026-07-05 | v0.2 | **A11 (T3.7 built).** New `tests/dialogue/test_session_fsm.py` parses §3 mechanically (AST-derived code edges vs. doc edges) — the drift-detector this doc had claimed since v0.1 but never had. Fixing what it found: removed dead `PARENT_ACK_WAIT` state (never wired — `parent_acknowledge()` drives resume/end directly from `ESCALATION_FREEZE`); corrected `SCORE`'s `safe_reject` target (`PRESENT` → `AWAIT_ANSWER`, matches shipped same-question re-ask behaviour) and `PROBE_CLASSIFY`'s two exit targets (`BRANCH_DECISION` → `NODE_SELECT`, matches the probe-demote fix); documented previously-undocumented reachable transitions: auto-help (`BKT_UPDATE`/`SCORE` → `HELP_MODALITY_SELECT`), A21's don't-know/question routing (three `*_AWAIT` states → `HELP_MODALITY_SELECT`), A9's unreadable-streak-cap (`SCORE` → `HELP_MODALITY_SELECT`), and the pre-existing `stop_request` gap in three `*_AWAIT` states. §4 corrected to stop claiming a `test_session_fsm_invariants.py` dynamic/fuzz harness exists (it doesn't — only §4's invariant #1 is currently automated). |

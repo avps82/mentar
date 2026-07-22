@@ -1,8 +1,8 @@
 ---
 title: "W7 — Grounding / ZIM-Reader: Design & Build Contract (pilot scope)"
 version: v1.0 (frozen contract)
-status: "FROZEN — Opus design. Sonnet builds B1–B5 against this. Pilot scope = anchor-resolution only."
-last-updated: 2026-06-15
+status: "B1+B2 DONE (2026-07-05); B3–B5 frozen / deferred post-pilot."
+last-updated: 2026-07-05
 owner: Opus
 deps: "libzim (runtime, pinned). OpenZIM MCP (MIT) = reference code only. Hermit-AI (AGPL) = ideas only."
 refs: "SPEC §15 (layer 1 RAG), SPEC §20.1 (llama.cpp), SAFETY §1.5 (grounding-as-data / W2.3), docs/design/grounding_zim_reference_hermit.md, prompts/system_prompt.md, curriculum/_template.md"

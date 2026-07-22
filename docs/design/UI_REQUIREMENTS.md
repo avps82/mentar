@@ -1,8 +1,8 @@
 ---
 title: "UI Rebuild — Requirements"
 version: v1.0
-status: "Requirements ratified 2026-07-10; BUILT same session (all 6 flows) — see §8 build log. Maintainer review + screenshots (U-2a) still pending."
-last-updated: 2026-07-10
+status: "Requirements ratified + BUILT 2026-07-10 (all 6 flows). U-2a maintainer review completed 2026-07-10 (§9 build log). R4-R6 follow-ons built 2026-07-11."
+last-updated: 2026-07-22
 owner: maintainer (ratified) / Opus (drafted + built)
 sources: "docs/design/W6.3_pilot_interface.md (supersedes its 4-view minimalism for look-and-feel only); SESSION_FSM.md; SAFETY.md L2/L5; AGENTS.md RULES; PHASE0_STATUS backlog (web display row)"
 ---
