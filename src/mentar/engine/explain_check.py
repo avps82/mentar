@@ -24,7 +24,12 @@ _NUM = r"(?:\d+\s+\d+/\d+|\d+/\d+|\d+)"
 # ponytail: only the plain "/" division operator is not matched — it collides with
 # the fraction slash ("3/4 / 1/2"). "÷" and "divided by" are explicitly supported.
 _OP = r"(?:[+\-×x*÷]|divided\s+by)"
-_CLAIM_RE = re.compile(rf"({_NUM})\s*({_OP})\s*({_NUM})\s*=\s*({_NUM})")
+# (?<!\d) — don't start a match inside a number (e.g. the "2" in "12").
+# (?!\s*[+\-×÷*x\d]) — reject if the result is followed by an operator or digit,
+# which means it's a mid-chain intermediate value, not a final result
+# (e.g. "6 + 13 = 12 + 13 = 25" must not match "6 + 13 = 12" as a claim;
+# the backtracked "6 + 13 = 1" attempt is also blocked because "1" is followed by "2").
+_CLAIM_RE = re.compile(rf"(?<!\d)({_NUM})\s*({_OP})\s*({_NUM})\s*=\s*({_NUM})(?!\s*[+\-×÷*x\d])")
 
 _OPS = {
     "+": lambda a, b: a + b,
