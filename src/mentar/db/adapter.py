@@ -67,6 +67,9 @@ class _DbStoreAdapter:
     def write_transcript(self, session_id: str, turn_index: int, role: str, text: str) -> int:
         return self._store.write_transcript(self._db_id, session_id, turn_index, role, text)
 
+    def max_turn_index_for_session(self, session_id: str) -> int:
+        return self._store.max_turn_index_for_session(self._db_id, session_id)
+
     def write_response(
         self, session_id: str, skill_id: str, prompt_ref: str, answer: str,
         scored: int, hinted: int, check_result: str | None,

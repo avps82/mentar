@@ -802,7 +802,13 @@ class SessionController:
         if cp:
             # R-RES: restore turn_index so _log_transcript doesn't collide with
             # transcript rows already written by the previous server process.
-            ctx.turn_index = int(cp.get("turn_index") or 0)
+            # If the checkpoint pre-dates turn_index saving, query the DB for
+            # the actual max already written (handles old checkpoints gracefully).
+            saved = cp.get("turn_index")
+            if saved is not None:
+                ctx.turn_index = int(saved)
+            else:
+                ctx.turn_index = self._store.max_turn_index_for_session(self._session_id) + 1
         if cp and cp.get("frozen"):
             ctx.state = FSMState.ESCALATION_FREEZE
         elif cp and node_id in self._curriculum and not is_mastered(ctx.mastery.get(node_id, 0.0)):

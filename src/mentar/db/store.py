@@ -531,6 +531,15 @@ class LearnerStore:
         ).fetchall()
         return [dict(r) for r in rows]
 
+    def max_turn_index_for_session(self, learner_id: int, session_id: str) -> int:
+        """Return the highest turn_index written so far (or -1 if no rows yet)."""
+        row = self._conn.execute(
+            "SELECT MAX(turn_index) FROM transcript WHERE learner_id = ? AND session_id = ?",
+            (learner_id, session_id),
+        ).fetchone()
+        v = row[0]
+        return v if v is not None else -1
+
     # ── Connection lifecycle ─────────────────────────────────────────────────
 
     def checkpoint(self) -> None:

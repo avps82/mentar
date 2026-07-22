@@ -63,6 +63,9 @@ class _FakeStore:
     def write_escalation(self, learner_id, trigger_class, trigger_text_verbatim, **kwargs):
         return 1
 
+    def max_turn_index_for_session(self, session_id):
+        return -1  # no transcript rows in the fake store
+
 
 def _make_controller(mastery=None, resume_checkpoint=None, session_id=None, curriculum=None):
     return SessionController(
