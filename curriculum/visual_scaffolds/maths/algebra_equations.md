@@ -11,18 +11,18 @@ timestamp: "2026-07-22T00:00:00Z"
 When writing or explaining this question, use the balance layout below. Rules:
 - NO square brackets [ ] around expressions
 - Always show the explicit middle step (operation applied to both sides)
-- Keep ⚖️ and other emoji OUTSIDE the equation block — put them before or after, never inline
-- Align the `=` signs at the same column on every row
-- Align the `←` arrows at the same column on every annotated row (pad shorter expressions to match)
+- Keep ⚖️ and other emoji OUTSIDE the equation block — before or after, never on a row
+- **Column alignment:** find the LONGEST left-hand expression in the block, then pad EVERY left-hand expression with spaces to that same width — this keeps ALL `=` signs in a single vertical column
+- **Arrow alignment:** pad shorter right-hand expressions so ALL `←` arrows land at the same column
 
-**One-step balance** — three rows:
+**One-step balance** — three rows. `x + 5 - 5` is the longest LHS (9 chars), so every LHS is padded to 9:
 ```
   x + 5        = 12
-  x + 5 - 5    = 12 - 5     ← subtract 5 from both sides
+  x + 5 - 5    = 12 - 5    ← subtract 5 from both sides
   x            = 7
 ```
 
-**Two-step balance** — five rows. Note how ← lines up at the same column on both operation rows:
+**Two-step balance** — five rows. `2x + 3 - 3` is the longest LHS (10 chars), padded to 14; `11 - 3` and `8 ÷ 2` are padded to 6 so both `←` land at the same column:
 ```
   2x + 3        = 11
   2x + 3 - 3    = 11 - 3    ← subtract 3 from both sides
