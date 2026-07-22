@@ -37,7 +37,7 @@ from mentar.engine.arithmetic_steps import (
     extract_subtraction_operands,
 )
 from mentar.engine.bkt import P_L0, bkt_update, params_for
-from mentar.engine.explain_check import has_verified_failure
+from mentar.engine.explain_check import has_verified_failure, realign_algebra_blocks
 from mentar.engine.fringe import DEFAULT_MASTERY_THRESHOLD, is_mastered, select_next
 from mentar.engine.probe_classify import ProbeClass, classify_probe
 from mentar.engine.visual_scaffold import load_visual_scaffold
@@ -1198,6 +1198,7 @@ class SessionController:
             # (e.g. "10 ÷ 5 = ? ⭐"), which collides with the FSM's single practice
             # question. Strip trailing question lines so only ONE question is live.
             candidate = self._strip_trailing_questions(candidate or "")
+            candidate = realign_algebra_blocks(candidate)
             if not (candidate and candidate.strip()):
                 break  # empty/unavailable — no point retrying, go to fallback
             # A14 / SAFETY §6.2 Level 2: verify arithmetic claims in the explanation

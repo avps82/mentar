@@ -72,3 +72,76 @@ def find_claims(text: str) -> list[ClaimCheck]:
 def has_verified_failure(text: str) -> bool:
     """True if *text* contains at least one arithmetic claim that's provably wrong."""
     return any(c.ok is False for c in find_claims(text))
+
+
+# ── Algebra block alignment ──────────────────────────────────────────────────
+
+# Matches a step line: 2+ space indent, expression, 2+ spaces, = , content
+_STEP_RE = re.compile(r'^( {2,})(\S.*?)\s{2,}=\s+(.+)$')
+# Splits the RHS from the ← annotation (2+ spaces before ←)
+_ANN_RE = re.compile(r'\s{2,}(←.*)')
+
+
+def _parse_step(line: str):
+    m = _STEP_RE.match(line)
+    if not m:
+        return None
+    indent, lhs, rest = m.group(1), m.group(2).rstrip(), m.group(3)
+    ann_m = _ANN_RE.search(rest)
+    if ann_m:
+        rhs = rest[:ann_m.start()].rstrip()
+        ann = ann_m.group(1)
+    else:
+        rhs = rest.rstrip()
+        ann = ''
+    return indent, lhs, rhs, ann
+
+
+def _realign_block(lines: list) -> list:
+    parsed = [_parse_step(l) for l in lines]
+    valid = [p for p in parsed if p]
+    if not valid:
+        return lines
+    max_lhs = max(len(p[1]) for p in valid)
+    annotated = [p for p in valid if p[3]]
+    max_rhs = max(len(p[2]) for p in annotated) if annotated else 0
+    indent = valid[0][0]
+    result = []
+    for i, p in enumerate(parsed):
+        if p is None:
+            result.append(lines[i])
+            continue
+        _, lhs, rhs, ann = p
+        lhs_pad = ' ' * (max_lhs - len(lhs) + 4)
+        if ann:
+            rhs_pad = ' ' * (max_rhs - len(rhs) + 4)
+            result.append(f"{indent}{lhs}{lhs_pad}= {rhs}{rhs_pad}{ann}")
+        else:
+            result.append(f"{indent}{lhs}{lhs_pad}= {rhs}")
+    return result
+
+
+def realign_algebra_blocks(text: str) -> str:
+    """Post-process explanation text: find indented algebra step blocks and
+    re-align the = column (pad every LHS to the longest) and ← column
+    (pad every annotated RHS to the longest). Returns text unchanged if no
+    block is found."""
+    if '=' not in text:
+        return text
+    lines = text.split('\n')
+    out: list[str] = []
+    i = 0
+    while i < len(lines):
+        if _STEP_RE.match(lines[i]):
+            j = i
+            while j < len(lines) and (_STEP_RE.match(lines[j]) or not lines[j].strip()):
+                j += 1
+            block = lines[i:j]
+            if sum(1 for ln in block if _STEP_RE.match(ln)) >= 2:
+                block = _realign_block(block)
+            out.extend(block)
+            i = j
+        else:
+            out.append(lines[i])
+            i += 1
+    return '\n'.join(out)

@@ -11,7 +11,7 @@ import sys
 REPO = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "src"))
 
-from mentar.engine.explain_check import find_claims, has_verified_failure
+from mentar.engine.explain_check import find_claims, has_verified_failure, realign_algebra_blocks
 
 
 def test_correct_fraction_claim_passes():
@@ -87,6 +87,43 @@ def test_division_by_zero_claim_is_unparseable_not_a_failure():
     assert len(claims) == 1
     assert claims[0].ok is None
     assert not has_verified_failure(text)
+
+
+def test_realign_algebra_blocks_fixes_arrow_and_equals_columns():
+    # Simulates the actual misalignment the model produced:
+    # both RHS expressions are 6 chars but got different gap before ←
+    messy = (
+        "Let's keep balanced ⚖️\n"
+        "\n"
+        "  2x + 8        = 36\n"
+        "  2x + 8 - 8    = 36 - 8   ← subtract 8 from both sides\n"
+        "  2x            = 28\n"
+        "  2x ÷ 2        = 28 ÷ 2     ← divide both sides by 2\n"
+        "  x             = 14\n"
+        "\n"
+        "Now you try it! ✏️"
+    )
+    fixed = realign_algebra_blocks(messy)
+    lines = fixed.split('\n')
+    arrow_lines = [l for l in lines if '←' in l]
+    assert len(arrow_lines) == 2
+    # Both ← must be at the exact same character position
+    positions = [l.index('←') for l in arrow_lines]
+    assert positions[0] == positions[1], f"← at cols {positions} — not aligned"
+    # All = in step lines must be at the same column
+    step_lines = [l for l in lines if '=' in l and l.startswith('  ') and 'Now' not in l and 'Let' not in l]
+    eq_positions = [l.index('=') for l in step_lines if not l.strip().startswith('Check')]
+    assert len(set(eq_positions)) == 1, f"= at multiple cols: {eq_positions}"
+
+
+def test_realign_algebra_blocks_leaves_prose_unchanged():
+    prose = "The answer is x = 5 because we subtracted 3 from both sides."
+    assert realign_algebra_blocks(prose) == prose
+
+
+def test_realign_algebra_blocks_noop_when_no_equals():
+    text = "Think of slices of pizza shared among friends."
+    assert realign_algebra_blocks(text) == text
 
 
 if __name__ == "__main__":
