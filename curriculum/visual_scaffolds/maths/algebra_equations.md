@@ -8,16 +8,21 @@ topic_keywords: [equation, solve, unknown, variable, one-step, two-step, balance
 timestamp: "2026-07-22T00:00:00Z"
 ---
 
-When writing or explaining this question, use the balance layout below — NO square brackets, always show the explicit middle step where the operation is applied to both sides:
+When writing or explaining this question, use the balance layout below. Rules:
+- NO square brackets [ ] around expressions
+- Always show the explicit middle step (operation applied to both sides)
+- Keep ⚖️ and other emoji OUTSIDE the equation block — put them before or after, never inline
+- Align the `=` signs at the same column on every row
+- Align the `←` arrows at the same column on every annotated row (pad shorter expressions to match)
 
-**One-step balance** — three rows, no brackets:
+**One-step balance** — three rows:
 ```
   x + 5        = 12
   x + 5 - 5    = 12 - 5     ← subtract 5 from both sides
   x            = 7
 ```
 
-**Two-step balance** — five rows, every operation shown explicitly:
+**Two-step balance** — five rows. Note how ← lines up at the same column on both operation rows:
 ```
   2x + 3        = 11
   2x + 3 - 3    = 11 - 3    ← subtract 3 from both sides
@@ -28,11 +33,11 @@ When writing or explaining this question, use the balance layout below — NO sq
   Check: 2 × 4 + 3 = 8 + 3 = 11 ✓
 ```
 
+The ⚖️ may appear as a standalone line before the block (e.g. "Let's keep both sides balanced ⚖️") or after — never inside a row.
+
 **Guidelines:**
-- Never skip the middle row — write out the operation on both sides explicitly before simplifying.
-- No square brackets [ ] around expressions.
+- Never skip the middle row.
 - Use a single letter (x) consistently; do not switch variables.
 - Year 7 (one-step): one inverse operation only.
 - Year 8 (two-step): always show BOTH steps and the check.
 - Word-problem framing: "A number is multiplied by 3 and then 5 is added, giving 17. Find the number."
-- Use emoji shapes (⚖️) to frame the balance idea in explanations, not pipe-and-dash ASCII art.
