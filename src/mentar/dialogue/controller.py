@@ -420,6 +420,7 @@ class SessionController:
             "frozen": ctx.state is FSMState.ESCALATION_FREEZE,
             "items_completed": ctx.items_completed,
             "items_since_probe": ctx.items_since_probe,
+            "turn_index": ctx.turn_index,
         }
         self._safe_store(
             "update_session_checkpoint", self._session_id, json.dumps(checkpoint),
@@ -798,6 +799,10 @@ class SessionController:
         #     (safe degrade, not an error -- the checkpoint just wasn't trustworthy).
         cp = self._resume_checkpoint
         node_id = cp.get("current_node_id") if cp else None
+        if cp:
+            # R-RES: restore turn_index so _log_transcript doesn't collide with
+            # transcript rows already written by the previous server process.
+            ctx.turn_index = int(cp.get("turn_index") or 0)
         if cp and cp.get("frozen"):
             ctx.state = FSMState.ESCALATION_FREEZE
         elif cp and node_id in self._curriculum and not is_mastered(ctx.mastery.get(node_id, 0.0)):
