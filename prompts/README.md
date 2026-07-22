@@ -25,7 +25,7 @@ reproduce every hash below or the test FAILS (stale registry).
 |------|-------------|---------|------------------------|
 | `help_analogy.md` | `help_analogy` | Help re-explanation by ANALOGY (mapping the idea to something familiar), then a transfe… | `5bd290d32e95` |
 | `help_concrete.md` | `help_concrete` | Help re-explanation in the CONCRETE representation (real objects/actions), then a trans… | `282b04c34ccc` |
-| `help_elaborate.md` | `help_elaborate` | R12.5 "Explain more" — unpack the SAME explanation one level deeper at the child's requ… | `52503052162e` |
+| `help_elaborate.md` | `help_elaborate` | R12.5 "Explain more" — unpack the SAME explanation one level deeper at the child's requ… | `0f6d76c2f764` |
 | `help_formal.md` | `help_formal` | Help re-explanation in the FORMAL representation (symbols/notation/steps), then a trans… | `6336975f3a40` |
 | `help_story.md` | `help_story` | Help re-explanation as a short STORY (narrative with characters), then a transfer re-ch… | `97d1700528e6` |
 | `help_visual.md` | `help_visual` | Help re-explanation in the VISUAL representation (shapes/pictures), then a transfer re-… | `732905f7242a` |

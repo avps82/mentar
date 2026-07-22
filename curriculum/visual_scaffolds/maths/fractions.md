@@ -29,4 +29,4 @@ Label each part with its fraction value. Shade the relevant portion.
 - For comparing, show BOTH fractions side by side on the same scale.
 - For equivalent fractions, show two different-looking bars with the same shaded amount.
 - Keep numbers small: denominators 2, 3, 4, 6, 8 only for Year 2–5; up to 12 for Year 6+.
-- Do not draw diagrams as raw ASCII in the child-facing question — describe them in plain words ("a bar split into 4 equal pieces, 3 shaded").
+- Use emoji shapes (🟩 🟧 ⬜) for diagrams in explanations. In a written question, describe in plain words ("a bar split into 4 equal pieces, 3 shaded") instead of pipe-and-dash ASCII art.

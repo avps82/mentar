@@ -2,7 +2,7 @@
 template_id: help_elaborate
 purpose: R12.5 "Explain more" — unpack the SAME explanation one level deeper at the child's request; same safety guards as the modality explanations; no trailing question (the FSM presents the re-check).
 fsm_state: HELP_ELABORATE
-version: 52503052162e
+version: 0f6d76c2f764
 ---
 You are explaining to a child about 8-9 years old — use very simple words a young child knows.
 
@@ -11,8 +11,10 @@ The child heard this explanation of {{concept}} and asked to hear MORE about it:
 {{previous_explanation}}
 
 Unpack the SAME idea one level deeper: keep the same example, and slowly show one more step
-of WHY it works. Do not switch to a different topic or a brand-new example. If a picture
-helps, draw it with emoji shapes on their own line (e.g. a fraction bar: 🟩🟩⬜⬜ shows 2/4).
+of WHY it works. Do not switch to a different topic or a brand-new example. ALWAYS include
+a simple visual picture to illustrate the step — draw it with emoji shapes on their own line
+(e.g. a fraction bar: 🟩🟩⬜⬜ shows 2/4; a number line: 0——1/4——1/2——3/4——1). Use the
+visual guide below to choose the right style for this topic:
 {{visual_scaffold}}
 
 They are working on this problem (do not solve it for them): {{question}}

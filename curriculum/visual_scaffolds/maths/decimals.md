@@ -37,4 +37,4 @@ Highlight the target digit's column when asking about place value.
 - For "what does the digit X represent" questions, name the column in the question ("in 3.42, what does the 4 represent?").
 - For addition/subtraction, always align decimal points. Show carrying/borrowing if within the question's scope.
 - For Year 5: tenths and hundredths only. Year 6+: thousandths allowed.
-- Describe the chart in words, not raw ASCII, in the child-facing question.
+- Use emoji shapes (🟦 ⬜ 🔵) for diagrams in explanations. In a written question, describe the chart in plain words rather than pipe-and-dash ASCII art.
