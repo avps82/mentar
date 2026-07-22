@@ -23,12 +23,12 @@ reproduce every hash below or the test FAILS (stale registry).
 
 | File | template_id | Purpose | version (sha256[:12]) |
 |------|-------------|---------|------------------------|
-| `help_analogy.md` | `help_analogy` | Help re-explanation by ANALOGY (mapping the idea to something familiar), then a transfe… | `5bd290d32e95` |
-| `help_concrete.md` | `help_concrete` | Help re-explanation in the CONCRETE representation (real objects/actions), then a trans… | `282b04c34ccc` |
+| `help_analogy.md` | `help_analogy` | Help re-explanation by ANALOGY (mapping the idea to something familiar), then a transfe… | `357bbd5127f9` |
+| `help_concrete.md` | `help_concrete` | Help re-explanation in the CONCRETE representation (real objects/actions), then a trans… | `618b40f8d01b` |
 | `help_elaborate.md` | `help_elaborate` | R12.5 "Explain more" — unpack the SAME explanation one level deeper at the child's requ… | `acb28cea1a3c` |
-| `help_formal.md` | `help_formal` | Help re-explanation in the FORMAL representation (symbols/notation/steps), then a trans… | `6336975f3a40` |
-| `help_story.md` | `help_story` | Help re-explanation as a short STORY (narrative with characters), then a transfer re-ch… | `97d1700528e6` |
-| `help_visual.md` | `help_visual` | Help re-explanation in the VISUAL representation (shapes/pictures), then a transfer re-… | `732905f7242a` |
+| `help_formal.md` | `help_formal` | Help re-explanation in the FORMAL representation (symbols/notation/steps), then a trans… | `936b9062ca4d` |
+| `help_story.md` | `help_story` | Help re-explanation as a short STORY (narrative with characters), then a transfer re-ch… | `bdc8c67b16c1` |
+| `help_visual.md` | `help_visual` | Help re-explanation in the VISUAL representation (shapes/pictures), then a transfer re-… | `a87ee3c79782` |
 | `pattern_problem_first.md` | `pattern_problem_first` | Interaction pattern — pose a problem first, then probe the child's reasoning. Best for … | `b045d54ca85f` |
 | `pattern_read_then_question.md` | `pattern_read_then_question` | Interaction pattern — present a short grounded passage, then ask a checking question. B… | `4743ea70953b` |
 | `pattern_state_and_challenge.md` | `pattern_state_and_challenge` | Interaction pattern — child states what they learned, system gently challenges an assum… | `eb701d1f2cb0` |

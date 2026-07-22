@@ -2,9 +2,9 @@
 template_id: help_visual
 purpose: Help re-explanation in the VISUAL representation (shapes/pictures); simple, age-framed, worked to the answer, no trailing question — the FSM presents the re-check (SPEC §13.2).
 fsm_state: HELP_REEXPLAIN (modality = visual)
-version: 732905f7242a
+version: a87ee3c79782
 ---
-You are explaining to a child about 8-9 years old — use very simple words a young child knows, and keep it SHORT.
+You are explaining to a child about 8-9 years old — use very simple words a young child knows.
 
 The child needs help with this problem:
 
@@ -17,7 +17,7 @@ Re-explain {{concept}} with a simple VISUAL picture in words — a shape the chi
 
 Show the method by working this solved example through to its final answer: {{worked_example}} — finish it, show the final number.
 
-Keep it to 2-3 short, simple sentences with one clear idea. Use one or two friendly emojis. Do NOT restate their question, do NOT ask the child anything, and do NOT end with a question or a fill-in-the-blank (no '... = ?'). Output ONLY the explanation.
+Use as many steps as needed to make it completely clear — do NOT cut steps short for brevity. Use one or two friendly emojis. Do NOT restate their question, do NOT ask the child anything, and do NOT end with a question or a fill-in-the-blank (no '... = ?'). Output ONLY the explanation.
 
 If the child was already given an explanation before, it is shown here — use a DIFFERENT example and different wording than it this time:
 {{previous_explanation}}
