@@ -1,3 +1,11 @@
+---
+type: Mentar Guide
+title: Running Mentar Locally — Quick Start
+description: Cross-platform (Windows/macOS/Linux) getting-started guide — local LLM setup, no cloud, no API key needed.
+tags: [guide, setup, running, quick-start]
+timestamp: "2026-07-23T00:00:00Z"
+---
+
 # Running Mentar locally — quick start (Windows / macOS / Linux)
 
 A simple getting-started guide to run the Mentar tutor on your own machine. You'll run a

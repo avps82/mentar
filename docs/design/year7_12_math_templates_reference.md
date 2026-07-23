@@ -1,3 +1,11 @@
+---
+type: Mentar Reference Material
+title: Year 7-12 mathematics visual templates
+description: Maintainer dump of 19 ASCII templates across 6 sections spanning Year 7 through senior secondary, logged only.
+tags: [design, reference, mathematics, visual-scaffold, logged-only]
+timestamp: "2026-07-19T00:00:00Z"
+---
+
 # Year 7-12 mathematics visual templates (2026-07-19)
 
 Maintainer dump, LOGGED ONLY (same pattern as the other reference docs logged

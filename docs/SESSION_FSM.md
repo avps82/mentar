@@ -1,4 +1,5 @@
 ---
+type: Mentar Spec
 title: "Mentar — Session State Machine"
 version: v0.3
 status: "Active — Pilot in progress"

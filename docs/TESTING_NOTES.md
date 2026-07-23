@@ -1,3 +1,11 @@
+---
+type: Mentar Guide
+title: Testing Notes (raw)
+description: Maintainer notes from hands-on product testing, stored verbatim and unprocessed — a running triage log, not an actioned record.
+tags: [testing, notes, raw, triage]
+timestamp: "2026-07-19T00:00:00Z"
+---
+
 # Testing Notes (raw)
 
 Maintainer notes from hands-on product testing, stored **verbatim** and **unprocessed** —

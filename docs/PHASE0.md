@@ -1,3 +1,11 @@
+---
+type: Mentar Spec
+title: Phase 0 Entry Plan & Task List
+description: Defines what must be true before the pilot starts (Gate G0), what runs during it (Gate G1), and each task's exit criterion (W1-W7 entry tasks, P1-P5 pilot tasks).
+tags: [phase0, plan, gates, pilot]
+timestamp: "2026-06-12T00:00:00Z"
+---
+
 # 26 — Phase 0 Entry Plan & Task List
 *Source: plan review session, 2026-06-10 | Last updated: 2026-06-12. Status: ACTIVE. Supersedes the implicit sequencing in 25 Phase 0.*
 

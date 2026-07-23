@@ -1,3 +1,11 @@
+---
+type: Mentar Design Doc
+title: Interaction Scope — Child-Input Intents
+description: Gap analysis + proposal for what child input the system recognizes and how it routes it, surfaced during product testing (2026-06-29).
+tags: [design, fsm, safety, pedagogy]
+timestamp: "2026-06-29T00:00:00Z"
+---
+
 # Interaction Scope — child-input intents (gap analysis + proposal)
 
 **Status:** draft for maintainer ratification (2026-06-29). Surfaced during product testing.

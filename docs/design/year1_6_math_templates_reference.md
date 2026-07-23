@@ -1,3 +1,11 @@
+---
+type: Mentar Reference Material
+title: Year 1-6 mathematics visual templates
+description: Maintainer dump of 16 ASCII templates across 5 sections spanning the full Year 1-6 range, logged only.
+tags: [design, reference, mathematics, visual-scaffold, logged-only]
+timestamp: "2026-07-19T00:00:00Z"
+---
+
 # Year 1-6 mathematics visual templates (2026-07-19)
 
 Maintainer dump, LOGGED ONLY (same pattern as the other two reference docs

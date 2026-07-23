@@ -1,4 +1,5 @@
 ---
+type: Mentar Audit Doc
 title: "Mentar — Model Evaluation Results (W1.2)"
 status: "W1.3 pick made 2026-06-27: gemma2:9b. This page is the evaluation record that led to it — see docs/MODEL.md for the pick + roster."
 last-updated: 2026-07-10

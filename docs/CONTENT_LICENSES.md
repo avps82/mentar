@@ -1,4 +1,5 @@
 ---
+type: Mentar Audit Doc
 title: "Mentar — Content Licence Audit (Pilot Sources)"
 version: v0.6
 status: "Pilot sources cleared; India's 3 national boards don't clear a claimed-alignment pack; US Common Core flagged (purpose clause + trademark) as a maintainer decision"

@@ -1,3 +1,11 @@
+---
+type: Mentar Audit Doc
+title: Hardware Requirements
+description: W1.4 hardware-tier mapping — what RAM/hardware runs which model tier. Partially validated against real eval-host runs.
+tags: [hardware, eval, model-tiers]
+timestamp: "2026-06-27T00:00:00Z"
+---
+
 # Hardware Requirements
 
 W1.4 hardware-tier mapping. Partially validated (2026-06) against real runs; refine as more

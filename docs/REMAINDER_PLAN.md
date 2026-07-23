@@ -1,4 +1,5 @@
 ---
+type: Mentar Status Doc
 title: "Mentar — Remainder Build Plan v2 (post-G0-validation)"
 version: living-doc
 status: "Active"

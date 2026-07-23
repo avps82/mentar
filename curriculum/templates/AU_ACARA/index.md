@@ -1,11 +1,6 @@
----
-title: AU_ACARA — Australian Curriculum v9
-description: Mentar curriculum templates for Australia (ACARA v9), Years 2–8. Content licensed CC BY 4.0 (ACARA). Codes are alignment references only; questions are Mentar-authored.
-tags: [AU, ACARA, curriculum, mathematics, english]
-timestamp: "2026-07-22T00:00:00Z"
----
+# AU_ACARA — Australian Curriculum v9
 
-# AU_ACARA
+Mentar curriculum templates for Australia (ACARA v9), Years 2–8. Content licensed CC BY 4.0 (ACARA). Codes are alignment references only; questions are Mentar-authored.
 
 * [year2_english](year2_english.md) — English — Year 2
 * [year2_maths](year2_maths.md) — Maths — Year 2

@@ -1,3 +1,11 @@
+---
+type: Mentar Reference Material
+title: Comprehensive basic-mathematics reference templates
+description: Maintainer dump of 16 ASCII visual templates across 7 topic areas, logged only — reference material for potential future "show human working" visual scaffolding.
+tags: [design, reference, mathematics, visual-scaffold, logged-only]
+timestamp: "2026-07-19T00:00:00Z"
+---
+
 # Comprehensive basic-mathematics reference templates (2026-07-19)
 
 Maintainer dump, LOGGED ONLY ("Note it down for now" — no action requested).

@@ -50,6 +50,27 @@ dependency bump (see the comment at the top of that file).
 - `eval/` = model/prompt evaluation (run-only tools like promptfoo/MathTutorBench live here, never
   vendored). `prompts/` = **tutor product** prompt templates (not agent prompts — don't conflate).
 
+## OKF documentation bundles — creating/editing any `.md` under `docs/`, `curriculum/templates/`, or `curriculum/visual_scaffolds/`
+These three trees are [OKF](https://github.com/GoogleCloudPlatform/knowledge-catalog/tree/main/okf)
+(Open Knowledge Format) v0.1 bundles — plain markdown + YAML frontmatter, readable by graphify and
+other agents without bespoke parsing. Two rules, verified against the spec text itself (not
+inferred from existing files — that inference was wrong once already, see `docs/DOC_AUDIT.md`
+2026-07-23 addendum):
+
+1. **`index.md` and `log.md` are reserved filenames — they carry NO frontmatter, ever.** Just an
+   `#` heading + body (a directory listing of links, per §6 of the spec). Never add `type:`,
+   `title:`, `tags:`, etc. to one. Code already relies on this split — `_TEMPLATES_DIR` scans,
+   `visual_scaffold.py`'s loader, and web app discovery all skip `index.md`/`log.md` explicitly;
+   a test glob that forgets the exclusion will crash trying to YAML-parse a bare heading as a dict.
+2. **Every other `.md` file in these trees is a concept document and MUST start with a frontmatter
+   block whose first field is `type: <Concept Type Name>`** — the one truly required OKF field.
+   `title`/`description`/`tags`/`timestamp` are recommended; add them. Producer-specific extra
+   keys (`version`, `status`, `owner`, `sources`, …) are explicitly allowed by the spec and don't
+   need to change.
+
+Before trusting any "is this OKF-compliant" claim (including a prior one in this repo's own
+history), re-derive it from the spec text, not from what similar files already look like.
+
 ## The gate (every change)
 `python -m pytest tests/ -q` **green** *and* `ruff check .` **clean** before a change is done.
 

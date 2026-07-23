@@ -161,7 +161,8 @@ def test_no_skill_id_collides_across_any_shipped_template():
     covers every shipped pack -- and a new one dropped in later is covered
     automatically, not just the ones in _EXPECTED."""
     owners: dict[str, str] = {}
-    paths = sorted(_TPL.glob("**/*.md"))
+    # OKF reserved filenames (index.md, log.md) are bundle metadata, not curriculum concepts.
+    paths = sorted(p for p in _TPL.glob("**/*.md") if p.name not in ("index.md", "log.md"))
     for path in paths:
         curriculum = load_curriculum(path)
         for skill_id in curriculum:

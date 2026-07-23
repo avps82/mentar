@@ -1,3 +1,11 @@
+---
+type: Mentar Design Doc
+title: Mentar — Interaction Flow
+description: How a session flows across subject selection, child learning loop, and parent oversight view, with safety as a cross-cutting pre-empt. Mermaid diagrams grounded in dialogue/controller.py and web/app.py.
+tags: [design, flow, fsm, safety]
+timestamp: "2026-07-23T00:00:00Z"
+---
+
 # Mentar — interaction flow
 
 How a session actually flows, separated into **subject selection**, the **child** learning loop,

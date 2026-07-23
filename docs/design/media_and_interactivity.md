@@ -1,4 +1,5 @@
 ---
+type: Mentar Design Doc
 title: "Media & Interactivity in Mentar — grounding ≠ presentation (decision + scope)"
 version: v1.0 (decision)
 status: "DECIDED 2026-06-15. Grounding stays text-only (correct). Media/interactivity is a presentation-layer concern → two new post-pilot W-tasks: W6.5 (Mentar-owned manipulatives) + W7.6 (vetted ZIM media serving)."

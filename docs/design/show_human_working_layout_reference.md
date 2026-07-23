@@ -1,3 +1,11 @@
+---
+type: Mentar Reference Material
+title: "\"Show human working\" — long-division layout reference"
+description: Maintainer feedback, logged only — reference material for a future polish pass on build_long_division_steps (engine/arithmetic_steps.py).
+tags: [design, reference, arithmetic, logged-only]
+timestamp: "2026-07-19T00:00:00Z"
+---
+
 # "Show human working" — long-division layout reference (2026-07-19)
 
 Maintainer feedback, LOGGED ONLY (explicitly "no action, just note down" — their

@@ -1,3 +1,11 @@
+---
+type: Mentar Spec
+title: "Mentar — Test Plan & Agent-Executable Task Specification"
+description: Defines every test required for Phase 0 as self-contained executable chunks (T1.x-T7.x), each with enough context for an autonomous agent to execute independently.
+tags: [tests, spec, phase0]
+timestamp: "2026-06-12T00:00:00Z"
+---
+
 # Mentar — Test Plan & Agent-Executable Task Specification
 *Version 0.2 · 2026-06-12 · Companion to spec 26 (Phase 0 Entry Plan, incl. W6 design-artifact workstream). Intended repo path: `docs/TESTS.md`*
 

@@ -1,3 +1,11 @@
+---
+type: Mentar Status Doc
+title: Documentation Audit
+description: Staleness register — what's done, what's left, which docs have drifted from the code. Findings + fix log across multiple audit passes.
+tags: [audit, docs, staleness]
+timestamp: "2026-07-23T00:00:00Z"
+---
+
 # Documentation Audit — 2026-06-26 (addendum 2026-07-03 below)
 
 A snapshot of **what's done, what's left, and which docs have gone stale.**
@@ -143,3 +151,39 @@ Full codebase audit using graphify (code graph), OKF frontmatter sweep, and grep
 - `docs/SESSION_FSM.md` — `probe_frequency_cap` (W2.4) and help-rate probe clause (W5.3): not implemented. Noted in doc but not built; needs a design decision before implementation.
 - `compliance/` — `docs/research/compliance/australia.md` is referenced in `compliance/README.md` but the file does not exist. Low-risk gap (compliance/ is supplementary); log for next audit.
 - `docs/PHASE0_STATUS.md` line counts (W2.1/W2.2/W3.6/W6.1/W6.2/W7) in ✅-done rows are point-in-time delivery snapshots — files have grown since delivery. Not corrected (historical record, not overclaims).
+
+## K. OKF spec-compliance correction (2026-07-23)
+
+**§H's earlier claim above ("curriculum/visual_scaffolds/ — frontmatter timestamps consistent")
+was true but incomplete** — it checked concept-file timestamps only, never verified the actual
+[OKF v0.1 spec text](https://raw.githubusercontent.com/GoogleCloudPlatform/knowledge-catalog/main/okf/SPEC.md)
+against `index.md` files. When asked to properly verify OKF compatibility, fetching the real spec
+found: **§6 requires `index.md` to carry NO frontmatter at all** (not just "no `type:` field," which
+is what an earlier pass in this repo had assumed). Every `index.md` in `curriculum/templates/` (5)
+and `curriculum/visual_scaffolds/` (4) had frontmatter — a real, repo-wide violation that predates
+this session and was never caught because verification was pattern-matched against existing files
+rather than the spec itself.
+
+**Fixed 2026-07-23:**
+- Stripped frontmatter from all 9 pre-existing `index.md` files (descriptions folded into body prose).
+- Converted `docs/` into a full OKF bundle per maintainer request: `docs/README.md` → `docs/index.md`
+  (README isn't a reserved name, so it wasn't fulfilling the manifest role correctly); added
+  `docs/design/index.md` and `docs/research/compliance/index.md`; `docs/research/compliance/README.md`
+  → `overview.md` (converted to a proper concept file with `type: Mentar Compliance Research`).
+- Added `type:` (the one required OKF field) to all 18 `docs/` concept files, all 22
+  `docs/design/` files, and all 5 `docs/research/compliance/` files — 7 of these had zero frontmatter
+  and needed a full block added (description/tags/timestamp derived from existing content).
+- **Regression caught by the test suite**: `tests/engine/test_template_catalog.py::test_no_skill_id_collides_across_any_shipped_template`
+  globbed `**/*.md` without excluding `index.md`/`log.md` (unlike its sibling test in the same file,
+  and unlike `web/app.py`'s discovery code, both of which already exclude them correctly). This was
+  a latent bug masked by index.md's stray frontmatter (parsed as an empty-`concepts:` dict by
+  accident); stripping the frontmatter correctly exposed it as an `AttributeError`. Fixed by adding
+  the same exclusion. All 717 tests green after the fix; `ruff check .` shows only 2 pre-existing,
+  unrelated errors (not touched this session).
+- Added an "OKF documentation bundles" section to `AGENTS.md` (after Project layout) so future doc
+  creation/edits in `docs/`, `curriculum/templates/`, `curriculum/visual_scaffolds/` reference the
+  spec's two hard rules directly, instead of re-deriving them by inference each time.
+
+**Lesson, stated plainly:** "I confirmed X is spec-compliant" is only true if the spec was actually
+read. Pattern-matching against sibling files that may themselves be non-compliant produces false
+confidence — this is exactly what happened in the 2026-07-22 pass above.

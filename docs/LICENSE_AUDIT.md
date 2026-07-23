@@ -1,3 +1,11 @@
+---
+type: Mentar Audit Doc
+title: License Audit (dependencies + bundled content)
+description: Status input for the W4.2 OSS-license decision — dependency graph, vendored code, and content licences. Informs the choice, does not make it.
+tags: [license, audit, compliance, oss]
+timestamp: "2026-07-22T00:00:00Z"
+---
+
 # License Audit (dependencies + bundled content)
 
 Status input for the **W4.2 OSS-license decision** — this audit *informs* the choice, it does

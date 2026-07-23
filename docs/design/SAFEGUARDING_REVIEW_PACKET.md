@@ -1,4 +1,5 @@
 ---
+type: Mentar Design Doc
 title: "Mentar — Safeguarding Review Packet (for an external safeguarding / child-communication professional)"
 status: "Prepared 2026-07-16 for the maintainer to hand to a qualified reviewer. Not a policy document; it frames what a professional is being asked to validate."
 owner: maintainer (commissions review) / external safeguarding professional (gives the review)

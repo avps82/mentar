@@ -9,50 +9,42 @@ Start with the [project README](../README.md). This page maps everything under `
 | [PHASE0_STATUS.md](PHASE0_STATUS.md) | **Live status tracker** — what's done, in progress, and blocked. |
 | [PHASE0.md](PHASE0.md) | The Phase-0 entry plan + task list (W1–W7, P1–P5 pilot tasks). |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Repo layout + module map (Python src-layout). |
+| [REMAINDER_PLAN.md](REMAINDER_PLAN.md) | The post-G0 release-wave build plan (R2–R15, R-RES, R-MC). |
+| [DOC_AUDIT.md](DOC_AUDIT.md) | Documentation staleness audit register + fix log. |
 
 ## Safety
 | Doc | What it is |
 |-----|-----------|
 | [SAFETY.md](SAFETY.md) | The 6-layer child-safety specification (non-negotiable). |
 | [PILOT_CONSENT.md](PILOT_CONSENT.md) | Signable consent template — required before any pilot session. |
+| [PILOT_RUNBOOK.md](PILOT_RUNBOOK.md) | Operational runbook for running a supervised pilot session. |
 
 ## Pedagogy & runtime
 | Doc | What it is |
 |-----|-----------|
 | [SESSION_FSM.md](SESSION_FSM.md) | The tutoring turn-loop as an explicit state machine. |
 | [TESTS.md](TESTS.md) | The test plan (T1.x–T7.x), incl. the model-eval tests. |
+| [TESTING_NOTES.md](TESTING_NOTES.md) | Raw, unprocessed maintainer testing notes (triage log). |
+| [RUNNING.md](RUNNING.md) | Cross-platform quick-start guide (Windows/macOS/Linux). |
 
 ## Model evaluation (W1)
 | Doc | What it is |
 |-----|-----------|
 | [EVAL_RESULTS.md](EVAL_RESULTS.md) | **Plain-language results** — why/how/what we found. |
-| [MODEL.md](MODEL.md) | Candidate roster, roles, run plan, and the W1.3 pick (TBD). |
-| [llm-compatibility.md](llm-compatibility.md) | Model compatibility notes. |
+| [MODEL.md](MODEL.md) | Candidate roster, roles, run plan, and the W1.3 pick (`gemma2:9b`). |
+| [llm-compatibility.md](llm-compatibility.md) | Model compatibility notes (superseded by EVAL_RESULTS.md/MODEL.md). |
 | [hardware-requirements.md](hardware-requirements.md) | What hardware runs which model tier. |
 | [`../eval/README.md`](../eval/README.md) | The eval **tooling** (how to run the tests). |
 
 ## Licensing
 | Doc | What it is |
 |-----|-----------|
-| [CONTENT_LICENSES.md](CONTENT_LICENSES.md) | Licences of the grounding content sources (Vikidia, Wikipedia, …). |
+| [LICENSE_AUDIT.md](LICENSE_AUDIT.md) | Dependency + bundled-content license audit (informs the W4.2 OSS-license decision). |
+| [CONTENT_LICENSES.md](CONTENT_LICENSES.md) | Licences of the grounding content sources (Vikidia, Wikipedia, Khan Academy, …). |
 
-## Design notes (`docs/design/`)
-Deeper design decisions behind specific workstreams:
-- [W1.2_eval_tooling.md](design/W1.2_eval_tooling.md) — eval tooling scan (NIAH adoption).
-- [W2.2_escalation.md](design/W2.2_escalation.md) — safety escalation module contract.
-- [W3.3_bkt.md](design/W3.3_bkt.md) — BKT mastery model.
-- [W3.5_build_vs_adopt.md](design/W3.5_build_vs_adopt.md) — Open-TutorAI build-vs-adopt verdict.
-- [W6.3_pilot_interface.md](design/W6.3_pilot_interface.md) — pilot interface decision.
-- [W7_grounding_reader.md](design/W7_grounding_reader.md) — grounding / ZIM-reader contract.
-- [grounding_zim_reference_hermit.md](design/grounding_zim_reference_hermit.md) — grounding reference scan.
-- [media_and_interactivity.md](design/media_and_interactivity.md) — media/interactivity decision (W6.5/W7.6).
-
-## Compliance research (`docs/research/compliance/`)
-Background research, not legal advice — see [research/compliance/README.md](research/compliance/README.md):
-- [coppa.md](research/compliance/coppa.md) · [gdpr-k.md](research/compliance/gdpr-k.md) ·
-  [eu-ai-act.md](research/compliance/eu-ai-act.md) · [uk-aadc.md](research/compliance/uk-aadc.md)
-
-(The mapped coverage status lives in [`../compliance/README.md`](../compliance/README.md).)
+## Subdirectories
+* [design](design/index.md) — Deeper design decisions and build contracts behind specific workstreams.
+* [research/compliance](research/compliance/index.md) — Regulatory background research (COPPA, GDPR-K, EU AI Act, UK AADC). Not legal advice.
 
 ## Other folder docs
 - [`../config/README.md`](../config/README.md) — runtime config + grounding/ZIM sources + secret safeguards.

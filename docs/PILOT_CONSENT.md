@@ -1,4 +1,5 @@
 ---
+type: Mentar Legal Doc
 title: "Mentar — Pilot Parental Consent & Ethics Note"
 version: v0.1 (template)
 status: "Template — must be printed, completed, and signed BEFORE the first child session"

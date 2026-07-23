@@ -1,3 +1,11 @@
+---
+type: Mentar Compliance Research
+title: Compliance Overview
+description: Cross-jurisdiction compliance posture mapping (COPPA, GDPR-K, EU AI Act, UK AADC) for the OSS local edition. Not legal advice.
+tags: [compliance, legal, coppa, gdpr-k, eu-ai-act, uk-aadc]
+timestamp: "2026-07-23T00:00:00Z"
+---
+
 # Compliance Overview
 
 This folder documents Mentar's legal and regulatory compliance posture. Because Mentar is OSS, coverage status is documented here openly so contributors can see what's mapped, what's incomplete, and where they can help.

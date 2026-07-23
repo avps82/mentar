@@ -1,3 +1,11 @@
+---
+type: Mentar Audit Doc
+title: LLM Compatibility
+description: Superseded placeholder retained for its evaluation-criteria sketch. Real results live in EVAL_RESULTS.md and MODEL.md.
+tags: [llm, compatibility, superseded]
+timestamp: "2026-07-22T00:00:00Z"
+---
+
 # LLM Compatibility
 
 > ⚠️ **Superseded — placeholder retained for its criteria sketch only.** Actual evaluation results

@@ -1,4 +1,5 @@
 ---
+type: Mentar Design Doc
 title: "W7 — Grounding / ZIM-Reader: Design & Build Contract (pilot scope)"
 version: v1.0 (frozen contract)
 status: "B1+B2 DONE (2026-07-05); B3–B5 frozen / deferred post-pilot."

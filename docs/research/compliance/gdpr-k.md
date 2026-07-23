@@ -1,3 +1,11 @@
+---
+type: Mentar Compliance Research
+title: GDPR-K — Children's Data Protection (EU)
+description: EU GDPR-K mapping for the OSS local edition. Not legal advice.
+tags: [compliance, legal, gdpr-k, eu]
+timestamp: "2026-07-23T00:00:00Z"
+---
+
 # GDPR-K — Children's Data Protection (EU)
 
 **Jurisdiction:** European Union (+ EEA)  

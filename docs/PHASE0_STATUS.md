@@ -1,4 +1,5 @@
 ---
+type: Mentar Status Doc
 title: "Mentar — Phase 0 Status"
 version: living-doc
 status: "Active"

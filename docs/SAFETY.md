@@ -1,4 +1,5 @@
 ---
+type: Mentar Spec
 title: "Mentar — Child Safety Specification"
 version: v0.2
 status: "Pilot in progress (supervised single-family pilot; W2.2 professional-review gate still open)"

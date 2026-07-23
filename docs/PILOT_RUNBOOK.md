@@ -1,4 +1,5 @@
 ---
+type: Mentar Guide
 title: "Mentar — Pilot Runbook"
 version: v0.1
 status: "Draft — checklist not yet run against a real session"

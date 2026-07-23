@@ -1,4 +1,5 @@
 ---
+type: Mentar Design Doc
 title: "UI Rebuild — Requirements"
 version: v1.0
 status: "Requirements ratified + BUILT 2026-07-10 (all 6 flows). U-2a maintainer review completed 2026-07-10 (§9 build log). R4-R6 follow-ons built 2026-07-11."

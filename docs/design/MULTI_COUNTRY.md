@@ -1,4 +1,5 @@
 ---
+type: Mentar Design Doc
 title: "Multi-Country Curriculum Platform — Design"
 version: v0.5
 status: "RATIFIED 2026-07-19 (maintainer, as part of the release-backlog planning pass). §2's country_authority naming convention + §2b's subject-key robustness are BUILT (R-MC, 2026-07-19): AU/ renamed to AU_ACARA/, derive_subject_key resolves the authority dir past a future year-subfolder. §4's content-download design + §6's India/second-country decision were already built and shipped (R8, R9, R9.1). §2b's year-subfolder + LATEST pointer mechanism stays UNBUILT — deferred until a second publication year genuinely exists (nothing to point at yet)."

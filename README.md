@@ -150,7 +150,7 @@ Hardware requirements: see `docs/hardware-requirements.md`.
 
 ## Documentation
 
-Full index: **[`docs/README.md`](docs/README.md)**. Highlights:
+Full index: **[`docs/index.md`](docs/index.md)**. Highlights:
 
 - **[Spec](docs/SPEC.md)** · **[Live status](docs/PHASE0_STATUS.md)** · **[Architecture](docs/ARCHITECTURE.md)**
 - **[Safety spec](docs/SAFETY.md)** (6-layer, non-negotiable) · **[Pilot consent](docs/PILOT_CONSENT.md)**

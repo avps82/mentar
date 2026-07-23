@@ -1,3 +1,11 @@
+---
+type: Mentar Reference Material
+title: Year 1-12 English language & literature visual templates
+description: Maintainer dump of 10 ASCII visual templates across 4 sections spanning Year 1 through senior secondary, logged only.
+tags: [design, reference, english, visual-scaffold, logged-only]
+timestamp: "2026-07-19T00:00:00Z"
+---
+
 # Year 1-12 English language & literature visual templates (2026-07-19)
 
 Maintainer dump, LOGGED ONLY (same log-only pattern as every template round

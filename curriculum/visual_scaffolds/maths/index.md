@@ -1,11 +1,6 @@
----
-title: Maths Visual Scaffolds
-description: Visual scaffold hints for mathematics topics.
-tags: [mathematics, visual-scaffold]
-timestamp: "2026-07-22T00:00:00Z"
----
-
 # Maths Visual Scaffolds
+
+Visual scaffold hints for mathematics topics.
 
 * [fractions](fractions.md) — Number line and bar model for fraction concepts
 * [decimals](decimals.md) — Place-value chart and number line for decimal concepts

@@ -1,4 +1,5 @@
 ---
+type: Mentar Design Doc
 title: "Grounding / ZIM-Reader — Design & References (Hermit-AI + OpenZIM MCP)"
 version: v0.2 (hands-on)
 status: "Recommendation: BUILD a thin owned libzim reader (reuse OpenZIM MCP's MIT code as reference) — do NOT take the MCP server as a pilot runtime dependency."

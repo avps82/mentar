@@ -1,3 +1,11 @@
+---
+type: Mentar Compliance Research
+title: EU AI Act
+description: EU AI Act (Article 5 + Annex III) mapping for the OSS local edition. Not legal advice.
+tags: [compliance, legal, eu-ai-act, eu]
+timestamp: "2026-07-23T00:00:00Z"
+---
+
 # EU AI Act
 
 **Jurisdiction:** European Union  

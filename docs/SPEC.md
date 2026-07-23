@@ -1,3 +1,11 @@
+---
+type: Mentar Spec
+title: "Mentar — Project Specification"
+description: The full product specification — the authoritative source of truth. Merges project-memory decisions with the pedagogical engine design (concept graph, mastery tracking, Help loop).
+tags: [spec, product, authoritative]
+timestamp: "2026-07-22T00:00:00Z"
+---
+
 # Mentar — Project Specification
 
 **Project:** Mentar — OSS-first, local-first AI tutor for children  

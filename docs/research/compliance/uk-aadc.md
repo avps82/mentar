@@ -1,3 +1,11 @@
+---
+type: Mentar Compliance Research
+title: UK Age Appropriate Design Code (Children's Code)
+description: UK AADC (Children's Code) mapping for the OSS local edition. Not legal advice.
+tags: [compliance, legal, uk-aadc, uk]
+timestamp: "2026-07-23T00:00:00Z"
+---
+
 # UK Age Appropriate Design Code (Children's Code)
 
 **Jurisdiction:** United Kingdom  

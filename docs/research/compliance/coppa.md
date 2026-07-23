@@ -1,3 +1,11 @@
+---
+type: Mentar Compliance Research
+title: COPPA — Children's Online Privacy Protection Act (US)
+description: US COPPA (2025 amendments) mapping for the OSS local edition. Not legal advice.
+tags: [compliance, legal, coppa, us]
+timestamp: "2026-07-23T00:00:00Z"
+---
+
 # COPPA — Children's Online Privacy Protection Act (US)
 
 **Jurisdiction:** United States  

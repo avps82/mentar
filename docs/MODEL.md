@@ -1,4 +1,5 @@
 ---
+type: Mentar Audit Doc
 title: "Mentar — Model Selection & Eval Plan (W1.2 / W1.3)"
 version: living-doc
 status: "W1.3 DECIDED 2026-06-27 — pilot model = gemma2:9b (see W1.3 Decision below)."

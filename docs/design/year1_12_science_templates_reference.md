@@ -1,3 +1,11 @@
+---
+type: Mentar Reference Material
+title: Year 1-12 home-based science visual templates
+description: Maintainer dump of 12 ASCII templates using a home-appliance framing, logged only — a new topic domain (science) with no shipped curriculum content yet.
+tags: [design, reference, science, visual-scaffold, logged-only]
+timestamp: "2026-07-19T00:00:00Z"
+---
+
 # Year 1-12 home-based science visual templates (2026-07-19)
 
 Maintainer dump, LOGGED ONLY (same log-only pattern as the math template

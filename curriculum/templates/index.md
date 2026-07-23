@@ -1,13 +1,6 @@
----
-title: Mentar Curriculum Templates
-description: Curriculum and practice templates powering the Mentar AI tutor. Each file defines a subject/year pack with concept nodes, BKT priors, and verifier configuration.
-tags: [mentar, curriculum, templates, education]
-timestamp: "2026-07-22T00:00:00Z"
----
-
 # Mentar Curriculum Templates
 
-OKF bundle. Each `.md` file is a `Mentar Curriculum Template` concept describing one subject/year pack. The `curriculum/visual_scaffolds/` sibling bundle holds per-topic visual scaffold hints consumed at question-generation time.
+Curriculum and practice templates powering the Mentar AI tutor. Each file defines a subject/year pack with concept nodes, BKT priors, and verifier configuration. Each `.md` file is a `Mentar Curriculum Template` concept. The `curriculum/visual_scaffolds/` sibling bundle holds per-topic visual scaffold hints consumed at question-generation time.
 
 ## Subdirectories
 

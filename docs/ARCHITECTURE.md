@@ -1,4 +1,5 @@
 ---
+type: Mentar Architecture Doc
 title: Mentar — Repository Architecture
 version: v0.3
 last-updated: 2026-07-22
