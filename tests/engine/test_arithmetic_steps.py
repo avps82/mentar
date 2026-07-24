@@ -466,20 +466,25 @@ def test_extract_multiplication_rejects_non_multiplication_nodes():
 # 425/4 = 106 R 1 hand-worked alignment example and 432/15 shown in all three
 # ending styles.
 
+def _quotient_row(grid):
+    """The quotient row is the first row containing a DIGIT/POINT cell --
+    NOT always grid.rows[0], since a decimal-divisor division (2026-07-24)
+    prepends a scale-explanation row ("2.53 / 1.1 becomes 25.3 / 11...")
+    ahead of it."""
+    return next(row for row in grid.rows if any(c.kind in (DIGIT, POINT) for c in row))
+
+
 def _quotient_from_grid(grid) -> str:
-    """Division's result (the quotient, plus any "R n"/"num/den" suffix) is
-    the FIRST row, not the last. Excludes the trailing "<-- Quotient is..."
-    annotation cell (2026-07-24) -- that's plain-text-only reader guidance,
-    not part of the answer."""
-    top_row = grid.rows[0]
-    return "".join(c.text for c in top_row if c.text and "<--" not in c.text)
+    """Division's result (the quotient, plus any "R n"/"num/den" suffix).
+    Excludes the trailing "<-- Quotient is..." annotation cell (2026-07-24)
+    -- that's plain-text-only reader guidance, not part of the answer."""
+    return "".join(c.text for c in _quotient_row(grid) if c.text and "<--" not in c.text)
 
 
 def _bare_quotient(grid) -> str:
     """Same as _quotient_from_grid but without an OPERATOR-kind suffix cell
     (the "R n" / "num/den" tail) -- for comparing just the digit/point part."""
-    top_row = grid.rows[0]
-    return "".join(c.text for c in top_row if c.kind in (DIGIT, POINT) and c.text)
+    return "".join(c.text for c in _quotient_row(grid) if c.kind in (DIGIT, POINT) and c.text)
 
 
 def test_division_hand_example_225_div_5():
@@ -495,6 +500,28 @@ def test_division_original_motivating_example_8_96_div_3_2():
     grid = build_long_division_steps(Decimal("8.96"), Decimal("3.2"))
     assert _bare_quotient(grid) == "2.8"
     assert Decimal(_bare_quotient(grid)) == Decimal("2.8")
+
+
+def test_division_decimal_divisor_explains_the_scale_step():
+    """Regression (2026-07-24, maintainer-reported bug): a decimal divisor is
+    scaled to a whole number internally (2.53 / 1.1 -> 25.3 / 11), but the
+    scaled numbers were shown with NO explanation of where they came from --
+    a reader sees "11" and has no idea why, since they asked about "1.1".
+    A leading line must spell out the scale step using the ORIGINAL
+    (unscaled) operands."""
+    grid = build_long_division_steps(Decimal("2.53"), Decimal("1.1"), ending="decimal")
+    text = render_steps_grid_text(grid, col_width=1)
+    assert "2.53 ÷ 1.1 becomes 25.3 ÷ 11" in text
+    assert "multiply both by 10" in text
+    assert _bare_quotient(grid) == "2.3"
+
+
+def test_division_whole_divisor_has_no_scale_note():
+    """A whole-number divisor needs no scaling, so no scale-explanation line
+    should appear at all (only decimal divisors trigger it)."""
+    grid = build_long_division_steps(432, 15, ending="remainder")
+    text = render_steps_grid_text(grid, col_width=1)
+    assert "becomes" not in text
 
 
 def test_division_decimal_dividend_whole_divisor():

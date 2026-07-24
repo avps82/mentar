@@ -564,9 +564,25 @@ def build_long_division_steps(
 
     divisor_cells = [Cell(ch, DIGIT) for ch in divisor_str]
     dividend_by_pos = {i: (digits[i], DIGIT) for i in range(n)}
+    # ")" not "|" -- a vertical bar risks looking identical to the digit "1"
+    # in some monospace fonts (flagged by the maintainer), a real legibility
+    # concern for a children's product where every digit must read unambiguously.
     header_row = divisor_cells + [Cell(") ", OPERATOR)] + _region_row(dividend_by_pos, Cell(".", POINT))
 
-    rows = [quotient_row, vinculum_row, header_row]
+    rows: list[list[Cell]] = []
+    if scale_pow > 0:
+        # A decimal divisor was scaled to a whole number (multiply BOTH
+        # operands by the same power of 10 -- the quotient is unchanged).
+        # Without this line the reader sees the SCALED numbers (e.g. "11"
+        # instead of the "1.1" they asked about) with no explanation of
+        # where they came from (2026-07-24 maintainer-reported bug).
+        multiplier = 10 ** scale_pow
+        rows.append([Cell(
+            f"{dividend_dec} ÷ {divisor_dec} becomes {scaled_dividend} ÷ {divisor_int}"
+            f" (multiply both by {multiplier} so the divisor is a whole number)",
+            OPERATOR,
+        )])
+    rows += [quotient_row, vinculum_row, header_row]
     prev_product, prev_window_value = None, None
     for display_start, display_end, bring_down_str, product_str, q_digit, window_value in steps:
         if bring_down_str is not None:
