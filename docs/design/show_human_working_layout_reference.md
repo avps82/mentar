@@ -1,17 +1,22 @@
 ---
 type: Mentar Reference Material
 title: "\"Show human working\" — long-division layout reference"
-description: Maintainer feedback, logged only — reference material for a future polish pass on build_long_division_steps (engine/arithmetic_steps.py).
-tags: [design, reference, arithmetic, logged-only]
-timestamp: "2026-07-19T00:00:00Z"
+description: "ACTIONED 2026-07-24: build_long_division_steps rebuilt against these worked examples, including remainder support (item 2 below). See docs/PHASE0_STATUS.md 2026-07-24 changelog entry."
+tags: [design, reference, arithmetic, actioned]
+timestamp: "2026-07-24T00:00:00Z"
 ---
 
 # "Show human working" — long-division layout reference (2026-07-19)
 
-Maintainer feedback, LOGGED ONLY (explicitly "no action, just note down" — their
-weekly session was ending). Supersedes nothing shipped; this is reference
-material for the NEXT session's polish pass on `build_long_division_steps`
-(`src/mentar/engine/arithmetic_steps.py`).
+**Status (2026-07-24): ACTIONED.** `build_long_division_steps` was rebuilt against these
+worked examples — leading-zero suppression (item 1), remainder support via a new `ending`
+param (item 2, extended to "fraction"/"decimal" endings too, not just "R n"), and the column
+alignment fix. See `docs/PHASE0_STATUS.md`'s 2026-07-24 changelog entry for the full detail;
+this file is kept as the original reference record, not rewritten.
+
+Maintainer feedback, originally LOGGED ONLY (explicitly "no action, just note down" — their
+weekly session was ending). This was reference material for a future polish pass on
+`build_long_division_steps` (`src/mentar/engine/arithmetic_steps.py`) — now built.
 
 **Core ask: "needs to be aligned... I wanted clean and simple like this."** The
 examples below are the maintainer's own reference for column alignment,

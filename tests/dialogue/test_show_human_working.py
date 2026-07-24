@@ -60,6 +60,20 @@ _FRACTION_CURRICULUM = {
     },
 }
 
+_DIVISION_REMAINDER_FRACTION_CURRICULUM = {
+    "division_remainder_fraction": {
+        "label": "division with remainder (fraction)", "answer_type": "fraction",
+        "checker": "fraction_equiv", "expected_answer": "1/3", "grounding": {}, "prerequisites": [],
+    },
+}
+
+_DIVISION_REMAINDER_DECIMAL_CURRICULUM = {
+    "division_remainder_decimal": {
+        "label": "division with remainder (decimal)", "answer_type": "decimal",
+        "checker": "decimal_exact", "expected_answer": "1.5", "grounding": {}, "prerequisites": [],
+    },
+}
+
 
 class _FakeStore:
     def get_skill_state(self, learner_id, node_id):
@@ -97,6 +111,20 @@ def _multiplication_bank():
 def _division_bank():
     from mentar.engine.au_items import gen_division_facts
     return ItemGenerator(generators={"division": gen_division_facts})
+
+
+def _division_remainder_fraction_bank():
+    from mentar.engine.au_items import gen_division_remainder_as_fraction
+    return ItemGenerator(generators={
+        "division_remainder_fraction": gen_division_remainder_as_fraction,
+    })
+
+
+def _division_remainder_decimal_bank():
+    from mentar.engine.au_items import gen_division_remainder_as_decimal
+    return ItemGenerator(generators={
+        "division_remainder_decimal": gen_division_remainder_as_decimal,
+    })
 
 
 def test_elaborate_on_addition_node_produces_a_real_step_grid():
@@ -167,6 +195,48 @@ def test_elaborate_on_division_node_produces_a_real_step_grid():
     assert llm.calls == calls_before_elaborate, "step-display must skip the LLM entirely"
     grid = ctrl.elaborate_steps_grid
     assert isinstance(grid, StepGrid)
+
+
+def test_elaborate_on_division_remainder_fraction_node_uses_fraction_ending():
+    """2026-07-24: a division-with-remainder node using answer_type="fraction"
+    must render with ending="fraction" (an inline mixed-number suffix like
+    " 1/3"), not the plain "R n" default."""
+    llm = _PromptCapturingLlm()
+    ctrl = SessionController(
+        llm_call=llm, prompt_dir=PROMPTS, grounding_cfg={},
+        curriculum=_DIVISION_REMAINDER_FRACTION_CURRICULUM, db_store=_FakeStore(), learner_id="L",
+        item_bank=_division_remainder_fraction_bank(), rng_seed=7,
+    )
+    ctrl.step(None)
+    ctrl.step("?")
+    calls_before_elaborate = llm.calls
+    ctrl.step("more")
+    assert llm.calls == calls_before_elaborate, "step-display must skip the LLM entirely"
+    grid = ctrl.elaborate_steps_grid
+    assert isinstance(grid, StepGrid)
+    suffix_texts = [c.text for c in grid.rows[0] if "/" in c.text]
+    assert suffix_texts, "fraction ending must append a reduced mixed-number suffix"
+
+
+def test_elaborate_on_division_remainder_decimal_node_uses_decimal_ending():
+    """2026-07-24: a division-with-remainder node using answer_type="decimal"
+    must render with ending="decimal" (continuing past the given precision),
+    not the plain "R n" default."""
+    llm = _PromptCapturingLlm()
+    ctrl = SessionController(
+        llm_call=llm, prompt_dir=PROMPTS, grounding_cfg={},
+        curriculum=_DIVISION_REMAINDER_DECIMAL_CURRICULUM, db_store=_FakeStore(), learner_id="L",
+        item_bank=_division_remainder_decimal_bank(), rng_seed=7,
+    )
+    ctrl.step(None)
+    ctrl.step("?")
+    calls_before_elaborate = llm.calls
+    ctrl.step("more")
+    assert llm.calls == calls_before_elaborate, "step-display must skip the LLM entirely"
+    grid = ctrl.elaborate_steps_grid
+    assert isinstance(grid, StepGrid)
+    suffix_texts = [c.text for c in grid.rows[0] if "R " in c.text]
+    assert not suffix_texts, "decimal ending must not use the 'R n' remainder suffix"
 
 
 def test_elaborate_on_fraction_node_still_uses_llm_prose():

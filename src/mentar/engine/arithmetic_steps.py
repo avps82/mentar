@@ -29,6 +29,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
+from fractions import Fraction
 
 # Cell kinds -- drive the CSS class the web layer applies per cell.
 CARRY = "carry"
@@ -38,9 +39,6 @@ OPERATOR = "operator"
 BLANK = "blank"
 LINE = "line"          # a full-width horizontal rule row
 POINT = "point"         # a decimal point
-QUOTIENT_HIT = "quotient-hit"  # a division step whose quotient digit is nonzero --
-                                # colours the digit and its "-product" row the same,
-                                # so a child can trace which subtraction produced it
 
 
 @dataclass(frozen=True)
@@ -53,6 +51,31 @@ class Cell:
 class StepGrid:
     rows: list[list[Cell]]
     n_cols: int
+
+
+def render_steps_grid_text(grid: StepGrid, col_width: int = 1) -> str:
+    """Render a StepGrid as plain monospace text (2026-07-24) -- one line per
+    row, one right-justified `col_width`-wide slot per cell -- for a `<pre>`
+    block in the web UI, replacing the earlier per-cell CSS Grid divs. A
+    `LINE`-kind cell becomes a `col_width`-wide dash-fill (so consecutive
+    rule cells read as one continuous rule, no gaps); a cell whose text is
+    LONGER than `col_width` (a multi-character annotation like " R 12",
+    " 4/5", or "−1") is emitted as-is, never truncated or squeezed. Each
+    finished row is right-stripped (trailing whitespace only -- interior
+    spacing from earlier columns is preserved), then all rows are joined
+    with newlines. Pure function: no I/O, no mutation of `grid`."""
+    lines = []
+    for row in grid.rows:
+        parts = []
+        for cell in row:
+            if cell.kind == LINE:
+                parts.append("-" * col_width)
+            elif len(cell.text) > col_width:
+                parts.append(cell.text)
+            else:
+                parts.append(cell.text.rjust(col_width))
+        lines.append("".join(parts).rstrip())
+    return "\n".join(lines)
 
 
 # ── Operand extraction ────────────────────────────────────────────────────────
@@ -134,17 +157,14 @@ def extract_multiplication_operands(problem: str) -> tuple[int, int] | None:
 def extract_division_operands(problem: str) -> tuple[Decimal, Decimal] | None:
     """Pull the two operands out of a division question WE generated (e.g.
     "What is 225 ÷ 5?"). Negative operands and a zero divisor are excluded
-    outright. The remaining eligibility question -- does this division
-    actually terminate using only the dividend's OWN given digits, the way
-    `build_long_division_steps` processes it (see that function's docstring
-    for why it doesn't synthesize extra trailing zero digits) -- is
-    answered by just attempting the build and catching its ValueError,
-    rather than duplicating the bus-stop algorithm here as a second
-    "is this exact" check. All three shipped division generators
-    (`gen_division_facts`, `gen_div_decimals`, `gen_div_decimal_by_decimal`)
-    construct the dividend FROM the quotient, so this always succeeds for
-    real content -- the guard exists for correctness, not because it's
-    expected to reject anything shipped today."""
+    outright. Unlike the pre-2026-07-24 version, this no longer probes
+    `build_long_division_steps` for "does it terminate" -- that question is
+    now `ending`-dependent (a division that doesn't divide evenly is fine
+    under ending="remainder"/"fraction", but can still raise under
+    ending="decimal" if it doesn't terminate within the synthesized-digit
+    cap). The caller knows which ending it wants (from the item's
+    answer_type) and catches ValueError itself at that point -- see
+    `dialogue/controller.py::_build_steps_grid_if_eligible`."""
     m = _DIVISION_RE.search(problem)
     if not m:
         return None
@@ -153,10 +173,6 @@ def extract_division_operands(problem: str) -> tuple[Decimal, Decimal] | None:
     except InvalidOperation:
         return None
     if a < 0 or b <= 0:
-        return None
-    try:
-        build_long_division_steps(a, b)
-    except ValueError:
         return None
     return a, b
 
@@ -387,74 +403,129 @@ def build_multiplication_partial_products_steps(a: int, b: int) -> StepGrid:
     return StepGrid(rows=rows, n_cols=n_cols)
 
 
-def build_long_division_steps(dividend: Decimal | int, divisor: Decimal | int) -> StepGrid:
-    """Bus-stop ("long") division -- the maintainer's own 5-step worked
-    example, 225 / 5, matched against a reference image they supplied
-    (2026-07-19, after finding the first version's layout "weird and
-    confusing"): EVERY digit gets its own drawn step, including a leading
-    quotient digit of 0 (the reference explicitly draws "-0") -- there is
-    no "don't show the leading zero" simplification here. Before each step
-    after the first, a "bring-down" row shows the value actually being
-    divided at that point (the previous remainder combined with the newly
-    brought-down digit, e.g. "22"), THEN the "-product" subtraction below
-    it, THEN a rule -- this is the row the first version was missing,
-    which is what made the old layout jump straight from a bare remainder
-    digit to a subtraction that looked unconnected to it. A step whose
-    quotient digit is nonzero (a "real" division, not a trivial 0) colours
-    that quotient digit and its "-product" row the same (QUOTIENT_HIT),
-    matching the reference image's blue linking a "4" to its "-20".
+def build_long_division_steps(
+    dividend: Decimal | int,
+    divisor: Decimal | int,
+    *,
+    ending: str = "remainder",
+    max_decimal_places: int = 6,
+) -> StepGrid:
+    """Bus-stop ("long") division -- rebuilt 2026-07-24 to match the
+    standard school algorithm exactly (maintainer reference: 432 / 15 shown
+    in three ending styles, cross-checked against a hand-worked
+    425 / 4 = 106 R 1 alignment example). Unlike the 2026-07-19 version,
+    quotient digits are NOT forced one-per-input-digit: the first "window"
+    of dividend digits grows silently until it first reaches >= divisor
+    (the standard leading-zero suppression -- 432/15 reads "28", not
+    "028"), then every subsequent step consumes exactly one more digit and
+    ALWAYS emits a quotient digit, including a genuine internal zero
+    (408/4 -> "102" keeps its middle "0" -- that is not a leading zero).
 
-    A non-integer divisor is scaled to a whole number first (multiply both
-    operands by the same power of 10 -- the standard technique). This
-    covers the maintainer's ORIGINAL motivating example, 8.96 / 3.2: scale
-    by 10 -> 89.6 / 32, then the same digit-by-digit process, carrying the
-    decimal point straight down into the quotient at the SAME digit
-    position it sits in the (scaled) dividend.
+    A division that doesn't divide evenly within the GIVEN digits is
+    controlled by `ending`:
+      - "remainder" (default): stop once the given digits run out; if the
+        remainder is nonzero, append " R {remainder}" to the quotient row
+        (e.g. "28 R 12"). Always succeeds for any non-negative dividend and
+        positive divisor.
+      - "fraction": same stopping point; append " {num}/{den}" -- the
+        remainder/divisor reduced via fractions.Fraction (e.g. "28 4/5").
+        Always succeeds.
+      - "decimal": keep dividing past the given precision by synthesizing
+        "0" digits (bringing them down exactly like a real digit) until the
+        remainder reaches 0 or `max_decimal_places` synthesized digits have
+        been used. Raises ValueError if it still hasn't terminated by the
+        cap (a repeating decimal) -- this builder never rounds/truncates a
+        wrong answer into looking exact.
 
-    Raises ValueError if the dividend's OWN given digits aren't enough to
-    reach an exact (remainder-0) result -- this does NOT synthesize extra
-    trailing zero digits to keep dividing forever (both to avoid an
-    infinite loop on a non-terminating division, and because every shipped
-    generator constructs the dividend FROM the quotient, so its given
-    precision is always already exactly enough). See
-    extract_division_operands, which uses this exception as the
-    eligibility check rather than duplicating the algorithm."""
+    A non-integer divisor is still scaled to a whole number first (multiply
+    both operands by the same power of 10 -- e.g. 8.96 / 3.2 -> 89.6 / 32),
+    same as before."""
+    if ending not in ("remainder", "fraction", "decimal"):
+        raise ValueError(f"unknown ending: {ending!r}")
+
     dividend_dec, divisor_dec = Decimal(dividend), Decimal(divisor)
     scale_pow = _frac_digits(divisor_dec)
     # .scaleb() shifts the decimal point cleanly (adjusts the exponent only)
     # -- unlike multiplying by Decimal(10) ** scale_pow, which ADDS
     # exponents and multiplies significands, silently baking in an extra
-    # trailing zero of "precision" that was never actually in the dividend
-    # (e.g. Decimal('8.96') * Decimal(10) == Decimal('89.60'), 2 dp, not
-    # the clean 1 dp shift "89.6" that scaleb gives).
+    # trailing zero of "precision" that was never actually in the dividend.
     scaled_dividend = dividend_dec.scaleb(scale_pow)
     divisor_int = int(divisor_dec.scaleb(scale_pow).to_integral_value())
-
-    dividend_frac_digits = _frac_digits(scaled_dividend)
-    dividend_digit_str = str(int(scaled_dividend.scaleb(dividend_frac_digits).to_integral_value()))
-    n = len(dividend_digit_str)
-    point_at = n - dividend_frac_digits if dividend_frac_digits else None
-
-    quotient_digits = []
-    # (i, dividend_slice_str, product_str, is_hit) -- dividend_slice is the
-    # "bring-down" value THIS step divides (None for i == 0, whose slice is
-    # already visible as the header row's own leading digit(s)).
-    steps = []
-    remainder = 0
-    for i, ch in enumerate(dividend_digit_str):
-        remainder = remainder * 10 + int(ch)
-        dividend_slice_str = str(remainder) if i > 0 else None
-        q_digit = remainder // divisor_int
-        product = q_digit * divisor_int
-        remainder -= product
-        quotient_digits.append(q_digit)
-        steps.append((i, dividend_slice_str, str(product), q_digit != 0))
-    if remainder != 0:
-        raise ValueError("division does not terminate within the given dividend's precision")
-
     divisor_str = str(divisor_int)
     divisor_width = len(divisor_str)
-    n_cols = divisor_width + 1 + n + (1 if point_at is not None else 0)
+
+    dividend_frac_digits = _frac_digits(scaled_dividend)
+    digits = list(str(int(scaled_dividend.scaleb(dividend_frac_digits).to_integral_value())))
+    given_n = len(digits)
+    point_at = given_n - dividend_frac_digits if dividend_frac_digits else None
+
+    # Each step: (display_start, display_end inclusive, bring_down_str or
+    # None for the first step, product_str, q_digit, window_value). Extra
+    # fields (q_digit, window_value -- the value BEFORE subtracting this
+    # step's product) exist only to drive the "Middle Step" annotations
+    # below; display_start/end are the dividend-region column indices this
+    # step's rule/subtraction spans.
+    steps: list[tuple[int, int, str | None, str, int, int]] = []
+    quotient_by_pos: dict[int, str] = {}
+    remainder = 0
+    started = False
+    window_start = 0
+    i = 0
+    while True:
+        if i >= len(digits):
+            if ending == "decimal" and remainder != 0 and (len(digits) - given_n) < max_decimal_places:
+                digits.append("0")
+            else:
+                break
+        remainder_before_digit = remainder
+        remainder = remainder * 10 + int(digits[i])
+        window_value = remainder
+        if started or remainder >= divisor_int:
+            q, remainder = divmod(remainder, divisor_int)
+            quotient_by_pos[i] = str(q)
+            if started:
+                bring_down_str = f"{remainder_before_digit:0{divisor_width}d}" + digits[i]
+                display_start = i - divisor_width
+            else:
+                bring_down_str = None
+                display_start = window_start
+            steps.append((display_start, i, bring_down_str, str(q * divisor_int), q, window_value))
+            started = True
+            window_start = i + 1
+        i += 1
+
+    if not started:
+        # Whole given dividend < divisor (e.g. 4 / 15): force a single "0"
+        # quotient digit spanning all given digits, matching how a child
+        # would read "0 remainder 4" rather than nothing at all.
+        quotient_by_pos[len(digits) - 1] = "0"
+        steps.append((0, len(digits) - 1, None, "0", 0, int("".join(digits))))
+        remainder = int("".join(digits))
+
+    if ending == "decimal" and remainder != 0:
+        raise ValueError("division does not terminate within max_decimal_places")
+
+    n = len(digits)
+    if point_at is None and n > given_n:
+        point_at = given_n  # decimal point introduced by synthesized continuation
+
+    # If EVERY emitted quotient digit sits at/after the decimal point (the
+    # window never closed anywhere in the integer part -- e.g. 10.2/34,
+    # which only resolves once the "2" is folded in), the integer part
+    # would render as a bare "." with nothing before it. Force a "0" in the
+    # ones place, matching conventional "0.3" notation -- display-only, no
+    # window actually closed there.
+    if point_at is not None and point_at > 0 and all(p >= point_at for p in quotient_by_pos):
+        quotient_by_pos[point_at - 1] = "0"
+
+    suffix_cells: list[Cell] = []
+    if remainder != 0 and ending == "remainder":
+        suffix_cells = [Cell(f" R {remainder}", OPERATOR)]
+    elif remainder != 0 and ending == "fraction":
+        frac = Fraction(remainder, divisor_int)
+        suffix_cells = [Cell(f" {frac.numerator}/{frac.denominator}", OPERATOR)]
+
+    n_cols = divisor_width + 2 + n + (1 if point_at is not None else 0) + len(suffix_cells)
 
     def _at_point(cells: list[Cell], point_cell: Cell) -> list[Cell]:
         if point_at is None:
@@ -466,56 +537,75 @@ def build_long_division_steps(dividend: Decimal | int, divisor: Decimal | int) -
         cells = [Cell(*digits_by_pos.get(i, ("", DIGIT))) for i in range(n)]
         return _at_point(cells, point_cell)
 
-    blank_lead = [Cell("", BLANK)] * (divisor_width + 1)
-    minus_lead = [Cell("", BLANK)] * (divisor_width - 1) + [Cell("−", OPERATOR)] + [Cell("", BLANK)]
+    # +2 (not +1) matches the header row's ") " bracket cell, which is 2
+    # characters wide once rendered (a trailing space for readability) --
+    # every other row's lead must be the SAME total width or its dividend
+    # region drifts one column left of where the header row's actually is.
+    blank_lead = [Cell("", BLANK)] * (divisor_width + 2)
+    minus_lead = [Cell("", BLANK)] * (divisor_width - 1) + [Cell("−", OPERATOR)] + [Cell("", BLANK)] * 2
 
-    # Quotient row: every digit shown, INCLUDING leading zeros -- this is
-    # the raw mechanical process (matches the reference image's visible
-    # "0" before "4"), not the polished final answer.
-    quotient_by_pos = {
-        i: (str(quotient_digits[i]), QUOTIENT_HIT if is_hit else DIGIT)
-        for i, _, _, is_hit in steps
-    }
-    quotient_row = blank_lead + _region_row(quotient_by_pos, Cell(".", POINT))
+    # Bare quotient text (no "R n"/fraction suffix) -- used by the "Quotient
+    # is..." annotation below, same reconstruction the reader (and the test
+    # helper) uses: join DIGIT/POINT cells in column order, skipping blanks.
+    quotient_only_row = _region_row(
+        {i: (d, DIGIT) for i, d in quotient_by_pos.items()}, Cell(".", POINT)
+    )
+    quotient_str = "".join(c.text for c in quotient_only_row if c.text)
 
-    # The point column stays a plain blank continuation on the rule, not an
-    # actual "." glyph.
+    annotate: list[Cell] = []
+    if ending == "remainder":
+        annotate = [Cell(f"   <-- Quotient is {quotient_str}, Remainder is {remainder}", OPERATOR)]
+
+    quotient_row = (
+        blank_lead + quotient_only_row + suffix_cells + annotate
+    )
+
     vinculum_row = blank_lead + _at_point([Cell("", LINE) for _ in range(n)], Cell("", BLANK))
 
     divisor_cells = [Cell(ch, DIGIT) for ch in divisor_str]
-    dividend_by_pos = {i: (dividend_digit_str[i], DIGIT) for i in range(n)}
-    header_row = divisor_cells + [Cell(")", OPERATOR)] + _region_row(dividend_by_pos, Cell(".", POINT))
+    dividend_by_pos = {i: (digits[i], DIGIT) for i in range(n)}
+    header_row = divisor_cells + [Cell(") ", OPERATOR)] + _region_row(dividend_by_pos, Cell(".", POINT))
 
     rows = [quotient_row, vinculum_row, header_row]
-    for i, dividend_slice_str, product_str, is_hit in steps:
-        # Working rows treat the point column as a plain blank continuation,
-        # not an actual "." glyph -- these are intermediate integer
-        # quantities (a slice/product is never itself "decimal"), even
-        # though they sit at dividend-region columns that may straddle
-        # where the point falls in the dividend/quotient rows above.
-        if dividend_slice_str is not None:
-            slice_by_pos = {
-                i - len(dividend_slice_str) + 1 + k: (c, DIGIT)
-                for k, c in enumerate(dividend_slice_str)
+    prev_product, prev_window_value = None, None
+    for display_start, display_end, bring_down_str, product_str, q_digit, window_value in steps:
+        if bring_down_str is not None:
+            bring_positions = {
+                display_start + k: (c, DIGIT) for k, c in enumerate(bring_down_str)
             }
-            rows.append(blank_lead + _region_row(slice_by_pos, Cell("", BLANK)))
-        product_kind = QUOTIENT_HIT if is_hit else DIGIT
+            new_digit = bring_down_str[-1]
+            bring_note = [Cell(
+                f"   <-- Middle Step: {prev_window_value} - {prev_product} = {prev_window_value - prev_product},"
+                f" bring down {new_digit}",
+                OPERATOR,
+            )]
+            rows.append(blank_lead + _region_row(bring_positions, Cell("", BLANK)) + bring_note)
         product_by_pos = {
-            i - len(product_str) + 1 + k: (c, product_kind)
+            display_end - len(product_str) + 1 + k: (c, DIGIT)
             for k, c in enumerate(product_str)
         }
-        rows.append(minus_lead + _region_row(product_by_pos, Cell("", BLANK)))
+        product_note = [Cell(f"   <-- Middle Step: {divisor_int} x {q_digit} = {product_str}", OPERATOR)]
+        rows.append(minus_lead + _region_row(product_by_pos, Cell("", BLANK)) + product_note)
         rows.append(blank_lead + _at_point(
-            [Cell("", LINE) if pos in product_by_pos else Cell("", BLANK) for pos in range(n)],
+            [Cell("", LINE) if display_start <= pos <= display_end else Cell("", BLANK) for pos in range(n)],
             Cell("", BLANK),
         ))
+        prev_product, prev_window_value = int(product_str), window_value
 
-    # Final confirmation row: the leftover after the LAST step (0, for an
-    # exact division) -- shown once at the very end, not per-step (each
-    # intermediate remainder instead feeds directly into the NEXT step's
-    # bring-down row, which is what makes this read as one continuous
-    # process rather than a series of disconnected leftovers).
-    final_by_pos = {n - 1: (str(remainder), DIGIT)}
-    rows.append(blank_lead + _region_row(final_by_pos, Cell("", BLANK)))
+    # Final leftover row: the raw remainder after the last step (0 for an
+    # exact division, or the actual leftover for "remainder"/"fraction"
+    # endings) -- natural width, no zero-padding, right-aligned at the last
+    # digit position, same convention as every intermediate product row.
+    final_str = str(remainder)
+    final_by_pos = {
+        n - len(final_str) + k: (c, DIGIT) for k, c in enumerate(final_str)
+    }
+    final_note = []
+    if ending == "remainder":
+        final_note = [Cell(
+            f"          <-- Remainder check: {remainder} is smaller than {divisor_int}, so it is correct.",
+            OPERATOR,
+        )]
+    rows.append(blank_lead + _region_row(final_by_pos, Cell("", BLANK)) + final_note)
 
     return StepGrid(rows=rows, n_cols=n_cols)

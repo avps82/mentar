@@ -238,6 +238,38 @@ def gen_negative_numbers(rng: random.Random):
     return ("int", "int_exact", f"The temperature was {temp}°C and dropped by {drop}°C. What is the new temperature?", str(temp - drop))
 
 
+def gen_division_remainder_as_fraction(rng: random.Random):
+    """AC9M5N05-adjacent: whole-number division that does NOT divide evenly
+    -- the leftover expressed as a reduced mixed number (e.g. "28 4/5").
+    Divisor and remainder are constructed directly (remainder always
+    1..divisor-1, guaranteed nonzero) so `build_long_division_steps`'s
+    ending="fraction" always has something to reduce; dividend is built
+    FROM quotient/divisor/remainder, same "computed ground truth" posture
+    as every other generator here."""
+    divisor = rng.randint(2, 20)
+    quotient = rng.randint(10, 40)
+    remainder = rng.randint(1, divisor - 1)
+    dividend = quotient * divisor + remainder
+    frac = Fraction(remainder, divisor)
+    answer = f"{quotient} {frac.numerator}/{frac.denominator}"
+    return ("fraction", "fraction_equiv", f"What is {dividend} ÷ {divisor}?", answer)
+
+
+def gen_division_remainder_as_decimal(rng: random.Random):
+    """Whole-number division that does NOT divide evenly, but the decimal
+    quotient terminates within a couple of places -- divisor restricted to
+    values whose only prime factors are 2 and 5, so long division into
+    decimals always terminates (matches what
+    `build_long_division_steps`'s ending="decimal" can actually render --
+    it raises rather than guess at a repeating decimal)."""
+    divisor = rng.choice([2, 4, 5, 8, 10, 16, 20, 25])
+    quotient = rng.randint(10, 40)
+    remainder = rng.randint(1, divisor - 1)
+    dividend = quotient * divisor + remainder
+    answer = str(Decimal(dividend) / Decimal(divisor))
+    return ("decimal", "decimal_exact", f"What is {dividend} ÷ {divisor}?", answer)
+
+
 # ── Year 6 (AC9M6N01/N02/N03/M01 alignment) ───────────────────────────────────
 
 def gen_order_of_operations(rng: random.Random):
@@ -433,6 +465,8 @@ AU_YEAR5_GENERATORS = {
     "au5_mult_fraction_whole": gen_mult_fraction_whole,         # AC9M5N06
     "au5_percentage_of_quantity": gen_percentage_of_quantity,   # AC9M5N02
     "au5_negative_numbers": gen_negative_numbers,               # AC9M5N01
+    "au5_division_remainder_as_fraction": gen_division_remainder_as_fraction,  # AC9M5N05
+    "au5_division_remainder_as_decimal": gen_division_remainder_as_decimal,    # AC9M5N05
 }
 
 AU_YEAR6_GENERATORS = {

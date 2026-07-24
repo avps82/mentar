@@ -1505,14 +1505,25 @@ class SessionController:
         """"Show human working": build a deterministic step grid for the
         current item's problem text, or None if the node's shape isn't
         step-eligible (plain non-negative addition/subtraction/integer
-        multiplication/exact-terminating division so far -- Phase
-        1/2/3/4). Uses ctx.current_item.problem
-        when a real item is live (the normal case), falling back to
-        ctx.current_question for the legacy LLM-generated-question path
-        (which never matches any extraction regex anyway, since that text
-        isn't one of our own
-        f-string phrasings -- returns None there, same as any other
-        ineligible node)."""
+        multiplication/division so far -- Phase 1/2/3/4). Uses
+        ctx.current_item.problem when a real item is live (the normal
+        case), falling back to ctx.current_question for the legacy
+        LLM-generated-question path (which never matches any extraction
+        regex anyway, since that text isn't one of our own f-string
+        phrasings -- returns None there, same as any other ineligible
+        node).
+
+        Division's `ending` is derived from the item's answer_type
+        (2026-07-24 rebuild): "decimal" -> continue past the given
+        precision into synthesized decimal places; "fraction" -> a mixed
+        number remainder (only reachable for problems matching the
+        division regex in the first place, so this never collides with
+        the pilot's OWN plain fraction-arithmetic content, which has a
+        different problem-text shape); anything else -> plain "R n"
+        remainder notation. build_long_division_steps can still raise
+        ValueError (a "decimal" ending that doesn't terminate within the
+        synthesized-digit cap) -- caught here as "not eligible", same
+        contract as every other ineligible shape."""
         ctx = self._ctx
         item = ctx.current_item
         problem = item.problem if item is not None else (ctx.current_question or "")
@@ -1527,7 +1538,12 @@ class SessionController:
             return build_multiplication_partial_products_steps(*mult_operands)
         div_operands = extract_division_operands(problem)
         if div_operands is not None:
-            return build_long_division_steps(*div_operands)
+            answer_type = item.answer_type if item is not None else "int"
+            ending = "decimal" if answer_type == "decimal" else "fraction" if answer_type == "fraction" else "remainder"
+            try:
+                return build_long_division_steps(*div_operands, ending=ending)
+            except ValueError:
+                return None
         return None
 
     def _worked_example_for(self, node_id: str) -> str:

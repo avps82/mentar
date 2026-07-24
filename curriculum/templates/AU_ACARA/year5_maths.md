@@ -2,7 +2,7 @@
 type: Mentar Curriculum Template
 title: "Maths — Year 5 (AU)"
 tags: [AU, mathematics, "Year 5"]
-timestamp: "2026-07-22T00:00:00Z"
+timestamp: "2026-07-24T00:00:00Z"
 # Mentar curriculum template — Australia, Year 5 Mathematics (Number strand)
 # Aligned to ACARA Australian Curriculum v9 content descriptions (codes below are
 # alignment REFERENCES; all labels/questions are Mentar-authored — see
@@ -18,17 +18,19 @@ curriculum_standard: "ACARA v9 (AC9M5 Number)"
 schema_version: "0.1"
 label: "Maths — Year 5 🇦🇺"                          # R3.1: web picker catalog fields
 icon: "5️⃣"
-description: "Decimal place value, adding and subtracting decimals, multiplying fractions, percentages and negative numbers (Australian Year 5)."
+description: "Decimal place value, adding and subtracting decimals, multiplying fractions, percentages, negative numbers, and division with a remainder (Australian Year 5)."
 item_source: au_year5
 
 language_register:
   reading_level: "~Year 5 / ages 10-11"
   vocabulary_note: "Clear sentences. Plain number words. One idea per question."
 
-# 5 nodes: decimal place value, fraction-times-whole, percentages and negative numbers
+# 7 nodes: decimal place value, fraction-times-whole, percentages and negative numbers
 # are independent strands (no natural prereq chain between them at this level);
 # add/subtract decimals is the one true prereq (needs place value first). This is the
-# pilot's FIRST use of the "decimal" answer type (R13, 2026-07-19).
+# pilot's FIRST use of the "decimal" answer type (R13, 2026-07-19). The two
+# division-with-remainder nodes (2026-07-24) each prereq an existing sibling node using
+# the same answer_type they extend (fraction / decimal).
 concepts:
 
   - id: au5_decimal_place_value
@@ -86,6 +88,28 @@ concepts:
       checker: int_exact
     bkt_priors: { guess: 0.05, slip: 0.1, learns: 0.2, forgets: 0 }
 
+  - id: au5_division_remainder_as_fraction
+    label: "Division with a remainder, as a mixed number"  # AC9M5N05
+    prereqs: [au5_mult_fraction_whole]
+    grounding: {}
+    transfer_seeds:
+      - "What is 86 ÷ 4?"
+    verifier:
+      answer_type: fraction
+      checker: fraction_equiv
+    bkt_priors: { guess: 0.05, slip: 0.1, learns: 0.2, forgets: 0 }
+
+  - id: au5_division_remainder_as_decimal
+    label: "Division with a remainder, as a decimal"     # AC9M5N05
+    prereqs: [au5_add_sub_decimals]
+    grounding: {}
+    transfer_seeds:
+      - "What is 47 ÷ 8?"
+    verifier:
+      answer_type: decimal
+      checker: decimal_exact
+    bkt_priors: { guess: 0.05, slip: 0.1, learns: 0.2, forgets: 0 }
+
 ---
 
 # Australia — Year 5 Mathematics (Number)
@@ -95,7 +119,11 @@ in the per-country/per-year pattern (SPEC §6). Parametric generators only
 (`engine/au_items.py`); the deterministic verifier scores every answer. This template is the
 pilot's first use of the "decimal" answer type (R13, 2026-07-19) — decimal-flavoured content
 (tenths place value, adding/subtracting decimals) sits alongside the existing int/fraction/mc4
-grammar.
+grammar. The two division-with-remainder nodes (added 2026-07-24, alongside the long-division
+"show human working" rebuild) reuse the existing fraction/decimal answer types rather than
+inventing new verifier grammar — a mixed-number answer already parses via
+`verify_numeric.normalise_fraction`, and a terminating decimal already parses via the R13 decimal
+checker.
 
 **Alignment note:** the AC9M5Nxx codes in the node comments are references to ACARA v9
 content descriptions for alignment/traceability. Question text, labels and generators are

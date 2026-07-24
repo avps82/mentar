@@ -37,7 +37,7 @@
   </form>
   {% endif %}
 </div>{% endif %}
-{% if steps_grid %}{% include "_arithmetic_steps.html" %}{% endif %}
+{% if steps_text %}{% include "_arithmetic_steps.html" %}{% endif %}
 <div class="question{% if is_first_turn and not message_html %} first-turn{% endif %}">
   <button class="tts-btn" type="button" aria-label="Read the question aloud" title="Read aloud">🔊</button>
   <div class="question-text">{{ question_html | safe }}</div>

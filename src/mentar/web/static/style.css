@@ -187,30 +187,22 @@ input[type=text], input[type=number] {
    of the flex item, not squeezed beside the 🔊 button. */
 .feedback .elaborate-form { flex-basis: 100%; margin-top: 8px; }
 
-/* "Show human working" (2026-07-19): a StepGrid rendered via CSS Grid so
-   carry/borrow marks land in the exact column they belong to regardless of
-   font/device -- the reason this is grid-based, not a monospace <pre>. */
-.steps-grid {
-  display: grid;
-  gap: 2px 6px;
-  justify-content: start;
+/* "Show human working" (2026-07-19, rebuilt 2026-07-24): plain monospace
+   text (engine/arithmetic_steps.py::render_steps_grid_text), not a per-cell
+   CSS Grid -- the maintainer's own reference examples were plain ASCII text
+   blocks, not a boxed grid. */
+.steps-pre {
   font-family: var(--font-mono, monospace);
   font-size: 1.4rem;
+  line-height: 1.3;
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 14px 18px;
   margin-bottom: 12px;
+  white-space: pre;
+  overflow-x: auto;
 }
-.steps-cell { text-align: center; min-width: 1.1em; }
-.steps-cell-carry { color: var(--accent); font-size: 0.75em; align-self: end; }
-.steps-cell-borrow { color: var(--danger); font-size: 0.75em; align-self: end; }
-/* Division: links a quotient digit to the "-product" row that produced it
-   (2026-07-19 maintainer feedback, matched to a reference image). */
-.steps-cell-quotient-hit { color: var(--primary); font-weight: bold; }
-.steps-cell-operator { text-align: left; font-weight: bold; }
-.steps-cell-line { border-bottom: 2px solid var(--text); align-self: end; height: 0.4em; }
-.steps-cell-point { align-self: end; }
 
 /* Question block internals: read-aloud button + text side by side */
 .question { display: flex; gap: 10px; align-items: flex-start; }
