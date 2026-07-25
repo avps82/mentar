@@ -68,11 +68,16 @@ for the authoritative layout.
 mentar/
 ├── curriculum/              # Markdown curriculum templates (concept graphs)
 │   ├── _template.md         # Authoring format for new curricula
+│   ├── visual_scaffolds/    # Per-topic visual-hint bundle (maths/english/science)
 │   └── templates/
-│       └── _pilot/          # Phase-0 fractions pilot graph (more to follow)
+│       ├── AU_ACARA/        # Australian Curriculum v9, Years 2–8 (maths + English)
+│       ├── IN_GENERIC/      # India board-agnostic, Class 3 maths
+│       ├── _pilot/          # Phase-0 fractions/arithmetic/science pilot graph
+│       └── practice/        # Country-agnostic evergreen practice content
 ├── prompts/                 # Versioned prompt templates + prompts/README.md registry (W6.2)
 ├── src/mentar/              # Python package (src-layout)
-│   ├── engine/              # Concept graph (KST), BKT mastery, fringe, probe classifier
+│   ├── engine/              # Concept graph (KST), BKT mastery, fringe, probe classifier,
+│   │                        #   item generators (see "How curriculum content is made" below)
 │   ├── dialogue/            # Turn-loop controller (session state machine)
 │   ├── safety/              # Safety-layer implementation (escalation, output guard, filters)
 │   ├── grounding/           # ZIM reader + resolver + data-wrapper (retrieval grounding)
@@ -88,6 +93,28 @@ mentar/
 ├── compliance/              # Compliance coverage-status map (points back to docs/)
 └── eval/                    # Eval datasets/outputs (data is gitignored)
 ```
+
+### How curriculum content is actually made (read this before assuming what a ZIM download unlocks)
+
+**Every question a child sees today is hand-authored** — a parametric formula (maths: e.g. random
+addition within a range) or a curated fact table (English/science: e.g. a synonym-pair list),
+written directly in Python and self-validated against hundreds of random draws before shipping.
+**Grounding (the ZIM/retrieval machinery below) is wired to exactly one pack — the original 8-node
+Phase-0 fractions pilot.** All of AU_ACARA/IN_GENERIC/practice (every year, every subject) works
+today with **zero ZIM download** — there is no correlation between grade level and grounding need
+in the current build. Grounding, where it exists, only adds a quoted reference passage to an
+*explanation* — it never generates a question or decides correctness; that's always the
+deterministic verifier, never the LLM.
+
+This is a deliberate, proven design for the content it covers (see
+[`docs/EXPLAIN_METHOD_AUDIT.md`](docs/EXPLAIN_METHOD_AUDIT.md) for a full audit), but it doesn't
+scale to broader/deeper subject coverage by itself — a **hybrid** direction (keep hand-authoring
+where it fits; add a retrieve→extract→verify→freeze pipeline sourced from real ZIM content for
+subjects that need it) has been ratified but **not yet built** — see
+[`docs/design/hybrid_content_architecture.md`](docs/design/hybrid_content_architecture.md) for the
+reasoning, including a live test showing why an ungrounded LLM can't just be asked for facts
+directly (a small model got a chemistry equation's *final answer* right while its shown
+*reasoning* was fabricated nonsense).
 
 ### Codebase knowledge graph
 

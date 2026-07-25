@@ -20,6 +20,7 @@ Deeper design decisions and build contracts behind specific workstreams. Point-i
 * [INTERACTION_SCOPE](INTERACTION_SCOPE.md) — Child-input intent scope gap analysis.
 * [FLOW](FLOW.md) — Session interaction flow (Mermaid diagrams).
 * [SAFEGUARDING_REVIEW_PACKET](SAFEGUARDING_REVIEW_PACKET.md) — Packet for an external safeguarding professional review.
+* [hybrid_content_architecture](hybrid_content_architecture.md) — Hand-authored + retrieval-verified hybrid content pipeline decision (ratified direction, not yet built).
 
 ## Reference material (logged, not designed/built)
 
