@@ -48,9 +48,13 @@ htmlcov/
 *.zim
 
 # ── Local model weights (large; never commit GGUF/safetensors) ───────────────
+# Anchored to the repo root (leading slash) -- a bare "models/" also matched
+# eval/niah/models/ (small per-model TEST CONFIG yaml, not weights), silently
+# excluding real framework config with no size/safety justification
+# (2026-07-25 finding -- collateral damage from an overly broad pattern).
 *.gguf
 *.safetensors
-models/
+/models/
 
 # ── Grounding passage on-disk cache ──────────────────────────────────────────
 .cache/grounding/

@@ -1,2 +1,5 @@
 cache/
 .graphify_*
+# Curriculum graph (scripts/graphify_curriculum.py): regenerated on demand or in
+# CI, using the local LLM -- never committed (changes on every curriculum edit).
+curriculum/

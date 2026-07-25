@@ -11,6 +11,7 @@ Start with the [project README](../README.md). This page maps everything under `
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Repo layout + module map (Python src-layout). |
 | [REMAINDER_PLAN.md](REMAINDER_PLAN.md) | The post-G0 release-wave build plan (R2–R15, R-RES, R-MC). |
 | [DOC_AUDIT.md](DOC_AUDIT.md) | Documentation staleness audit register + fix log. |
+| [EXPLAIN_METHOD_AUDIT.md](EXPLAIN_METHOD_AUDIT.md) | Node-by-node audit of every curriculum concept's explain output (ASCII step-grid vs. LLM prose vs. LLM prose + visual scaffold) — subject × category × explain-type, with 5 real findings. |
 
 ## Safety
 | Doc | What it is |

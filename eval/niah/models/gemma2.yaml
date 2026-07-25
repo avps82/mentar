@@ -1,0 +1,5 @@
+id: "vllm-gemma2-9b"
+runtime: {sdk: "openai-python", api: "chat_completions"}
+client: {api_key_env: "MENTAR_VLLM_API_KEY", base_url_env: "MENTAR_VLLM_BASE_URL"}
+request: {model: "gemma2:9b", max_tokens: 256, temperature: 0.0}
+pricing: {input: 0.0, output: 0.0}
