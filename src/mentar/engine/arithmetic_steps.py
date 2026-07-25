@@ -53,6 +53,18 @@ class StepGrid:
     n_cols: int
 
 
+def _render_row_text(row: list[Cell], col_width: int) -> str:
+    parts = []
+    for cell in row:
+        if cell.kind == LINE:
+            parts.append("-" * col_width)
+        elif len(cell.text) > col_width:
+            parts.append(cell.text)
+        else:
+            parts.append(cell.text.rjust(col_width))
+    return "".join(parts).rstrip()
+
+
 def render_steps_grid_text(grid: StepGrid, col_width: int = 1) -> str:
     """Render a StepGrid as plain monospace text (2026-07-24) -- one line per
     row, one right-justified `col_width`-wide slot per cell -- for a `<pre>`
@@ -64,18 +76,28 @@ def render_steps_grid_text(grid: StepGrid, col_width: int = 1) -> str:
     finished row is right-stripped (trailing whitespace only -- interior
     spacing from earlier columns is preserved), then all rows are joined
     with newlines. Pure function: no I/O, no mutation of `grid`."""
-    lines = []
-    for row in grid.rows:
-        parts = []
-        for cell in row:
-            if cell.kind == LINE:
-                parts.append("-" * col_width)
-            elif len(cell.text) > col_width:
-                parts.append(cell.text)
-            else:
-                parts.append(cell.text.rjust(col_width))
-        lines.append("".join(parts).rstrip())
-    return "\n".join(lines)
+    return "\n".join(_render_row_text(row, col_width) for row in grid.rows)
+
+
+def render_steps_grid_lines(grid: StepGrid, col_width: int = 1) -> list[dict]:
+    """Same rendering as `render_steps_grid_text`, but returns one dict per
+    ROW instead of one joined string, each tagged `is_annotation` -- a
+    "Middle Step"/scale-explanation/etc. note (2026-07-25) is always a
+    single-cell row whose text is a free-text sentence, never digit-grid
+    content -- every numeric/rule row always has multiple cells (a lead +
+    the digit region). The web layer uses this tag to render annotation
+    lines at a SMALLER font size so a long sentence still fits on ONE line
+    without wrapping or a horizontal scrollbar (both were tried and
+    rejected as looking bad for a "keep it ASCII" display) --
+    `render_steps_grid_text` above stays as the plain-string form other
+    callers (and most tests) use."""
+    return [
+        {
+            "text": _render_row_text(row, col_width),
+            "is_annotation": len(row) == 1 and len(row[0].text) > col_width,
+        }
+        for row in grid.rows
+    ]
 
 
 # ── Operand extraction ────────────────────────────────────────────────────────
@@ -552,13 +574,13 @@ def build_long_division_steps(
     )
     quotient_str = "".join(c.text for c in quotient_only_row if c.text)
 
-    annotate: list[Cell] = []
+    quotient_annotation: list[list[Cell]] = []
     if ending == "remainder":
-        annotate = [Cell(f"   <-- Quotient is {quotient_str}, Remainder is {remainder}", OPERATOR)]
+        quotient_annotation = [[Cell(
+            f"  <-- Quotient is {quotient_str}, Remainder is {remainder}", OPERATOR
+        )]]
 
-    quotient_row = (
-        blank_lead + quotient_only_row + suffix_cells + annotate
-    )
+    quotient_row = blank_lead + quotient_only_row + suffix_cells
 
     vinculum_row = blank_lead + _at_point([Cell("", LINE) for _ in range(n)], Cell("", BLANK))
 
@@ -578,11 +600,10 @@ def build_long_division_steps(
         # where they came from (2026-07-24 maintainer-reported bug).
         multiplier = 10 ** scale_pow
         rows.append([Cell(
-            f"{dividend_dec} ÷ {divisor_dec} becomes {scaled_dividend} ÷ {divisor_int}"
-            f" (multiply both by {multiplier} so the divisor is a whole number)",
+            f"{dividend_dec} ÷ {divisor_dec} = {scaled_dividend} ÷ {divisor_int} (x{multiplier} both sides)",
             OPERATOR,
         )])
-    rows += [quotient_row, vinculum_row, header_row]
+    rows += [quotient_row] + quotient_annotation + [vinculum_row, header_row]
     prev_product, prev_window_value = None, None
     for display_start, display_end, bring_down_str, product_str, q_digit, window_value in steps:
         if bring_down_str is not None:
@@ -590,18 +611,18 @@ def build_long_division_steps(
                 display_start + k: (c, DIGIT) for k, c in enumerate(bring_down_str)
             }
             new_digit = bring_down_str[-1]
-            bring_note = [Cell(
-                f"   <-- Middle Step: {prev_window_value} - {prev_product} = {prev_window_value - prev_product},"
+            rows.append(blank_lead + _region_row(bring_positions, Cell("", BLANK)))
+            rows.append([Cell(
+                f"  <-- Middle Step: {prev_window_value} - {prev_product} = {prev_window_value - prev_product},"
                 f" bring down {new_digit}",
                 OPERATOR,
-            )]
-            rows.append(blank_lead + _region_row(bring_positions, Cell("", BLANK)) + bring_note)
+            )])
         product_by_pos = {
             display_end - len(product_str) + 1 + k: (c, DIGIT)
             for k, c in enumerate(product_str)
         }
-        product_note = [Cell(f"   <-- Middle Step: {divisor_int} x {q_digit} = {product_str}", OPERATOR)]
-        rows.append(minus_lead + _region_row(product_by_pos, Cell("", BLANK)) + product_note)
+        rows.append(minus_lead + _region_row(product_by_pos, Cell("", BLANK)))
+        rows.append([Cell(f"  <-- Middle Step: {divisor_int} x {q_digit} = {product_str}", OPERATOR)])
         rows.append(blank_lead + _at_point(
             [Cell("", LINE) if display_start <= pos <= display_end else Cell("", BLANK) for pos in range(n)],
             Cell("", BLANK),
@@ -616,12 +637,11 @@ def build_long_division_steps(
     final_by_pos = {
         n - len(final_str) + k: (c, DIGIT) for k, c in enumerate(final_str)
     }
-    final_note = []
+    rows.append(blank_lead + _region_row(final_by_pos, Cell("", BLANK)))
     if ending == "remainder":
-        final_note = [Cell(
-            f"          <-- Remainder check: {remainder} is smaller than {divisor_int}, so it is correct.",
+        rows.append([Cell(
+            f"  <-- Remainder check: {remainder} is smaller than {divisor_int}, so it is correct.",
             OPERATOR,
-        )]
-    rows.append(blank_lead + _region_row(final_by_pos, Cell("", BLANK)) + final_note)
+        )])
 
     return StepGrid(rows=rows, n_cols=n_cols)

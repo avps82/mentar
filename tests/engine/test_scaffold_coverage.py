@@ -37,6 +37,6 @@ def test_every_concept_node_has_a_scaffold():
                 missing.append(f"[{tid}] {label!r} ({subject})")
     assert not missing, (
         "These concept nodes have no matching visual scaffold "
-        f"(add keywords or a new file under curriculum/visual_scaffolds/):\n"
+        "(add keywords or a new file under curriculum/visual_scaffolds/):\n"
         + "\n".join(f"  {m}" for m in missing)
     )

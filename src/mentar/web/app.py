@@ -35,7 +35,7 @@ from markupsafe import escape
 from mentar.db.adapter import _DbStoreAdapter
 from mentar.db.store import LearnerStore
 from mentar.dialogue.controller import FSMState, SessionController
-from mentar.engine.arithmetic_steps import render_steps_grid_text
+from mentar.engine.arithmetic_steps import render_steps_grid_lines
 from mentar.engine.curriculum import (
     derive_subject_key,
     load_curriculum,
@@ -1118,10 +1118,13 @@ def _turn_context(learner_uuid: str, ctrl: SessionController, is_first_turn: boo
         "can_elaborate": ctrl.can_elaborate,
         # "Show human working": deterministic step grid for step-eligible nodes
         # (add/sub/mult/div). None for anything else -- template shows nothing.
-        # Rendered to plain monospace text (2026-07-24) for a <pre> block --
-        # replaces the earlier per-cell CSS Grid divs.
-        "steps_text": (
-            render_steps_grid_text(ctrl.elaborate_steps_grid)
+        # Rendered to plain monospace lines (2026-07-24/25) for a <pre> block --
+        # replaces the earlier per-cell CSS Grid divs. steps_lines carries an
+        # is_annotation tag per line so long "Middle Step"/scale-explanation
+        # sentences render at a smaller font (fits on one line, no wrap/scroll)
+        # while the numeric rows stay at the normal size.
+        "steps_lines": (
+            render_steps_grid_lines(ctrl.elaborate_steps_grid)
             if ctrl.elaborate_steps_grid is not None else None
         ),
         # R12-fix2: mastery bar + session counter live INSIDE the swap target so

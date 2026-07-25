@@ -187,13 +187,16 @@ input[type=text], input[type=number] {
    of the flex item, not squeezed beside the 🔊 button. */
 .feedback .elaborate-form { flex-basis: 100%; margin-top: 8px; }
 
-/* "Show human working" (2026-07-19, rebuilt 2026-07-24): plain monospace
-   text (engine/arithmetic_steps.py::render_steps_grid_text), not a per-cell
-   CSS Grid -- the maintainer's own reference examples were plain ASCII text
-   blocks, not a boxed grid. */
+/* "Show human working" (2026-07-19, rebuilt 2026-07-24/25): plain monospace
+   text (engine/arithmetic_steps.py::render_steps_grid_lines), not a
+   per-cell CSS Grid -- the maintainer's own reference examples were plain
+   ASCII text blocks, not a boxed grid ("keep it ASCII" -- no wrapping, no
+   horizontal scroll, both tried and rejected as looking bad). Each line is
+   its own <span>; a long "Middle Step"/scale-explanation annotation line
+   renders smaller (steps-pre-annotation) so the whole sentence still fits
+   on ONE line at the container width instead of needing to wrap or scroll. */
 .steps-pre {
   font-family: var(--font-mono, monospace);
-  font-size: 1.4rem;
   line-height: 1.3;
   background: var(--bg);
   border: 1px solid var(--border);
@@ -201,8 +204,10 @@ input[type=text], input[type=number] {
   padding: 14px 18px;
   margin-bottom: 12px;
   white-space: pre;
-  overflow-x: auto;
+  overflow-x: hidden;
 }
+.steps-pre-line { font-size: 1.4rem; }
+.steps-pre-annotation { font-size: 0.75rem; color: var(--text-muted); }
 
 /* Question block internals: read-aloud button + text side by side */
 .question { display: flex; gap: 10px; align-items: flex-start; }

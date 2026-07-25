@@ -98,7 +98,7 @@ def _parse_step(line: str):
 
 
 def _realign_block(lines: list) -> list:
-    parsed = [_parse_step(l) for l in lines]
+    parsed = [_parse_step(line) for line in lines]
     valid = [p for p in parsed if p]
     if not valid:
         return lines

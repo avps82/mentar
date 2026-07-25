@@ -92,13 +92,16 @@ def test_render_steps_grid_text_trailing_blanks_are_stripped():
 
 def test_render_steps_grid_text_matches_division_hand_example():
     """The maintainer's own hand-worked plain-text example, 425 / 4 = 106 R 1,
-    including the annotation lines the maintainer added (2026-07-24)."""
+    including the annotation lines the maintainer added (2026-07-24). Each
+    annotation is its OWN line (2026-07-25 fix) -- not appended to the end
+    of a numeric row -- so a long annotation sentence wraps instead of
+    getting cut off / requiring horizontal scroll in the browser."""
     grid = build_long_division_steps(425, 4, ending="remainder")
     text = render_steps_grid_text(grid, col_width=1)
     lines = text.split("\n")
-    assert lines[0].strip().startswith("106 R 1")
-    assert "Quotient is 106, Remainder is 1" in lines[0]
-    assert lines[-1].strip().startswith("1")
+    assert lines[0].strip() == "106 R 1"
+    assert "Quotient is 106, Remainder is 1" in lines[1]
+    assert lines[-2].strip() == "1"
     assert "Remainder check: 1 is smaller than 4, so it is correct." in lines[-1]
     assert "4) 425" in text
     assert "Middle Step: 4 x 1 = 4" in text
@@ -511,8 +514,8 @@ def test_division_decimal_divisor_explains_the_scale_step():
     (unscaled) operands."""
     grid = build_long_division_steps(Decimal("2.53"), Decimal("1.1"), ending="decimal")
     text = render_steps_grid_text(grid, col_width=1)
-    assert "2.53 ÷ 1.1 becomes 25.3 ÷ 11" in text
-    assert "multiply both by 10" in text
+    assert "2.53 ÷ 1.1 = 25.3 ÷ 11" in text
+    assert "x10 both sides" in text
     assert _bare_quotient(grid) == "2.3"
 
 
@@ -545,9 +548,16 @@ def test_division_single_digit_quotient():
     assert _bare_quotient(grid) == "6"
 
 
+def _last_digit_row(grid):
+    """The last row containing a DIGIT cell -- robust to an annotation row
+    (2026-07-25: its own line, not appended text) following the real final
+    numeric row."""
+    return next(row for row in reversed(grid.rows) if any(c.kind == DIGIT for c in row))
+
+
 def test_division_exact_no_remainder_shows_final_zero():
     grid = build_long_division_steps(225, 5)
-    last_row = grid.rows[-1]
+    last_row = _last_digit_row(grid)
     remainder_text = "".join(c.text for c in last_row if c.kind == DIGIT and c.text)
     assert remainder_text == "0"
 
@@ -563,7 +573,7 @@ def test_division_hand_example_425_div_4_remainder():
     digit's bring-down reads "02", not bare "2") and the inline "R 1" suffix."""
     grid = build_long_division_steps(425, 4, ending="remainder")
     assert _quotient_from_grid(grid) == "106 R 1"
-    last_row = grid.rows[-1]
+    last_row = _last_digit_row(grid)
     remainder_text = "".join(c.text for c in last_row if c.kind == DIGIT and c.text)
     assert remainder_text == "1"
 
@@ -585,12 +595,16 @@ def test_division_plain_text_columns_align_with_a_2digit_divisor():
     text = render_steps_grid_text(grid, col_width=1)
     lines = text.split("\n")
     header = next(l for l in lines if l.strip().startswith("15)"))
-    thirty_line = next(l for l in lines if "30" in l and "Middle Step: 15 x 2" in l)
+    # The numeric "30" row and its "Middle Step: 15 x 2" annotation are now
+    # separate lines (2026-07-25) -- find the numeric one specifically (no
+    # "<--" marker) rather than a line containing both substrings.
+    thirty_line = next(l for l in lines if "30" in l and "<--" not in l and l.strip().startswith("−"))
     # "43" (the first two dividend digits) and "30" (what's subtracted from
     # them) must occupy the SAME two columns.
     dividend_43_col = header.index("43")
     thirty_col = thirty_line.index("30")
     assert dividend_43_col == thirty_col, (header, thirty_line)
+    assert any("Middle Step: 15 x 2 = 30" in l for l in lines)
 
 
 def test_division_fraction_ending_432_div_15():

@@ -44,4 +44,26 @@ them via ${ENV_VAR}. If this is a genuine false positive: git commit --no-verify
 MSG
   exit 1
 fi
+
+# 3) ruff gate -- AGENTS.md already states "ruff check . clean" as part of
+# every change's gate; this just enforces it instead of relying on an agent/
+# contributor to remember before committing (2026-07-25, maintainer ask).
+# Whole-repo, not staged-files-only, matching that same existing gate
+# definition exactly. Skips quietly if ruff isn't installed rather than
+# hard-failing a commit over a missing dev dependency.
+RUFF=""
+if [ -x ".venv/bin/ruff" ]; then
+  RUFF=".venv/bin/ruff"
+elif command -v ruff >/dev/null 2>&1; then
+  RUFF="ruff"
+fi
+if [ -n "$RUFF" ]; then
+  if ! "$RUFF" check . ; then
+    echo "Commit blocked: ruff check . is not clean (see above). Fix or: git commit --no-verify" >&2
+    exit 1
+  fi
+else
+  echo "NOTE: ruff not found (.venv/bin/ruff or on PATH) -- skipping the ruff gate this commit." >&2
+fi
+
 exit 0
