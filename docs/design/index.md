@@ -21,6 +21,7 @@ Deeper design decisions and build contracts behind specific workstreams. Point-i
 * [FLOW](FLOW.md) — Session interaction flow (Mermaid diagrams).
 * [SAFEGUARDING_REVIEW_PACKET](SAFEGUARDING_REVIEW_PACKET.md) — Packet for an external safeguarding professional review.
 * [hybrid_content_architecture](hybrid_content_architecture.md) — Hand-authored + retrieval-verified hybrid content pipeline decision (ratified direction, not yet built).
+* [htmx4_migration_plan](htmx4_migration_plan.md) — htmx 4 (currently beta) migration readiness check against Mentar's actual usage; monitoring only, not started.
 
 ## Reference material (logged, not designed/built)
 
