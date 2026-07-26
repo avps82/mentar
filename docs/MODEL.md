@@ -3,7 +3,7 @@ type: Mentar Audit Doc
 title: "Mentar — Model Selection & Eval Plan (W1.2 / W1.3)"
 version: living-doc
 status: "W1.3 DECIDED 2026-06-27 — pilot model = gemma2:9b (see W1.3 Decision below)."
-last-updated: 2026-07-22
+last-updated: 2026-07-26
 owner: Opus
 refs: "SPEC §20 (local LLM), §20.3 (eval host), §15 (RAG/quality), docs/design/W1.2_eval_tooling.md, eval/niah/, docs/PHASE0_STATUS.md (W1)"
 ---
@@ -99,6 +99,8 @@ final pick into the Decision section** below.
 | `gemma4:12b` | Gemma 4 | 12B | <8 GB | capable-GPU | **candidate** (added 2026-06-18) | 4-bit quant; eval done (full-GPU profile below — safety 1.00, sycophancy 1.00, latency 14.6s) |
 | `qwen2.5:3b` | Qwen 2.5 | ~3B | <4 GB | low-end | **candidate** (in roster rank 7) | broad-HW small model; not yet formally eval'd through T1 suite |
 | `qwen2.5:0.5b` | Qwen 2.5 | ~0.5B | <2 GB | low-end | **candidate** (in roster rank 8) | minimum-RAM fallback; not yet formally eval'd through T1 suite |
+| `nanbeige:3b` (tag unconfirmed) | Nanbeige | ~3B | <4 GB | low-end | **candidate** *(queued, added 2026-07-26)* | Not yet on the eval-host proxy — checked `tools/llm.sh --models` 2026-07-26, absent. Maintainer to pull/expose on the eval host; re-run `--models` to confirm before any eval. |
+| `bonzai:27b` (name/tag unconfirmed) | — | ~27B | ~16+ GB | capable-GPU | **candidate** *(queued, added 2026-07-26)* | Name given verbatim by the maintainer, not independently verified — no open-weight model called "Bonzai" is recognized at this size from prior sessions' research. Not yet on the eval-host proxy. Confirm the exact family/tag once pulled before treating this row as more than a placeholder. |
 | `gemma-4-E2B-it-qat` | Gemma 4 QAT | ~2B eff. | 3 GB RAM | low-end / broad-HW | **candidate** *(queued, added 2026-07-22)* | llama.cpp only, no Ollama tag — `unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q4_K_XL`; host setup pending |
 | `gemma-4-E4B-it-qat` | Gemma 4 QAT | ~4B eff. | 5 GB RAM | low-end / broad-HW | **candidate** *(queued, added 2026-07-22)* | llama.cpp only, no Ollama tag — `unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q4_K_XL`; host setup pending |
 | `mistral-small3.1` | Mistral | ~24B (15GB) | ~16 GB (CPU-offload) | — | **CEILING, not candidate** | quality upper-bound; too big/slow for the pilot envelope — do **not** pick as the tutor |
