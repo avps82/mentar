@@ -271,7 +271,7 @@ the natural moment, and it is a template change, not an architecture change.
 | D1 | `pyproject.toml` → `license = { text = "TBD" }` | **Open — hard blocker** | W4.2 ratified **AGPL-3.0-only** and it was never applied. One line. Flagged at `docs/DOC_AUDIT.md:51`. Do this first. |
 | D2 | Name reservation on npm + PyPI | **Open** | `docs/SPEC.md:69` (W4.1): publish placeholders to claim `mentar` *before* the repo is public. Ordering matters — after publication it is a race. |
 | D3 | W2.2 professional safeguarding review | **Open — maintainer-gated** | Handoff wording + emergency-services signposting. `SAFEGUARDING_REVIEW_PACKET.md` is prepared and hands straight to a professional. **Not autonomous work.** Blocks anything past the supervised pilot; the README must say so plainly at release. |
-| D4 | Secret + history sweep | **Not done** | `.gitignore` is sane (`*.db`, `reports/`, `dist/`, eval data all excluded) and no DB or model is tracked. Two things to settle: scan **git history** for the eval-host LiteLLM token, and decide whether `graphify-out/` (tracked: `graph.json`, `cost.json`, a PNG) belongs in a public repo — dev artifact, probably drop. |
+| D4 | Secret + history sweep | ✅ **DONE 2026-08-11 (maintainer directed):** `gitleaks git . --no-banner --redact` (v8.30.1, the exact CI command) — 309 commits scanned, **no leaks found**. Supplementary checks: this session's own local-LLM gateway token confirmed NEVER in history (`.claude/settings.local.json` is gitignored and has zero commits touching it, ever); a secret-pattern regex sweep beyond gitleaks' ruleset (api_key/secret/password/bearer assignments, private-key headers) — the one PRIVATE KEY hit is the literal regex pattern INSIDE the pre-commit hook's own secret-scanner script, not a real key; all 4 unique 64-char hex strings in history individually verified as legitimate content hashes (an htmx subresource-integrity hash, a dataset checksum, a curriculum-pack manifest hash), not credentials. **`graphify-out/` still open** — tracked dev artifact (`graph.json`/`cost.json`/a PNG), not a secret risk, recommend dropping before a public repo but that's a separate housekeeping call, not a security finding. |
 | D5 | CI installs `[dev,web,grounding]` | Known gotcha | Not just `dev,web`, or libzim tests fail. Confirm before the release build. |
 | D6 | Cloud-routine repo access | Blocked, may self-resolve | `auto_disabled_repo_access` because the repo is private. Going public may unblock it. Do not build anything that depends on it. |
 | D7 | Attribution + obligations pass | Partly done | `CONTENT_LICENSES.md` is thorough. The one that must be surfaced, not buried: **Khan Academy is CC BY-NC-SA** — the NC clause is a live blocker against any paid hosted tier (§3, "Phase-3 blocker"). State it in the README, not only in the audit doc. |
@@ -706,8 +706,28 @@ the real controller: ground-truth answers PASS, a reordered-but-equivalent answe
 (the actual point of the new checker), a wrong answer FAILS and routes to Help. 786 tests
 green.
 
+**Y10-12 maths SHIPPED 2026-08-11 (completes the AU_ACARA Y9-12 sequence):** 11 more
+`expression`-type nodes across 3 templates — Y10 (distributive law, 3-way combine with
+subtraction, squared expressions, combined-rectangle perimeter), Y11 (first genuinely
+quadratic content: binomial-product areas, "square of a number" translation, combining
+different-degree terms), Y12 (algebra applied to modelled scenarios: revenue, compound
+shapes with a removed section). Two real bugs caught on self-review before shipping: (1)
+an f-string brace-escaping typo rendered "${x} each" instead of "$x each" in the revenue
+prompt; (2) a systemic "coefficient=1 prints as '1x'" bug across 4 of the new generators
+(inconsistent randint lower bounds copy-pasted without checking the boundary) — caught by
+writing an explicit regex check for the pattern and running it over 300 draws per
+generator, not by eyeballing samples. Also caught a SECOND real scaffold-routing mismatch
+(same shape as Y9's): 3 shape-based labels fell through to `area_perimeter.md`, a
+scaffold built for CONCRETE numeric dimensions with cm/cm² units — wrong for algebraic
+side lengths. Fixed the same way as Y9: relabelled to explicitly say "algebraic
+expression" rather than patch keywords again, consistent naming across the whole
+expression-type content. Verified: every generator's ground truth self-checks PASS over
+300 draws; the safety property (a lazy non-derivation answer FAILS) spot-checked on the
+hardest new nodes; live FSM round-trip on all 3 templates. 786 tests green.
+
 **Next-session starting point: Y3 science (extend the proven Y2 shape), then English Y3/Y4, then SG_GENERIC, then US_GENERIC (maintainer decided 2026-08-11: generic pack, no CCSS codes/branding — OSS-release safety; see CONTENT_LICENSES.md §2b)** |
-| D2 name reservation, D3 safeguarding, D4 history sweep, D6 cloud routines | D2/D3 are maintainer actions (publishing packages, commissioning a professional). D4's history sweep is worth doing carefully with the maintainer present (a found secret would need immediate rotation — not something to discover at 3am with nobody to rotate it). D6 self-resolves on going public |
+| D2 name reservation | ✅ **DONE** — `@mentar/mentar` on npm (published 2026-06-17, confirmed via the registry API 2026-08-11) and `mentar` on PyPI (0.1.0.dev0). **One thing found on verification, not a name-reservation problem**: both placeholders have STALE license metadata — npm says MIT, PyPI says "TBD" — while the repo ratified AGPL-3.0-only weeks ago. Republishing needs the maintainer's own credentials; flagged, not fixed. |
+| D3 safeguarding, D6 cloud routines | D3 is a maintainer action (commissioning a professional; packet ready). D6 self-resolves on going public |
 | htmx 4 migration (E9) | Still beta, still monitoring-only |
 
 ## I — Ground-truth library adoptions (2026-08-11, maintainer-directed)
@@ -748,12 +768,12 @@ the work in the other order means redoing it.
 | Wave | Contents | Why here |
 |---|---|---|
 | **-1** | ✅ **DONE 2026-08-10** — local-LLM infra verified + 2 real bugs fixed (F0) | Prerequisite for delegating anything below with confidence |
-| **0** | D1 licence field · D4 history sweep · A0 decide the uncommitted CSS diff | Hours of work; D1 blocks any public repo, A0 blocks A |
+| **0** | ✅ D1 licence field (already done) · ✅ D4 history sweep (DONE 2026-08-11, clean) · A0 decide the uncommitted CSS diff (still open — see A's completion note) | D1 blocks any public repo, A0 blocks A |
 | **1** | ✅ **DONE 2026-08-10** — **A — rendering contract** (A1–A5; A0 still open) | Done directly, not delegated — A1 is a trust boundary, A2–A5 turned out smaller than a delegation spec. A3 was 4 files, not 24 (21 already used fences) |
 | **2** | E2.2 ✅ **DONE**; E1, E2.1, E2.3–E2.5, E3 still open | Cheap, root causes known, and E1/E2.3 touch the same explain path A just changed. Not delegated — precision/binding-judgment work, see F's "Not delegated" list |
 | **3** | **B0 — verifier ceiling decision** (sympy or cap at Y8) | Gates every Y9+ item in B1/B4/B5. A decision, not a build — not delegated. **Still open** |
 | **4** | **B3 science: AU_ACARA Y2 ✅ DONE** (sound, solar system, materials — all 3 topics) → Y3–12 still open → B2 English → B1 maths Y9–12 → B4 India → **C Singapore** | Y2 proved the two-model split on real content twice (F1/F2). Templates/fact-tables → `gemma4-12b-q4`; generator Python → `qwen3.6-27b-q5`; fact-table design itself stays with Opus (binding judgment) |
-| **5** | **D — release** (D2 name reservation → D7 → D8 → publish) | Name reservation before publication, docs true before publication. D7/D8 doc prose can delegate to `gemma4-12b-q4`/`qwen3.6-27b-q5` per F |
+| **5** | **D — release** (✅ D2 name reservation DONE, licence-metadata mismatch flagged for maintainer → ✅ D7/D8 doc-truth pass DONE 2026-08-11 → publish) | Docs true before publication (verified, not assumed — 8 of 11 DOC_AUDIT findings were themselves stale) |
 | **∞** | D3 safeguarding review | Maintainer-commissioned, runs in parallel, **gates rollout beyond the supervised pilot regardless of everything above** |
 
 **The three real gates:** A before B (or you re-edit hundreds of files). B0 before Y9+ (or

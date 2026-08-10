@@ -566,3 +566,172 @@ AU_YEAR9_GENERATORS = {
     "au9_rectangle_perimeter_expression": gen_rectangle_perimeter_expression,  # AC9M9A02
     "au9_rectangle_area_expression": gen_rectangle_area_expression,          # AC9M9A02
 }
+
+# ── Year 10 (AC9M10A02 alignment) ──────────────────────────────────────────
+# Same derive-not-transform safety discipline as Year 9 (see that section's
+# docstring) -- every answer must come from a word/shape setup the prompt
+# does not hand over in already-equivalent form.
+
+def gen_distributive_word_to_expression(rng: random.Random):
+    """"The sum of x and n, all multiplied by k" -> k*(x+n). Tests the
+    distributive-law READING (the whole sum is multiplied), not just term
+    translation -- one step harder than Y9's word_to_expression."""
+    var = rng.choice("xy")
+    n = rng.randint(2, 9)
+    k = rng.randint(2, 6)
+    return ("expression", "expression_equiv",
+            f"Write an algebraic expression for: the sum of {var} and {n}, all multiplied by {k}.",
+            f"{k}*({var} + {n})")
+
+
+def gen_combine_three_expressions(rng: random.Random):
+    """a, b, c given; asks for a + b - c. Introduces SUBTRACTION-combining
+    (Y9 only had addition) -- genuinely new arithmetic, not just more terms."""
+    var = rng.choice("xy")
+    a1, a0 = rng.randint(2, 9), rng.randint(1, 9)
+    b1, b0 = rng.randint(2, 9), rng.randint(1, 9)
+    c1, c0 = rng.randint(2, 5), rng.randint(1, 9)  # c1>=2: avoid "1x" printing as a coefficient
+    return ("expression", "expression_equiv",
+            f"If a = {a1}{var} + {a0}, b = {b1}{var} + {b0} and c = {c1}{var} + {c0}, "
+            "what is a + b - c? Give your answer as a simplified expression.",
+            f"{a1+b1-c1}*{var} + {a0+b0-c0}")
+
+
+def gen_square_expression(rng: random.Random):
+    """Side (x+n) -> area as a squared expression, deliberately LEFT
+    unexpanded as ground truth (any equivalent expanded trinomial also
+    passes) -- sets up Year 11's binomial-product content."""
+    var = rng.choice("xy")
+    n = rng.randint(1, 8)
+    return ("expression", "expression_equiv",
+            f"A square has side length ({var} + {n}). Write an expression for its area.",
+            f"({var} + {n})**2")
+
+
+def gen_combined_rectangles_perimeter(rng: random.Random):
+    """Two IDENTICAL rectangles -> combined perimeter. Requires recognising
+    "combined" means double the single-rectangle perimeter, not just
+    restating one rectangle's own perimeter."""
+    var = rng.choice("xy")
+    n = rng.randint(1, 9)
+    # single perimeter = 2*(var + (var+n)) = 4*var + 2n; combined = double that
+    return ("expression", "expression_equiv",
+            f"Two identical rectangles each have width {var} and length ({var} + {n}). "
+            "Write a simplified expression for their COMBINED perimeter (both rectangles together).",
+            f"{8}*{var} + {4*n}")
+
+
+AU_YEAR10_GENERATORS = {
+    "au10_distributive_word_to_expression": gen_distributive_word_to_expression,  # AC9M10A02
+    "au10_combine_three_expressions": gen_combine_three_expressions,              # AC9M10A02
+    "au10_square_expression": gen_square_expression,                              # AC9M10A02
+    "au10_combined_rectangles_perimeter": gen_combined_rectangles_perimeter,      # AC9M10A02
+}
+
+# ── Year 11 (AC9M11A02-shaped) ─────────────────────────────────────────────
+
+def gen_binomial_product_area(rng: random.Random):
+    """Rectangle with DIFFERENT binomial width/length -> area as their
+    product, left unexpanded as ground truth (equivalent expanded trinomial
+    also passes). The genuine new content: multiplying two binomials, not
+    just one variable term."""
+    var = rng.choice("xy")
+    a = rng.randint(1, 7)
+    b = rng.randint(1, 7)
+    return ("expression", "expression_equiv",
+            f"A rectangle has width ({var} + {a}) and length ({var} + {b}). "
+            "Write an expression for its area.",
+            f"({var} + {a})*({var} + {b})")
+
+
+def gen_word_to_quadratic_expression(rng: random.Random):
+    """"The square of a number x, plus k times the number, minus n" ->
+    x**2 + k*x - n. Tests "square of" translation -- new vocabulary, not
+    just a longer linear phrase."""
+    var = rng.choice("xy")
+    k = rng.randint(2, 9)
+    n = rng.randint(1, 9)
+    return ("expression", "expression_equiv",
+            f"Write an algebraic expression for: the square of a number {var}, "
+            f"plus {k} times the number, minus {n}.",
+            f"{var}**2 + {k}*{var} - {n}")
+
+
+def gen_combine_quadratic_linear(rng: random.Random):
+    """a (quadratic) + b (linear) -> combined expression. Genuinely new:
+    combining terms of DIFFERENT degree, not just same-degree linear terms."""
+    var = rng.choice("xy")
+    a2, a1 = rng.randint(2, 4), rng.randint(2, 9)  # both >=2: avoid "1x"/"1x**2" printing
+    b1, b0 = rng.randint(2, 9), rng.randint(1, 9)  # b1>=2: avoid "1x" printing
+    return ("expression", "expression_equiv",
+            f"If a = {a2}{var}**2 + {a1}{var} and b = {b1}{var} + {b0}, what is a + b? "
+            "Give your answer as a simplified expression.",
+            f"{a2}*{var}**2 + {a1+b1}*{var} + {b0}")
+
+
+def gen_difference_of_expressions(rng: random.Random):
+    """Two-part word problem (a number, and a second number defined FROM the
+    first) -> the SECOND minus the FIRST. Requires deriving both quantities
+    then subtracting -- the prompt never states the difference directly."""
+    var = rng.choice("xy")
+    k = rng.randint(2, 6)
+    n = rng.randint(1, 9)
+    return ("expression", "expression_equiv",
+            f"A number is {var}. A second number is {k} times {var}, minus {n}. "
+            "Write an expression for the SECOND number minus the FIRST number.",
+            f"{k-1}*{var} - {n}")
+
+
+AU_YEAR11_GENERATORS = {
+    "au11_binomial_product_area": gen_binomial_product_area,                # AC9M11A02
+    "au11_word_to_quadratic_expression": gen_word_to_quadratic_expression,  # AC9M11A02
+    "au11_combine_quadratic_linear": gen_combine_quadratic_linear,          # AC9M11A02
+    "au11_difference_of_expressions": gen_difference_of_expressions,       # AC9M11A02
+}
+
+# ── Year 12 (AC9M12A02-shaped) — algebra applied to a modelled scenario ────
+
+def gen_revenue_expression(rng: random.Random):
+    """Price × quantity-sold (quantity itself an expression in the price
+    variable) -> a genuine quadratic revenue model, not just a rectangle
+    re-skinned -- real-world application is the Year 12-appropriate step up."""
+    var = rng.choice("xy")
+    k = rng.randint(2, 4)  # >=2 so the quantity term always prints a visible coefficient
+    n = rng.randint(1, 9)
+    return ("expression", "expression_equiv",
+            f"A shop sells items for ${var} each. On a day they sell ({k}{var} + {n}) items. "
+            "Write an expression for the total revenue (price times number sold).",
+            f"{var}*({k}*{var} + {n})")
+
+
+def gen_combine_two_quadratics(rng: random.Random):
+    """a + b, both quadratic -- harder same-degree combination than Y11's
+    quadratic-plus-linear."""
+    var = rng.choice("xy")
+    a2, a1, a0 = rng.randint(2, 5), rng.randint(2, 9), rng.randint(1, 9)  # a2,a1>=2: avoid "1x"/"1x**2"
+    b2, b1, b0 = rng.randint(2, 5), rng.randint(2, 9), rng.randint(1, 9)  # b2,b1>=2: same reason
+    return ("expression", "expression_equiv",
+            f"If a = {a2}{var}**2 + {a1}{var} + {a0} and b = {b2}{var}**2 + {b1}{var} + {b0}, "
+            "what is a + b? Give your answer as a simplified expression.",
+            f"{a2+b2}*{var}**2 + {a1+b1}*{var} + {a0+b0}")
+
+
+def gen_compound_shape_area(rng: random.Random):
+    """Rectangle area MINUS a removed square section -> a genuine two-step
+    (multiply, then subtract) compound-shape derivation; the prompt states
+    only the pieces, never the combined expression."""
+    var = rng.choice("xy")
+    n = rng.randint(2, 9)
+    s = rng.randint(1, 4)
+    return ("expression", "expression_equiv",
+            f"A garden is rectangular with width {var} and length ({var} + {n}), but a square "
+            f"section of side {s} is removed from one corner for a path. Write an expression "
+            "for the remaining garden area.",
+            f"{var}*({var} + {n}) - {s*s}")
+
+
+AU_YEAR12_GENERATORS = {
+    "au12_revenue_expression": gen_revenue_expression,          # AC9M12A02
+    "au12_combine_two_quadratics": gen_combine_two_quadratics,  # AC9M12A02
+    "au12_compound_shape_area": gen_compound_shape_area,        # AC9M12A02
+}
