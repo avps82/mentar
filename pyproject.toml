@@ -62,17 +62,6 @@ nas = [
   # Not needed when the share is mounted in the OS (libzim reads the mount directly).
   "smbprotocol>=1.12",
 ]
-chemistry = [
-  # Adopted 2026-08-11 alongside pint/inflect/num2words (see core dependencies
-  # comment), but as an EXTRA, not core: chempy's balance_stoichiometry() is the
-  # computed ground truth for higher-grades chemistry generators (the fabricated-
-  # reasoning failure the 2026-07-25 chemistry test caught is exactly what this
-  # eliminates) — but its packaging drags an unusually heavy transitive tree
-  # (jupyter/notebook/matplotlib), which a family installing the tutor shouldn't
-  # pay for until chemistry content actually ships. Import stays lazy at the
-  # point of use; CI adds this extra when the chemistry wave lands.
-  "chempy>=0.9",
-]
 grounding = [
   # ZIM reader for offline grounding (SPEC §15). Imported LAZILY — grounding degrades
   # gracefully to "" without it, so it's opt-in, not a core/runtime requirement. libzim
