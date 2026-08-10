@@ -107,6 +107,23 @@ final pick into the Decision section** below.
 | `claude-sonnet-4-6` | Anthropic (cloud) | — | n/a | n/a | **judge / oracle** | grades candidate outputs; Phase-2 LLM-as-judge |
 | `claude-haiku-4-5` | Anthropic (cloud) | — | n/a | n/a | **dev / cheap judge** | not a tutor candidate |
 
+### Domain-specific models — considered and DECLINED (2026-08-11, maintainer decision)
+
+**Maths-tuned models (Mathstral 7B, Qwen-Math family, DeepSeek-Math, etc.): not
+candidates; do not queue.** Rationale: Mentar's architecture removes from the LLM exactly
+the job these models are tuned for — computing/solving is owned by generators + the
+deterministic verifiers (SPEC §14), never the model. The LLM's remaining job is warm,
+child-register explanation, which competition-tuned models are, if anything, worse at
+than a good general instruct model. No key advantage → an eval slot would likely buy a
+null result. Do not re-propose without new evidence.
+
+**Education/tutoring-tuned models (LearnLM-class): the right IDEA, wrong availability.**
+LearnLM is API-only (folded into Gemini) — violates the local-only principle (U-80)
+regardless of quality. **Standing trigger:** if an OPEN-WEIGHTS tutoring-register model
+runnable on family hardware appears, queue it for ONE eval run (incl. MathTutorBench's
+scaffolding dimension — it targets exactly the half of the job Mentar's LLM performs).
+That trigger, not general curiosity, is what reopens this row.
+
 > 📌 **TODO (2026-06-16):** the 2 nemotron models are **done** (results below). Still **queued**:
 > `falcon:7b-instruct`, `vicuna:7b`, `mistral:7b-instruct` — pull on the eval host and run through the
 > same criteria (T1.1–T1.6). All <6 GB — good for the broad-hardware tier *if* any clears the gates.
