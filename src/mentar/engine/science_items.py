@@ -38,6 +38,21 @@ _LIVING_CLASSES = {
     "non-living thing": ["a rock", "a car", "a spoon", "a cloud", "a chair"],
 }
 
+_SOUND_CLASSES = {
+    "makes a sound by vibrating": ["a guitar string", "a drum", "a bell", "a tuning fork"],
+    "does not make a sound on its own": ["a rock", "a book", "a pillow", "a chair"],
+}
+
+_SOLAR_SYSTEM_CLASSES = {
+    "is a planet": ["Earth", "Mars", "Jupiter", "Saturn", "Venus"],
+    "is not a planet": ["the Sun", "the Moon", "a comet", "a star"],
+}
+
+_MATERIALS_CLASSES = {
+    "can be bent, twisted or stretched": ["a rubber band", "a pipe cleaner", "playdough", "a piece of string"],
+    "stays the same shape unless broken": ["a glass cup", "a wooden ruler", "a ceramic plate", "a china bowl"],
+}
+
 
 def _gen_classify_animals(rng: random.Random):
     return mc_which_is(rng, "Which of these is a {label}?", _ANIMAL_CLASSES)
@@ -51,9 +66,24 @@ def _gen_living_nonliving(rng: random.Random):
     return mc_which_is(rng, "Which of these is a {label}?", _LIVING_CLASSES)
 
 
+def _gen_sound_vibration(rng: random.Random):
+    return mc_which_is(rng, "Which of these {label}?", _SOUND_CLASSES)
+
+
+def _gen_solar_system(rng: random.Random):
+    return mc_which_is(rng, "Which of these {label}?", _SOLAR_SYSTEM_CLASSES)
+
+
+def _gen_materials_change(rng: random.Random):
+    return mc_which_is(rng, "Which of these {label}?", _MATERIALS_CLASSES)
+
+
 # Registry — node_id -> generator (matches the science curriculum template node ids).
 SCIENCE_GENERATORS: dict[str, GenFn] = {
     "classify_animals": _gen_classify_animals,
     "states_of_matter": _gen_states_of_matter,
     "living_nonliving": _gen_living_nonliving,
+    "au2_science_sound": _gen_sound_vibration,
+    "au2_science_solar_system": _gen_solar_system,
+    "au2_science_materials": _gen_materials_change,
 }

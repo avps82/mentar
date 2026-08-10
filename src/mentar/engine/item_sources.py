@@ -47,6 +47,7 @@ def build_registry(pilot_itembank_path: Path) -> dict[str, dict]:
         "pilot_fractions": {"generators": DEFAULT_GENERATORS, "itembank": pilot_itembank_path},
         "arithmetic": {"generators": ARITHMETIC_GENERATORS, "itembank": None},
         "science": {"generators": SCIENCE_GENERATORS, "itembank": None},
+        "au_science_year2": {"generators": SCIENCE_GENERATORS, "itembank": None},
         "au_year2": {"generators": AU_YEAR2_GENERATORS, "itembank": None},
         "au_year3": {"generators": AU_YEAR3_GENERATORS, "itembank": None},
         "au_year4": {"generators": AU_YEAR4_GENERATORS, "itembank": None},
