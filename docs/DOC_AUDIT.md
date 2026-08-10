@@ -35,38 +35,59 @@ A snapshot of **what's done, what's left, and which docs have gone stale.**
 - **Local backlog: exhausted** — the only open local items are the unmerged PRs #5–#9 themselves.
 
 ## C. Stale-document findings (NOTE — do not action yet)
-1. **`PHASE0_STATUS.md` frontmatter `last-updated: 2026-06-14`** — months behind; bump on next edit.
-2. **`PHASE0_STATUS.md` → "Next batch (immediately actionable)"** — **STALE**: lists the grounding
-   reader, dialogue controller, and web app as "doable next", but all are built. Superseded by
-   `REMAINDER_PLAN.md`. Replace or delete the section.
-3. **`PHASE0_STATUS.md` → "Tests written but not yet runnable as a suite"** — **STALE**: claims the
-   sandbox has no `pip`/`pytest`; the suite runs (363 tests). Remove/replace.
-4. **`PHASE0_STATUS.md` W3.3 / W3.4 "Remaining (Sonnet): caller wiring"** notes — **STALE**: the
-   FSM caller wiring is done.
-5. **`PHASE0_STATUS.md` W2.2 note** ("handoff wording validation … remain required") — partly
-   addressed: a wording **harness** exists (PR #5); the **professional** review is still open.
-   Reword to distinguish the two.
+1. ~~**`PHASE0_STATUS.md` frontmatter `last-updated: 2026-06-14`** — months behind; bump on next edit.~~
+   **RESOLVED — verified 2026-08-11:** the field already reads `last-updated: 2026-07-26`, and the
+   changelog carries entries through 2026-08-11. This finding was itself stale.
+2. ~~**`PHASE0_STATUS.md` → "Next batch (immediately actionable)"** — STALE...~~
+   **RESOLVED — verified 2026-08-11:** section no longer exists in `PHASE0_STATUS.md` (`grep` for
+   the exact heading returns nothing). Already cleaned up in an earlier session; this finding
+   itself was the drift.
+3. ~~**`PHASE0_STATUS.md` → "Tests written but not yet runnable as a suite"** — STALE...~~
+   **RESOLVED — verified 2026-08-11:** section no longer exists (same check as #2). 786 tests run
+   today, not 363 — the underlying claim has been stale for a long time.
+4. ~~**`PHASE0_STATUS.md` W3.3 / W3.4 "Remaining (Sonnet): caller wiring"** notes — STALE...~~
+   **RESOLVED — verified 2026-08-11:** section no longer exists (same check as #2/#3).
+5. **`PHASE0_STATUS.md` W2.2 note** ("handoff wording validation … remain required") — **STILL
+   OPEN, verified 2026-08-11, not stale**: a wording **harness** exists (PR #5); the
+   **professional** review is genuinely still outstanding (maintainer-commissioned, packet
+   prepared in `SAFEGUARDING_REVIEW_PACKET.md`). This is the one finding in this section that
+   remains a real, current gap — see the D3/W2.2 checklist item at the end of this document.
 6. **Line-count drift** in `PHASE0_STATUS.md` (e.g. "SAFETY.md 692 lines" → now 715;
    "escalation.py 220 lines"). Cosmetic.
 7. ~~**`pyproject.toml` `license = { text = "TBD" }`** — blocks public release; resolve with W4.2.~~
    **STALE — verified resolved (2026-08-11):** the field already reads `license = "AGPL-3.0-only"`.
    This row itself was the drift; the release-blocker no longer exists.
-8. **`docs/EVAL_RESULTS.md` (231 ln) + `docs/llm-compatibility.md` (57 ln)** — **VERIFY**: the
-   W1.2 eval-host run hasn't happened, so confirm neither presents un-run/placeholder numbers as
-   real results. `README.md` links both.
-9. **`docs/MODEL.md`** — confirm it reads as a *plan/roster* (W1.3 pick not yet made), not a
-   settled selection.
-10. **`docs/SPEC.md` v0.3 (2026-06-11)** — verify it reflects later decisions (W5.x, W7 grounding,
-    media/interactivity); it may lag.
-11. **`README.md` doc links** — re-check once PRs #5–#9 merge (SECURITY.md + the disclaimer banner
-    arrive via #7; AGENTS/CONTRIBUTING via #7).
+8. ~~**`docs/EVAL_RESULTS.md` + `docs/llm-compatibility.md`** — VERIFY: W1.2 eval-host run hasn't
+   happened...~~ **RESOLVED — verified 2026-08-11:** the eval-host run happened long ago;
+   `PHASE0_STATUS.md` W1.2/W1.3 rows cite real numbers (gemma2:9b: rubric 0.78, sycophancy 12/12,
+   ~0.5s/item) with dates and PR references, not placeholders. This finding predates that work.
+9. ~~**`docs/MODEL.md`** — confirm... W1.3 pick not yet made...~~ **RESOLVED — verified
+   2026-08-11:** W1.3 was decided 2026-06-27 (`gemma2:9b`, `PHASE0_STATUS.md` row 35); `MODEL.md`
+   has a dedicated "W1.3 — Decision" section, not an open plan. This finding predates that
+   decision and was never updated after.
+10. ~~**`docs/SPEC.md` v0.3 (2026-06-11)**...~~ **PARTIALLY RESOLVED — verified 2026-08-11:**
+    SPEC.md's own timestamp now reads 2026-07-22, well past the cited v0.3/06-11 snapshot — the
+    version this finding named no longer exists. Not independently re-verified line-by-line
+    against every later decision (W5.x/W7/media); the version-drift half of the finding is
+    resolved, a full content audit was not re-run.
+11. ~~**`README.md` doc links** — re-check once PRs #5-9 merge...~~ **RESOLVED — verified
+    2026-08-11:** SECURITY.md, AGENTS.md, CONTRIBUTING.md all exist and README references them.
+    That PR range merged long ago; this finding was never closed out afterward.
 
-## D. Suggested fix order (when actioned)
-1. Refresh `PHASE0_STATUS.md` (drop the stale "Next batch" + "Tests not runnable" sections; bump
-   the frontmatter date; clear the done "Remaining" wiring notes) — highest signal-to-effort.
-2. Verify/refresh `EVAL_RESULTS.md` + `llm-compatibility.md` so they don't imply results that
-   haven't been produced.
-3. Resolve `pyproject` license alongside the W4.2 decision.
+## D. Suggested fix order (when actioned) — CLOSED 2026-08-11
+
+All three items below are now resolved (verified, not assumed — see §C items 1-4, 7, 8):
+1. ~~Refresh `PHASE0_STATUS.md`...~~ Done in an earlier session (sections gone, date current).
+2. ~~Verify/refresh `EVAL_RESULTS.md` + `llm-compatibility.md`...~~ Verified real, dated numbers.
+3. ~~Resolve `pyproject` license...~~ Already `AGPL-3.0-only`.
+
+**Section C/D doc-truth pass status (2026-08-11): 8 of 11 findings resolved-and-verified, 1
+(#5, the W2.2 professional review) confirmed genuinely still open — the real remaining gate —
+1 (#6) cosmetic/not chased, 1 (#10) partially resolved (version drift closed, full content
+re-audit not re-run).** Lesson repeated from the 2026-07-13 sweep: a "STALE" marker written
+against a real problem does not mean the problem stays real forever — several of these
+findings were themselves years-old snapshots of an already-fixed state. Don't trust any marker
+in this file (🔭, STALE, or otherwise) without checking the current tree.
 
 ---
 
