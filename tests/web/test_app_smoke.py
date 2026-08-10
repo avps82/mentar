@@ -650,6 +650,45 @@ def test_markdown_lite_renders_bold_italic_and_bullets():
     assert "<li>Step one</li>" in body
 
 
+def test_markdown_lite_renders_fenced_ascii_diagrams():
+    """A workstream (2026-08-10): fenced ```...``` blocks -- the one house
+    convention for ASCII diagrams (curriculum/visual_scaffolds/*.md) -- render
+    as a single monospace <pre>, not literal backticks in the proportional
+    prose font (the actual root cause behind "diagrams look broken"; see
+    docs/design/R16_release_plan.md workstream A). No third-party markdown
+    lib is involved; this is the same escape-first whitelist function every
+    other markdown-lite case above is checked against."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+
+    app_mod, _c = _client()
+    md = app_mod._render_markdown_lite
+
+    fenced = "Bar model:\n```\n|████|    |\n 1/2 shaded\n```\nShade one half."
+    out = md(fenced)
+    assert "```" not in out, "literal backticks must never reach the child"
+    assert '<pre class="ascii-art">|████|    |\n 1/2 shaded</pre>' in out
+    assert out.startswith("Bar model:")
+    assert out.endswith("Shade one half.")
+
+    # Bold/italic/bullet syntax INSIDE a fence must NOT be processed -- an
+    # asterisk in ASCII art (e.g. a multiplication sign) is not italic markup.
+    star_fence = "```\n2 * 3 = 6\n* not a bullet *\n```"
+    out2 = md(star_fence)
+    assert "<em>" not in out2 and "<strong>" not in out2
+    assert "2 * 3 = 6" in out2 and "* not a bullet *" in out2
+
+    # Escaping still wins inside a fence -- fence content is not a separate
+    # trust boundary from the rest of the function.
+    hostile_fence = "```\n<script>alert(1)</script>\n```"
+    out3 = md(hostile_fence)
+    assert "<script>" not in out3
+    assert "&lt;script&gt;alert(1)&lt;/script&gt;" in out3
+
+
 def test_answer_hx_request_on_escalation_sends_hx_redirect():
     """Escalated htmx turns get an HX-Redirect to /frozen (empty body), never
     the verbatim trigger text anywhere in the response (mirrors A8)."""
@@ -1218,6 +1257,8 @@ if __name__ == "__main__":
     print("  ✓ test_answer_hx_fragment_escapes_html")
     test_markdown_lite_renders_bold_italic_and_bullets()
     print("  ✓ test_markdown_lite_renders_bold_italic_and_bullets")
+    test_markdown_lite_renders_fenced_ascii_diagrams()
+    print("  ✓ test_markdown_lite_renders_fenced_ascii_diagrams")
     test_structured_turn_renders_message_and_question_separately()
     print("  ✓ test_structured_turn_renders_message_and_question_separately")
     test_mc4_choices_render_as_radio_buttons()

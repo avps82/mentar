@@ -828,41 +828,71 @@ def uninstall_curriculum_pack(pack_id):
 
 _MD_BOLD_RE = re.compile(r"\*\*(.+?)\*\*")
 _MD_ITALIC_RE = re.compile(r"\*(.+?)\*")
+# A workstream (2026-08-10): fenced ```...``` blocks are the ONE house convention for
+# ASCII diagrams (curriculum/visual_scaffolds/*.md, help prompts) -- everything else in
+# markdown-lite stays a 4-tag whitelist, but a fence's content must render in a
+# monospace <pre>, not fall through to the proportional-font prose path (that was the
+# actual root cause of "diagrams look broken" -- this function had no fence handling at
+# all, so a model that copied a scaffold's fenced exemplar produced literal backticks
+# wrapped around misaligned ASCII in the child's browser). Optional language tag after
+# the opening ``` (e.g. "```text") is accepted and discarded, though nothing in this
+# codebase's own scaffolds currently uses one.
+_FENCE_RE = re.compile(r"```[^\n]*\n(.*?)```", re.DOTALL)
 
 
 def _render_markdown_lite(text: str) -> str:
-    """U-32: HTML-escape first (the security property), then insert ONLY 4
-    whitelisted tags (<strong>/<em>/<ul>/<li>) over the now-safe text -- no
-    third-party markdown lib, no other tag ever gets emitted. Bullet markers
+    """U-32: HTML-escape first (the security property), then insert ONLY 5
+    whitelisted tags (<strong>/<em>/<ul>/<li>/<pre>) over the now-safe text --
+    no third-party markdown lib, no other tag ever gets emitted. Fenced
+    ```...``` blocks are extracted FIRST (before the per-line bullet/bold/
+    italic pass, which must never run across a fence's own content) and
+    rendered as a single <pre class="ascii-art"> block; everything outside a
+    fence goes through the original line-by-line treatment. Bullet markers
     are stripped line-by-line BEFORE the bold/italic regexes run so a leading
     "* " (bullet) is never mistaken for an italic delimiter; bold (**x**) is
     substituted before italic (*x*) so a bold span's stars are consumed first.
-    Segments are joined WITHOUT a "\\n" between block tags (<ul>/<li>/</ul>) --
-    .question uses white-space:pre-wrap, so a raw newline next to a block
-    element would render as a stray visible gap; "\\n" is only kept between
-    two genuine prose lines, to preserve intentional line breaks.
+    Segments are joined WITHOUT a "\\n" between block tags (<ul>/<li>/</ul>/
+    <pre>) -- .question uses white-space:pre-wrap, so a raw newline next to a
+    block element would render as a stray visible gap; "\\n" is only kept
+    between two genuine prose lines, to preserve intentional line breaks.
     Safe to mark `| safe` in Jinja: every character that reaches an HTML tag
     boundary either came from escape() or from a literal string in this
-    function, never from unescaped model/generator output."""
+    function, never from unescaped model/generator output -- fence content is
+    already inside `escaped` (the whole input is escaped up front, before
+    fence extraction), so wrapping it in <pre> needs no separate escaping."""
     escaped = str(escape(text))
     segments: list[tuple[bool, str]] = []  # (is_block_markup, content)
     in_list = False
-    for line in escaped.split("\n"):
-        stripped = line.strip()
-        is_bullet = stripped.startswith("* ") or stripped.startswith("- ")
-        content = stripped[2:] if is_bullet else line
-        content = _MD_BOLD_RE.sub(r"<strong>\1</strong>", content)
-        content = _MD_ITALIC_RE.sub(r"<em>\1</em>", content)
-        if is_bullet:
-            if not in_list:
-                segments.append((True, "<ul>"))
-                in_list = True
-            segments.append((True, f"<li>{content}</li>"))
-        else:
-            if in_list:
-                segments.append((True, "</ul>"))
-                in_list = False
-            segments.append((False, content))
+
+    def _process_prose(chunk: str) -> None:
+        nonlocal in_list
+        for line in chunk.split("\n"):
+            stripped = line.strip()
+            is_bullet = stripped.startswith("* ") or stripped.startswith("- ")
+            content = stripped[2:] if is_bullet else line
+            content = _MD_BOLD_RE.sub(r"<strong>\1</strong>", content)
+            content = _MD_ITALIC_RE.sub(r"<em>\1</em>", content)
+            if is_bullet:
+                if not in_list:
+                    segments.append((True, "<ul>"))
+                    in_list = True
+                segments.append((True, f"<li>{content}</li>"))
+            else:
+                if in_list:
+                    segments.append((True, "</ul>"))
+                    in_list = False
+                segments.append((False, content))
+
+    pos = 0
+    for m in _FENCE_RE.finditer(escaped):
+        _process_prose(escaped[pos:m.start()])
+        if in_list:
+            segments.append((True, "</ul>"))
+            in_list = False
+        fence_body = m.group(1).rstrip("\n")
+        segments.append((True, f'<pre class="ascii-art">{fence_body}</pre>'))
+        pos = m.end()
+    _process_prose(escaped[pos:])
     if in_list:
         segments.append((True, "</ul>"))
 

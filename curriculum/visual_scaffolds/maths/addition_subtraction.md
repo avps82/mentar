@@ -37,4 +37,6 @@ When writing or explaining this question, use ONE of these visual structures:
 - For Year 2–3: use number lines; totals ≤ 100.
 - For Year 4+: column layout; totals up to 10 000.
 - When carrying or borrowing is involved, call it out explicitly in the explanation.
-- Use emoji shapes (🟡 ➡️ 🔢) or step-by-step text for diagrams in explanations. In a written question, describe the jump or column in plain words rather than pipe-and-dash ASCII art.
+- Diagrams go in a fenced block (see the examples above) — not emoji shapes, not raw
+  pipe-and-dash art outside a fence. In a written question, describe the jump or column in
+  plain words instead of drawing it.

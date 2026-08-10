@@ -43,4 +43,5 @@ When writing or explaining this question, use ONE of these visual structures:
 - For fraction↔percent conversion: use the triple notation above.
 - Year 5–6: 10%, 25%, 50%, 75% and their fraction/decimal equivalents.
 - Year 7+: all multiples of 5%, then any integer percent, then non-integer.
-- Use emoji shapes (🟦 ⬜) for the hundred grid in explanations. In a written question, describe the grid or line in plain words rather than raw ASCII art.
+- The hundred grid goes in a fenced block (see the example above) — not emoji shapes. In a
+  written question, describe the grid or line in plain words instead of drawing it.
