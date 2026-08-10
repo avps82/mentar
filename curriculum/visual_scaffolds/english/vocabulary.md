@@ -4,7 +4,7 @@ title: Vocabulary — Frayer Model
 description: Visual scaffold hints for word-study questions using the Frayer model (definition, characteristics, examples, non-examples).
 tags: [english, vocabulary, visual-scaffold, frayer-model, word-study]
 subject: english
-topic_keywords: [vocabulary, word meaning, definition, synonym, antonym, prefix, suffix, root word, spelling, phonics, decode]
+topic_keywords: [vocabulary, word meaning, definition, synonym, antonym, prefix, suffix, root word, spelling, phonics, decode, homophone, homophones]
 timestamp: "2026-07-22T00:00:00Z"
 ---
 

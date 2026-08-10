@@ -679,6 +679,16 @@ packs (12 consecutive ground-truth answers each, all PASS). Level→stage mappin
 deliberately conservative-approximate — no alignment claimed, per each pack's licence
 finding. 786 tests green.
 
+**AU English Y3+Y4 SHIPPED 2026-08-11:** 8 new nodes (antonyms, prefixes, homophones,
+comparative adjectives / suffixes, contractions, common-vs-proper nouns, similes) closing
+the Y3/Y4 gap the explain-method audit flagged. Same mc_which_is pattern as every English
+node; pool-size checked BEFORE authoring this time (no repeat of the science-wave crash).
+Two scaffold keyword gaps found and closed (homophone/contraction had no matching
+scaffold — vocabulary.md/grammar.md extended). All 8 labels verified routing correctly
+through the real matcher; live FSM round-trip both templates, 12/12 ground-truth PASS.
+One own-review catch: "Which of these word begins..." — singular/plural agreement bug,
+fixed before commit.
+
 **Next-session starting point: Y3 science (extend the proven Y2 shape), then English Y3/Y4, then SG_GENERIC, then US_GENERIC (maintainer decided 2026-08-11: generic pack, no CCSS codes/branding — OSS-release safety; see CONTENT_LICENSES.md §2b)** |
 | D2 name reservation, D3 safeguarding, D4 history sweep, D6 cloud routines | D2/D3 are maintainer actions (publishing packages, commissioning a professional). D4's history sweep is worth doing carefully with the maintainer present (a found secret would need immediate rotation — not something to discover at 3am with nobody to rotate it). D6 self-resolves on going public |
 | htmx 4 migration (E9) | Still beta, still monitoring-only |

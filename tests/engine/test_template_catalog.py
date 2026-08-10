@@ -62,6 +62,12 @@ _EXPECTED = {
     "curriculum/templates/AU_ACARA/year2_english.md": {
         "key": "au_acara_year2_english", "label": "English — Year 2 🇦🇺", "item_source": "au_english_year2",
     },
+    "curriculum/templates/AU_ACARA/year3_english.md": {
+        "key": "au_acara_year3_english", "label": "English — Year 3 🇦🇺", "item_source": "au_english_year3",
+    },
+    "curriculum/templates/AU_ACARA/year4_english.md": {
+        "key": "au_acara_year4_english", "label": "English — Year 4 🇦🇺", "item_source": "au_english_year4",
+    },
     "curriculum/templates/AU_ACARA/year5_english.md": {
         "key": "au_acara_year5_english", "label": "English — Year 5 🇦🇺", "item_source": "au_english_year5",
     },

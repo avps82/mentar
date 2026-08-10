@@ -4,7 +4,7 @@ title: Grammar — Parts of Speech and Sentence Structure
 description: Visual scaffold hints for grammar questions including parts of speech, punctuation, and sentence construction.
 tags: [english, grammar, visual-scaffold, parts-of-speech, sentence-structure]
 subject: english
-topic_keywords: [grammar, noun, verb, adjective, adverb, pronoun, conjunction, punctuation, sentence, clause, phrase, capital letter, full stop, comma]
+topic_keywords: [grammar, noun, verb, adjective, adverb, pronoun, conjunction, punctuation, sentence, clause, phrase, capital letter, full stop, comma, contraction, contractions, comparative, superlative]
 timestamp: "2026-07-22T00:00:00Z"
 ---
 
