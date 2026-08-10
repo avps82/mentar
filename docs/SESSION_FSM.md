@@ -173,6 +173,8 @@ reach, since T3.7 checks per-handler, not per-`hinted`-value.
 | `HELP_RECHECK_AWAIT` | `learner_help_press` (or A21: don't-know / clarifying question) | `HELP_MODALITY_SELECT` | Another Help round instead of scoring it as an answer; `help_by_node` set (A5). |
 | `HELP_RECHECK_AWAIT` | `stop_request` | `SESSION_END_BY_LEARNER` | Learner ended explicitly. |
 | `HELP_RECHECK_SCORE` | `scored` | `HELP_RECHECK_BKT_UPDATE` | — |
+| `HELP_RECHECK_SCORE` | `safe_reject` (< A9's streak cap) | `HELP_RECHECK_AWAIT` | E2.4 (2026-08-10): unreadable re-check answer re-asks the SAME question, unscored — previously scored flatly wrong against mastery/retry-count. |
+| `HELP_RECHECK_SCORE` | `safe_reject_streak_cap` | `HELP_MODALITY_SELECT` | E2.4: same A9 escape hatch as `SCORE` — fresh Help chain, `help_by_node` NOT set (system-routed). |
 | `HELP_RECHECK_BKT_UPDATE` | `enter` (recheck passed) | `BRANCH_DECISION` | BKT update with hinted-win discount applied (T4.5); exits the Help loop. |
 | `HELP_RECHECK_BKT_UPDATE` | *(over-approximation — see note above)* | `HELP_MODALITY_SELECT` | Not actually reachable from `HELP_RECHECK_BKT_UPDATE` (only from `BKT_UPDATE`'s `hinted=False`+wrong call) — listed because both share `_do_bkt_update` and T3.7 checks per-handler. |
 | `HELP_RECHECK_BKT_UPDATE` | `enter` (recheck failed) | `HELP_RETRY_DECISION` | BKT updated (A20: no `learns` credit); routed to the retry/modality-exhaustion decision. |
@@ -185,6 +187,8 @@ reach, since T3.7 checks per-handler, not per-`hinted`-value.
 | `PROBE_AWAIT_ANSWER` | `learner_help_press` (or A21: don't-know / clarifying question) | `HELP_MODALITY_SELECT` | The probe is abandoned; a child needing help is itself useful signal and help must never be refused. `help_by_node` set (A5). |
 | `PROBE_AWAIT_ANSWER` | `stop_request` | `SESSION_END_BY_LEARNER` | Learner ended explicitly. |
 | `PROBE_SCORE` | `scored` | `PROBE_CLASSIFY` | — |
+| `PROBE_SCORE` | `safe_reject` (< A9's streak cap) | `PROBE_AWAIT_ANSWER` | E2.4 (2026-08-10): unreadable probe answer re-asks, unscored — a phantom miss here would corrupt the false-confidence classifier's input. |
+| `PROBE_SCORE` | `safe_reject_streak_cap` | `HELP_MODALITY_SELECT` | E2.4: A9 escape hatch; the probe is abandoned (help must never be refused), `help_by_node` NOT set. |
 | `PROBE_CLASSIFY` | `clean_pass` | `NODE_SELECT` | `probe_event` row with class=`clean_pass`; must NOT return to `BRANCH_DECISION` (with mastery ≥ threshold, `probe_due` would re-fire forever). **Corrected 2026-07-05** — was documented as `BRANCH_DECISION`. |
 | `PROBE_CLASSIFY` | `retry_needed` (`SLIP_SUSPECT` only, first probe) | `PROBE_PRESENT` | One retry allowed for SLIP_SUSPECT before classifying (W3.4 decision table). `false_confidence` and `forgetting_suspect` are classified immediately — no retry. |
 | `PROBE_CLASSIFY` | `classified_as_class` (final, after any retry) | `NODE_SELECT` | `probe_event` row with class ∈ {`false_confidence`, `slip_suspect`, `forgetting_suspect`}; mastery demoted (probe-demote) so the node returns to normal practice instead of being re-probed endlessly. **Corrected 2026-07-05** — was documented as `BRANCH_DECISION`. |

@@ -45,13 +45,24 @@ def test_no_claims_in_plain_prose_passes():
     assert find_claims(text) == []
 
 
-def test_decimal_claim_is_unparseable_not_a_failure():
-    """Decimals are out of pilot scope — the claim regex doesn't even recognise
-    a decimal token as a number, so no claim is extracted (pass through, not
-    a failure) rather than a false FAIL."""
-    text = "0.5 + 0.5 = 1.0"
-    assert find_claims(text) == []
-    assert not has_verified_failure(text)
+def test_decimal_claims_are_now_verified():
+    """E2.3 (2026-08-10): OVERTURNS this test's previous assertion. The old
+    behaviour ("decimals out of pilot scope, no claim extracted") predated R13 —
+    decimal answer types and Y5-8 decimal content are live, so SAFETY §6.2's
+    verify-or-discard guard must cover decimal claims too. A wrong decimal claim
+    in an explanation is now a verified failure, not invisible."""
+    # Correct decimal claims pass (exact Fraction arithmetic — no float epsilon).
+    assert not has_verified_failure("0.5 + 0.5 = 1.0")
+    assert not has_verified_failure("3.5 + 2.1 = 5.6")
+    assert not has_verified_failure("0.1 + 0.2 = 0.3")  # would FAIL under float math
+    assert not has_verified_failure("2.5 × 4 = 10")
+    # Wrong decimal claims are now caught.
+    assert has_verified_failure("3.5 + 2.1 = 5.7")
+    assert has_verified_failure("0.5 + 0.5 = 1.1")
+    assert has_verified_failure("7.5 - 2.5 = 4.9")
+    # Mixed decimal/integer claims verify too.
+    claims = find_claims("First 1.5 + 1.5 = 3, then 3 + 1 = 4.")
+    assert [c.ok for c in claims] == [True, True]
 
 
 def test_multiplication_claim():
@@ -124,6 +135,23 @@ def test_realign_algebra_blocks_leaves_prose_unchanged():
 def test_realign_algebra_blocks_noop_when_no_equals():
     text = "Think of slices of pizza shared among friends."
     assert realign_algebra_blocks(text) == text
+
+
+def test_division_remainder_correct():
+    assert not has_verified_failure("12 ÷ 5 = 2 R 2")
+    assert not has_verified_failure("15 ÷ 4 = 3 R 3")
+    assert not has_verified_failure("15 divided by 4 = 3 R 3")
+
+
+def test_division_remainder_wrong():
+    assert has_verified_failure("12 ÷ 5 = 2 R 3")
+    assert has_verified_failure("12 ÷ 5 = 3 R 2")
+
+
+def test_division_remainder_claim_extraction():
+    claims = find_claims("12 ÷ 5 = 2 R 2")
+    assert len(claims) == 1
+    assert claims[0].ok is True
 
 
 if __name__ == "__main__":

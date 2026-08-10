@@ -52,15 +52,26 @@ def _scan_scaffold_dir(scaffold_dir: str) -> tuple[tuple[tuple[str, ...], str], 
 
 
 def load_visual_scaffold(scaffold_root: Path, subject: str, label: str) -> str:
-    """Return the body of the first scaffold file whose `topic_keywords` match
+    """Return the body of the scaffold file whose `topic_keywords` best match
     *label* (case-insensitive substring), or "" if none match / the subject
-    has no scaffold directory yet."""
+    has no scaffold directory yet.
+
+    E1 Finding 2 fix (2026-08-10): MOST keywords matched wins, not first match
+    in alphabetical filename order. "Adding fractions with the same denominator"
+    matches addition_subtraction.md on 1 keyword ("adding") but fractions.md on
+    3 ("fraction", "fractions", "denominator") — the more subject-specific
+    scaffold matches more of the label, so counting is the tie-break the old
+    first-match scan lacked (it always returned addition_subtraction.md purely
+    because 'a' sorts before 'f'). Equal counts keep alphabetical order (stable,
+    deterministic)."""
     subdir = _SUBJECT_TO_SCAFFOLD_DIR.get(subject)
     if subdir is None:
         return ""
     label_lower = label.lower()
     scaffold_dir = str(Path(scaffold_root) / subdir)
+    best_body, best_count = "", 0
     for keywords, body in _scan_scaffold_dir(scaffold_dir):
-        if any(kw in label_lower for kw in keywords):
-            return body
-    return ""
+        count = sum(1 for kw in keywords if kw in label_lower)
+        if count > best_count:
+            best_body, best_count = body, count
+    return best_body

@@ -17,19 +17,30 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from fractions import Fraction
 
-from mentar.eval.verify_numeric import normalise_fraction
+from mentar.eval.verify_numeric import normalise_decimal, normalise_fraction
 
-_NUM = r"(?:\d+\s+\d+/\d+|\d+/\d+|\d+)"
+# E2.3 (2026-08-10): decimals added. The original _NUM had no "." handling, so a
+# decimal claim ("3.5 + 2.1 = 5.6") never matched _CLAIM_RE at all and SAFETY §6.2's
+# verify-or-discard guard was silently inert for every decimal explanation — a gap,
+# not a design choice, once R13 shipped decimal answer types (Y5-8 decimal content
+# is live). Decimal alternative goes FIRST so "3.5" parses as one token, not "3"+".5".
+_NUM = r"(?:\d+\.\d+|\d+\s+\d+/\d+|\d+/\d+|\d+)"
 # ponytail: only the plain "/" division operator is not matched — it collides with
 # the fraction slash ("3/4 / 1/2"). "÷" and "divided by" are explicitly supported.
 _OP = r"(?:[+\-×x*÷]|divided\s+by)"
-# (?<!\d) — don't start a match inside a number (e.g. the "2" in "12").
+# (?<![\d./]) — don't start a match inside a number (e.g. the "2" in "12"), NOR right
+# after a decimal point or fraction slash (E2.3: "3.5/7 + 1.5 = 2" must not yield a
+# phantom "5/7..." or "7 + 1.5 = 2" claim — starting mid-token verifies arithmetic the
+# author never claimed and could flag a correct explanation as wrong). A token this
+# gate skips entirely (a decimal-over-slash mongrel) simply produces NO claim:
+# fail-open, same as any other unparseable prose.
 # (?!\s*[+\-×÷*x\d]) — reject if the result is followed by an operator or digit,
 # which means it's a mid-chain intermediate value, not a final result
 # (e.g. "6 + 13 = 12 + 13 = 25" must not match "6 + 13 = 12" as a claim;
 # the backtracked "6 + 13 = 1" attempt is also blocked because "1" is followed by "2").
-_CLAIM_RE = re.compile(rf"(?<!\d)({_NUM})\s*({_OP})\s*({_NUM})\s*=\s*({_NUM})(?!\s*[+\-×÷*x\d])")
+_CLAIM_RE = re.compile(rf"(?<![\d./])({_NUM})\s*({_OP})\s*({_NUM})\s*=\s*({_NUM})(?:\s+R\s+({_NUM}))?(?!\s*[+\-×÷*x\d])")
 
 _OPS = {
     "+": lambda a, b: a + b,
@@ -47,16 +58,27 @@ class ClaimCheck:
     ok: bool | None  # True = verified correct; False = verified WRONG; None = not checkable
 
 
+def _parse_num(token: str):
+    """One claim token -> exact Fraction, or None. Decimal-shaped tokens go through
+    normalise_decimal (E2.3) then exact Fraction conversion — NOT through
+    normalise_fraction, whose decimal-safe-reject guard is deliberate and untouched
+    (it protects the child-ANSWER path; this is the explanation-CLAIM path)."""
+    if "." in token:
+        d = normalise_decimal(token)
+        return Fraction(d) if d is not None else None
+    return normalise_fraction(token)
+
+
 def find_claims(text: str) -> list[ClaimCheck]:
     """Extract and verify every `a <op> b = c` claim in *text*."""
     if not text:
         return []
     results = []
     for m in _CLAIM_RE.finditer(text):
-        lhs_a, op, lhs_b, rhs = m.groups()
-        a = normalise_fraction(lhs_a)
-        b = normalise_fraction(lhs_b)
-        c = normalise_fraction(rhs)
+        lhs_a, op, lhs_b, rhs, remainder = m.groups()
+        a = _parse_num(lhs_a)
+        b = _parse_num(lhs_b)
+        c = _parse_num(rhs)
         if a is None or b is None or c is None:
             results.append(ClaimCheck(m.group(0), None))
             continue
@@ -64,8 +86,15 @@ def find_claims(text: str) -> list[ClaimCheck]:
         if op_key == "÷" and b == 0:
             results.append(ClaimCheck(m.group(0), None))
             continue
-        computed = _OPS[op_key](a, b)
-        results.append(ClaimCheck(m.group(0), computed == c))
+        if remainder is not None and op_key == "÷":
+            r_val = normalise_fraction(remainder)
+            if r_val is None:
+                results.append(ClaimCheck(m.group(0), None))
+                continue
+            results.append(ClaimCheck(m.group(0), (a == c * b + r_val) and (0 <= r_val < b)))
+        else:
+            computed = _OPS[op_key](a, b)
+            results.append(ClaimCheck(m.group(0), computed == c))
     return results
 
 
@@ -145,3 +174,4 @@ def realign_algebra_blocks(text: str) -> str:
             out.append(lines[i])
             i += 1
     return '\n'.join(out)
+

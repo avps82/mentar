@@ -106,10 +106,10 @@ def test_help_on_one_node_does_not_leak_to_another():
     ctx.mastery[helped] = 0.9     # simulate the helped node at the probe threshold
     ctrl.step("2")           # correct hinted recheck -> BRANCH_DECISION -> probe fires
     assert ctrl.state == FSMState.PROBE_AWAIT_ANSWER.value
-    ctrl.step("wrong")       # first probe attempt wrong; help_pressed=True suppresses
+    ctrl.step("999")  # readable-but-wrong (E2.4: unreadable input now re-prompts)       # first probe attempt wrong; help_pressed=True suppresses
                              # false_confidence -> slip_suspect -> ONE retry granted
     assert ctrl.state == FSMState.PROBE_AWAIT_ANSWER.value  # confirms the retry, not NODE_SELECT
-    ctrl.step("wrong")       # retry also wrong -> logs slip_suspect, demotes, advances
+    ctrl.step("999")  # readable-but-wrong (E2.4: unreadable input now re-prompts)       # retry also wrong -> logs slip_suspect, demotes, advances
 
     # Force the node switch directly (NODE_SELECT's re-pick among the demoted
     # helped node and the fresh one is orthogonal to what this test exercises).
@@ -122,7 +122,7 @@ def test_help_on_one_node_does_not_leak_to_another():
 
     ctrl.step("2")            # unhelped node answered correctly, unaided -> probe fires (mastery 0.9)
     assert ctrl.state == FSMState.PROBE_AWAIT_ANSWER.value
-    ctrl.step("wrong")        # probe wrong, help NEVER pressed on this node ->
+    ctrl.step("999")  # readable-but-wrong (E2.4: unreadable input now re-prompts)        # probe wrong, help NEVER pressed on this node ->
                               # false_confidence immediately (no retry, since help_pressed=False)
 
     classes = dict(store.probe_events)
@@ -145,7 +145,7 @@ def test_auto_help_alone_still_classifies_false_confidence():
 
     ctrl.step(None)           # presents whichever node the R11 policy picked first
     node = ctx.current_node_id
-    ctrl.step("wrong")        # WRONG unaided answer -> auto-help scaffolding kicks in
+    ctrl.step("999")  # readable-but-wrong (E2.4: unreadable input now re-prompts)        # WRONG unaided answer -> auto-help scaffolding kicks in
                               # (help_modalities_used reset, but help_by_node NOT set)
     assert not ctx.help_by_node.get(node), (
         "auto-help must not set help_by_node — only a child-initiated request should"
@@ -153,7 +153,7 @@ def test_auto_help_alone_still_classifies_false_confidence():
     ctx.mastery[node] = 0.9
     ctrl.step("2")            # correct hinted recheck -> BRANCH_DECISION -> probe fires
     assert ctrl.state == FSMState.PROBE_AWAIT_ANSWER.value
-    ctrl.step("wrong")        # failed probe, help_pressed=False (auto-help doesn't count) ->
+    ctrl.step("999")  # readable-but-wrong (E2.4: unreadable input now re-prompts)        # failed probe, help_pressed=False (auto-help doesn't count) ->
                               # false_confidence immediately
 
     classes = dict(store.probe_events)

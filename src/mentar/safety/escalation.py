@@ -188,7 +188,11 @@ _SECRECY_REQUEST_PATTERNS: list[re.Pattern[str]] = [p for p in (
 _ADVERSARIAL_JAILBREAK_PATTERNS: list[re.Pattern[str]] = [p for p in (
     re.compile(r"(ignore|disregard|forget|bypass|override) (?:your |all |previous |the |above ){0,2}(instructions?|rules?|guidelines?|safety|(?:system )?prompt\b|restrictions?)", re.I),
     re.compile(r"(pretend|act|behave|imagine) (like |as if )?(you (are|have) no |you don'?t have |you'?re |you are )(a different|rules?|restrictions?|guidelines?|an? (uncensored|unrestricted|free|evil|jailbroken))", re.I),
-    re.compile(r"(you are now|you'?re now|from now on (you are|you'?re|act as)) (a |an )?(?!a tutor|helping|assisting)", re.I),
+    # E2.5 (2026-08-10): the exemption lookahead must run BEFORE the optional article
+    # is consumed — the old form `(a |an )?(?!a tutor|...)` greedily ate "a " first, so
+    # the lookahead checked for the literal "a tutor" at a position where "a " was
+    # already gone and never blocked; "you are now a tutor" fired as a jailbreak.
+    re.compile(r"(you are now|you'?re now|from now on (you are|you'?re|act as)) (?!(?:a |an )?(?:tutor|helping|assisting|my tutor))((?:a |an )?)", re.I),
     re.compile(r"(jailbreak|dan mode|developer mode|god mode|unrestricted mode)", re.I),
     re.compile(r"(your new (instructions?|rules?|system prompt)|new system prompt)", re.I),
     re.compile(r"(pretend you have no rules|pretend you'?re a different ai|pretend (there are|you have) no (rules|restrictions|limits?))", re.I),
@@ -207,7 +211,10 @@ _LEET = str.maketrans({"0": "o", "1": "i", "3": "e", "4": "a", "5": "s", "7": "t
 _JAILBREAK_DEOBFUSCATED = re.compile(
     r"(ignore|disregard|forget|bypass|override).{0,15}(instruction|rule|guideline|safety|systemprompt|restriction)"  # t7.3-exempt: de-obfuscation regex, not a prompt
     r"|jailbreak|danmode|developermode|godmode|unrestrictedmode"
-    r"|youarenow|youhavenorules|pretend.{0,15}no.{0,5}(rule|restriction|limit)"
+    # E2.5: same benign-role exemption as the primary pattern, in despaced form --
+    # without it the fallback re-fires on "you are now a tutor" after despacing.
+    r"|youarenow(?!(?:a|an|my)?(?:tutor|helping|assisting))"
+    r"|youhavenorules|pretend.{0,15}no.{0,5}(rule|restriction|limit)"
     r"|(whatis|tellme|showme|print|reveal|repeat).{0,15}(systemprompt|instruction|rule|guideline)",
     re.I,
 )

@@ -437,6 +437,49 @@ def test_all_mastered_ends_session():
     assert result.done
 
 
+def test_recheck_gibberish_is_reprompted_not_scored():
+    """E2.4 regression: an unreadable answer at the Help RE-CHECK must be
+    re-prompted (same treatment as the first ask), never scored flatly wrong
+    against mastery/retry-count — previously only _do_score had this branch."""
+    ctrl = _make_controller(llm_fn=lambda msgs: "explanation text")
+    ctrl.step(None)
+    r = ctrl.step("2/5")                              # wrong -> auto-help -> recheck
+    assert r.state == FSMState.HELP_RECHECK_AWAIT.value
+    mastery_before = dict(ctrl._ctx.mastery)
+    help_n_before = ctrl._ctx.help_n
+    r2 = ctrl.step("jjjd")                            # unreadable at the re-check
+    assert r2.state == FSMState.HELP_RECHECK_AWAIT.value  # re-asked, same state
+    assert "couldn't read" in r2.message
+    assert ctrl._ctx.mastery == mastery_before        # no BKT hit
+    assert ctrl._ctx.help_n == help_n_before          # no retry consumed
+
+
+def test_probe_gibberish_is_reprompted_not_scored():
+    """E2.4 regression: an unreadable probe answer must not count as a failed
+    probe — a phantom miss would feed the false-confidence classifier."""
+    ctrl = _make_controller(mastery={"unit_fractions": 0.84})  # one correct -> >=0.85 -> probe
+    ctrl.step(None)
+    r = ctrl.step("1/3")                              # correct; mastery crosses threshold
+    assert r.state == FSMState.PROBE_AWAIT_ANSWER.value, r.state
+    r2 = ctrl.step("jjjd")                            # unreadable at the probe
+    assert r2.state == FSMState.PROBE_AWAIT_ANSWER.value
+    assert "couldn't read" in r2.message
+    assert ctrl._ctx.probe_scored_correct is None     # never scored
+
+
+def test_subject_in_completion_message():
+    """E2.1 regression: the session-complete message names the ACTIVE subject,
+    not hardcoded 'fractions'."""
+    ctrl = SessionController(
+        llm_call=lambda msgs: "q", prompt_dir=PROMPTS, grounding_cfg={},
+        curriculum=_MASTERED_CURRICULUM, db_store=_FakeStore({"unit_fractions": 0.95}),
+        learner_id="t", subject="science",
+    )
+    result = ctrl.step(None)
+    assert "science" in result.text
+    assert "fractions concepts" not in result.text
+
+
 def _smoke():
     test_happy_path_to_await(); print("[smoke] happy path OK")
     test_correct_answer_advances(); print("[smoke] correct answer OK")

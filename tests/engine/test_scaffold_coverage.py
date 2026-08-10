@@ -40,3 +40,28 @@ def test_every_concept_node_has_a_scaffold():
         "(add keywords or a new file under curriculum/visual_scaffolds/):\n"
         + "\n".join(f"  {m}" for m in missing)
     )
+
+
+def test_scaffold_routing_prefers_most_specific_match():
+    """E1 Findings 1+2 regression (2026-08-11): most-keywords-matched wins.
+
+    Finding 2: 'Adding fractions...' labels matched addition_subtraction.md
+    first (alphabetical first-match) instead of fractions.md. Finding 1:
+    whole-number place-value labels matched decimals.md via its bare
+    'place value' keyword (now narrowed to 'decimal place value'; whole
+    numbers route to the new place_value.md)."""
+    _scan_scaffold_dir.cache_clear()
+    cases = [
+        # (label, unique marker of the CORRECT scaffold's body)
+        ("Place value to 99", "Hundreds | Tens | Ones"),          # place_value.md
+        ("Decimal place value (tenths and hundredths)", "place-value chart"),  # decimals.md
+        ("Adding fractions with the same denominator", "1/2 shaded"),          # fractions.md
+        ("Adding and subtracting fractions with unlike denominators", "1/2 shaded"),
+        ("Adding numbers to 100", "number line"),                  # addition_subtraction.md
+    ]
+    for label, marker in cases:
+        body = load_visual_scaffold(SCAFFOLD_ROOT, "mathematics", label)
+        assert body and marker.lower() in body.lower(), (
+            f"label {label!r} routed to the wrong scaffold "
+            f"(wanted body containing {marker!r}; got: {body[:120]!r})"
+        )

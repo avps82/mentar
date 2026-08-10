@@ -838,7 +838,9 @@ class SessionController:
         )
         if next_node is None:
             ctx.state = FSMState.SESSION_END_COMPLETE
-            return ("Well done — you've mastered all the fractions concepts for today! Great work.", False)
+            # E2.1: subject-aware (was hardcoded "fractions" — same bug class A7 fixed
+            # for the system prompt; a science session used to end on "fractions").
+            return (f"Well done — you've mastered all the {self._subject} concepts for today! Great work.", False)
         ctx.current_node_id = next_node
         ctx.state = FSMState.PATTERN_SELECT
         return ("", True)
@@ -921,6 +923,27 @@ class SessionController:
         ctx.state = FSMState.SCORE
         return ("", True)
 
+    def _handle_unreadable(self, answer_type: str) -> tuple[str, bool]:
+        """A9/E2.4 shared: one unreadable (SAFE_REJECT/EXTRACT_FAIL) answer on the
+        live question. Increments the per-question streak; at UNREADABLE_STREAK_CAP
+        primes a fresh Help chain (NOT child-initiated — help_by_node deliberately
+        not set, A5). Returns (nudge_text, cap_hit); the CALLER assigns ctx.state
+        (T3.7's AST conformance test reads the literal FSMState assignments out of
+        each _do_ handler body, so they must stay inline there)."""
+        ctx = self._ctx
+        ctx.unreadable_streak += 1
+        if ctx.unreadable_streak >= UNREADABLE_STREAK_CAP:
+            # 3 unreadable answers in a row on the SAME question has no exit
+            # otherwise — a child who genuinely can't produce the expected shape
+            # (keyboard trouble, misunderstanding "_/_") gets stuck nudging forever.
+            ctx.unreadable_streak = 0
+            ctx.help_n = 1
+            ctx.help_modalities_used = []
+            return ("", True)
+        if answer_type == "mc4":
+            return ("I didn't catch a letter there — please answer with A, B, C or D.", False)
+        return ("Hmm, I couldn't read a number there — give it another go.", False)
+
     def _do_score(self) -> tuple[str, bool]:
         ctx = self._ctx
         node = self._curriculum[ctx.current_node_id]
@@ -932,28 +955,15 @@ class SessionController:
             ground_truth=ground_truth,
         )
         if outcome.result in (CheckResult.SAFE_REJECT, CheckResult.EXTRACT_FAIL):
-            ctx.unreadable_streak += 1
-            if ctx.unreadable_streak >= UNREADABLE_STREAK_CAP:
-                # A9: 3 unreadable answers in a row on the SAME question has no exit
-                # otherwise — a child who genuinely can't produce the expected shape
-                # (keyboard trouble, misunderstanding "_/_") gets stuck nudging forever.
-                # Route into the Help loop, unscored — nothing logged as scored (mirrors
-                # the auto-help-on-wrong branch in _do_bkt_update; NOT child-initiated,
-                # so help_by_node is deliberately NOT set here — A5).
-                ctx.unreadable_streak = 0
-                ctx.help_n = 1
-                ctx.help_modalities_used = []
-                ctx.state = FSMState.HELP_MODALITY_SELECT
-                return ("", True)
             # Couldn't read a checkable answer (blank / gibberish / malformed). Don't
             # penalise or log — re-ask the SAME question with answer-type-aware guidance.
             # (The question itself stays live via TurnResult.question / question_display;
             # no need to re-embed it in the nudge prose.)
+            nudge, cap_hit = self._handle_unreadable(answer_type)
+            if cap_hit:
+                ctx.state = FSMState.HELP_MODALITY_SELECT
+                return ("", True)
             ctx.state = FSMState.AWAIT_ANSWER
-            if answer_type == "mc4":
-                nudge = "I didn't catch a letter there — please answer with A, B, C or D."
-            else:
-                nudge = "Hmm, I couldn't read a number there — give it another go."
             return (nudge, False)
         ctx.last_scored_correct = (outcome.result is CheckResult.PASS)
         self._log_response(
@@ -1296,6 +1306,17 @@ class SessionController:
             llm_output=ctx.help_answer or "",
             ground_truth=ground_truth,
         )
+        if outcome.result in (CheckResult.SAFE_REJECT, CheckResult.EXTRACT_FAIL):
+            # E2.4: an unreadable re-check answer must get the same "couldn't read
+            # that" re-ask the first ask gets — previously it scored flatly WRONG
+            # against mastery/retry-count (the only scoring site with that branch
+            # was _do_score; recheck and probe silently lacked it).
+            nudge, cap_hit = self._handle_unreadable(answer_type)
+            if cap_hit:
+                ctx.state = FSMState.HELP_MODALITY_SELECT
+                return ("", True)
+            ctx.state = FSMState.HELP_RECHECK_AWAIT
+            return (nudge, False)
         ctx.help_scored_correct = (outcome.result is CheckResult.PASS)
         rid = self._log_response(
             ctx.current_node_id, ctx.help_answer,
@@ -1405,6 +1426,16 @@ class SessionController:
             llm_output=ctx.probe_answer or "",
             ground_truth=ground_truth,
         )
+        if outcome.result in (CheckResult.SAFE_REJECT, CheckResult.EXTRACT_FAIL):
+            # E2.4: same re-ask treatment as _do_score/_do_help_recheck_score — an
+            # unreadable probe answer must not count as a failed probe (it would
+            # feed the false-confidence classifier a phantom miss).
+            nudge, cap_hit = self._handle_unreadable(answer_type)
+            if cap_hit:
+                ctx.state = FSMState.HELP_MODALITY_SELECT
+                return ("", True)
+            ctx.state = FSMState.PROBE_AWAIT_ANSWER
+            return (nudge, False)
         ctx.probe_scored_correct = (outcome.result is CheckResult.PASS)
         rid = self._log_response(
             ctx.current_node_id, ctx.probe_answer,
