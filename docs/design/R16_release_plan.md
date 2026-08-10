@@ -670,6 +670,36 @@ executes; each ✅ below was verified (tests + targeted checks), not just writte
 | D2 name reservation, D3 safeguarding, D4 history sweep, D6 cloud routines | D2/D3 are maintainer actions (publishing packages, commissioning a professional). D4's history sweep is worth doing carefully with the maintainer present (a found secret would need immediate rotation — not something to discover at 3am with nobody to rotate it). D6 self-resolves on going public |
 | htmx 4 migration (E9) | Still beta, still monitoring-only |
 
+## I — Ground-truth library adoptions (2026-08-11, maintainer-directed)
+
+Maintainer decision after the sympy/B0 unblock: **batch-adopt the scouted ground-truth
+libraries NOW** rather than per-wave — the sandbox blocks agent-chosen installs, so
+"adopt when the wave starts" would make every future wave block on the maintainer being
+awake; and the standing instruction is **never hand-roll what these cover**.
+
+Installed + smoke-tested with curriculum-shaped cases, added to pyproject:
+
+| Library | Where in pyproject | Computes | For |
+|---|---|---|---|
+| `pint` 0.25 | core deps | unit conversions (2.5 m → 250 cm, exact) | Y5+ measurement, physics-adjacent maths |
+| `inflect` 7.5 | core deps | plurals incl. irregulars (child→children, sheep→sheep), a/an, ordinals | English word-form generators (replaces hand-curated tables) |
+| `num2words` 0.5 | core deps | number→words, multi-locale (en_IN verified) | lower-years; SG/IN English variants |
+| `chempy` 0.10 | **`chemistry` extra, NOT core** | `balance_stoichiometry()` — verified it computes the exact benzene equation (2 C6H6 + 15 O2 → 12 CO2 + 6 H2O) that the 2026-07-25 chemistry test showed phi4-mini reaching via fabricated reasoning | higher-grades chemistry wave |
+
+ChemPy's extra-not-core placement is the one judgment call: its packaging drags
+jupyter/notebook/matplotlib transitively — a family installing the tutor shouldn't pay
+that until chemistry content ships. CI adds the extra when that wave lands.
+
+Rejected in the same scouting pass (recorded so it isn't re-litigated):
+`language-tool-python` (Java server — wrong shape), `spaCy`/`NLTK` (heavy, no current
+need), `textstat` (would replace the working owned `eval/readability.py`), `py-fsrs`
+(watch-only; BKT is the deliberate design), `networkx` (stdlib graphlib suffices).
+
+**Architecture rule carried from sympy:** each library is adopted behind the same
+pattern — lazy import at point of use, additive paths only, our thin gate stays the
+safety boundary, SAFE_REJECT/graceful degradation when absent. The library computes
+truth; it never becomes the trust boundary itself.
+
 ## G — Sequence
 
 Dependency-ordered. The ordering is not cosmetic — three of these gates exist because doing

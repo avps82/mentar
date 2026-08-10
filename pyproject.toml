@@ -27,6 +27,14 @@ dependencies = [
   # is the whole equivalence check. Import is LAZY in verify_numeric.py (module
   # still imports without it; expression checks SAFE_REJECT with a clear detail).
   "sympy>=1.12",
+  # Ground-truth computation libs, adopted 2026-08-11 (maintainer: batch-adopt now
+  # so no future content wave blocks on an install, and never hand-roll what these
+  # cover). Same architecture as sympy: the library COMPUTES truth for generators/
+  # verifiers, our thin gates stay the safety boundary, imports stay lazy at the
+  # point of use. All three are light, pure-Python, long-maintained:
+  "pint>=0.24",       # unit conversion (Y5+ measurement, physics-adjacent maths)
+  "inflect>=7.0",     # English plurals/articles/ordinals (English word-form generators)
+  "num2words>=0.5",   # number->words, multi-locale (lower years; SG/IN English variants)
 ]
 
 [project.optional-dependencies]
@@ -53,6 +61,17 @@ nas = [
   # SMB/Samba client for reading/downloading ZIMs from a NAS via smb:// URLs.
   # Not needed when the share is mounted in the OS (libzim reads the mount directly).
   "smbprotocol>=1.12",
+]
+chemistry = [
+  # Adopted 2026-08-11 alongside pint/inflect/num2words (see core dependencies
+  # comment), but as an EXTRA, not core: chempy's balance_stoichiometry() is the
+  # computed ground truth for higher-grades chemistry generators (the fabricated-
+  # reasoning failure the 2026-07-25 chemistry test caught is exactly what this
+  # eliminates) — but its packaging drags an unusually heavy transitive tree
+  # (jupyter/notebook/matplotlib), which a family installing the tutor shouldn't
+  # pay for until chemistry content actually ships. Import stays lazy at the
+  # point of use; CI adds this extra when the chemistry wave lands.
+  "chempy>=0.9",
 ]
 grounding = [
   # ZIM reader for offline grounding (SPEC §15). Imported LAZILY — grounding degrades
