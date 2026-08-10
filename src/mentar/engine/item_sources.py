@@ -34,6 +34,7 @@ from mentar.engine.au_items import (
     AU_YEAR6_GENERATORS,
     AU_YEAR7_GENERATORS,
     AU_YEAR8_GENERATORS,
+    AU_YEAR9_GENERATORS,
 )
 from mentar.engine.generic_items import GENERIC_ITEM_SOURCES
 from mentar.engine.in_generic_items import IN_GENERIC_MATHS_GENERATORS
@@ -58,6 +59,7 @@ def build_registry(pilot_itembank_path: Path) -> dict[str, dict]:
         "au_year6": {"generators": AU_YEAR6_GENERATORS, "itembank": None},
         "au_year7": {"generators": AU_YEAR7_GENERATORS, "itembank": None},
         "au_year8": {"generators": AU_YEAR8_GENERATORS, "itembank": None},
+        "au_year9": {"generators": AU_YEAR9_GENERATORS, "itembank": None},
         "au_english_year2": {"generators": AU_ENGLISH_YEAR2_GENERATORS, "itembank": None},
         "au_english_year3": {"generators": AU_ENGLISH_YEAR3_GENERATORS, "itembank": None},
         "au_english_year4": {"generators": AU_ENGLISH_YEAR4_GENERATORS, "itembank": None},

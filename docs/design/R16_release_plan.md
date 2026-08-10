@@ -689,6 +689,23 @@ through the real matcher; live FSM round-trip both templates, 12/12 ground-truth
 One own-review catch: "Which of these word begins..." — singular/plural agreement bug,
 fixed before commit.
 
+**Y9 maths (first `expression`-type content) SHIPPED 2026-08-11:** 4 nodes —
+word-to-expression translation, combining two given expressions, perimeter/area from
+algebraic side lengths. Deliberately scoped away from "expand X"/"factorise X"/"simplify
+X" single-expression-transform phrasings: `expression_equiv` checks EQUIVALENCE, so a
+lazy retype of an already-algebraic prompt would trivially pass as "correct" for those
+phrasings (verified empirically: `x + (x+3)` correctly FAILs the perimeter question,
+since the prompt is a WORD description, not something equivalence-transformable into the
+answer). Real routing bug caught and fixed: all 4 labels initially matched
+`algebra_equations.md` (an EQUATION-SOLVING balance-layout scaffold with no relevance to
+expression-building) via a keyword-count TIE with the intended new scaffold, resolved
+alphabetically in the wrong file's favour — new `algebraic_expressions.md` scaffold
+authored, keywords strengthened until it wins outright; verified no regression on
+existing equation-solving/area-perimeter routing. Live FSM verified three properties on
+the real controller: ground-truth answers PASS, a reordered-but-equivalent answer PASSES
+(the actual point of the new checker), a wrong answer FAILS and routes to Help. 786 tests
+green.
+
 **Next-session starting point: Y3 science (extend the proven Y2 shape), then English Y3/Y4, then SG_GENERIC, then US_GENERIC (maintainer decided 2026-08-11: generic pack, no CCSS codes/branding — OSS-release safety; see CONTENT_LICENSES.md §2b)** |
 | D2 name reservation, D3 safeguarding, D4 history sweep, D6 cloud routines | D2/D3 are maintainer actions (publishing packages, commissioning a professional). D4's history sweep is worth doing carefully with the maintainer present (a found secret would need immediate rotation — not something to discover at 3am with nobody to rotate it). D6 self-resolves on going public |
 | htmx 4 migration (E9) | Still beta, still monitoring-only |

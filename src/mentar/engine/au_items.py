@@ -12,7 +12,10 @@ question text, labels and fact tables here are Mentar-authored (ACARA core
 content is CC BY 4.0; see docs/CONTENT_LICENSES.md).
 
 Scope guard: answers stay inside the deterministic verifier's grammar
-(int / fraction / mc4) — no decimals (the verifier safe-rejects them by design).
+(int / fraction / decimal / mc4 / expression — verify_numeric.py's full grammar
+as of B0, 2026-08-11). This docstring previously said "no decimals"; that was
+stale even before this edit — AU5-8 generators below already use decimal
+(R13 shipped it 2026-07-19) — corrected here while adding expression (Y9+).
 """
 
 from __future__ import annotations
@@ -491,4 +494,75 @@ AU_YEAR8_GENERATORS = {
     "au8_negative_multiplication": gen_negative_multiplication,  # AC9M8N01
     "au8_percentage_change": gen_percentage_change,              # AC9M8N03
     "au8_div_decimal_by_decimal": gen_div_decimal_by_decimal,    # AC9M8N05
+}
+
+# ── Year 9 (AC9M9A02 alignment) — first answer_type="expression" content ──
+#
+# B0 (2026-08-11) added a sympy-backed expression_equiv checker: PASS iff
+# simplify(candidate - truth) == 0, so 2(x+3) scores equal to 2x+6. That
+# equivalence is exactly right for "does this expression describe the same
+# relationship" — and exactly WRONG for "did you perform the named operation":
+# a task phrased "Expand 3(x+4)" would let the unexpanded original itself
+# pass (it IS equivalent to the expanded form), so it never verifies the work
+# was actually done. Every generator below is deliberately phrased so the
+# answer must be DERIVED from a setup the prompt does not hand over in
+# algebraically-equivalent form (a word phrase, or two separate expressions
+# to combine) — retyping the prompt's own text can never equal the answer.
+# "Expand X" / "factorise X" / "simplify X" single-expression-transform tasks
+# are NOT safe for this checker and are deliberately not attempted here.
+
+def gen_word_to_expression(rng: random.Random):
+    """"Three more than twice a number n" -> "2n + 3". Forces translation from
+    words, not transformation of an already-algebraic prompt."""
+    coef = rng.randint(2, 6)
+    const = rng.randint(1, 10)
+    var = rng.choice("nxy")
+    templates = [
+        (f"{const} more than {coef} times a number {var}", f"{coef}*{var} + {const}"),
+        (f"{coef} times a number {var}, minus {const}", f"{coef}*{var} - {const}"),
+    ]
+    phrase, expr = rng.choice(templates)
+    return ("expression", "expression_equiv",
+            f"Write an algebraic expression for: {phrase}.", expr)
+
+
+def gen_combine_expressions(rng: random.Random):
+    """Given a = Ax+B, b = Cx+D, what is a + b? Forces real combination -- the
+    prompt never states the answer's own algebraic form."""
+    var = rng.choice("xy")
+    a1, a0 = rng.randint(2, 8), rng.randint(1, 9)
+    b1, b0 = rng.randint(2, 8), rng.randint(1, 9)
+    return ("expression", "expression_equiv",
+            f"If a = {a1}{var} + {a0} and b = {b1}{var} + {b0}, what is a + b? "
+            "Give your answer as a simplified expression.",
+            f"{a1+b1}*{var} + {a0+b0}")
+
+
+def gen_rectangle_perimeter_expression(rng: random.Random):
+    """Width x, length x+n -> simplified perimeter expression. The setup is a
+    WORD description of a shape, not an expression the child could just echo."""
+    n = rng.randint(1, 9)
+    return ("expression", "expression_equiv",
+            f"A rectangle has width x and length (x + {n}). Write a simplified "
+            "expression for its perimeter.",
+            f"4*x + {2*n}")
+
+
+def gen_rectangle_area_expression(rng: random.Random):
+    """Width x, length x+n -> area expression (deliberately left in factored
+    form x*(x+n) as ground truth; expression_equiv accepts any equivalent
+    expanded form too, e.g. x^2+{n}x, since both are correct answers to
+    "an expression for the area", not a "must show expanded" instruction)."""
+    n = rng.randint(1, 9)
+    return ("expression", "expression_equiv",
+            f"A rectangle has width x and length (x + {n}). Write an expression "
+            "for its area.",
+            f"x*(x + {n})")
+
+
+AU_YEAR9_GENERATORS = {
+    "au9_word_to_expression": gen_word_to_expression,                        # AC9M9A02
+    "au9_combine_expressions": gen_combine_expressions,                      # AC9M9A02
+    "au9_rectangle_perimeter_expression": gen_rectangle_perimeter_expression,  # AC9M9A02
+    "au9_rectangle_area_expression": gen_rectangle_area_expression,          # AC9M9A02
 }
