@@ -404,6 +404,8 @@ def check(
             return _check_mc_choice(llm_output, ground_truth)
         elif checker == "decimal_exact":
             return _check_decimal_exact(llm_output, ground_truth)
+        elif checker == "expression_equiv":
+            return _check_expression_equiv(llm_output, ground_truth)
         else:
             return CheckOutcome(
                 result=CheckResult.SAFE_REJECT,
@@ -709,6 +711,131 @@ def _check_decimal_exact(llm_output: str, ground_truth: str) -> CheckOutcome:
         f"{gt_canonical}: {'match' if result == CheckResult.PASS else 'mismatch'}."
     )
     return CheckOutcome(result=result, extracted=candidate, canonical=canonical, detail=detail)
+
+
+# ---------------------------------------------------------------------------
+# expression answer type (B0, 2026-08-11) — a genuinely separate, additive path
+# for Y9+ algebra, exactly the R13 pattern: zero edits to the int/fraction/
+# decimal checkers above; their guards stay untouched.
+#
+# SAFETY: sympy's sympify/parse_expr is an eval-shaped surface — unrestricted
+# input can reach function calls and dunder attributes. The gate below, NOT
+# sympy's own leniency, is the actual safety boundary (same posture as R13's
+# _DECIMAL_STRICT_RE before Decimal()):
+#   * whole-string allowlist: digits, letters, + - * / ^ ( ) . and whitespace —
+#     no commas (function args), no underscores (dunders), no quotes, no '='
+#   * every alphabetic run must be a SINGLE letter — kills every function/
+#     attribute name ("factorial", "exp", "__class__") while keeping x, y, 2ab
+#   * hard length cap — no parser DoS from pathological input
+# Anything the gate passes that sympy still can't parse -> SAFE_REJECT (never
+# raises). sympy itself is imported LAZILY so this module keeps importing
+# without it (same deferred-import pattern as grounding/reader.py's libzim);
+# a missing sympy -> SAFE_REJECT with an explicit detail, never a crash.
+# ---------------------------------------------------------------------------
+
+_EXPR_ALLOWED_RE = re.compile(r"^[0-9a-zA-Z+\-*/^() \t.]{1,100}$")
+_EXPR_MULTILETTER_RE = re.compile(r"[a-zA-Z]{2,}")
+
+
+def _parse_expression(s: str):
+    """Gate + parse one expression string -> sympy expr, or None (SAFE_REJECT).
+
+    Child-friendly input forms: implicit multiplication ("2x", "2(x+3)") and
+    caret exponents ("x^2") are accepted via sympy's standard transformations.
+    """
+    if not s or not s.strip():
+        return None
+    s = s.strip()
+    if not _EXPR_ALLOWED_RE.fullmatch(s):
+        return None
+    if _EXPR_MULTILETTER_RE.search(s):
+        return None  # multi-letter name — function/attribute shaped; reject
+    try:
+        from sympy.parsing.sympy_parser import (
+            convert_xor,
+            implicit_multiplication_application,
+            parse_expr,
+            standard_transformations,
+        )
+    except ImportError:
+        return None
+    try:
+        return parse_expr(
+            s,
+            transformations=standard_transformations
+            + (implicit_multiplication_application, convert_xor),
+            evaluate=True,
+        )
+    except Exception:  # noqa: BLE001 — any parse failure is a SAFE_REJECT, never a crash
+        return None
+
+
+def _check_expression_equiv(llm_output: str, ground_truth: str) -> CheckOutcome:
+    """Symbolic equivalence: PASS iff simplify(candidate - truth) == 0, so
+    2(x+3) === 2x+6 and (x+1)^2 === x^2+2x+1. The candidate is the whole
+    (stripped) llm_output, or the last <answer> tag's content when present —
+    an expression can't be reliably fished out of surrounding prose the way a
+    lone integer can, and the child's typed answer IS the whole input."""
+    try:
+        import sympy
+    except ImportError:
+        return CheckOutcome(
+            result=CheckResult.SAFE_REJECT,
+            extracted=None,
+            canonical=None,
+            detail="sympy not installed — expression checking unavailable; safe-reject.",
+        )
+
+    gt_expr = _parse_expression(ground_truth)
+    if gt_expr is None:
+        return CheckOutcome(
+            result=CheckResult.SAFE_REJECT,
+            extracted=None,
+            canonical=None,
+            detail=f"ground_truth {ground_truth!r} failed the expression gate — safe-reject.",
+        )
+
+    tag_match = _ANSWER_TAG_RE.search(llm_output)
+    candidate = (tag_match.group(1) if tag_match else llm_output).strip()
+    cand_expr = _parse_expression(candidate)
+    if cand_expr is None:
+        # Distinguish "gate/parse rejected it" (SAFE_REJECT — something
+        # expression-shaped may be there but we refuse to guess) from
+        # "nothing but whitespace" (EXTRACT_FAIL).
+        if not candidate:
+            return CheckOutcome(
+                result=CheckResult.EXTRACT_FAIL,
+                extracted=None,
+                canonical=None,
+                detail="Empty candidate — nothing to verify.",
+            )
+        return CheckOutcome(
+            result=CheckResult.SAFE_REJECT,
+            extracted=candidate,
+            canonical=None,
+            detail=f"Candidate {candidate!r} failed the expression gate/parse — safe-reject.",
+        )
+
+    try:
+        equivalent = sympy.simplify(cand_expr - gt_expr) == 0
+    except Exception as exc:  # noqa: BLE001
+        return CheckOutcome(
+            result=CheckResult.SAFE_REJECT,
+            extracted=candidate,
+            canonical=None,
+            detail=f"simplify failed: {exc!r} — safe-reject.",
+        )
+    canonical = str(sympy.expand(cand_expr))
+    result = CheckResult.PASS if equivalent else CheckResult.FAIL
+    return CheckOutcome(
+        result=result,
+        extracted=candidate,
+        canonical=canonical,
+        detail=(
+            f"Candidate {candidate!r} -> {canonical}; expected {ground_truth!r}: "
+            f"{'equivalent' if equivalent else 'not equivalent'}."
+        ),
+    )
 
 
 def _check_mc_choice(llm_output: str, ground_truth: str) -> CheckOutcome:

@@ -1062,6 +1062,7 @@ class SessionController:
             "mc4": "(answer with a letter: A, B, C or D)",
             "int": "(answer with a number)",
             "decimal": "(answer with a number)",
+            "expression": "(answer like 2x + 6)",
         }.get(answer_type, "")
 
     @staticmethod

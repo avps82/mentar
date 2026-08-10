@@ -32,8 +32,10 @@ _CLASS_DEFAULTS = {
     "mc4":     {"guess": 0.20, "slip": 0.10, "learns": 0.20, "forgets": 0.0},
     "numeric": {"guess": 0.05, "slip": 0.10, "learns": 0.20, "forgets": 0.0},
 }
-# answer_type -> node class
-_NUMERIC_TYPES = frozenset({"int", "decimal", "fraction"})
+# answer_type -> node class. "expression" (B0, 2026-08-11): guessing a correct
+# algebraic expression cold is at least as unlikely as guessing a number —
+# numeric-class priors fit.
+_NUMERIC_TYPES = frozenset({"int", "decimal", "fraction", "expression"})
 
 
 @dataclass(frozen=True)
