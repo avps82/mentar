@@ -666,7 +666,20 @@ executes; each ✅ below was verified (tests + targeted checks), not just writte
 | E1 Finding 4 — `au6_fraction_decimal_equiv` scaffold is "debatable, not wrong" | Audit's own words; building a dual-representation scaffold is polish, YAGNI until a real complaint |
 | Restart-the-app button (R12 follow-up item 4) | `PHASE0_STATUS.md` already records it as "needs a design call (no in-process restart for a WSGI dev server)" — a design decision, not an overnight fix |
 | A0 — pre-existing `style.css` polish diff | Maintainer taste call, explicitly left to them (see A's completion note) |
-| B1 maths Y9-12, B2 English breadth, B4 India, B5/C3 Singapore authoring, science Y3-12 | Each slice = fact-table/content design (binding, mine) + delegation round + full verification ≈ 1-2h per slice. The pattern is proven (F1/F2); executing the full breadth is a multi-session effort, not an overnight one. **Next-session starting point: Y3 science (extend the proven Y2 shape), then English Y3/Y4, then SG_GENERIC, then US_GENERIC (maintainer decided 2026-08-11: generic pack, no CCSS codes/branding — OSS-release safety; see CONTENT_LICENSES.md §2b)** |
+| B1 maths Y9-12, B2 English breadth, B4 India, B5/C3 Singapore authoring, science Y3-12 | Each slice = fact-table/content design (binding, mine) + delegation round + full verification ≈ 1-2h per slice. The pattern is proven (F1/F2); executing the full breadth is a multi-session effort, not an overnight one. **Generic curriculum wave SHIPPED 2026-08-11 (maintainer: "do all the generic curriculum"):**
+20 new maths templates — SG_GENERIC Primary 2-6 + Secondary 1-2, US_GENERIC Grades 2-8,
+IN_GENERIC Classes 2 and 4-8 (Class 3 already existed and keeps its original node ids) —
+via ONE shared concept-progression table (`engine/generic_items.py`: 7 difficulty stages,
+111 nodes, ZERO new generator logic — pure reuse of already-tested generators, the
+in_generic_items.py discipline generalized). Templates generated deterministically from a
+curated table (labels/seeds mirror real generator output per stage — a stage-3 seed shows
+3-digit numbers, not 2-digit; caught and fixed on review). Registry spread-wired; catalog
+golden-list extended (+20); live FSM round-trips on 4 representative levels across all 3
+packs (12 consecutive ground-truth answers each, all PASS). Level→stage mapping is
+deliberately conservative-approximate — no alignment claimed, per each pack's licence
+finding. 786 tests green.
+
+**Next-session starting point: Y3 science (extend the proven Y2 shape), then English Y3/Y4, then SG_GENERIC, then US_GENERIC (maintainer decided 2026-08-11: generic pack, no CCSS codes/branding — OSS-release safety; see CONTENT_LICENSES.md §2b)** |
 | D2 name reservation, D3 safeguarding, D4 history sweep, D6 cloud routines | D2/D3 are maintainer actions (publishing packages, commissioning a professional). D4's history sweep is worth doing carefully with the maintainer present (a found secret would need immediate rotation — not something to discover at 3am with nobody to rotate it). D6 self-resolves on going public |
 | htmx 4 migration (E9) | Still beta, still monitoring-only |
 

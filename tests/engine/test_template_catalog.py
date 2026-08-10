@@ -78,6 +78,66 @@ _EXPECTED = {
         "key": "in_generic_class3_maths", "label": "Maths — Class 3 🇮🇳 (general)",
         "item_source": "in_generic_maths",
     },
+    "curriculum/templates/SG_GENERIC/p2_maths.md": {
+        "key": "sg_generic_p2_maths", "label": "Maths — Primary 2 🇸🇬 (general)", "item_source": "sg_p2_maths",
+    },
+    "curriculum/templates/SG_GENERIC/p3_maths.md": {
+        "key": "sg_generic_p3_maths", "label": "Maths — Primary 3 🇸🇬 (general)", "item_source": "sg_p3_maths",
+    },
+    "curriculum/templates/SG_GENERIC/p4_maths.md": {
+        "key": "sg_generic_p4_maths", "label": "Maths — Primary 4 🇸🇬 (general)", "item_source": "sg_p4_maths",
+    },
+    "curriculum/templates/SG_GENERIC/p5_maths.md": {
+        "key": "sg_generic_p5_maths", "label": "Maths — Primary 5 🇸🇬 (general)", "item_source": "sg_p5_maths",
+    },
+    "curriculum/templates/SG_GENERIC/p6_maths.md": {
+        "key": "sg_generic_p6_maths", "label": "Maths — Primary 6 🇸🇬 (general)", "item_source": "sg_p6_maths",
+    },
+    "curriculum/templates/SG_GENERIC/s1_maths.md": {
+        "key": "sg_generic_s1_maths", "label": "Maths — Secondary 1 🇸🇬 (general)", "item_source": "sg_s1_maths",
+    },
+    "curriculum/templates/SG_GENERIC/s2_maths.md": {
+        "key": "sg_generic_s2_maths", "label": "Maths — Secondary 2 🇸🇬 (general)", "item_source": "sg_s2_maths",
+    },
+    "curriculum/templates/US_GENERIC/g2_maths.md": {
+        "key": "us_generic_g2_maths", "label": "Maths — Grade 2 🇺🇸 (general)", "item_source": "us_g2_maths",
+    },
+    "curriculum/templates/US_GENERIC/g3_maths.md": {
+        "key": "us_generic_g3_maths", "label": "Maths — Grade 3 🇺🇸 (general)", "item_source": "us_g3_maths",
+    },
+    "curriculum/templates/US_GENERIC/g4_maths.md": {
+        "key": "us_generic_g4_maths", "label": "Maths — Grade 4 🇺🇸 (general)", "item_source": "us_g4_maths",
+    },
+    "curriculum/templates/US_GENERIC/g5_maths.md": {
+        "key": "us_generic_g5_maths", "label": "Maths — Grade 5 🇺🇸 (general)", "item_source": "us_g5_maths",
+    },
+    "curriculum/templates/US_GENERIC/g6_maths.md": {
+        "key": "us_generic_g6_maths", "label": "Maths — Grade 6 🇺🇸 (general)", "item_source": "us_g6_maths",
+    },
+    "curriculum/templates/US_GENERIC/g7_maths.md": {
+        "key": "us_generic_g7_maths", "label": "Maths — Grade 7 🇺🇸 (general)", "item_source": "us_g7_maths",
+    },
+    "curriculum/templates/US_GENERIC/g8_maths.md": {
+        "key": "us_generic_g8_maths", "label": "Maths — Grade 8 🇺🇸 (general)", "item_source": "us_g8_maths",
+    },
+    "curriculum/templates/IN_GENERIC/c2_maths.md": {
+        "key": "in_generic_c2_maths", "label": "Maths — Class 2 🇮🇳 (general)", "item_source": "in_c2_maths",
+    },
+    "curriculum/templates/IN_GENERIC/c4_maths.md": {
+        "key": "in_generic_c4_maths", "label": "Maths — Class 4 🇮🇳 (general)", "item_source": "in_c4_maths",
+    },
+    "curriculum/templates/IN_GENERIC/c5_maths.md": {
+        "key": "in_generic_c5_maths", "label": "Maths — Class 5 🇮🇳 (general)", "item_source": "in_c5_maths",
+    },
+    "curriculum/templates/IN_GENERIC/c6_maths.md": {
+        "key": "in_generic_c6_maths", "label": "Maths — Class 6 🇮🇳 (general)", "item_source": "in_c6_maths",
+    },
+    "curriculum/templates/IN_GENERIC/c7_maths.md": {
+        "key": "in_generic_c7_maths", "label": "Maths — Class 7 🇮🇳 (general)", "item_source": "in_c7_maths",
+    },
+    "curriculum/templates/IN_GENERIC/c8_maths.md": {
+        "key": "in_generic_c8_maths", "label": "Maths — Class 8 🇮🇳 (general)", "item_source": "in_c8_maths",
+    },
 }
 
 

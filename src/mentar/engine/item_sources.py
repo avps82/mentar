@@ -33,6 +33,7 @@ from mentar.engine.au_items import (
     AU_YEAR7_GENERATORS,
     AU_YEAR8_GENERATORS,
 )
+from mentar.engine.generic_items import GENERIC_ITEM_SOURCES
 from mentar.engine.in_generic_items import IN_GENERIC_MATHS_GENERATORS
 from mentar.engine.itemgen import ARITHMETIC_GENERATORS, DEFAULT_GENERATORS
 from mentar.engine.practice_items import ENGLISH_PRACTICE_GENERATORS, MATHS_PRACTICE_GENERATORS
@@ -63,4 +64,12 @@ def build_registry(pilot_itembank_path: Path) -> dict[str, dict]:
         # IN_GENERIC ships in-repo under curriculum/templates/ like every other
         # pack (R10 -- a family toggles it on/off from Settings, no download).
         "in_generic_maths": {"generators": IN_GENERIC_MATHS_GENERATORS, "itembank": None},
+        # Generic (board-agnostic) packs — SG/US/IN levels built from ONE shared
+        # concept-progression table (engine/generic_items.py). Spread rather than
+        # listed one-by-one: 20 entries whose contents are already defined there,
+        # so hand-listing them here would be a second place to drift.
+        **{
+            name: {"generators": gens, "itembank": None}
+            for name, gens in GENERIC_ITEM_SOURCES.items()
+        },
     }
