@@ -2,14 +2,15 @@
 type: Mentar Design Doc
 title: R16 — Release Wave (rendering contract, curriculum breadth, Singapore, OSS release)
 description: Complete plan for the open bugs, the one-look-and-feel fix, full maths/science/English curriculum, the Singapore pack, and OSS release readiness. Planning only — nothing in here is built.
-status: PLAN ONLY — not started, nothing executed
-timestamp: "2026-08-10T00:00:00Z"
+status: LIVE — plan + execution log (waves -1 through 2 and Y2 science shipped; see §H for per-item status)
+timestamp: "2026-08-11T00:00:00Z"
 ---
 
 # R16 — Release Wave
 
-Planning document. **No code was changed to produce this.** Every claim below was read
-out of the working tree on 2026-08-10; file/line references are current as of that read.
+Started 2026-08-10 as a pure planning document; now also the execution log (statuses
+updated in place as waves ship — see §F0-F2 and §H). File/line references were current at
+the original read; sections marked ✅ describe what actually shipped.
 
 Five workstreams — **A** rendering contract, **B** curriculum breadth, **C** Singapore,
 **D** OSS release, **E** open bugs — plus **F**, which is not a workstream but the
@@ -87,6 +88,11 @@ prerequisite decision (see B0), not a step in the sequence.
 
 ## A — One rendering contract
 
+**✅ SHIPPED 2026-08-10 (all of A0–A5, applied to the working tree, not committed).** See
+the completion note at the end of this section for what actually happened, including one
+real scope correction from the original estimate below (kept for the record — the "why"
+still holds even though the "24 files" number turned out wrong).
+
 **Goal:** every solution, explanation, and diagram in the app looks like it came from the
 same product. One convention, enforced in one function and one CSS block.
 
@@ -117,6 +123,46 @@ the final convention. Authoring first means re-editing hundreds of files later.
 **Verification is visual, not just green tests.** The house rule from
 `project_r12_followup_bugs_2026-07-19` applies: reproduce through a real `mentar serve`
 request path. "Code reads correct" is not evidence for a rendering change.
+
+**Completion note (2026-08-10):** all done directly, not delegated — A1 is a trust-boundary
+change (escape-first is the security property) and A2–A5 turned out small enough that
+writing a delegation spec would have cost more than doing the work.
+
+- **A1**: implemented exactly as scoped (fence extraction before the per-line bullet/bold/
+  italic pass, wrapped in `<pre class="ascii-art">`). Verified against real, pre-existing
+  content, not just synthetic fixtures — `curriculum/visual_scaffolds/science/
+  states_of_matter.md`'s actual fenced table now renders as a genuine `<pre>` block with
+  zero literal backticks, through the real `load_visual_scaffold` → `_render_markdown_lite`
+  pipeline.
+- **A2**: `--font-mono` defined; `.steps-pre`/`.ascii-art` share one "diagram box" rule.
+  One deliberate divergence from the original estimate: `.ascii-art` gets `overflow-x: auto`
+  (not `.steps-pre`'s `hidden`) — free-form scaffold content has no width guarantee the way
+  the computed arithmetic step grid does, so clipping would silently reintroduce the exact
+  misalignment this workstream exists to fix.
+- **A3**: the "24 files, rewrite all of them" estimate was wrong — **21 of 24 already used
+  fences correctly** and needed no content change once A1 landed; only the 4 files that
+  actively told the model to prefer emoji *instead of* the fence needed fixing (a 5th
+  emoji mention, in `algebra_equations.md`, turned out to already be decoration-only
+  guidance, not a contradiction — checked before editing it, left alone). Fixed directly
+  (one line each), not delegated — the actual fix was smaller than a delegation spec would
+  have been.
+- **A4**: found a second contradiction not in the original plan while implementing this —
+  `prompts/help_visual.md` explicitly instructed emoji-shape diagrams
+  ("🟩🟩⬜⬜ shows 2/4"), directly opposing the fence-only decision. Fixed, plus a new
+  "Diagrams" section in `system_prompt.md` stating the convention once. Both are in the
+  hash-gated prompt registry (T4.6/T7.3) — versions recomputed and `prompts/README.md`
+  updated to match; verified via `test_prompt_registry.py`, not just eyeballed.
+- **A5**: `test_markdown_lite_renders_fenced_ascii_diagrams` added to
+  `tests/web/test_app_smoke.py` — fence rendering, bold/italic/bullet syntax correctly
+  NOT processed inside a fence, and XSS-safety inside a fence (escaping is not a separate
+  trust boundary from the rest of the function).
+- **A0 still open, not resolved by this pass**: the pre-existing uncommitted `style.css`
+  polish diff (gradient wordmark, layered shadows, hover states) is still sitting in the
+  working tree, now with A2's changes layered on top of it with no conflicts. Whether to
+  keep or drop that polish work is a product/taste call for the maintainer, not something
+  to decide unilaterally while fixing the rendering contract.
+
+Full suite: 739 passed (up from 738 — A5 adds one test). Nothing committed.
 
 ---
 
@@ -255,40 +301,307 @@ stable.
 
 ---
 
+## F0 — Local-LLM infra: what was verified and fixed (2026-08-10)
+
+Superseded: the old `gemma4:12b`-via-`MENTAR_VLLM_*` eval-host path referenced below in F's
+prior version. A new gateway (`local-llm-infra`, `<local-llm-infra>`, source of
+truth over any pasted copy) is now set up in this project — `tools/llm.sh`, five named
+models across two GPUs, and a verification harness
+(`local-llm-infra/linux/harness/run_checks.sh`). Before revising the delegation plan against
+it, every piece was actually exercised, not assumed working:
+
+| Checked | Result |
+|---|---|
+| `CLAUDE.md` local-LLM section, `tools/llm.sh`, `.claude/settings.local.json` env | All present, JSON valid, script executable |
+| Bare call (`tools/llm.sh gemma4-12b-q4 "reply with OK"`) | ✅ Works, instant |
+| `--rules` (mandatory for all code delegation per the standing rules) | ❌ Failed outright — `prompts/system-grunt.md` doesn't exist in this project. **Root cause**: this project's `prompts/` is a spec-gated dialogue-template registry (`tests/test_prompt_registry.py`, T4.6/T7.3) that globs every `*.md` under it and demands versioned front matter + a README hash entry. Confirmed by dropping the file there directly: 3 tests failed immediately. **Fixed**: `system-grunt.md` copied to `tools/system-grunt.md` instead (outside the registry, git-excluded alongside its sibling `llm.sh`); `llm.sh` patched with a one-line `${LLM_SYSTEM_GRUNT_PATH:-...}` override (falls back to upstream's default path when unset, so the vendored script's own behaviour is unchanged for any project that doesn't need the override) wired via `.claude/settings.local.json`. Verified: `--rules` now returns correctly-formatted `FILES`/`ARTIFACT`/`NOT DONE`/`MISSING` blocks |
+| `gemma4-12b-q4` + `--rules` on a real artifact-shaped task | ❌ Failed twice — `finish_reason=length`, empty content, then `Context size has been exceeded` even at `LLM_MAX_TOKENS=4000`. **Root cause**: this is `local-llm-infra`'s own already-documented **BUG-4** (`docs/OPEN-BUGS-lifecycle-and-timeouts.md`) — `gemma4-12b-q4` is a reasoning model that burns its entire budget on hidden `reasoning_content`; `think:false` is silently ignored (an Ollama-ism llama.cpp doesn't know) and `reasoning_effort:"none"` is rejected by LiteLLM. The one thing BUG-4 measured as working — `chat_template_kwargs: {enable_thinking: false}` — is **not sent by the shipped `llm.sh`**, and the script's own on-failure advice ("raise `LLM_MAX_TOKENS`") is the *wrong* fix per BUG-4: this model has a hard `-c 16384` ceiling (BUG-12, its 10 GB card), so more budget just means more silent thinking, not an answer. **Fixed**: `llm.sh` patched to send `chat_template_kwargs: {enable_thinking: false}`, scoped to `gemma4-12b-q4` only (the only model with measured evidence either way). Verified: the same artifact task that failed twice now returns clean, correctly-formatted output |
+| Model registry (`GET /v1/models`) | ✅ All 5 documented names present, no drift |
+| Harness (`run_checks.sh --help`) | ✅ Runs, interface matches the `CLAUDE.md` block exactly (no doc drift) |
+| `tools/ask-local.sh` (pre-existing, not part of this setup) | ⚠️ **Stale, not fixed** — a parallel, older tool for the same purpose. Different env var names (`LITELLM_URL`/`LITELLM_KEY`, neither set in `.claude/settings.local.json`) so it fails outright on its own env guard; hardcodes the same `system-grunt.md` path with no override; no reasoning-suppression fix. Left alone (wasn't asked to remove it) but flagged — two tools claiming the same job, one working and one silently broken, is a maintenance trap. Recommend deleting it or pointing it at `llm.sh`. |
+
+**Both `llm.sh` fixes are deliberate, commented deviations from the vendored copy**, not
+silent forks — each cites the reason (project-specific registry collision; upstream BUG-4)
+so a future re-sync from `local-llm-infra` doesn't blindly overwrite them and reintroduce
+either failure. Consider upstreaming both (the env-var override is generically useful for
+any project with an incompatible `prompts/`-shaped directory; the `chat_template_kwargs` fix
+is a correctness fix, not a Mentar-specific choice) — not done here since `local-llm-infra`
+is a shared repo outside this task's scope.
+
+**Measured capability evidence worth carrying into the routing below**
+(`local-llm-infra/docs/2026-08-09-capability-validation.md`, one real multi-file task,
+43 tests, temperature 0): `qwen3.6-27b-q5` was the *only* model of the four GPU-0 options
+that shipped genuinely correct, working functionality. `devstral-24b-q5` completed fast
+(318s) but silently built stub objects and never fetched them — 0 records, no error.
+`skywork-swe-32b-q5` completed but re-fetched the wrong node 3× and returned duplicated
+data. `gemma4-31b-q5` timed out entirely even at a raised 2400s ceiling. **"Completed
+without error" is not evidence of correctness for any of these models** — devstral and
+skywork's failures look exactly like clean diffs. This is the concrete case for why the
+harness gate below is mandatory regardless of which model produced the output, not a
+formality for the less-trusted ones.
+
+---
+
 ## F — What the local LLM builds
 
-The standing default already applies (`feedback_local_generate_sonnet_verify`): **gemma4:12b
-generates anything it can, Sonnet verifies.** This section is only the routing table for
-this wave — the policy itself is settled and is not re-litigated here.
+The standing default (`feedback_local_generate_sonnet_verify`) still applies — **local
+model generates, Sonnet/Opus verifies** — retargeted onto the new roster and pushed further:
+with a 27B reasoning model and a 24B agentic model now available (not just a 12B), more of
+this wave's grunt work can move off Sonnet/Opus quota than the original plan assumed.
 
-**Gemma-suitable** — high volume, schema-constrained, machine-checkable:
+### F1 — Calibration pilot: E2.2 delegated to `qwen3.6-27b-q5`, measured (2026-08-10)
 
-- A3: 24 scaffold rewrites onto one convention (mechanical transform, fixed target format)
-- B1–B5: every curriculum template markdown (fixed front matter + node schema)
-- B3: science fact tables (bulk authoring against a table shape)
-- B2/B4: mc4 distractor lists for English and science
+Before trusting the routing table below on real curriculum work, one real advisory-judgment
+task was run end to end to get a measured data point instead of a guess: **E2.2**, the
+`explain_check.py` false-positive on division-with-remainder claims (`"12 ÷ 5 = 2 R 2"`
+wrongly flagged as verified-wrong — see E2 above). Chosen because it satisfies the
+advisory-judgment test above: the desired behavior reduces to a small truth table
+(does `a == q×b + r` with `0 ≤ r < b`?) plus a pre-existing 16-test regression suite, so
+verifying the result doesn't require re-deriving the fix myself. E2.3 (decimal claims,
+same file) was deliberately left out of scope — see the "Not delegated" note above.
 
-**Not gemma** — Sonnet or Opus, no delegation:
+**Task spec sent to qwen:** complete file contents of `explain_check.py` and its test file,
+the exact bug trace (already fully diagnosed in E2), a 7-row truth table of required
+in/out behavior, explicit file scope (may edit the implementation file; may only *append*
+new tests to the test file, never modify existing ones), and the `--rules` block.
+
+**Result:** `tools/llm.sh --rules qwen3.6-27b-q5` — 9m36s wall time (mostly cold load; GPU 0
+had nothing resident). Output: correctly-formed `FILES`/`ARTIFACT`/`NOT DONE: none`/
+`MISSING: none`.
+
+**Verification actually run** (not just re-running qwen's own claims):
+1. Manual diff against HEAD — exactly 3 changed lines in the implementation (the regex, the
+   tuple-unpack, one new branch) plus 1 trailing blank line; the test file diff was a pure
+   append of 3 new test functions. Zero reformatting, zero renamed/reordered anything —
+   clean PRESERVE CONTEXT compliance.
+2. Applied, ran `pytest tests/engine/test_explain_check.py` — 19/19 pass (16 original + 3
+   new, 0 changed, 0 removed).
+3. **7 adversarial cases I wrote myself, not qwen's** — including a non-canonical-remainder
+   case (`"12 ÷ 5 = 1 R 7"`, arithmetically self-consistent but `7 ≥ divisor`, must be
+   WRONG) that wasn't in my own spec's truth table. qwen's fix rejected it correctly anyway
+   (the `0 ≤ r < b` range check it added handles this on its own) — a genuine positive
+   signal, not just spec-compliance. One of my own hand-checked cases had an arithmetic
+   error in my prediction; the code's actual output was right and caught it.
+4. Full suite: 735 → 738 passed (exactly +3, 0 regressions). `ruff check` clean.
+5. `run_checks.sh --mode code --must-preserve ... --must-call normalise_fraction --json`:
+   `check_preserved` passed once I fixed my own flag misuse (`--must-preserve` means
+   *byte-identical to HEAD* — I'd wrongly listed `find_claims`, the function that was
+   *supposed* to change; removing it from the list was the correct fix, not a harness bug).
+   `check_diff_scope` reported a false "out-of-scope" failure — caused by unrelated
+   pre-existing uncommitted changes already sitting in this working tree from earlier in
+   the session (`CLAUDE.md`, this plan doc, `style.css`), not by qwen's edit. Confirmed via
+   a direct `git diff --name-only` cross-check. **Operational lesson for future runs:**
+   `check_diff_scope` needs a clean or task-isolated working tree (stash first, or a git
+   worktree per delegated task) to be meaningful — running it against a tree with other
+   in-flight work produces misleading collateral-damage failures unrelated to the task
+   actually being checked.
+
+**Verdict: qwen3.6-27b-q5 produced a correct, well-scoped, properly-tested fix for a
+moderately subtle regex/judgment bug on the first attempt.** Not committed yet — applied to
+the working tree, pending the same commit decision as everything else this session. This is
+one data point, not a pattern — but it's real evidence advisory-judgment delegation to this
+model is worth doing more of, at the E2.2 risk tier (bounded file, existing regression
+suite, checkable truth table), not yet at the E2.4/E2.5 tier reclassified above.
+
+### F2 — First production slice: B3 science, AU_ACARA Year 2 sound (2026-08-10)
+
+Not another calibration pilot — the first real wave-4 deliverable, run to prove the
+two-model split on actual content rather than a bug fix. Narrowed from the plan's original
+"B3: Y2-12 science, 11 fact tables" down to ONE topic (sound/vibration, ACARA `AC9S2U02`)
+for a concrete reason found while scoping, not caution for its own sake: the other two
+natural Y2 topics had real, structural problems —
+- **Solar system (`AC9S2U01`)**: the natural {planet, star, moon} fact-table shape breaks
+  `mc_which_is`'s `rng.sample(pool, 3)` — targeting "planet" (5 members) leaves only
+  star+moon (1+1=2) in the distractor pool, which crashes at runtime for a real child
+  session, not at authoring time.
+- **Materials change (`AC9S2U03`)**: bending/twisting/stretching/breaking don't cleanly
+  partition into an unambiguous disjoint-classes MC shape at this reading level (a
+  "twisted pipe cleaner" is arguably also bent) — content-design risk, not a coding one.
+
+Shipping one structurally-sound node beats three where two have unresolved design risk.
+
+**Split, applying the advisory/binding distinction from F1 directly:** the fact table
+itself (is "a guitar string vibrates to make sound" true?) is binding judgment — cheap
+for Opus to verify against general knowledge, so authored directly rather than delegated.
+Writing the generator function/registry entry AND the template markdown against an
+already-fact-checked table is advisory — delegated.
+
+- **Template** (`curriculum/templates/AU_ACARA/year2_science.md`) → `gemma4-12b-q4`,
+  16s. One real defect: it copied the sibling template's `engine/au_items.py
+  AU_YEAR2_GENERATORS` comment line verbatim even though this template's items come from
+  `engine/science_items.py`/`SCIENCE_GENERATORS` — my own spec gave explicit values for
+  every field but that one connective comment line, so it fell back to copying the
+  sibling unchanged rather than flagging the gap under `MISSING` as instructed. Caught on
+  read-through, fixed directly (one line) rather than re-delegated. A second, unrelated
+  typo ("ACAR" → "ACARA") also fixed directly.
+- **Generator** (`engine/science_items.py`, new `_gen_sound_vibration` + registry entry)
+  → `qwen3.6-27b-q5`, 3m30s. Clean — diff was a pure 3-block insertion, zero touched
+  existing lines, matched the existing `_gen_states_of_matter` pattern exactly.
+- **Registry wiring** (`item_sources.py`, one new entry pointing both `"science"` and
+  `"au_science_year2"` at the same growing `SCIENCE_GENERATORS` dict) — done directly,
+  not delegated. One dict entry with zero design freedom isn't worth a round-trip.
+- **Visual scaffold** (`curriculum/visual_scaffolds/science/sound.md`) — done directly,
+  not delegated. `tests/engine/test_scaffold_coverage.py` failed on the first full-suite
+  run because the new node had no matching scaffold (a real, generically-useful gate this
+  project already had — not something either model was asked about, since I hadn't
+  scoped it into either task spec). Authored in workstream A's target rendering
+  convention (fenced ASCII, no emoji-diagram instruction) even though A itself hasn't
+  landed yet — costs nothing extra now and means this one file won't need touching again
+  once A ships.
+
+**Verification, all four layers, not just "tests passed":**
+1. `mentar validate` on the template — pass, 1 concept, correctly identified as root+leaf.
+2. 500-draw self-validate on the generator — zero crashes; every draw's marked-correct
+   option independently re-derived and confirmed a member of the target category AND
+   confirmed absent from the other category (disjointness holds every time, not just in
+   qwen's own untested claim).
+3. Full suite — 738/738 (same count as F1; this run added no new tests, just content).
+   Two failures on the first pass, both real and both fixed directly: the golden-list
+   catalog test (`test_template_catalog.py`) needed the new template added to `_EXPECTED`
+   — expected maintenance, the test's whole documented purpose; and the scaffold-coverage
+   gap above.
+4. **Live FSM round-trip through a real `SessionController`** — not a stub. First attempt
+   at this had a bug in the verification script itself (a stateful `ItemGenerator` reused
+   across four supposedly-independent sessions, so each "answer attempt" silently drew a
+   different random question instead of testing one question four ways) — caught before
+   trusting the result, fixed with a freshly-seeded generator per session. Re-run: the
+   same question, answered all four ways, produced exactly one PASS and three
+   correctly-routed-to-Help responses, the wrong-answer fallback pulling a second,
+   independently-correct worked example from the same fact table.
+
+**Verdict:** the two-model split works on real content, not just a bug fix. The one real
+defect (the copied sibling-reference line) was a spec gap on my side, not a model failure,
+and was exactly the kind of thing the read-before-apply step exists to catch. Not
+committed — applied to the working tree.
+
+**Round 2 (same session): the remaining two Y2 topics, shipped.** Solar system
+(`AC9S2U01`) and materials (`AC9S2U03`) needed their fact-table shapes redesigned first —
+done directly (binding judgment, see the "Advisory vs. binding" split below), landing on
+a 2-category `{is a planet / is not a planet}` split (avoids the earlier 3-category
+`mc_which_is` pool-size crash) and a `{flexible / rigid}` materials split (avoids the
+earlier bend/twist/stretch ambiguity). Same two-model split as round 1: `qwen3.6-27b-q5`
+extended `science_items.py` with both generators in one batched call (5m56s, clean
+insertion, zero touched lines); `gemma4-12b-q4` extended the template from 1 to 3 nodes
+and flipped every "partial coverage" field to "complete" (22s) — one real defect this
+time, a dropped digit in a re-typed ACARA code (`AC9S2U1` for `AC9S2U01`), caught on
+read-through and fixed directly, same pattern as round 1's defect. Two new scaffolds
+(`solar_system.md`, `materials_change.md`) authored directly, same reasoning as round 1.
+Template now covers all 3 planned Year 2 Science topics — no longer partial.
+
+**A verification-script bug worth recording, since it cost real debugging time:** the
+live FSM round-trip initially appeared to fail — some answer attempts showed zero
+correct letters, and the node presented seemed to change between what should have been
+identical repeated attempts. Chased for a while (checked whether prior `random.Random`
+construction could leak into a later one — confirmed via direct test it cannot; checked
+whether the item generator's fact-table draw was non-deterministic — confirmed via direct
+inspection it was not). **Root cause was in the check script, not the delegated code**:
+`PRAISE_VARIANTS` has 5 randomly-chosen phrasings (`"Yes, that's it — great job!"` among
+them), and the verification script's substring keyword list didn't cover all 5 — a
+genuinely correct PASS was being misread as unrecognized/failing. Fixed by matching
+against the exact `PRAISE_VARIANTS`/`WRONG_VARIANTS` lists imported from
+`controller.py` instead of guessing keywords. Re-run: all 3 nodes correctly produce
+exactly one PASS letter each. **The lesson generalizes**: a verification script is code
+too, and an unverified verification script can manufacture a false failure as easily as
+an unverified delegation can manufacture a false pass — don't stop debugging at "the
+model must be wrong" without checking the checker first.
+
+Remaining Y2 ACARA science content beyond these 3 topics (if any — this was scoped as
+"the natural Year 2 slice," not audited against the full syllabus) is out of scope for
+this session; Y3+ science and the other subjects' remaining year gaps are still the B1–B5
+backlog in §B.
+
+### Model routing per workstream
+
+| Task | Model | Why |
+|---|---|---|
+| A3 — 24 scaffold rewrites onto one convention | `gemma4-12b-q4` | Mechanical, fixed target format, short per-file — its grunt-tier ceiling (BUG-12) is not a constraint here; GPU 1, free to interleave with anything else running on GPU 0 |
+| B1–B5, C3 — curriculum template markdown (fixed front matter + node schema) | `gemma4-12b-q4` | Same shape as A3 — short, schema-constrained, high volume |
+| B3 — science fact tables | `gemma4-12b-q4` | Bulk authoring against a table shape, verified against the curated source separately |
+| B2/B4 — mc4 distractor lists | `gemma4-12b-q4` | Same |
+| B1/B4/C3 — the **generator Python** behind each template (the actual checkable-answer code, `engine/*_items.py`-shaped) | `qwen3.6-27b-q5` | Real control-flow code needs correctness, not just schema conformance — this is the model the capability-validation round measured actually working, not just completing |
+| Wiring a new pack into `item_sources.py` / multi-file registry changes | `devstral-24b-q5` | Multi-file/agentic shape fits its design intent — **but its own measured failure mode is a silent stub that never does the real work**, so treat its output with the same suspicion as any other, not more trust for being "the agentic one" |
+| A genuinely independent second check on a risky local result | `skywork-swe-32b-q5` or `gemma4-31b-q5` | Evicts the GPU-0 working model — worth it for a real review pass (e.g. sanity-checking B0's sympy verifier design before it goes to Sonnet), not for routine work |
+| D7/D8 — doc prose from a fact sheet (attribution paragraphs, status-doc corrections) | `gemma4-12b-q4` or `qwen3.6-27b-q5` | "Doc prose from a fact sheet" is explicitly in the DELEGATE list; the underlying facts (licence findings, stale-row list) are already nailed down in this plan, so it's transcription, not judgement |
+
+**Batching note, corrected from the naive "batch per model" version of this rule:**
+`gemma4-12b-q4` sits on GPU 1 and is always resident — it never evicts anything and costs
+nothing to interleave. The cold-load cost is specifically GPU-0-to-GPU-0 switching. So: run
+all the `gemma4-12b-q4` scaffold/template/fact-table calls for a wave in one batch (fast
+regardless of interleaving), and separately batch every `qwen3.6-27b-q5` generator-code
+call for that same wave together — don't ping-pong between `qwen` and `devstral` mid-wave.
+
+### Advisory judgment vs. binding judgment (maintainer framing, 2026-08-10)
+
+The routing table above is necessary but not sufficient — model *capability* is not the
+only variable. The real split is:
+
+- **Advisory judgment** — qwen produces a claim or draft whose correctness reduces to a
+  small set of checkable facts: a truth table, an existing regression suite, a harness
+  pass/fail. Verifying it costs a read of the diff plus running the checks — cheap,
+  regardless of how much reasoning qwen did to get there. **This is delegable.**
+- **Binding judgment** — the decision itself is what ships, and checking it means
+  re-deriving the same reasoning chain qwen used, because there's no independent ground
+  truth to check against (or checking it exhaustively would take as long as doing it).
+  **This stays with Opus, regardless of qwen's raw ability on the task.**
+
+The trap is scoping a task as "delegate because qwen can probably do it" without asking
+whether *verifying* the output is actually cheaper than doing it. A task can be well
+within qwen's capability and still belong on the Opus side of this line if confirming
+correctness requires the same depth of reasoning as authoring it.
+
+Reclassifying two items from the original routing pass under this lens:
+
+- **E2.4** (the SAFE_REJECT/EXTRACT_FAIL asymmetry fix, 3 call sites in `controller.py`)
+  — moved to **binding, keep with Opus**. Confirming the refactor changed *only* the
+  intended branch at each of the three sites means tracing FSM state transitions by hand;
+  there's no truth table that substitutes for that, so verification cost ≈ authoring cost.
+- **E2.5** (the `escalation.py` jailbreak-exemption regex) — moved to **binding, keep
+  with Opus**. The specific fixture (`"you are now a tutor"`) is cheap to check, but the
+  real question — does the new pattern introduce a false negative somewhere in the safety
+  classifier's much larger attack surface that the existing 20+20 fixtures don't cover —
+  is not answerable by re-running the fixtures. That question requires the same reasoning
+  as writing the fix.
+
+### Not delegated — Sonnet or Opus, no local model, at any tier
 
 - B0's `expression` verifier and the strict pre-`sympify` regex gate (safety-critical, same
   class as the R13 decimal regex and the `verify_numeric.py` decimal safe-reject)
 - A1's renderer change (a trust boundary — escape-first is the security property)
 - C1's licence determination (a judgement call with legal consequences)
-- Every acceptance gate and review
+- E2.3 (the decimal-claim fix) — not a precision-work exclusion like the original draft of
+  this list said (E2.2 disproved that framing — see F1). The real reason: fixing it means
+  deliberately overturning `test_decimal_claim_is_unparseable_not_a_failure`'s *asserted
+  intent*, which requires reading why that test was written that way (pre-R13, before
+  decimal answer types existed) and deciding it's now stale rather than a deliberate scope
+  boundary. That's a binding judgment call about spec intent, not a checkable claim.
+- E2.4, E2.5 — see the reclassification above
+- Every acceptance gate and review, regardless of which model produced the draft
 
-**Guardrails, learned the hard way:**
+### Guardrails, learned the hard way (R14a + this setup pass)
 
 - In R14a, gemma placed `concepts:` **outside** the YAML front matter. The file would not
   have parsed. It was caught in review — so review is load-bearing, not ceremony.
-- Every gemma-drafted template goes through `mentar validate` → 500-draw self-validate →
-  live FSM round-trip **before** it is committed. Machine-check immediately after each
-  draft, not in a batch at the end.
-- `gemma4:12b` needs `generation.extra_body.think=false` or it burns the whole token budget
-  on hidden reasoning and returns empty content.
-- It is **eval-host only** — needs `MENTAR_VLLM_BASE_URL` / `MENTAR_VLLM_API_KEY` in the
-  session. A 12B model will not run in the 4GB sandbox.
-- One template per call, spec in / markdown out. Batching many templates into one call is
-  where schema drift enters.
+- Every delegated template/generator goes through **two** verification layers before it's
+  committed, in this order:
+  1. `local-llm-infra/linux/harness/run_checks.sh --mode code` with `--must-define` **and**
+     `--must-call` for every named deliverable, `--must-preserve` for every frozen symbol,
+     `--json > verdict.json` — catches fabricated identifiers, silent omission, and
+     out-of-scope edits generically, regardless of content domain.
+  2. Mentar's own domain gate, unchanged from the original plan: `mentar validate` → 500-draw
+     self-validate → live FSM round-trip. The harness above doesn't know what a curriculum
+     node or a BKT prior is; this is what catches a schema-valid-but-pedagogically-wrong
+     template.
+  An empty `NOT DONE`/`MISSING` block from either layer proves nothing — always run the
+  harness regardless of what the model claims.
+- `gemma4-12b-q4` needs `chat_template_kwargs: {enable_thinking: false}` or it burns the
+  whole budget on hidden reasoning (BUG-4, now patched into this project's `tools/llm.sh` —
+  see F0). It is also grunt-tier only on this rig (BUG-12, hard `-c 16384` ceiling) — fine
+  for A3/B/C's template and fact-table work, wrong choice for the generator Python.
+- One template (or one generator file) per call, spec in / markdown or code out. Batching
+  many templates into one call is where schema drift enters.
+- `--rules` is mandatory for every code-shaped delegation call in this project now that it
+  actually works (F0) — it wasn't functional before this pass, so nothing in the earlier
+  release-backlog work used it; don't assume prior local-model output went through it.
 
 ---
 
@@ -322,6 +635,41 @@ sequence below; they're comparably small and share the same root-cause-not-sympt
 
 ---
 
+## H — Complete missing-items inventory (2026-08-10 overnight pass)
+
+Maintainer asked for a complete plan of everything still open, then autonomous execution
+("keep doing all the task until completed"). This section is that inventory — every open
+item, its disposition, and the reason. Statuses updated in place as the overnight pass
+executes; each ✅ below was verified (tests + targeted checks), not just written.
+
+### Executable tonight (in order)
+
+| # | Item | Status | Notes |
+|---|---|---|---|
+| H1 | E2.1 — hardcoded "fractions" in session-complete message (`controller.py:841`) | ✅ done + regression test | One line, `self._subject` exists |
+| H2 | E2.5 — jailbreak-pattern exemption broken (`escalation.py:191`) | ✅ done — BOTH the primary pattern and the despaced de-obfuscation fallback needed the exemption (the fallback re-fired on "youarenowatutor" after the primary was fixed; caught by the new regression test, 72 safety tests green) | Regex reorder + regression test the fixture set lacks |
+| H3 | E2.3 — decimal claims never verified (`explain_check.py`) | ✅ done — `_NUM` gained decimals (exact Fraction arithmetic, so `0.1 + 0.2 = 0.3` passes where float math would fail); lookbehind extended to `(?<![\d./])` after adversarial checks found phantom mid-token claims ("3.5/7 + 1.5 = 2" must not verify a "7 + 1.5 = 2" nobody claimed); stale pre-R13 test overturned with documented rationale | **Binding judgment resolved**: `test_decimal_claim_is_unparseable_not_a_failure`'s rationale ("decimals out of pilot scope") is pre-R13 and stale — R13 shipped decimal answer types, Y5-8 decimal content is live, so SAFETY §6.2's verify-or-discard guard MUST cover decimal claims. The old test gets rewritten to assert the new behaviour, with a comment recording the overturn |
+| H4 | E2.4 — SAFE_REJECT/EXTRACT_FAIL asymmetry (recheck + probe scoring) | ✅ done — shared `_handle_unreadable` helper, state assignments inline (T3.7 AST constraint), 4 new SESSION_FSM.md §3 rows, 2 regression tests. Two pre-existing tests used the literal string "wrong" as an incorrect answer — which only ever scored wrong BECAUSE of this bug (no extractable number); updated to a readable-but-wrong "999", preserving their real intent | Shared classification helper; `ctx.state` assignments stay inline in handlers (T3.7 AST test walks handler bodies); `SESSION_FSM.md` §3 table gains the two re-ask transitions |
+| H5 | E1 Findings 1+2 — scaffold routing bugs | ✅ done — most-keywords-matched-wins in `visual_scaffold.py`; new `place_value.md` (gemma-drafted, 9s; applied after fixing its misaligned column table + one wrong guideline line on review); `decimals.md` keyword narrowed. All 7 routing cases verified through the real matcher + locked in a regression test | Root cause is shared: first-match-wins on alphabetical filename scan. Fix: **most-keywords-matched wins** in `visual_scaffold.py` (a more specific scaffold matches more of the label), plus a new `place_value.md` whole-number scaffold, plus `decimals.md`'s bare `"place value"` keyword narrowed to `"decimal place value"` |
+| H6 | D1 — licence field | ✅ was ALREADY `AGPL-3.0-only` — `DOC_AUDIT.md` item 7 was itself stale (the exact D8 problem); DOC_AUDIT corrected instead | W4.2 ratified it 2026-06-27; one line |
+| H7 | B0 — verifier ceiling decision | ✅ decided: **cap at Y8 for now** (sympy not installed; sandbox denies agent pip installs — adding the dependency is a maintainer action, design unchanged) | **Decided tonight: cap at Y8.** Not a change of recommendation — sympy is simply not installed and the sandbox denies agent-chosen `pip install` (`feedback_sandbox_blocks_agent_binary_exec`); adding the dependency is a maintainer action (add to `pyproject.toml` + install). The `expression` answer-type design stays as specced in B0; build resumes when sympy is present. Y9-12 maths authoring stays blocked behind it |
+| H8 | C1 — Singapore MOE licence check | ✅ done — moe.gov.sg Terms of Use fetched directly + independent search 2026-08-11: all rights reserved, modifications prohibited, no open licence. **`SG_GENERIC` confirmed** (IN_GENERIC pattern); logged in CONTENT_LICENSES.md §2b with verbatim quotes | Two web searches + a dated `CONTENT_LICENSES.md` §2b entry; expected outcome `SG_GENERIC` |
+| H9 | Commit + push in logical chunks | ✅ done (see git log) | Per `project_git_github_workflow` — SSH push to main works; maintainer asleep, so nothing left uncommitted overnight |
+| H10 | Doc truth pass | ✅ done — PHASE0_STATUS changelog entry + DOC_AUDIT stale item 7 corrected | Avoid creating the exact stale-🔭 problem D8 exists to fix |
+| H11 | Memory dual-write | ✅ done | Both memory locations per house rule |
+
+### Explicitly deferred tonight (with reasons — not silently dropped)
+
+| Item | Why deferred |
+|---|---|
+| E1 Findings 3+5 — draw-dependent step-grid eligibility (`au7_integers_add_sub` 21%, `au8_negative_multiplication` 23%, `au6_mult_decimals` 13%, `au7_mult_decimal_by_decimal` 1%) | The audit itself classified these as design-accepted: the exclusions are individually correct (signed/decimal arithmetic ≠ the unsigned column method), the inconsistency needs either a signed-number step-grid method or a decimal place-value method — each a real design+build the size of the original "show human working" phases. Not a tonight-sized item; needs its own plan |
+| E1 Finding 4 — `au6_fraction_decimal_equiv` scaffold is "debatable, not wrong" | Audit's own words; building a dual-representation scaffold is polish, YAGNI until a real complaint |
+| Restart-the-app button (R12 follow-up item 4) | `PHASE0_STATUS.md` already records it as "needs a design call (no in-process restart for a WSGI dev server)" — a design decision, not an overnight fix |
+| A0 — pre-existing `style.css` polish diff | Maintainer taste call, explicitly left to them (see A's completion note) |
+| B1 maths Y9-12, B2 English breadth, B4 India, B5/C3 Singapore authoring, science Y3-12 | Each slice = fact-table/content design (binding, mine) + delegation round + full verification ≈ 1-2h per slice. The pattern is proven (F1/F2); executing the full breadth is a multi-session effort, not an overnight one. **Next-session starting point: Y3 science (extend the proven Y2 shape), then English Y3/Y4** |
+| D2 name reservation, D3 safeguarding, D4 history sweep, D6 cloud routines | D2/D3 are maintainer actions (publishing packages, commissioning a professional). D4's history sweep is worth doing carefully with the maintainer present (a found secret would need immediate rotation — not something to discover at 3am with nobody to rotate it). D6 self-resolves on going public |
+| htmx 4 migration (E9) | Still beta, still monitoring-only |
+
 ## G — Sequence
 
 Dependency-ordered. The ordering is not cosmetic — three of these gates exist because doing
@@ -329,13 +677,16 @@ the work in the other order means redoing it.
 
 | Wave | Contents | Why here |
 |---|---|---|
+| **-1** | ✅ **DONE 2026-08-10** — local-LLM infra verified + 2 real bugs fixed (F0) | Prerequisite for delegating anything below with confidence |
 | **0** | D1 licence field · D4 history sweep · A0 decide the uncommitted CSS diff | Hours of work; D1 blocks any public repo, A0 blocks A |
-| **1** | **A — rendering contract** (A1–A5) | **Must precede B.** Content authored after A lands is authored once |
-| **2** | **E — bug fixes** (E1, E2.1–E2.5, E3) | Cheap, root causes known, and E1/E2.2/E2.3 touch the same explain path A just changed |
-| **3** | **B0 — verifier ceiling decision** (sympy or cap at Y8) | Gates every Y9+ item in B1/B4/B5. A decision, not a build |
-| **4** | **B3 science** → B2 English → B1 maths Y9–12 → B4 India → **C Singapore** | Science first: entirely missing, proven generator shape, no new verifier. C is gated on C1's licence answer |
-| **5** | **D — release** (D2 name reservation → D7 → D8 → publish) | Name reservation before publication, docs true before publication |
+| **1** | ✅ **DONE 2026-08-10** — **A — rendering contract** (A1–A5; A0 still open) | Done directly, not delegated — A1 is a trust boundary, A2–A5 turned out smaller than a delegation spec. A3 was 4 files, not 24 (21 already used fences) |
+| **2** | E2.2 ✅ **DONE**; E1, E2.1, E2.3–E2.5, E3 still open | Cheap, root causes known, and E1/E2.3 touch the same explain path A just changed. Not delegated — precision/binding-judgment work, see F's "Not delegated" list |
+| **3** | **B0 — verifier ceiling decision** (sympy or cap at Y8) | Gates every Y9+ item in B1/B4/B5. A decision, not a build — not delegated. **Still open** |
+| **4** | **B3 science: AU_ACARA Y2 ✅ DONE** (sound, solar system, materials — all 3 topics) → Y3–12 still open → B2 English → B1 maths Y9–12 → B4 India → **C Singapore** | Y2 proved the two-model split on real content twice (F1/F2). Templates/fact-tables → `gemma4-12b-q4`; generator Python → `qwen3.6-27b-q5`; fact-table design itself stays with Opus (binding judgment) |
+| **5** | **D — release** (D2 name reservation → D7 → D8 → publish) | Name reservation before publication, docs true before publication. D7/D8 doc prose can delegate to `gemma4-12b-q4`/`qwen3.6-27b-q5` per F |
 | **∞** | D3 safeguarding review | Maintainer-commissioned, runs in parallel, **gates rollout beyond the supervised pilot regardless of everything above** |
 
 **The three real gates:** A before B (or you re-edit hundreds of files). B0 before Y9+ (or
-you author curriculum no verifier can score). C1 before C3 (or you repeat NCERT).
+you author curriculum no verifier can score). C1 before C3 (or you repeat NCERT). Local-LLM
+delegation (F) rides inside waves 1 and 4–5 wherever the routing table says so; it doesn't
+change the gate order, only who drafts the work inside each wave.

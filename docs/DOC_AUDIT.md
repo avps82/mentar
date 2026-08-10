@@ -48,7 +48,9 @@ A snapshot of **what's done, what's left, and which docs have gone stale.**
    Reword to distinguish the two.
 6. **Line-count drift** in `PHASE0_STATUS.md` (e.g. "SAFETY.md 692 lines" → now 715;
    "escalation.py 220 lines"). Cosmetic.
-7. **`pyproject.toml` `license = { text = "TBD" }`** — blocks public release; resolve with W4.2.
+7. ~~**`pyproject.toml` `license = { text = "TBD" }`** — blocks public release; resolve with W4.2.~~
+   **STALE — verified resolved (2026-08-11):** the field already reads `license = "AGPL-3.0-only"`.
+   This row itself was the drift; the release-blocker no longer exists.
 8. **`docs/EVAL_RESULTS.md` (231 ln) + `docs/llm-compatibility.md` (57 ln)** — **VERIFY**: the
    W1.2 eval-host run hasn't happened, so confirm neither presents un-run/placeholder numbers as
    real results. `README.md` links both.
