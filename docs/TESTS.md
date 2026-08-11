@@ -29,10 +29,10 @@ generally landed elsewhere. Resolved mapping:
 |---|---|---|
 | T2.1 | `test_escalation.py` | `tests/safety/test_escalation.py` ✅ same name |
 | T2.2 | `test_escalation_e2e.py` | `tests/safety/test_escalation_wiring.py` |
-| T2.3 | `test_injection.py` | `tests/eval/test_score_safety.py` (eval-side) ⚠️ |
+| T2.3 | `test_injection.py` | `tests/grounding/test_safety_wrapper.py` — see §T2.3 note below ⚠️ |
 | T2.4 | `test_jailbreak_regression.py` | `tests/safety/test_escalation.py` (jailbreak cases inline) |
 | T2.5 | `test_content_blocks.py` | `tests/safety/test_output_guard.py` + `tests/safety/test_output_guard_wiring.py` |
-| T2.6 | `test_parent_gate.py` | `tests/dialogue/test_db_logging.py` (parent-mediated assertion) ⚠️ |
+| T2.6 | `test_parent_gate.py` | **BLOCKED by design** — the PIN gate is phased, not built (see note) |
 | T3.1 | `test_validator.py` | `tests/tools/test_validate_template.py` (cites T3.1) |
 | T3.2 | `test_fringe.py` | `tests/engine/test_fringe.py` ✅ same name |
 | T3.3 | `tests/engine/test_bkt.py` | ✅ as written |
@@ -40,8 +40,8 @@ generally landed elsewhere. Resolved mapping:
 | T3.5 | `test_verifier.py` | `tests/engine/test_verifier.py` ✅ same name |
 | T3.6 | `test_datamodel.py` | `tests/db/test_datamodel.py` ✅ same name |
 | T3.7 | `test_session_fsm.py` | `tests/dialogue/test_session_fsm.py` ✅ same name |
-| T4.1 | `test_modality.py` | `tests/eval/test_judge_responses.py` (eval-side) ⚠️ |
-| T4.2 | `test_retry_cap.py` | no single owner — cap logic is in `tests/dialogue/test_controller.py` ⚠️ |
+| T4.1 | `test_modality.py` | `tests/dialogue/test_help_link_back.py` (rotation, added 2026-08-12) + eval-side judging |
+| T4.2 | `test_retry_cap.py` | `tests/dialogue/test_help_link_back.py` (added 2026-08-12) — partial, see note |
 | T4.3 | `test_mandatory_recheck.py` | `tests/dialogue/test_elaborate.py` |
 | T4.4 | `test_transfer.py` | `tests/eval/test_dataset_v1.py` (eval-side) ⚠️ |
 | T4.5 | `test_hinted_discount.py` | `tests/engine/test_bkt.py` |
@@ -49,6 +49,35 @@ generally landed elsewhere. Resolved mapping:
 | T5.1 | `test_probe_trigger.py` | `tests/engine/test_probe_classify.py` |
 | T5.2 | `test_probe_cap.py` | `tests/dialogue/test_probe_help_pressed.py` |
 | T5.3 | `test_probe_logging.py` | `tests/dialogue/test_db_logging.py` |
+
+### Notes on the rows investigated 2026-08-12
+
+**T2.3 — the specified sanitiser deliberately does not exist.** This block's STEPS require
+"Unit-test the sanitiser: ≥10 passages with embedded instructions → flagged/stripped", but
+`grounding/wrapper.py` explicitly declines to sanitise, and says why: *"Stripping 'suspicious'
+strings here would be security theatre that silently corrupts legitimate educational
+content."* The defence that IS implemented is marker framing — `prompts/system_prompt.md`
+wraps the passage in `<<<GROUNDING_BEGIN>>>`/`<<<GROUNDING_END>>>` and instructs the model to
+treat everything inside as untrusted data and ignore any commands in it. That is covered by
+`tests/grounding/test_safety_wrapper.py` (passage returned verbatim, markers present).
+**So T2.3's PASS criteria are unmeetable as written** — step 1 tests a component that was
+deliberately not built. Step 2 (end-to-end: ≥5 injected passages through the full pipeline,
+0 executed) is still genuinely open and needs an eval-host run. **This block should be
+rewritten to match the ratified architecture** — a maintainer call, since it changes what the
+project claims its injection defence is.
+
+**T2.6 — blocked by design, not a coverage gap.** Its PRE is "gate implemented"; the PIN gate
+is *phased* (W2.6 decided honour-based first), and README.md lists "no PIN gate" among the
+known safety gaps. Per this document's own Blocked protocol the correct state is BLOCKED, not
+a missing test. `assert_parent_mediated()` enforces the age-mode, which is a different (and
+weaker) thing than the PIN gate this block specifies.
+
+**T4.2 — `sticking_point` is specified but not implemented.** The block requires the 4th Help
+press to (a) link back to a vetted source rather than generate, (b) flag the concept
+`sticking_point`, (c) optionally alert the parent. (a) is implemented and now tested. **(b)
+does not exist anywhere in `src/` — grep finds no `sticking_point`** — and (c) is not
+implemented either. Recorded rather than quietly built: whether a stuck concept should raise a
+durable flag (and what consumes it) is a product decision.
 
 **What this mapping does and does not claim.** It says a plausible owning test EXISTS for each
 T-task. It does **not** claim each one satisfies that T-task's specific acceptance criteria —
