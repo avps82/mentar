@@ -794,7 +794,20 @@ the check proactively rather than after a bug report.
 
 Verified: live FSM round-trip 3/3 PASS, 786 tests green, ruff clean.
 
-**Next-session starting point: AU Science Year 5+ (continue the shape), then generic Y3/Y4, then SG_GENERIC, then US_GENERIC (maintainer decided 2026-08-11: generic pack, no CCSS codes/branding — OSS-release safety; see CONTENT_LICENSES.md §2b)** |
+**AU Science Year 5 SHIPPED 2026-08-11**: body-feature adaptations, dissolving in water,
+transparent/opaque materials. 3 new disjoint fact tables in `engine/science_items.py`
+(`AU_SCIENCE_YEAR5_GENERATORS`), 300-draw self-validated. All 3 labels had NO existing
+scaffold match (a safe null, not a wrong one) -- built 3 dedicated scaffold files
+(`adaptations.md`, `dissolving.md`, `light_materials.md`) rather than shipping without.
+Verified every new label AND the full existing science-scaffold set (9 labels across
+Y2-Y5) by content marker before shipping -- zero regressions, zero mismatches this round
+(the routing-bug streak from the Y4 wave didn't repeat, i.e. checking first really does
+prevent the bug, not just catch it after).
+
+Verified: live FSM round-trip 3/3 PASS, 786 tests green, ruff clean.
+
+**AU Science Year 2-5 complete.** Next-session starting point: AU Science Year 6+ (continue
+the shape), then generic Y3/Y4, then SG_GENERIC, then US_GENERIC (maintainer decided 2026-08-11: generic pack, no CCSS codes/branding — OSS-release safety; see CONTENT_LICENSES.md §2b)** |
 | D2 name reservation | ✅ **DONE** — `@mentar/mentar` on npm (published 2026-06-17, confirmed via the registry API 2026-08-11) and `mentar` on PyPI (0.1.0.dev0). **One thing found on verification, not a name-reservation problem**: both placeholders have STALE license metadata — npm says MIT, PyPI says "TBD" — while the repo ratified AGPL-3.0-only weeks ago. Republishing needs the maintainer's own credentials; flagged, not fixed. |
 | D3 safeguarding, D6 cloud routines | D3 is a maintainer action (commissioning a professional; packet ready). D6 self-resolves on going public |
 | htmx 4 migration (E9) | Still beta, still monitoring-only |

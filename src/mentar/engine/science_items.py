@@ -93,6 +93,31 @@ _STATE_CHANGE_CLASSES = {
     ],
 }
 
+# ── Year 5 ─────────────────────────────────────────────────────────────────
+
+_ADAPTATION_CLASSES = {
+    "a body feature that helps an animal survive in its habitat": [
+        "a polar bear's thick fur", "a camel's hump", "a duck's webbed feet", "a giraffe's long neck",
+    ],
+    "not linked to survival in a habitat": [
+        "a dog's collar", "a horse's saddle", "a bird's cage", "a fish tank",
+    ],
+}
+
+_DISSOLVING_CLASSES = {
+    "dissolves in water": ["salt", "sugar", "instant coffee powder", "cordial powder"],
+    "does not dissolve in water": ["sand", "oil", "pepper", "small stones"],
+}
+
+_LIGHT_MATERIAL_CLASSES = {
+    "transparent (lets light pass through clearly)": [
+        "clear glass", "clean water", "clear plastic wrap", "a clear plastic bottle",
+    ],
+    "opaque (blocks light completely)": [
+        "a brick wall", "a wooden door", "a metal spoon", "a thick book",
+    ],
+}
+
 
 def _gen_classify_animals(rng: random.Random):
     return mc_which_is(rng, "Which of these is a {label}?", _ANIMAL_CLASSES)
@@ -142,6 +167,18 @@ def _gen_state_change_heat(rng: random.Random):
     return mc_which_is(rng, "Which of these is {label}?", _STATE_CHANGE_CLASSES)
 
 
+def _gen_adaptations(rng: random.Random):
+    return mc_which_is(rng, "Which of these is {label}?", _ADAPTATION_CLASSES)
+
+
+def _gen_dissolving(rng: random.Random):
+    return mc_which_is(rng, "Which of these {label}?", _DISSOLVING_CLASSES)
+
+
+def _gen_light_materials(rng: random.Random):
+    return mc_which_is(rng, "Which of these is {label}?", _LIGHT_MATERIAL_CLASSES)
+
+
 # Registry — node_id -> generator (matches the science curriculum template node ids).
 SCIENCE_GENERATORS: dict[str, GenFn] = {
     "classify_animals": _gen_classify_animals,
@@ -156,6 +193,9 @@ SCIENCE_GENERATORS: dict[str, GenFn] = {
     "au4_science_food_chain_roles": _gen_food_chain_roles,
     "au4_science_magnetic_materials": _gen_magnetic_materials,
     "au4_science_state_change_heat": _gen_state_change_heat,
+    "au5_science_adaptations": _gen_adaptations,
+    "au5_science_dissolving": _gen_dissolving,
+    "au5_science_light_materials": _gen_light_materials,
 }
 
 AU_SCIENCE_YEAR3_GENERATORS: dict[str, GenFn] = {
@@ -168,4 +208,10 @@ AU_SCIENCE_YEAR4_GENERATORS: dict[str, GenFn] = {
     "au4_science_food_chain_roles": _gen_food_chain_roles,
     "au4_science_magnetic_materials": _gen_magnetic_materials,
     "au4_science_state_change_heat": _gen_state_change_heat,
+}
+
+AU_SCIENCE_YEAR5_GENERATORS: dict[str, GenFn] = {
+    "au5_science_adaptations": _gen_adaptations,
+    "au5_science_dissolving": _gen_dissolving,
+    "au5_science_light_materials": _gen_light_materials,
 }
