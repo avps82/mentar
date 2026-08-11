@@ -278,6 +278,59 @@ Tooling: `eval/` (scorers + runner), `tests/eval/` (the tests, all green). Roste
 - A **deterministic (temp-0)** safety re-run for stable per-item numbers.
 - The **retrieval-faithfulness (NIAH)** test.
 - Human spot-check of the judge's grades → then the **W1.3 model pick** in `docs/MODEL.md`.
+### 3.3c Analysis of the 70% (2026-08-12) — the rubric and the prompts contradict each other
+
+**Read this before commissioning a prompt-iteration pass**, because a chunk of the 15 failures
+may not be a model weakness at all.
+
+`eval/rubric.md` defines the `grounded` criterion as: *"uses only facts present in the
+`<passage>`; nothing invented beyond it."* But three of the five Help modality prompts
+**instruct the model to introduce material that is not in the passage**:
+
+| Prompt | What it tells the model to do |
+|---|---|
+| `help_analogy.md` | "ONE simple everyday analogy the child knows (**sharing a pizza**, splitting a team)" |
+| `help_concrete.md` | "simple hands-on objects (**sharing apples, breaking a chocolate bar, folding paper**)" |
+| `help_story.md` | "a cheerful STORY (**two friendly characters** share something)" |
+| `help_visual.md` | "a bar split into equal parts, a circle in slices" (mild framing) |
+| `help_formal.md` | maths symbols only — invites no outside framing |
+
+§3.3b records the failure reason verbatim as *"invents ungrounded framing details (a **'pizza'**
+analogy not in the source passage…)"*. That is `help_analogy.md` being obeyed exactly. **A model
+scoring 100% on `grounded` would have to disobey three of its five modality prompts.** The
+conflict is structural, not a tuning problem: iterating prompt wording cannot fix a criterion
+that penalises the prompt's own instruction.
+
+Note `no_fabrication` ("no incorrect or made-up **maths** facts") is a separate and unambiguous
+criterion — a pizza analogy is not a wrong maths fact. The overlap §3.3b measured (`grounded`
+5/15 of failures, overlapping `no_fabrication` 8/15) is consistent with the judge applying
+`grounded` to pedagogical framing rather than to maths content.
+
+**This is a maintainer decision, not a code fix.** Three coherent resolutions:
+
+1. **Narrow `grounded`** to mean "does not contradict or invent MATHS content", explicitly
+   permitting pedagogical framing. Keeps the prompts as designed; most consistent with the
+   product's actual intent (the modalities exist precisely to bring in familiar objects).
+2. **Constrain the prompts** to draw framing only from the passage. Preserves the rubric, but
+   guts the analogy/story/concrete modalities — with a fractions passage, there may be no
+   usable framing in it at all.
+3. **Scope `grounded` per modality** — apply it to `formal`/`visual`, exempt
+   `analogy`/`story`/`concrete`. Most faithful to both, most complex to specify.
+
+Recommendation if no preference is given: **(1)**, and re-run before treating the 70% as a
+model-quality number at all. Until this is resolved, **the T1.6 gate is measuring a spec
+contradiction as if it were model error**, and the true pass rate is unknown — it could be
+materially higher.
+
+Separately and unaffected by the above: `in_modality` (9/15, the largest single driver) is a
+genuine weakness. One observation for whoever picks it up — `within_cap` scored **50/50** and is
+the one rule stated with an explicit negative example ("do NOT end with a question or a
+fill-in-the-blank (no '... = ?')"), while `in_modality` at **41/50** is stated once, positively,
+in the middle of ~7 competing instructions. That correlation is suggestive, not proven, and
+would be cheap to test.
+
+---
+
 - **Prompt-iteration pass on `prompts/help_*.md`** — §3.3b found modality-fidelity and
   grounding/fabrication (not question-restating) are the real drivers keeping explanation
   quality at 70% vs. the 90% gate. A maintainer decision on how to prioritise this against

@@ -21,7 +21,44 @@ timestamp: "2026-06-12T00:00:00Z"
 - Network allowed to: pypi.org, github.com, cran.r-project.org, library.kiwix.org, download.kiwix.org, ollama.com
 - LLM inference host: per W1.1 decision (NOT the build host — 2-core/16GB/no-GPU cannot serve models)
 
-**Code-path translation (added 2026-06-13 per ARCHITECTURE.md §7):** this document uses flat artifact paths (`safety/escalation.py`, `tools/validate_template.py`, `eval/verify_numeric.py`, `db/schema.sql`). The actual repo uses Python src-layout — those modules live at `src/mentar/<flat>` (e.g. `src/mentar/safety/escalation.py`). Data artifacts under `eval/` (datasets, response files, score CSVs) and `reports/` remain at the top-level repo root. When a test step writes to a code path, target `src/mentar/<flat>`; when it reads from a data path under `eval/` or `reports/`, target the top-level dir. `docs/` artifacts (`MODEL.md`, etc.) live at `docs/`. **Planned-vs-actual filenames (flagged 2026-08-11):** several T-task rows below name a test file that was never created under that name — `test_escalation_e2e.py`, `test_injection.py`, `test_jailbreak_regression.py`, `test_content_blocks.py`, `test_parent_gate.py`, `test_validator.py`, `test_false_confidence.py`. Most of the COVERAGE exists under different names (e.g. `tests/tools/test_validate_template.py` for T3.1's `test_validator.py`; `tests/safety/test_output_guard.py` for T2.5's `test_content_blocks.py`), but the per-row mapping has **not** been verified end to end — treat these filenames as the original plan's intent, not as a claim about what exists. Confirming each T-task's real coverage is an open task. **Test files (added 2026-08-11):** this document names test files flat (`tests/test_escalation.py`); the actual suite is organised into per-area subdirectories — `tests/safety/`, `tests/engine/`, `tests/eval/`, `tests/db/`, `tests/dialogue/`, `tests/grounding/`, `tests/web/`, `tests/cli/`, `tests/inference/`, `tests/tools/`. Resolve a flat `tests/test_X.py` to whichever subdirectory actually holds it (e.g. `tests/safety/test_escalation.py`); only `test_prompt_registry.py` and `test_smoke.py` are genuinely at `tests/` root. Note `bkt_notes.md` (referenced as a T3.3 output) was never created — the BKT design detail lives in `docs/design/W3.3_bkt.md` instead.
+**Code-path translation (added 2026-06-13 per ARCHITECTURE.md §7):** this document uses flat artifact paths (`safety/escalation.py`, `tools/validate_template.py`, `eval/verify_numeric.py`, `db/schema.sql`). The actual repo uses Python src-layout — those modules live at `src/mentar/<flat>` (e.g. `src/mentar/safety/escalation.py`). Data artifacts under `eval/` (datasets, response files, score CSVs) and `reports/` remain at the top-level repo root. When a test step writes to a code path, target `src/mentar/<flat>`; when it reads from a data path under `eval/` or `reports/`, target the top-level dir. `docs/` artifacts (`MODEL.md`, etc.) live at `docs/`. **Planned-vs-actual filenames — mapped 2026-08-12.** The T-task rows below name the test file
+each task was *planned* to produce. Most were never created under that name; the coverage
+generally landed elsewhere. Resolved mapping:
+
+| T-task | Filename named below | Actual file |
+|---|---|---|
+| T2.1 | `test_escalation.py` | `tests/safety/test_escalation.py` ✅ same name |
+| T2.2 | `test_escalation_e2e.py` | `tests/safety/test_escalation_wiring.py` |
+| T2.3 | `test_injection.py` | `tests/eval/test_score_safety.py` (eval-side) ⚠️ |
+| T2.4 | `test_jailbreak_regression.py` | `tests/safety/test_escalation.py` (jailbreak cases inline) |
+| T2.5 | `test_content_blocks.py` | `tests/safety/test_output_guard.py` + `tests/safety/test_output_guard_wiring.py` |
+| T2.6 | `test_parent_gate.py` | `tests/dialogue/test_db_logging.py` (parent-mediated assertion) ⚠️ |
+| T3.1 | `test_validator.py` | `tests/tools/test_validate_template.py` (cites T3.1) |
+| T3.2 | `test_fringe.py` | `tests/engine/test_fringe.py` ✅ same name |
+| T3.3 | `tests/engine/test_bkt.py` | ✅ as written |
+| T3.4 | `test_false_confidence.py` | `tests/engine/test_probe_classify.py` |
+| T3.5 | `test_verifier.py` | `tests/engine/test_verifier.py` ✅ same name |
+| T3.6 | `test_datamodel.py` | `tests/db/test_datamodel.py` ✅ same name |
+| T3.7 | `test_session_fsm.py` | `tests/dialogue/test_session_fsm.py` ✅ same name |
+| T4.1 | `test_modality.py` | `tests/eval/test_judge_responses.py` (eval-side) ⚠️ |
+| T4.2 | `test_retry_cap.py` | no single owner — cap logic is in `tests/dialogue/test_controller.py` ⚠️ |
+| T4.3 | `test_mandatory_recheck.py` | `tests/dialogue/test_elaborate.py` |
+| T4.4 | `test_transfer.py` | `tests/eval/test_dataset_v1.py` (eval-side) ⚠️ |
+| T4.5 | `test_hinted_discount.py` | `tests/engine/test_bkt.py` |
+| T4.6 | `tests/test_prompt_registry.py` | ✅ as written |
+| T5.1 | `test_probe_trigger.py` | `tests/engine/test_probe_classify.py` |
+| T5.2 | `test_probe_cap.py` | `tests/dialogue/test_probe_help_pressed.py` |
+| T5.3 | `test_probe_logging.py` | `tests/dialogue/test_db_logging.py` |
+
+**What this mapping does and does not claim.** It says a plausible owning test EXISTS for each
+T-task. It does **not** claim each one satisfies that T-task's specific acceptance criteria —
+verifying that means reading each test against its row below, which has not been done. The
+rows marked ⚠️ are the ones where the match is weakest and most worth checking first: T2.3,
+T4.1 and T4.4 resolve only to *eval-side* tests (they check the scoring harness, not the
+runtime behaviour the T-task describes), and T2.6/T4.2 have no clear single owner at all.
+Treat those five as possible genuine coverage gaps until someone confirms otherwise.
+
+**Test files (added 2026-08-11):** this document names test files flat (`tests/test_escalation.py`); the actual suite is organised into per-area subdirectories — `tests/safety/`, `tests/engine/`, `tests/eval/`, `tests/db/`, `tests/dialogue/`, `tests/grounding/`, `tests/web/`, `tests/cli/`, `tests/inference/`, `tests/tools/`. Resolve a flat `tests/test_X.py` to whichever subdirectory actually holds it (e.g. `tests/safety/test_escalation.py`); only `test_prompt_registry.py` and `test_smoke.py` are genuinely at `tests/` root. Note `bkt_notes.md` (referenced as a T3.3 output) was never created — the BKT design detail lives in `docs/design/W3.3_bkt.md` instead.
 
 **Standard block format:** `GOAL` (one sentence) · `CONTEXT` (why + domain background an agent needs) · `PRE` (preconditions, must all be true) · `INPUTS` (files/data/configs) · `STEPS` (ordered, deterministic where possible) · `PASS` (binary criteria — all must hold) · `OUT` (artifacts written, with paths) · `REFS` (links/spec sections).
 
