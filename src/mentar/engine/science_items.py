@@ -167,6 +167,27 @@ _MIXTURE_CLASSES = {
     ],
 }
 
+# ── Year 8 ─────────────────────────────────────────────────────────────────
+
+_CELL_STRUCTURE_CLASSES = {
+    "found in a plant cell but not in an animal cell": [
+        "a cell wall", "a chloroplast", "a large permanent vacuole",
+    ],
+    "found in both plant and animal cells": ["a nucleus", "mitochondria", "a cell membrane"],
+}
+
+_ENERGY_SOURCE_CLASSES = {
+    "a renewable energy source": ["solar power", "wind power", "hydroelectric power", "biomass"],
+    "a non-renewable energy source": ["coal", "oil", "natural gas", "nuclear fuel (uranium)"],
+}
+
+_ELEMENT_COMPOUND_CLASSES = {
+    "an element (only one type of atom)": ["oxygen", "iron", "gold", "carbon"],
+    "a compound (two or more elements chemically joined)": [
+        "water (H2O)", "carbon dioxide (CO2)", "table salt (NaCl)", "sugar (glucose)",
+    ],
+}
+
 
 def _gen_classify_animals(rng: random.Random):
     return mc_which_is(rng, "Which of these is a {label}?", _ANIMAL_CLASSES)
@@ -252,6 +273,18 @@ def _gen_mixtures(rng: random.Random):
     return mc_which_is(rng, "Which of these is {label}?", _MIXTURE_CLASSES)
 
 
+def _gen_cell_structures(rng: random.Random):
+    return mc_which_is(rng, "Which of these is {label}?", _CELL_STRUCTURE_CLASSES)
+
+
+def _gen_energy_sources(rng: random.Random):
+    return mc_which_is(rng, "Which of these is {label}?", _ENERGY_SOURCE_CLASSES)
+
+
+def _gen_elements_compounds(rng: random.Random):
+    return mc_which_is(rng, "Which of these is {label}?", _ELEMENT_COMPOUND_CLASSES)
+
+
 # Registry — node_id -> generator (matches the science curriculum template node ids).
 SCIENCE_GENERATORS: dict[str, GenFn] = {
     "classify_animals": _gen_classify_animals,
@@ -275,6 +308,9 @@ SCIENCE_GENERATORS: dict[str, GenFn] = {
     "au7_science_body_systems": _gen_body_systems,
     "au7_science_forces": _gen_forces,
     "au7_science_mixtures": _gen_mixtures,
+    "au8_science_cell_structures": _gen_cell_structures,
+    "au8_science_energy_sources": _gen_energy_sources,
+    "au8_science_elements_compounds": _gen_elements_compounds,
 }
 
 AU_SCIENCE_YEAR3_GENERATORS: dict[str, GenFn] = {
@@ -305,4 +341,10 @@ AU_SCIENCE_YEAR7_GENERATORS: dict[str, GenFn] = {
     "au7_science_body_systems": _gen_body_systems,
     "au7_science_forces": _gen_forces,
     "au7_science_mixtures": _gen_mixtures,
+}
+
+AU_SCIENCE_YEAR8_GENERATORS: dict[str, GenFn] = {
+    "au8_science_cell_structures": _gen_cell_structures,
+    "au8_science_energy_sources": _gen_energy_sources,
+    "au8_science_elements_compounds": _gen_elements_compounds,
 }

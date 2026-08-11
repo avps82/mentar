@@ -833,8 +833,27 @@ someone does.
 Verified: live FSM round-trip 3/3 PASS, full regression across all 18 shipped science
 labels (Y2-Y7) by content marker — zero mismatches, 786 tests green, ruff clean.
 
-**AU Science Year 2-7 complete.** Next-session starting point: AU Science Year 8 (completes
-the Y2-8 breadth to match maths/English), then generic Y3/Y4, then SG_GENERIC, then US_GENERIC (maintainer decided 2026-08-11: generic pack, no CCSS codes/branding — OSS-release safety; see CONTENT_LICENSES.md §2b)** |
+**AU Science Year 8 SHIPPED 2026-08-11** — completes AU Science Year 2-8, matching the
+maths and English packs' own Y2-8 breadth. Plant/animal cell structures, renewable/
+non-renewable energy, elements vs. compounds. 3 new disjoint fact tables in
+`engine/science_items.py` (`AU_SCIENCE_YEAR8_GENERATORS`), 300-draw self-validated
+(including a tight 3-vs-3 pool for cell structures — exactly at the `mc_which_is` safety
+boundary, verified fine since `rng.sample(pool, 3)` needs >=3, not >3).
+
+**Found and fixed a real routing bug (4th of this session's science wave, not counting the
+zero-bug Y5/Y6 rounds)**: "Plant and animal cell structures" matched `living_nonliving.md`
+via the bare "animal" keyword, delivering MRS GREN / animal-taxonomic-group content instead
+of cell-structure content. Built `cell_structures.md` (keywords: cell, cell wall,
+chloroplast, vacuole, nucleus, mitochondria, cell membrane, plant cell, animal cell) which
+now correctly outscores `living_nonliving.md` on keyword count. Also built
+`energy_sources.md` and `elements_compounds.md` for the other two labels (no prior match).
+Full regression across all 21 shipped science labels (Y2-Y8) by content marker — zero
+other mismatches.
+
+Verified: live FSM round-trip 3/3 PASS, 786 tests green, ruff clean.
+
+**AU Science Year 2-8 complete — 24 nodes across 7 years, matching maths (Y2-12) and
+English (Y2-8) in breadth for this subject.** Next-session starting point: generic Y3/Y4, then SG_GENERIC, then US_GENERIC (maintainer decided 2026-08-11: generic pack, no CCSS codes/branding — OSS-release safety; see CONTENT_LICENSES.md §2b)** |
 | D2 name reservation | ✅ **DONE** — `@mentar/mentar` on npm (published 2026-06-17, confirmed via the registry API 2026-08-11) and `mentar` on PyPI (0.1.0.dev0). **One thing found on verification, not a name-reservation problem**: both placeholders have STALE license metadata — npm says MIT, PyPI says "TBD" — while the repo ratified AGPL-3.0-only weeks ago. Republishing needs the maintainer's own credentials; flagged, not fixed. |
 | D3 safeguarding, D6 cloud routines | D3 is a maintainer action (commissioning a professional; packet ready). D6 self-resolves on going public |
 | htmx 4 migration (E9) | Still beta, still monitoring-only |
