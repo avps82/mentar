@@ -725,7 +725,26 @@ expression-type content. Verified: every generator's ground truth self-checks PA
 300 draws; the safety property (a lazy non-derivation answer FAILS) spot-checked on the
 hardest new nodes; live FSM round-trip on all 3 templates. 786 tests green.
 
-**Next-session starting point: Y3 science (extend the proven Y2 shape), then English Y3/Y4, then SG_GENERIC, then US_GENERIC (maintainer decided 2026-08-11: generic pack, no CCSS codes/branding — OSS-release safety; see CONTENT_LICENSES.md §2b)** |
+**AU English Y7+Y8 SHIPPED 2026-08-11 (completes AU_ACARA English Y2-8, matching maths'
+breadth):** 8 nodes — idioms, formal/informal register, active/passive voice,
+personification (Y7); connotation, clauses, adverbial phrases, onomatopoeia (Y8). Pool-size
+math checked before authoring (all 2-category tables, 4 members each). **Found and fixed a
+genuine content gap, not just a routing bug**: adding keywords to `figurative_language.md`
+and `grammar.md` for the 8 new topics made routing "succeed" (found a file) while
+delivering IRRELEVANT scaffold content — both files only had simile/metaphor and basic
+parts-of-speech diagrams respectively, nothing for idiom/personification/onomatopoeia/
+voice/register/clauses/phrase-type. Fixed properly: added genuine visual-structure blocks
+for all 7 sub-topics (not just keywords) to both files. Also found and fixed a latent
+routing bug that predates this session: the bare 2-character keyword `"as"` in
+`figurative_language.md` matched "as" as a SUBSTRING of "p**as**sive", causing "Active and
+passive voice" to false-match a simile/metaphor scaffold — removed the risky bare "as"/
+"like" keywords (redundant with "simile"/"metaphor"/"figurative" anyway). Verified: all 8
+labels now route to content that's actually topically correct (checked by content marker,
+not just "found a file"); regression-checked existing routing including the specific
+"as"-substring false-match case; live FSM round-trip both templates, 12/12 PASS each. 786
+tests green.
+
+**Next-session starting point: Y3 science (extend the proven Y2 shape), then generic Y3/Y4, then SG_GENERIC, then US_GENERIC (maintainer decided 2026-08-11: generic pack, no CCSS codes/branding — OSS-release safety; see CONTENT_LICENSES.md §2b)** |
 | D2 name reservation | ✅ **DONE** — `@mentar/mentar` on npm (published 2026-06-17, confirmed via the registry API 2026-08-11) and `mentar` on PyPI (0.1.0.dev0). **One thing found on verification, not a name-reservation problem**: both placeholders have STALE license metadata — npm says MIT, PyPI says "TBD" — while the repo ratified AGPL-3.0-only weeks ago. Republishing needs the maintainer's own credentials; flagged, not fixed. |
 | D3 safeguarding, D6 cloud routines | D3 is a maintainer action (commissioning a professional; packet ready). D6 self-resolves on going public |
 | htmx 4 migration (E9) | Still beta, still monitoring-only |

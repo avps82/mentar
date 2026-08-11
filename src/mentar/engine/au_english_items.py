@@ -148,6 +148,108 @@ def gen_similes_basic_y4(rng: random.Random):
     return mc_which_is(rng, "Which of these is {label}?", table)
 
 
+# ── Year 7 ─────────────────────────────────────────────────────────────────
+
+def gen_idioms_y7(rng: random.Random):
+    """AC9E7A alignment: idiom vs. literal-phrase recognition."""
+    table = {
+        "an idiom (doesn't mean what the words literally say)": [
+            "it's raining cats and dogs", "break a leg", "spill the beans", "under the weather",
+        ],
+        "a literal phrase (means exactly what it says)": [
+            "it's raining heavily outside", "good luck with the show", "I dropped the beans", "I feel sick today",
+        ],
+    }
+    return mc_which_is(rng, "Which of these is {label}?", table)
+
+
+def gen_formal_informal_y7(rng: random.Random):
+    """AC9E7A alignment: formal vs. informal register."""
+    table = {
+        "formal language": ["purchase", "commence", "assistance", "residence"],
+        "informal language": ["buy", "start", "help", "home"],
+    }
+    return mc_which_is(rng, "Which of these is {label}?", table)
+
+
+def gen_active_passive_y7(rng: random.Random):
+    """AC9E7A alignment: active vs. passive voice recognition."""
+    table = {
+        "active voice (the subject DOES the action)": [
+            "the dog chased the cat", "she wrote the letter", "the chef cooked the meal", "they built the house",
+        ],
+        "passive voice (the subject RECEIVES the action)": [
+            "the cat was chased by the dog", "the letter was written by her",
+            "the meal was cooked by the chef", "the house was built by them",
+        ],
+    }
+    return mc_which_is(rng, "Which of these is {label}?", table)
+
+
+def gen_personification_y7(rng: random.Random):
+    """AC9E7A alignment: personification vs. a literal statement of the same
+    event (distinguishing it from Y4's simile / Y6's simile-vs-metaphor)."""
+    table = {
+        "personification (giving human qualities to something non-human)": [
+            "the wind whispered through the trees", "the sun smiled down on us",
+            "the old car groaned to a start", "time flew by quickly",
+        ],
+        "a literal statement": [
+            "the wind blew through the trees", "the sun shone down on us",
+            "the old car started slowly", "time passed by quickly",
+        ],
+    }
+    return mc_which_is(rng, "Which of these is {label}?", table)
+
+
+# ── Year 8 ─────────────────────────────────────────────────────────────────
+
+def gen_connotation_y8(rng: random.Random):
+    """AC9E8A alignment: positive vs. negative connotation (word choice that
+    colours meaning beyond the dictionary definition)."""
+    table = {
+        "a word with a POSITIVE connotation": ["slender", "confident", "curious", "frugal"],
+        "a word with a NEGATIVE connotation": ["skinny", "arrogant", "nosy", "stingy"],
+    }
+    return mc_which_is(rng, "Which of these is {label}?", table)
+
+
+def gen_clauses_y8(rng: random.Random):
+    """AC9E8A alignment: main clause (stands alone) vs. subordinate clause
+    (cannot)."""
+    table = {
+        "a main clause (can stand alone as a full sentence)": [
+            "she went to the store", "the dog barked loudly", "we finished our homework", "he plays the guitar",
+        ],
+        "a subordinate clause (cannot stand alone)": [
+            "because she was hungry", "although the dog barked", "when we finished", "if he plays well",
+        ],
+    }
+    return mc_which_is(rng, "Which of these is {label}?", table)
+
+
+def gen_adverbial_phrases_y8(rng: random.Random):
+    """AC9E8A alignment: adverbial phrase (how/when/where) vs. noun phrase."""
+    table = {
+        "an adverbial phrase (tells HOW, WHEN or WHERE)": [
+            "in the morning", "very quickly", "under the table", "with great care",
+        ],
+        "a noun phrase (names a person, place or thing)": [
+            "the big red car", "my best friend", "a beautiful sunset", "the old oak tree",
+        ],
+    }
+    return mc_which_is(rng, "Which of these is {label}?", table)
+
+
+def gen_onomatopoeia_y8(rng: random.Random):
+    """AC9E8A alignment: onomatopoeia (sound-word) recognition."""
+    table = {
+        "onomatopoeia (a word that sounds like what it means)": ["buzz", "crash", "sizzle", "whoosh"],
+        "a regular descriptive word": ["loud", "sudden", "hot", "fast"],
+    }
+    return mc_which_is(rng, "Which of these is {label}?", table)
+
+
 # ── Year 5 ─────────────────────────────────────────────────────────────────
 
 def gen_synonyms_advanced_y5(rng: random.Random):
@@ -257,6 +359,20 @@ AU_ENGLISH_YEAR4_GENERATORS: dict[str, GenFn] = {
     "aue4_contractions": gen_contractions_y4,
     "aue4_common_proper_nouns": gen_common_proper_nouns_y4,
     "aue4_similes": gen_similes_basic_y4,
+}
+
+AU_ENGLISH_YEAR7_GENERATORS: dict[str, GenFn] = {
+    "aue7_idioms": gen_idioms_y7,
+    "aue7_formal_informal": gen_formal_informal_y7,
+    "aue7_active_passive": gen_active_passive_y7,
+    "aue7_personification": gen_personification_y7,
+}
+
+AU_ENGLISH_YEAR8_GENERATORS: dict[str, GenFn] = {
+    "aue8_connotation": gen_connotation_y8,
+    "aue8_clauses": gen_clauses_y8,
+    "aue8_adverbial_phrases": gen_adverbial_phrases_y8,
+    "aue8_onomatopoeia": gen_onomatopoeia_y8,
 }
 
 AU_ENGLISH_YEAR5_GENERATORS: dict[str, GenFn] = {

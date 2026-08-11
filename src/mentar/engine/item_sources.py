@@ -25,6 +25,8 @@ from mentar.engine.au_english_items import (
     AU_ENGLISH_YEAR4_GENERATORS,
     AU_ENGLISH_YEAR5_GENERATORS,
     AU_ENGLISH_YEAR6_GENERATORS,
+    AU_ENGLISH_YEAR7_GENERATORS,
+    AU_ENGLISH_YEAR8_GENERATORS,
 )
 from mentar.engine.au_items import (
     AU_YEAR2_GENERATORS,
@@ -71,6 +73,8 @@ def build_registry(pilot_itembank_path: Path) -> dict[str, dict]:
         "au_english_year4": {"generators": AU_ENGLISH_YEAR4_GENERATORS, "itembank": None},
         "au_english_year5": {"generators": AU_ENGLISH_YEAR5_GENERATORS, "itembank": None},
         "au_english_year6": {"generators": AU_ENGLISH_YEAR6_GENERATORS, "itembank": None},
+        "au_english_year7": {"generators": AU_ENGLISH_YEAR7_GENERATORS, "itembank": None},
+        "au_english_year8": {"generators": AU_ENGLISH_YEAR8_GENERATORS, "itembank": None},
         "maths_practice": {"generators": MATHS_PRACTICE_GENERATORS, "itembank": None},
         "english_practice": {"generators": ENGLISH_PRACTICE_GENERATORS, "itembank": None},
         # IN_GENERIC ships in-repo under curriculum/templates/ like every other
