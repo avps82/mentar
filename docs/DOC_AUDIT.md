@@ -266,3 +266,33 @@ suite when a prose doc names a path that doesn't resolve. Deliberately narrow �
 whether a path exists, never whether a claim is true. Counts, status markers, and prose still
 need a human. Its allowlist carries a written reason per entry so "add it to the allowlist"
 can't quietly become "suppress the signal".
+
+### §L second pass (same day) — claim-level, after the path-level pass
+
+The first pass was mechanically thorough but semantically shallow: it verified that paths,
+dates and counts resolved, and never read most docs' **claims** against the code. The
+maintainer pushed for another pass. That was the right call — the second pass found a
+different and more consequential class.
+
+| Finding | Detail |
+|---|---|
+| **ARCHITECTURE.md said "Help loop with 6 modalities"** | Code has **5** (`HELP_MODALITIES = [visual, concrete, analogy, story, formal]`). A genuine **cross-doc contradiction**: SESSION_FSM.md, TESTS.md and EXPLAIN_METHOD_AUDIT.md all correctly said 5 — ARCHITECTURE.md was the lone outlier, so any reader trusting the "authoritative layout" doc got the wrong number. |
+| **Module-map descriptions outgrown by breadth waves** | `au_items.py` "Year 2–8" (now Y2–12), `au_english_items.py` "Year 2/5/6" (now Y2–8), `science_items.py` "pilot only" (now + AU Y2–8), `curriculum/templates/` row listing only AU + IN Class 3. Paths all resolved — which is exactly why the path-level pass missed every one of these. |
+| **3 modules absent from the map entirely** | `generic_items.py`, `generic_english_items.py`, `chem_balance.py` — plus `dialogue/controller.py`, the most connected module in the codebase, had no row of its own while every `engine/` module did. |
+| **README understated what ships** | Status section headlined a 2026-07-03 review and never said what curriculum exists; the ASCII tree listed AU as "Years 2–8" and omitted `SG_GENERIC`/`US_GENERIC` entirely; "717+ tests"; the grounding-scope note named only three packs. Now states 319 nodes / 71 templates with a per-pack table **and** its licence-alignment position, plus the grounding limit stated plainly. |
+
+**Checked and found clean:** SPEC §15 (guardrails are described at a layer level, no verifier
+enumeration to drift); the `answer_type`/`checker` grammar (5 checkers in code, 5 answer types
+in templates, consistent); `schema.sql` v4 == `store.py` `_EXPECTED_VERSION` 4; FSM states
+(already gated by `tests/dialogue/test_session_fsm.py`, which parses §3 mechanically); the
+template catalog (already gated by `test_template_catalog.py`).
+
+**Method note worth keeping.** A first-cut regex for "modules mentioned in ARCHITECTURE.md"
+reported 18 missing, including `controller.py` — implausible enough to re-check, and it was
+the regex's fault (it only matched bare `` `foo.py` ``, not path-qualified `` `engine/foo.py` ``).
+The real number was 4. **A suspicious audit result is more often a broken audit than a broken
+repo** — verify the tool before believing the finding.
+
+**Left for a human/next pass:** re-running `EXPLAIN_METHOD_AUDIT.md` against all 319 nodes
+(it covers 76); verifying TESTS.md's per-T-task test-file mapping; and the still-open items in
+`R16_release_plan.md` §G/§H.

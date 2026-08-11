@@ -63,16 +63,20 @@ No network call crosses the data path in the default (local Ollama) backend. All
 | `src/mentar/engine/item_sources.py` | Named item-source registry mapping `item_source:` keys to generator callables | R3.1 |
 | `src/mentar/engine/itembank.py` | `ItemBank` — loads + caches static item JSON files for pre-authored question banks | R-option-A |
 | `src/mentar/engine/itemgen.py` | `ItemGenerator` — parametric item generation (composite default, `mc_which_is` shared helper) | R-option-B |
-| `src/mentar/engine/au_items.py` | AU_ACARA maths item generators (Year 2–8; per-year generator registries) | R14a; R15 |
-| `src/mentar/engine/au_english_items.py` | AU_ACARA English item generators (Year 2/5/6) | R14a |
-| `src/mentar/engine/in_generic_items.py` | India board-agnostic (IN_GENERIC) maths item generators (Class 3) | R8; R14b-deferred |
-| `src/mentar/engine/science_items.py` | Science multiple-choice generators from curated fact tables (pilot `_pilot/science.md`) | 2026-06-29 |
+| `src/mentar/engine/au_items.py` | AU_ACARA maths item generators (Year 2–12; per-year generator registries; Y9–12 use the `expression` answer type) | R14a; R15; B0/B1 |
+| `src/mentar/engine/au_english_items.py` | AU_ACARA English item generators (Year 2–8) | R14a; B2 |
+| `src/mentar/engine/in_generic_items.py` | India board-agnostic (IN_GENERIC) maths generators for **Class 3 only** — it keeps its original un-prefixed node ids so live mastery rows aren't orphaned; every other generic level comes from `generic_items.py` | R8; R14b |
+| `src/mentar/engine/generic_items.py` | ONE shared maths concept-progression table (`STAGE_CONCEPTS`, stages 2–8) + `PACK_LEVELS`; builds SG_GENERIC / US_GENERIC / IN_GENERIC levels by reusing already-tested generators — adding a country is one `PACK_LEVELS` entry, zero new item logic | B4; B5 |
+| `src/mentar/engine/generic_english_items.py` | Same pattern for English; reuses `au_english_items.py`'s generators and imports `PACK_LEVELS` from `generic_items.py` so both subjects share one level→stage source of truth | B2; B4; B5 |
+| `src/mentar/engine/science_items.py` | Science multiple-choice generators from curated fact tables — pilot `_pilot/science.md` plus AU_ACARA Year 2–8 (`AU_SCIENCE_YEAR3..8_GENERATORS`) | 2026-06-29; B3 |
+| `src/mentar/engine/chem_balance.py` | Owned sympy-only chemical-equation balancer (nullspace of the element-count matrix). Deliberately NOT chempy — that pulled a matplotlib/ODE dependency stack; validated byte-identical against it on a pinned 10-equation battery before chempy was dropped | 2026-08-11 |
 | `src/mentar/engine/practice_items.py` | Country-agnostic practice-pack generators (times tables, English vocabulary; `curriculum/templates/practice/`) | R7.1 |
 | `src/mentar/engine/arithmetic_steps.py` | Deterministic step-grid builder for column arithmetic (add/sub/mult/long-division with carry/borrow marks); wired into `HELP_ELABORATE` | R12-show-working |
 | `src/mentar/engine/visual_scaffold.py` | LRU-cached loader for OKF visual scaffold files in `curriculum/visual_scaffolds/`; matched by `topic_keywords` | R12-explain |
 | `src/mentar/engine/explain_check.py` | `has_verified_failure()` — arithmetic claim verifier for free-form explanation text; `realign_algebra_blocks()` — post-processor for aligned step blocks | A14; 2026-07-22 |
 | `src/mentar/engine/probe_classify.py` | W3.4 false-confidence classifier; probe outcome → `false_confidence`/`slip_suspect`/`forgetting_suspect` | W3.4 |
-| `src/mentar/dialogue/` | Session controller; FSM state machine (per SESSION_FSM.md); Help loop with 6 modalities + HELP_ELABORATE; probe trigger; interaction-pattern selection; session resume (R-RES) | SPEC §12, §13, §14; W6.1; R-RES |
+| `src/mentar/dialogue/controller.py` | `SessionController` — drives the whole session FSM (`FSMState`, one instance per learner session); the most connected module in the codebase | SPEC §12–§14; W6.1 |
+| `src/mentar/dialogue/` | Session controller; FSM state machine (per SESSION_FSM.md); Help loop with 5 modalities (`HELP_MODALITIES` in `controller.py`: visual, concrete, analogy, story, formal) + HELP_ELABORATE; probe trigger; interaction-pattern selection; session resume (R-RES) | SPEC §12, §13, §14; W6.1; R-RES |
 | `src/mentar/safety/` | 6-layer safety implementation: input filter (`output_guard.py`), escalation (`escalation.py`), age-mode enforcement, credential scrubbing (`credential_guard.py`), handoff validation (`handoff_check.py`) | SPEC §16.0–16.3; W2.1–W2.4 |
 | `src/mentar/safety/credential_guard.py` | Scrubs API keys / tokens from LLM output before it reaches the child | SPEC §16; A15 |
 | `src/mentar/safety/handoff_check.py` | Validates fixed handoff message text against SAFETY §3.4 requirements | SAFETY §3.4; W2.2 |
@@ -81,9 +85,9 @@ No network call crosses the data path in the default (local Ollama) backend. All
 | `src/mentar/db/` | SQLite store (`store.py`); schema (`schema.sql`, v4 with `PRAGMA user_version`); `adapter.py` (LearnerStore ↔ SessionController bridge, A17) | SPEC §16 L4; W3.6; T3.6; R-RES |
 | `src/mentar/grounding/` | ZIM reader (`reader.py`) + resolver (`resolve.py`) + source map (`source_map.py`) + sources downloader (`sources.py`) + LRU cache (`cache.py`) + data-wrapper (`wrapper.py`) | SPEC §15(1), §18.2; W7 |
 | `src/mentar/web/` | Flask app (`app.py`): learner/parent views, answer-mode dispatch (`answer_modes.py`), session routing, curriculum toggles, setup gate, escalation freeze page | SPEC §23; W6.3; R9; R10 |
-| `src/mentar/tools/` | CLI utilities: `validate_template.py` (DAG/schema validator) | W3.1; T3.1 |
+| `src/mentar/tools/` | CLI utilities: `validate_template.py` (DAG/schema validator); `check_doc_paths.py` (fails the suite when a prose doc names a path that doesn't resolve) | W3.1; T3.1; doc-audit 2026-08-11 |
 | `src/mentar/cli/` | `mentar` CLI entry point (`__main__.py`); subcommands: `setup`, `serve`, `eval`, `validate-template` | PHASE0.md W6.4 |
-| `curriculum/templates/` | Country/grade curriculum templates: `_pilot/` (fractions Phase-0), `AU_ACARA/` (Year 2–8 maths + English), `IN_GENERIC/` (Class 3 maths), `practice/` (country-agnostic) | SPEC §9; W3.1–W3.2; R14a; R15 |
+| `curriculum/templates/` | Country/grade curriculum templates: `_pilot/` (fractions Phase-0), `AU_ACARA/` (maths Y2–12, English Y2–8, science Y2–8), `IN_GENERIC/` (maths + English, Classes 2–8), `SG_GENERIC/` (Primary 2–6, Secondary 1–2), `US_GENERIC/` (Grades 2–8), `practice/` (country-agnostic). The three `*_GENERIC` packs claim **no** syllabus alignment — see `docs/CONTENT_LICENSES.md` §2b | SPEC §9; W3.1–W3.2; R14a; R15; B3–B5 |
 | `curriculum/visual_scaffolds/` | OKF-format visual scaffold files matched by topic keywords and injected into Help explanations | R12-explain |
 | `prompts/` | Versioned prompt templates + `prompts/README.md` registry with per-file SHA-256[:12] hashes | SPEC §12, §13.2; W6.2; T4.6 |
 | `eval/` | Eval DATA: `dataset_v1.jsonl`, `schema.json`, `models.yaml`; code at `src/mentar/eval/` | W1.2; T1.1–T1.5 |
