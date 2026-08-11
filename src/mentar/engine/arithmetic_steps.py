@@ -225,6 +225,41 @@ def extract_signed_multiplication_operands(problem: str) -> tuple[int, int] | No
     return int(a), int(b)
 
 
+def extract_signed_addition_operands(problem: str) -> tuple[int, int, str] | None:
+    """Phase C (2026-08-12): integer add/sub that the UNSIGNED column method
+    cannot do -- either operand negative, or a subtraction whose result goes
+    negative ("What is 5 - 12?", which `extract_subtraction_operands` rejects
+    by design because borrow-columns cannot represent it).
+
+    Returns `(a, b, op)` with `op` in `{"+", "-"}` -- the operator is kept
+    rather than folded into `b` because the grid SHOWS the original question
+    before rewriting it, and a child needs to see their own sum first.
+
+    Integers only. Anything the plain path already handles is left to it, so
+    the three add/sub extractors partition the space the same way the three
+    multiplication ones do."""
+    m = _ADDITION_RE.search(problem)
+    op = "+"
+    if not m:
+        m = _SUBTRACTION_RE.search(problem)
+        op = "-"
+    if not m:
+        return None
+    try:
+        a, b = Decimal(m.group(1)), Decimal(m.group(2))
+    except InvalidOperation:
+        return None
+    if a != a.to_integral_value() or b != b.to_integral_value():
+        return None  # signed DECIMAL add/sub needs place-value handling too; no
+                     # shipped generator produces one, so it is not guessed at
+    ia, ib = int(a), int(b)
+    if op == "+" and ia >= 0 and ib >= 0:
+        return None  # plain column addition's job
+    if op == "-" and ia >= 0 and ib >= 0 and ib <= ia:
+        return None  # plain column subtraction's job
+    return ia, ib, op
+
+
 def extract_division_operands(problem: str) -> tuple[Decimal, Decimal] | None:
     """Pull the two operands out of a division question WE generated (e.g.
     "What is 225 ÷ 5?"). Negative operands and a zero divisor are excluded
@@ -575,6 +610,58 @@ def build_signed_multiplication_steps(a: int, b: int) -> StepGrid:
     footer = [
         _full_width(f"so {a} × {b} = {product}", OPERATOR),
     ]
+    return StepGrid(rows=header + rows + footer, n_cols=n_cols)
+
+
+def build_signed_addition_steps(a: int, b: int, op: str = "+") -> StepGrid:
+    """Phase C (2026-08-12): signed integer addition/subtraction, taught by the
+    same-sign / different-sign rule.
+
+    Chosen over a number-line rendering deliberately (design doc §4 option 2):
+    the rule method reuses the EXISTING, already-reviewed
+    `build_addition_steps` / `build_subtraction_steps` on the magnitudes, in
+    exactly the shape Phase B established for signed multiplication, instead of
+    opening a new 1D-with-an-arc rendering surface and its own CSS. If the
+    maintainer prefers the number line, this function is the thing to replace --
+    the extractor and the wiring stay as they are.
+
+    Shape, for "What is 5 - 12?":
+
+        5 - 12
+        rewrite as an addition:  5 + (-12)
+        different signs → subtract the smaller from the larger, keep the bigger's sign
+          12
+        -  5
+        ----
+           7
+        so 5 - 12 = -7
+
+    Subtraction is rewritten to addition first because the rule is stated over
+    two signed addends; showing that step keeps the child's own question visible
+    rather than silently transforming it."""
+    addend = b if op == "+" else -b
+    total = a + addend
+    same_signs = (a < 0) == (addend < 0)
+
+    if same_signs:
+        rule = "same signs \u2192 add the magnitudes, keep the sign"
+        inner = build_addition_steps(abs(a), abs(addend))
+    else:
+        rule = "different signs \u2192 subtract the smaller from the larger, keep the bigger's sign"
+        hi, lo = max(abs(a), abs(addend)), min(abs(a), abs(addend))
+        inner = build_subtraction_steps(hi, lo)
+
+    rows = [list(r) for r in inner.rows]
+    n_cols = inner.n_cols
+
+    def _line(text: str, kind: str) -> list[Cell]:
+        return [Cell(text, kind)] + [Cell("", BLANK) for _ in range(n_cols - 1)]
+
+    header = [_line(f"{a} {op} {b}", OPERATOR)]
+    if op == "-":
+        header.append(_line(f"rewrite as an addition:  {a} + ({addend})", OPERATOR))
+    header.append(_line(rule, CARRY))
+    footer = [_line(f"so {a} {op} {b} = {total}", OPERATOR)]
     return StepGrid(rows=header + rows + footer, n_cols=n_cols)
 
 

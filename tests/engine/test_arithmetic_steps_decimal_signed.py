@@ -208,3 +208,75 @@ if __name__ == "__main__":
         if name.startswith("test_") and callable(fn):
             fn()
             print(f"  ✓ {name}")
+
+
+# ── 5. Phase C: signed addition/subtraction ──────────────────────────────────
+# Closes the last of the draw-dependent nodes (16 -> 4 -> 0). Built as the design
+# doc's option 2 (same-sign/different-sign rule reusing the existing unsigned
+# builders) rather than option 1 (a number-line rendering primitive); if the
+# maintainer prefers the number line, build_signed_addition_steps is the single
+# thing to replace -- the extractor and wiring stay.
+
+def test_signed_add_extractor_takes_only_what_the_plain_path_refuses():
+    from mentar.engine.arithmetic_steps import extract_signed_addition_operands as sx
+    assert sx("What is -8 + 3?") == (-8, 3, "+")
+    assert sx("What is -8 + -3?") == (-8, -3, "+")
+    assert sx("What is -4 - 6?") == (-4, 6, "-")
+    # a subtraction going negative -- refused by the unsigned borrow method
+    assert sx("What is 5 - 12?") == (5, 12, "-")
+    # ...and everything the plain path already handles stays there
+    assert sx("What is 7 + 5?") is None
+    assert sx("What is 12 - 5?") is None
+    assert sx("What is 6 × 7?") is None
+
+
+def test_signed_add_results_are_correct_across_the_generator():
+    """Every draw of the real Y7 generator, ground truth checked against the
+    grid's final line. 20.5% used to reach a grid; all of them should now."""
+    from mentar.engine.arithmetic_steps import (
+        build_signed_addition_steps,
+        extract_addition_operands,
+        extract_signed_addition_operands,
+        extract_subtraction_operands,
+    )
+    from mentar.engine.au_items import gen_integers_add_sub
+
+    rng = random.Random(20260812)
+    plain = signed = 0
+    for _ in range(400):
+        _at, _ck, problem, answer = gen_integers_add_sub(rng)
+        ops = extract_signed_addition_operands(problem)
+        if ops is None:
+            # must then be handled by one of the plain extractors -- never neither
+            assert (extract_addition_operands(problem) is not None
+                    or extract_subtraction_operands(problem) is not None), problem
+            plain += 1
+            continue
+        signed += 1
+        shown = _result_line(build_signed_addition_steps(*ops))
+        assert shown.endswith(str(answer)), (problem, shown, answer)
+    assert plain and signed, f"expected both paths exercised (plain={plain} signed={signed})"
+
+
+def test_same_and_different_sign_rules_are_stated_correctly():
+    from mentar.engine.arithmetic_steps import build_signed_addition_steps as B
+    same = render_steps_grid_text(B(-8, -3, "+"))
+    diff = render_steps_grid_text(B(-8, 3, "+"))
+    assert "same signs" in same and same.strip().endswith("-11")
+    assert "different signs" in diff and diff.strip().endswith("-5")
+
+
+def test_subtraction_is_rewritten_as_an_addition_for_the_child_to_see():
+    """The rule is stated over two signed addends, so the rewrite step must be
+    visible rather than the question silently transforming."""
+    from mentar.engine.arithmetic_steps import build_signed_addition_steps as B
+    text = render_steps_grid_text(B(5, 12, "-"))
+    assert "5 - 12" in text                      # their own question, first
+    assert "5 + (-12)" in text                   # the rewrite, shown
+    assert text.strip().endswith("-7")
+
+
+def test_equal_magnitudes_cancel_to_zero():
+    from mentar.engine.arithmetic_steps import build_signed_addition_steps as B
+    assert _result_line(B(-5, 5, "+")).endswith("0")
+    assert _result_line(B(5, 5, "-")).endswith("0")

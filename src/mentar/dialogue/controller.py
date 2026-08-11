@@ -31,12 +31,14 @@ from mentar.engine.arithmetic_steps import (
     build_long_division_steps,
     build_multiplication_decimal_steps,
     build_multiplication_partial_products_steps,
+    build_signed_addition_steps,
     build_signed_multiplication_steps,
     build_subtraction_steps,
     extract_addition_operands,
     extract_decimal_multiplication_operands,
     extract_division_operands,
     extract_multiplication_operands,
+    extract_signed_addition_operands,
     extract_signed_multiplication_operands,
     extract_subtraction_operands,
 )
@@ -1582,6 +1584,12 @@ class SessionController:
         signed_mult_operands = extract_signed_multiplication_operands(problem)
         if signed_mult_operands is not None:
             return build_signed_multiplication_steps(*signed_mult_operands)
+        # Phase C: signed add/sub -- either operand negative, or a subtraction
+        # whose result goes negative. Runs after the plain add/sub extractors
+        # above, which keep every case they already handle.
+        signed_add_operands = extract_signed_addition_operands(problem)
+        if signed_add_operands is not None:
+            return build_signed_addition_steps(*signed_add_operands)
         div_operands = extract_division_operands(problem)
         if div_operands is not None:
             answer_type = item.answer_type if item is not None else "int"

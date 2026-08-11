@@ -8,11 +8,14 @@ timestamp: "2026-08-11T00:00:00Z"
 
 # Step-grid design — signed arithmetic and decimal multiplication
 
-**Status: PHASES A + B SHIPPED 2026-08-12. PHASE C STILL GATED.** Phase A (decimal
-multiplication) and Phase B (signed multiplication) are built, wired and tested — together they
-took draw-dependent step-grid eligibility from **16 nodes to 4**. Phase C (signed
-addition/subtraction) remains **not built and still gated on maintainer worked examples**; the
-4 remaining nodes are the `*_integers_add_sub` family. See § Outcome at the end.
+**Status: ALL THREE PHASES SHIPPED 2026-08-12. Draw-dependent step-grid eligibility is now ZERO.** A+B took draw-dependent eligibility from **16 nodes to 4**, and C closed the last 4 the
+same day: **16 → 4 → 0**, with always-step-grid rising 56 → 72. See § Outcome at the end.
+
+**Phase C was built as option 2 (the same-sign/different-sign rule), not option 1 (a number-line
+rendering primitive), on the maintainer's "go do it".** §4 below asked for worked examples first
+and recommended option 2 as the default absent a preference; that recommendation was taken. The
+number line remains a live alternative — if it is preferred, `build_signed_addition_steps` is the
+single function to replace, and the extractor, the controller wiring and the tests all stay.
 
 Originally written in response to the maintainer's ask to turn `docs/EXPLAIN_METHOD_AUDIT.md`'s
 Findings 3+5 — logged as "not a tonight-sized item; needs its own plan" — into an actual plan.
@@ -284,7 +287,7 @@ first cut of that round-trip reported 0/12 for a *working* node because it passe
 in isolation, whose prereqs the fringe could then never satisfy — a harness artifact, not a
 product bug, and the same class of self-inflicted false signal seen twice before this session.
 
-### Phase C — still gated, deliberately
+### Phase C — SHIPPED (option 2)
 
 The remaining 4 nodes (`*_integers_add_sub`, e.g. `What is 5 - 12?`) need signed
 addition/subtraction. This document's §4 asked for 2–3 worked examples before building, because

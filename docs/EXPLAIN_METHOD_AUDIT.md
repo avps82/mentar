@@ -229,7 +229,7 @@ nodes were *not* dragged along.
 Verified by re-running the full audit: exactly **4 routing changes, 0 collateral changes**
 across the other 315 nodes, and 0 step-grid changes.
 
-### Finding 3+5 — draw-dependent eligibility: 4 → 16 → **4** ✅ mostly resolved 2026-08-12
+### Finding 3+5 — draw-dependent eligibility: 4 → 16 → **0** ✅ FULLY RESOLVED 2026-08-12
 
 The original found 4 nodes whose step-grid eligibility depends on the random draw. There are
 now **16**, because the SG/US/IN generic packs reuse the same generators — one root cause,
@@ -249,9 +249,10 @@ a 4-node problem: Phase A (decimal multiplication) and Phase B (signed multiplic
 both single fixes in `arithmetic_steps.py` that would resolve **8 nodes each**, not two.
 Phase C remains gated on maintainer worked examples.
 
-**Resolved 2026-08-12:** Phases A and B shipped, taking this from 16 nodes to **4**
-(always-step-grid rose 56 → 68). The remaining 4 are the `*_integers_add_sub` family,
-which is Phase C and still gated. Re-measured by re-running this audit, not asserted.
+**Resolved 2026-08-12:** all three phases shipped. A+B took it 16 → 4; C closed the last
+4 the same day. **Draw-dependent nodes: 0**; always-step-grid rose 56 → 72. Re-measured by
+re-running this audit each time, not asserted, and now gated by
+`tests/tools/test_audit_explain_paths.py::test_no_node_is_draw_dependent`.
 
 ### Checked and clean
 
