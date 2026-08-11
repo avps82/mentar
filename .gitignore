@@ -86,3 +86,10 @@ curriculum/pack_state.json
 eval/redteam/redteam.yaml
 eval/redteam/output/
 .promptfoo/
+
+# Local-LLM delegation tooling (llm.sh / ask-local.sh / system-grunt.md), vendored
+# from the separate local-llm-infra repo. DEV tooling for the maintainer's machine,
+# not a Mentar component and not part of the shipped package -- R16 §F0 already
+# described these as "git-excluded", but they were merely untracked until
+# 2026-08-11, which left them one `git add -A` away from shipping.
+tools/
