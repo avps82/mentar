@@ -107,6 +107,15 @@ _HARM_TO_SELF_PATTERNS: list[re.Pattern[str]] = [p for p in (
     re.compile(r"want to die", re.I),
     # bare "i want to die" also caught above; "i might as well die" etc.
     re.compile(r"\bi might as well (die|be dead)\b", re.I),
+    # Passive ideation (added 2026-08-12). A probe of realistic phrasings found
+    # these missed entirely, which contradicts this module's own sensitivity-biased
+    # contract -- passive ideation is a recognised risk indicator, not a milder
+    # version of the direct statements above. Deliberately narrow so the existing
+    # negative fixture "I miss my friend, she moved to another school" stays silent:
+    # the subject must be nobody/everyone, not "I".
+    re.compile(r"\b(nobody|no ?one|not one person)\s+(would|will|'?d)\s+(miss|care about|notice|even notice)\s+me\b", re.I),
+    re.compile(r"\b(everyone|everybody|they all|my family)\s+(would|will|'?d)\s+be\s+better\s+off\s+without\s+me\b", re.I),
+    re.compile(r"\bi\s+wish\s+i\s+(wasn'?t|was not|weren'?t|had never been)\s+(alive|here|born)\b", re.I),
     # "I'm thinking about ending it all" — indirect
     re.compile(r"thinking (about|of) (ending|killing) (it|myself|my life)", re.I),
     # "I've been cutting myself" / "I cut myself on purpose"
@@ -166,6 +175,41 @@ _ABUSE_DISCLOSURE_PATTERNS: list[re.Pattern[str]] = [p for p in (
     re.compile(r"abuse(d)? (me|my body|sexually)", re.I),
     # Euphemistic disclosures — simplified to catch the span that matters
     re.compile(r"(a grown.?up|an adult|someone older) (did|does|made|makes) (something|things?) (to me|with me)", re.I),
+    # Added 2026-08-12 after a probe found the plainest disclosures missed:
+    # "my uncle touches me" matched nothing, because every existing touch pattern
+    # required a body-part word, "in a wrong way", or "wants to touch". A child
+    # disclosing rarely qualifies the sentence. Requires a PERSON subject so that
+    # emotional uses ("the story touched me") do not fire.
+    # Matches "<person> touches ME" only -- never "touches MY <thing>". A first cut
+    # allowed "me|my" and fired on "the man touches my stuff"; requiring the bare
+    # object also makes it safe to include immediate family, who are statistically
+    # the likeliest subjects of a real disclosure and were missing as a result.
+    # "touches my private parts / body / area" is already covered above.
+    re.compile(
+        r"\b(my |a |an |the )?"  # t7.3-exempt: regex alternation, not a prompt
+        r"(uncle|aunt|cousin|coach|teacher|neighbou?r|stranger|babysitter|"
+        r"step-?\s?(dad|father|mum|mom|mother|brother|sister)|"
+        r"dad|daddy|father|mum|mummy|mom|mother|brother|sister|grandad|grandpa|granddad|"
+        r"man|woman|boy|girl|grown.?up|adult|someone|somebody|he|she|they)\s+"
+        r"(touch(es|ed)?|is touching|keeps touching|kept touching)\s+me\b",
+        re.I,
+    ),
+    # Grooming: a request for images. The existing pattern required an explicit
+    # qualifier ("naked/rude photos"); a real disclosure is usually just "asked me
+    # for photos". Parent-routed, so a false positive costs a parent conversation.
+    re.compile(
+        r"\b(ask(s|ed)?|want(s|ed)?|told|keeps asking)\s+me\s+"
+        r"(to\s+send\s+|to\s+take\s+|for\s+)"
+        r"(him|her|them)?\s*(a\s+|some\s+)?(photo|photos|picture|pictures|pic|pics|video|videos|selfie|selfies)\b",
+        re.I,
+    ),
+    # Grooming: an online contact pressing to meet or move off-platform.
+    re.compile(
+        r"\b(someone|somebody|a man|a woman|a person|a boy|a girl|a stranger|he|she|they)\b"  # t7.3-exempt: regex alternation, not a prompt
+        r"[^.?!]{0,60}\b(online|on the internet|in a game|on a game|in the chat)\b"
+        r"[^.?!]{0,60}\b(want(s|ed)? to meet|asked to meet|wants my address|asked where i live)\b",
+        re.I,
+    ),
     re.compile(r"(he|she|they) (made|make|asked|ask|told|tell) me (to )?(do|touch|show) (something|things?|myself|them)", re.I),
 )]
 
