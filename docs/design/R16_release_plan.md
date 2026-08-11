@@ -774,7 +774,27 @@ teach water-vs-land habitat — same content-relevance discipline as the English
 Verified: routing checked by content marker per label (not just "found a file"), live FSM
 round-trip 3/3 PASS, 786 tests green.
 
-**Next-session starting point: AU Science Year 4+ (continue the shape), then generic Y3/Y4, then SG_GENERIC, then US_GENERIC (maintainer decided 2026-08-11: generic pack, no CCSS codes/branding — OSS-release safety; see CONTENT_LICENSES.md §2b)** |
+**AU Science Year 4 SHIPPED 2026-08-11**: producers/consumers, magnetic materials,
+changes of state (adding/removing heat). 3 new disjoint fact tables in
+`engine/science_items.py` (`AU_SCIENCE_YEAR4_GENERATORS`), 300-draw self-validated.
+
+**Found and fixed a real scaffold-routing bug this time, not just a gap**: the state-change
+label matched `heat_energy.md` (1 keyword: "heat") over the far more relevant
+`states_of_matter.md`, because that file's keyword list had "change of state" (singular)
+which is NOT a substring of the label's "chang**es** of state" (plural) — a one-character
+phrasing gap silently sent the question to a heat-SOURCE scaffold instead of a
+change-of-STATE scaffold. Fixed the keyword list itself (added "changes of state",
+"melting", "freezing" — plural/verb-form variants, not just the noun root), which is more
+robust than relabelling the node since it fixes every future label that hits the same
+singular/plural gap. Also built 2 new scaffold files for the other two Y4 labels
+(`food_chains.md`, `magnetism.md`), which previously had no scaffold match at all.
+Verified every one of the 3 new labels AND the full existing science-scaffold set by content
+marker (not just "found a file") before shipping — this is the 2nd wave in a row applying
+the check proactively rather than after a bug report.
+
+Verified: live FSM round-trip 3/3 PASS, 786 tests green, ruff clean.
+
+**Next-session starting point: AU Science Year 5+ (continue the shape), then generic Y3/Y4, then SG_GENERIC, then US_GENERIC (maintainer decided 2026-08-11: generic pack, no CCSS codes/branding — OSS-release safety; see CONTENT_LICENSES.md §2b)** |
 | D2 name reservation | ✅ **DONE** — `@mentar/mentar` on npm (published 2026-06-17, confirmed via the registry API 2026-08-11) and `mentar` on PyPI (0.1.0.dev0). **One thing found on verification, not a name-reservation problem**: both placeholders have STALE license metadata — npm says MIT, PyPI says "TBD" — while the repo ratified AGPL-3.0-only weeks ago. Republishing needs the maintainer's own credentials; flagged, not fixed. |
 | D3 safeguarding, D6 cloud routines | D3 is a maintainer action (commissioning a professional; packet ready). D6 self-resolves on going public |
 | htmx 4 migration (E9) | Still beta, still monitoring-only |

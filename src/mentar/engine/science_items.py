@@ -70,6 +70,29 @@ _HABITAT_CLASSES = {
     "lives mainly on land": ["a lion", "a spider", "a snail", "a rabbit"],
 }
 
+# ── Year 4 ─────────────────────────────────────────────────────────────────
+
+_FOOD_CHAIN_CLASSES = {
+    "a producer (makes its own food, e.g. using sunlight)": ["a tree", "grass", "a sunflower", "seaweed"],
+    "a consumer (eats other living things for food)": ["a lion", "a rabbit", "a shark", "a caterpillar"],
+}
+
+_MAGNETIC_CLASSES = {
+    "attracted to a magnet": ["an iron nail", "a steel paperclip", "a steel spoon", "a tin can"],
+    "not attracted to a magnet": ["a wooden pencil", "a plastic ruler", "a rubber band", "a glass marble"],
+}
+
+_STATE_CHANGE_CLASSES = {
+    "caused by ADDING heat": [
+        "ice melting into water", "butter melting in a warm pan",
+        "chocolate melting in your hand", "water boiling into steam",
+    ],
+    "caused by REMOVING heat": [
+        "water freezing into ice", "juice freezing into ice blocks",
+        "melted wax cooling and hardening", "steam cooling back into water droplets",
+    ],
+}
+
 
 def _gen_classify_animals(rng: random.Random):
     return mc_which_is(rng, "Which of these is a {label}?", _ANIMAL_CLASSES)
@@ -107,6 +130,18 @@ def _gen_habitats(rng: random.Random):
     return mc_which_is(rng, "Which of these {label}?", _HABITAT_CLASSES)
 
 
+def _gen_food_chain_roles(rng: random.Random):
+    return mc_which_is(rng, "Which of these is {label}?", _FOOD_CHAIN_CLASSES)
+
+
+def _gen_magnetic_materials(rng: random.Random):
+    return mc_which_is(rng, "Which of these is {label}?", _MAGNETIC_CLASSES)
+
+
+def _gen_state_change_heat(rng: random.Random):
+    return mc_which_is(rng, "Which of these is {label}?", _STATE_CHANGE_CLASSES)
+
+
 # Registry — node_id -> generator (matches the science curriculum template node ids).
 SCIENCE_GENERATORS: dict[str, GenFn] = {
     "classify_animals": _gen_classify_animals,
@@ -118,10 +153,19 @@ SCIENCE_GENERATORS: dict[str, GenFn] = {
     "au3_science_life_cycle": _gen_life_cycle,
     "au3_science_heat_sources": _gen_heat_sources,
     "au3_science_habitats": _gen_habitats,
+    "au4_science_food_chain_roles": _gen_food_chain_roles,
+    "au4_science_magnetic_materials": _gen_magnetic_materials,
+    "au4_science_state_change_heat": _gen_state_change_heat,
 }
 
 AU_SCIENCE_YEAR3_GENERATORS: dict[str, GenFn] = {
     "au3_science_life_cycle": _gen_life_cycle,
     "au3_science_heat_sources": _gen_heat_sources,
     "au3_science_habitats": _gen_habitats,
+}
+
+AU_SCIENCE_YEAR4_GENERATORS: dict[str, GenFn] = {
+    "au4_science_food_chain_roles": _gen_food_chain_roles,
+    "au4_science_magnetic_materials": _gen_magnetic_materials,
+    "au4_science_state_change_heat": _gen_state_change_heat,
 }

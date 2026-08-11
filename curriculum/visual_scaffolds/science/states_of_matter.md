@@ -4,7 +4,7 @@ title: States of Matter — Solids, Liquids and Gases
 description: Visual scaffold hints for the three states of matter and changes between them.
 tags: [science, states-of-matter, solid, liquid, gas, visual-scaffold, particles]
 subject: science
-topic_keywords: [solid, liquid, gas, state, matter, particle, melt, freeze, evaporate, condense, boil, change of state, physical change]
+topic_keywords: [solid, liquid, gas, state, matter, particle, melt, melting, freeze, freezing, evaporate, condense, boil, change of state, changes of state, physical change]
 timestamp: "2026-07-22T00:00:00Z"
 ---
 
