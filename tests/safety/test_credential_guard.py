@@ -89,3 +89,32 @@ if __name__ == "__main__":
     for fn in fns:
         fn(); print(f"  ok {fn.__name__}")
     print(f"{len(fns)} passed.")
+
+
+# ── additional credential formats (added 2026-08-12) ─────────────────────────
+# This module's contract is "any credential-looking substring", but a probe
+# found these standard formats passing untouched. All have unambiguous fixed
+# prefixes or shapes, so the false-positive risk in tutor output is nil.
+
+def test_github_aws_and_uri_credentials_are_redacted():
+    for text in (
+        "The token is ghp_1234567890abcdefghijklmnopqrstuvwx",
+        "AKIAIOSFODNN7EXAMPLE",
+        "postgres://user:secret@localhost:5432/db",
+    ):
+        assert redact_credentials(text) != text, f"not redacted: {text!r}"
+        assert detect_credential_leak(text), f"not detected: {text!r}"
+
+
+def test_ordinary_tutoring_text_is_untouched_by_the_new_patterns():
+    """Including a plain https:// link and a ratio -- both share punctuation
+    with the URI-credential pattern."""
+    for text in (
+        "The answer is 42.",
+        "3/4 is greater than 1/2.",
+        "Your key insight is that the denominator stays the same.",
+        "Visit https://example.com/fractions for more practice.",
+        "A ratio like 3:4 compares two amounts.",
+    ):
+        assert redact_credentials(text) == text, f"false positive on {text!r}"
+        assert not detect_credential_leak(text), f"false positive on {text!r}"

@@ -22,6 +22,13 @@ _SENSITIVE_PATTERNS: list[re.Pattern[str]] = [
     re.compile(r"(api[_-]?key|token|secret|password)\s*[=:]\s*\S+", re.IGNORECASE),
     re.compile(r"\bsk-[A-Za-z0-9]{20,}\b"),                     # OpenAI-style keys
     re.compile(r"\bBearer\s+[A-Za-z0-9\-._~+/]+=*", re.IGNORECASE),  # bearer tokens
+    # Added 2026-08-12: this module's contract is "any credential-looking
+    # substring", and a probe found these standard formats passing untouched.
+    # All three have unambiguous fixed prefixes/shapes, so the false-positive
+    # risk inside a maths tutor's output is effectively nil.
+    re.compile(r"\bgh[pousr]_[A-Za-z0-9]{16,}\b"),              # GitHub tokens
+    re.compile(r"\bAKIA[0-9A-Z]{16}\b"),                        # AWS access key id
+    re.compile(r"\b[a-z][a-z0-9+.\-]*://[^\s:@/]+:[^\s:@/]+@"),  # user:pass@ in a URI
 ]
 
 
