@@ -806,7 +806,15 @@ prevent the bug, not just catch it after).
 
 Verified: live FSM round-trip 3/3 PASS, 786 tests green, ruff clean.
 
-**AU Science Year 2-5 complete.** Next-session starting point: AU Science Year 6+ (continue
+**AU Science Year 6 SHIPPED 2026-08-11**: vertebrates/invertebrates, electrical
+conductors/insulators, reversible/irreversible change. 3 new disjoint fact tables in
+`engine/science_items.py` (`AU_SCIENCE_YEAR6_GENERATORS`), 300-draw self-validated. All 3
+labels had no existing scaffold match (safe null) — built `vertebrates.md`, `circuits.md`,
+`reversible_change.md`. Full regression check across all 15 shipped science labels (Y2-Y6)
+by content marker — zero mismatches. Live FSM round-trip 3/3 PASS, 786 tests green, ruff
+clean.
+
+**AU Science Year 2-6 complete.** Next-session starting point: AU Science Year 7+ (continue
 the shape), then generic Y3/Y4, then SG_GENERIC, then US_GENERIC (maintainer decided 2026-08-11: generic pack, no CCSS codes/branding — OSS-release safety; see CONTENT_LICENSES.md §2b)** |
 | D2 name reservation | ✅ **DONE** — `@mentar/mentar` on npm (published 2026-06-17, confirmed via the registry API 2026-08-11) and `mentar` on PyPI (0.1.0.dev0). **One thing found on verification, not a name-reservation problem**: both placeholders have STALE license metadata — npm says MIT, PyPI says "TBD" — while the repo ratified AGPL-3.0-only weeks ago. Republishing needs the maintainer's own credentials; flagged, not fixed. |
 | D3 safeguarding, D6 cloud routines | D3 is a maintainer action (commissioning a professional; packet ready). D6 self-resolves on going public |

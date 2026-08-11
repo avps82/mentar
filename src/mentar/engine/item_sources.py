@@ -50,6 +50,7 @@ from mentar.engine.science_items import (
     AU_SCIENCE_YEAR3_GENERATORS,
     AU_SCIENCE_YEAR4_GENERATORS,
     AU_SCIENCE_YEAR5_GENERATORS,
+    AU_SCIENCE_YEAR6_GENERATORS,
     SCIENCE_GENERATORS,
 )
 
@@ -66,6 +67,7 @@ def build_registry(pilot_itembank_path: Path) -> dict[str, dict]:
         "au_science_year3": {"generators": AU_SCIENCE_YEAR3_GENERATORS, "itembank": None},
         "au_science_year4": {"generators": AU_SCIENCE_YEAR4_GENERATORS, "itembank": None},
         "au_science_year5": {"generators": AU_SCIENCE_YEAR5_GENERATORS, "itembank": None},
+        "au_science_year6": {"generators": AU_SCIENCE_YEAR6_GENERATORS, "itembank": None},
         "au_year2": {"generators": AU_YEAR2_GENERATORS, "itembank": None},
         "au_year3": {"generators": AU_YEAR3_GENERATORS, "itembank": None},
         "au_year4": {"generators": AU_YEAR4_GENERATORS, "itembank": None},

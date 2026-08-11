@@ -56,6 +56,9 @@ _EXPECTED = {
     "curriculum/templates/AU_ACARA/year5_science.md": {
         "key": "au_acara_year5_science", "label": "Science — Year 5 🇦🇺", "item_source": "au_science_year5",
     },
+    "curriculum/templates/AU_ACARA/year6_science.md": {
+        "key": "au_acara_year6_science", "label": "Science — Year 6 🇦🇺", "item_source": "au_science_year6",
+    },
     "curriculum/templates/AU_ACARA/year5_maths.md": {
         "key": "au_acara_year5_maths", "label": "Maths — Year 5 🇦🇺", "item_source": "au_year5",
     },

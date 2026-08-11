@@ -118,6 +118,29 @@ _LIGHT_MATERIAL_CLASSES = {
     ],
 }
 
+# ── Year 6 ─────────────────────────────────────────────────────────────────
+
+_VERTEBRATE_CLASSES = {
+    "a vertebrate (has a backbone)": ["a dog", "a snake", "a fish", "a bird"],
+    "an invertebrate (no backbone)": ["a worm", "a spider", "a snail", "a jellyfish"],
+}
+
+_CIRCUIT_CLASSES = {
+    "a good conductor of electricity": ["copper wire", "a steel key", "aluminium foil", "a silver spoon"],
+    "an insulator (does not conduct electricity)": [
+        "a rubber band", "a plastic ruler", "a wooden spoon", "a glass rod",
+    ],
+}
+
+_REVERSIBLE_CHANGE_CLASSES = {
+    "a reversible change (can be undone)": [
+        "melting chocolate", "freezing water", "dissolving salt in water", "melting butter",
+    ],
+    "an irreversible change (cannot be undone)": [
+        "burning paper", "baking a cake", "rusting iron", "cooking an egg",
+    ],
+}
+
 
 def _gen_classify_animals(rng: random.Random):
     return mc_which_is(rng, "Which of these is a {label}?", _ANIMAL_CLASSES)
@@ -179,6 +202,18 @@ def _gen_light_materials(rng: random.Random):
     return mc_which_is(rng, "Which of these is {label}?", _LIGHT_MATERIAL_CLASSES)
 
 
+def _gen_vertebrates(rng: random.Random):
+    return mc_which_is(rng, "Which of these is {label}?", _VERTEBRATE_CLASSES)
+
+
+def _gen_circuits(rng: random.Random):
+    return mc_which_is(rng, "Which of these is {label}?", _CIRCUIT_CLASSES)
+
+
+def _gen_reversible_change(rng: random.Random):
+    return mc_which_is(rng, "Which of these is {label}?", _REVERSIBLE_CHANGE_CLASSES)
+
+
 # Registry — node_id -> generator (matches the science curriculum template node ids).
 SCIENCE_GENERATORS: dict[str, GenFn] = {
     "classify_animals": _gen_classify_animals,
@@ -196,6 +231,9 @@ SCIENCE_GENERATORS: dict[str, GenFn] = {
     "au5_science_adaptations": _gen_adaptations,
     "au5_science_dissolving": _gen_dissolving,
     "au5_science_light_materials": _gen_light_materials,
+    "au6_science_vertebrates": _gen_vertebrates,
+    "au6_science_circuits": _gen_circuits,
+    "au6_science_reversible_change": _gen_reversible_change,
 }
 
 AU_SCIENCE_YEAR3_GENERATORS: dict[str, GenFn] = {
@@ -214,4 +252,10 @@ AU_SCIENCE_YEAR5_GENERATORS: dict[str, GenFn] = {
     "au5_science_adaptations": _gen_adaptations,
     "au5_science_dissolving": _gen_dissolving,
     "au5_science_light_materials": _gen_light_materials,
+}
+
+AU_SCIENCE_YEAR6_GENERATORS: dict[str, GenFn] = {
+    "au6_science_vertebrates": _gen_vertebrates,
+    "au6_science_circuits": _gen_circuits,
+    "au6_science_reversible_change": _gen_reversible_change,
 }
