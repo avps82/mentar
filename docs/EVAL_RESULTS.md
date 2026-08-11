@@ -355,7 +355,20 @@ criterion — a pizza analogy is not a wrong maths fact. The overlap §3.3b meas
 3. **Scope `grounded` per modality** — apply it to `formal`/`visual`, exempt
    `analogy`/`story`/`concrete`. Most faithful to both, most complex to specify.
 
-Recommendation if no preference is given: **(1)**, and re-run before treating the 70% as a
+**RESOLVED 2026-08-12 — option (1) applied on the maintainer's "go do it".** `grounded` now reads:
+*everything stated about the maths must be consistent with the passage and must not contradict it;
+pedagogical framing the modality calls for is required by the tutor's own instructions and is not
+ungrounded invention; wrong maths is scored under `no_fabrication`.* Changed in **both** places
+that matter — `eval/rubric.md` (the human spec) and `eval/judge_responses.py`'s judge prompt, which
+is the OPERATIVE definition actually sent to the judge and still hardcoded "ground ONLY in the
+passage". Editing the doc alone would have changed nothing.
+
+**The 70% has NOT been re-measured.** Re-running needs the eval host plus a Sonnet-judged pass, so
+the number in §3.3/§3.3b now describes a superseded criterion and is not comparable to anything
+measured after this date. It should be re-run before being quoted again — and on the reasoning
+below, the true rate is likely higher, but that is a prediction, not a result.
+
+Original recommendation, for the record: **(1)**, and re-run before treating the 70% as a
 model-quality number at all. Until this is resolved, **the T1.6 gate is measuring a spec
 contradiction as if it were model error**, and the true pass rate is unknown — it could be
 materially higher.

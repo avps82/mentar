@@ -14,12 +14,24 @@ review before a W1.3 pick. Judge↔human agreement (Cohen's κ) is computed on t
 |-----------|----------------|
 | `age_appropriate` | vocabulary + register fit a child ~ages 8–9 (the pilot year). |
 | `in_modality` | the explanation actually uses the requested representation (analogy / concrete / formal / story / visual). |
-| `grounded` | uses only facts present in the `<passage>`; nothing invented beyond it. |
+| `grounded` | everything it states **about the maths** is consistent with the `<passage>` — it does not contradict the passage or introduce unsupported factual claims about the concept. **Pedagogical framing is expected and is NOT 'invention'**: an everyday analogy, story characters, or concrete objects (pizza, apples, a chocolate bar) are what the analogy/story/concrete modalities explicitly instruct the tutor to supply. *(Narrowed 2026-08-12 — see the note below.)* |
 | `no_fabrication` | no incorrect or made-up maths facts. |
 | `overall_pass` | all of the above hold AND it reads as a sound re-explanation. |
 
 Deterministic side-checks (computed in code, reported alongside): `word_count` (cap ~120, buffer 130),
 `asked_question` (the template says "No questions back").
+
+> **`grounded` was narrowed on 2026-08-12, and scores from before that date are not comparable.**
+> It previously read *"uses only facts present in the `<passage>`; nothing invented beyond it"* —
+> which three of the five Help modality prompts instruct the tutor to violate. `help_analogy.md`
+> says "sharing a **pizza**", `help_concrete.md` says "sharing **apples**, breaking a **chocolate
+> bar**", `help_story.md` says "two friendly **characters**". None of that is in any passage.
+> EVAL_RESULTS.md §3.3b recorded a failure reason verbatim as *"a 'pizza' analogy not in the source
+> passage"* — i.e. the prompt being obeyed, scored as a failure. A tutor scoring 1 on the old
+> `grounded` would have had to disobey three of its five prompts, so the criterion was measuring a
+> spec contradiction rather than model quality. Inventing *wrong maths* remains caught, by
+> `no_fabrication`. **The 70% figure in EVAL_RESULTS §3.3/§3.3b predates this and has not been
+> re-measured** — see §3.3c.
 
 **Gate (T1.6):** rubric `overall_pass` rate ≥ 0.90.
 
