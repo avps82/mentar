@@ -190,13 +190,18 @@ def gen_personification_y7(rng: random.Random):
     """AC9E7A alignment: personification vs. a literal statement of the same
     event (distinguishing it from Y4's simile / Y6's simile-vs-metaphor)."""
     table = {
+        # Every member must attribute a distinctly HUMAN act -- whispering,
+        # smiling, groaning, grumbling. "time flew by" was here and was removed
+        # (2026-08-12): flying is not a human trait (birds and planes fly), so it
+        # is a metaphor, and a teacher would fairly mark it wrong as an answer to
+        # "which of these is personification?".
         "personification (giving human qualities to something non-human)": [
             "the wind whispered through the trees", "the sun smiled down on us",
-            "the old car groaned to a start", "time flew by quickly",
+            "the old car groaned to a start", "the thunder grumbled angrily",
         ],
         "a literal statement": [
             "the wind blew through the trees", "the sun shone down on us",
-            "the old car started slowly", "time passed by quickly",
+            "the old car started slowly", "the thunder rumbled loudly",
         ],
     }
     return mc_which_is(rng, "Which of these is {label}?", table)
