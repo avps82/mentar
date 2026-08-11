@@ -186,13 +186,21 @@ That gate is safety-critical and is **not** gemma work.
 
 ### B1–B5 — The build-out
 
-| # | Scope | New templates | New generators | Notes |
-|---|---|---|---|---|
-| B1 | AU maths Y9–Y12 | 4 | 4 sets, `expression` type | Gated on B0 |
-| B2 | AU English Y3, Y4, Y7–Y12 | 9 | 9 sets | Reuses the mc4/cloze shape in `au_english_items.py` |
-| B3 | **Science Y2–Y12** — new subject | 11 | 11 fact tables | Extends `science_items.py`'s curated-fact-table shape; the *tables* are the work, the code is 59 lines today |
-| B4 | `IN_GENERIC` Classes 1–12, all three subjects | ~30 | ~30 | Board-agnostic — forced by the NCERT/CBSE/ICSE licence findings, not a design choice |
-| B5 | Singapore | see C | see C | Gated on the C1 licence check |
+| # | Scope (as originally planned) | Actually shipped 2026-08-11 | Notes |
+|---|---|---|---|
+| B1 | AU maths Y9–Y12 | ✅ **Y9-12, matches plan** (4 templates, `expression` type) | Gated on B0, unblocked when sympy landed |
+| B2 | AU English Y3, Y4, Y7–Y12 | ✅ Y3/4/7/8 shipped; **Y9-12 NOT shipped — capped at Y8** | See asymmetry note below |
+| B3 | Science Y2–Y12 — new subject | ✅ Y2-8 shipped (24 nodes/7 years); **Y9-12 NOT shipped — capped at Y8** | See asymmetry note below |
+| B4 | `IN_GENERIC` Classes 1–12, all three subjects | ⚠️ **Partial**: maths+English Classes 2/4-8 (+ existing Class 3) shipped; **no science, no Classes 1/9-12** | Board-agnostic — forced by NCERT/CBSE/ICSE licence findings |
+| B5 | Singapore | ⚠️ **Partial**: `SG_GENERIC` maths+English (Primary 2-6, Secondary 1-2) shipped, same shape as B4; no science | Gated on the C1 licence check, which cleared it |
+
+**Breadth asymmetry, not yet an explicit maintainer decision**: maths reaches Y2-12 (the
+`expression_equiv` verifier makes senior-year algebra scoreable); English and Science both
+stop at Y2-8. This happened organically — English/Science content naturally fits the
+`mc4`/fact-table shape well through Y8, and AU's own real curricula split Science into
+separate Biology/Chemistry/Physics subjects after Y10 anyway — but nobody has explicitly
+ratified "cap English/Science at Y8, only maths goes to Y12" as a decision the way B0/C1
+were ratified. Worth a one-line confirmation from the maintainer, not a blocker.
 
 **Per-year acceptance gate** (already the house pattern from R14a/R15, do not skip):
 `mentar validate` on the template → **500-draw self-validate** on the generators → **live
@@ -268,8 +276,8 @@ the natural moment, and it is a template change, not an architecture change.
 
 | # | Item | State | Notes |
 |---|---|---|---|
-| D1 | `pyproject.toml` → `license = { text = "TBD" }` | **Open — hard blocker** | W4.2 ratified **AGPL-3.0-only** and it was never applied. One line. Flagged at `docs/DOC_AUDIT.md:51`. Do this first. |
-| D2 | Name reservation on npm + PyPI | **Open** | `docs/SPEC.md:69` (W4.1): publish placeholders to claim `mentar` *before* the repo is public. Ordering matters — after publication it is a race. |
+| D1 | `pyproject.toml` license field | ✅ **Verified done 2026-08-11** — `pyproject.toml:11` reads `license = "AGPL-3.0-only"`. This row was itself stale (claimed `{ text = "TBD" }`, the exact D8 problem it warns about); the fix predates this check. | — |
+| D2 | Name reservation on npm + PyPI | ✅ **Done** — confirmed by the maintainer 2026-08-11: `https://www.npmjs.com/package/@mentar/mentar` reserved. PyPI/npm license metadata on the published placeholders is stale (says MIT/TBD, repo is AGPL) — flagged, not fixed (needs the maintainer's own publish credentials). | — |
 | D3 | W2.2 professional safeguarding review | **Open — maintainer-gated** | Handoff wording + emergency-services signposting. `SAFEGUARDING_REVIEW_PACKET.md` is prepared and hands straight to a professional. **Not autonomous work.** Blocks anything past the supervised pilot; the README must say so plainly at release. |
 | D4 | Secret + history sweep | ✅ **DONE 2026-08-11 (maintainer directed):** `gitleaks git . --no-banner --redact` (v8.30.1, the exact CI command) — 309 commits scanned, **no leaks found**. Supplementary checks: this session's own local-LLM gateway token confirmed NEVER in history (`.claude/settings.local.json` is gitignored and has zero commits touching it, ever); a secret-pattern regex sweep beyond gitleaks' ruleset (api_key/secret/password/bearer assignments, private-key headers) — the one PRIVATE KEY hit is the literal regex pattern INSIDE the pre-commit hook's own secret-scanner script, not a real key; all 4 unique 64-char hex strings in history individually verified as legitimate content hashes (an htmx subresource-integrity hash, a dataset checksum, a curriculum-pack manifest hash), not credentials. **`graphify-out/` still open** — tracked dev artifact (`graph.json`/`cost.json`/a PNG), not a secret risk, recommend dropping before a public repo but that's a separate housekeeping call, not a security finding. |
 | D5 | CI installs `[dev,web,grounding]` | Known gotcha | Not just `dev,web`, or libzim tests fail. Confirm before the release build. |
@@ -285,11 +293,11 @@ Everything currently known to be broken or unfinished, with the source it came f
 
 | # | Issue | Source | Assessment |
 |---|---|---|---|
-| E1 | **5 explain-method findings, none fixed** — 2 scaffold-routing bugs, 2 draw-dependent step-grid eligibility bugs, 1 where decimal-mult is almost never eligible | `docs/EXPLAIN_METHOD_AUDIT.md` (2026-07-25, audit-only) | Real. The decimal-mult one was caught **only by running real draws** — fix the same way, don't reason from the code |
-| E2 | Restart button | `project_r12_followup_bugs` | Last unfixed of the original 5 |
-| E3 | `--font-mono` undefined | `style.css:226` | One line; folded into A2 |
-| E4 | No fenced-block handling in markdown-lite | `web/app.py:833` | The root cause; **is** A1 |
-| E5 | Pack cards don't separate countries | `PHASE0_STATUS.md:418` | Folded into C4 |
+| E1 | **2 of 5 explain-method findings fixed, 3 remain** — the 2 scaffold-routing bugs ✅ fixed 2026-08-10 (Findings 1+2); the decimal-mult-almost-never-eligible + 2 draw-dependent step-grid bugs (Findings 3+5) have a written plan (`docs/design/step_grid_signed_and_decimal_mult_design.md`, 2026-08-11) but Phase C is gated on maintainer worked examples, not built | `docs/EXPLAIN_METHOD_AUDIT.md` (2026-07-25, audit-only) | Real, plan exists for the rest. The decimal-mult one was caught **only by running real draws** — fix the same way, don't reason from the code |
+| E2 | Restart button | `project_r12_followup_bugs` | **Still open** — needs a design decision (no in-process restart for a WSGI dev server), not something to guess at |
+| E3 | `--font-mono` undefined | `style.css:226` | ✅ **Resolved** — verified 2026-08-11, `style.css:36` now defines it, used at line 236 |
+| E4 | No fenced-block handling in markdown-lite | `web/app.py:833` | ✅ Resolved — was A1, shipped 2026-08-10 |
+| E5 | Pack cards don't separate countries | `PHASE0_STATUS.md:418` | ✅ **Mechanism already fixed** (R3.2, `app.py::_subject_groups()` — year-level groups get a `(country)` suffix when unambiguous, verified 2026-08-11). **Re-check visually before closing**: this session added many more year-level groups across 4 countries (AU/SG/US/IN) since R3.2 shipped — the grouping LOGIC is correct but nobody has looked at the picker with today's full breadth loaded, and "mess" was originally a visual/volume complaint, not just a missing-label one |
 | E6 | Settings toggle for step-grid display style | `PHASE0_STATUS.md:417` | Idea only. **Skip** — A gives one house style; a toggle to switch between styles is the opposite of the goal |
 | E7 | Grounding wired to zero non-pilot curriculum | `decision_hybrid_content_architecture` | Not a bug — the unbuilt half of a ratified architecture. Disclose, don't paper over |
 | E8 | T1.6 rubric `overall_pass` below the 90% gate | `PHASE0_STATUS.md` known defects | Open, prompt-iteration follow-up |
@@ -893,16 +901,19 @@ truth; it never becomes the trust boundary itself.
 Dependency-ordered. The ordering is not cosmetic — three of these gates exist because doing
 the work in the other order means redoing it.
 
+**Status re-verified 2026-08-11 (this table had drifted stale — several "still open" rows
+below were already done and never marked; see the re-verification note after the table).**
+
 | Wave | Contents | Why here |
 |---|---|---|
 | **-1** | ✅ **DONE 2026-08-10** — local-LLM infra verified + 2 real bugs fixed (F0) | Prerequisite for delegating anything below with confidence |
-| **0** | ✅ D1 licence field (already done) · ✅ D4 history sweep (DONE 2026-08-11, clean) · A0 decide the uncommitted CSS diff (still open — see A's completion note) | D1 blocks any public repo, A0 blocks A |
+| **0** | ✅ D1 licence field · ✅ D4 history sweep · **A0 decide the uncommitted CSS diff — still open, maintainer taste call** | A0 blocks A being fully closed out (A itself shipped) |
 | **1** | ✅ **DONE 2026-08-10** — **A — rendering contract** (A1–A5; A0 still open) | Done directly, not delegated — A1 is a trust boundary, A2–A5 turned out smaller than a delegation spec. A3 was 4 files, not 24 (21 already used fences) |
-| **2** | E2.2 ✅ **DONE**; E1, E2.1, E2.3–E2.5, E3 still open | Cheap, root causes known, and E1/E2.3 touch the same explain path A just changed. Not delegated — precision/binding-judgment work, see F's "Not delegated" list |
-| **3** | **B0 — verifier ceiling decision** (sympy or cap at Y8) | Gates every Y9+ item in B1/B4/B5. A decision, not a build — not delegated. **Still open** |
-| **4** | **B3 science: AU_ACARA Y2 ✅ DONE** (sound, solar system, materials — all 3 topics) → Y3–12 still open → B2 English → B1 maths Y9–12 → B4 India → **C Singapore** | Y2 proved the two-model split on real content twice (F1/F2). Templates/fact-tables → `gemma4-12b-q4`; generator Python → `qwen3.6-27b-q5`; fact-table design itself stays with Opus (binding judgment) |
-| **5** | **D — release** (✅ D2 name reservation DONE, licence-metadata mismatch flagged for maintainer → ✅ D7/D8 doc-truth pass DONE 2026-08-11 → publish) | Docs true before publication (verified, not assumed — 8 of 11 DOC_AUDIT findings were themselves stale) |
-| **∞** | D3 safeguarding review | Maintainer-commissioned, runs in parallel, **gates rollout beyond the supervised pilot regardless of everything above** |
+| **2** | ✅ **ALL DONE** — E2.1–E2.5, E1 Findings 1+2 (2026-08-10 overnight wave), E3 (`--font-mono` — resolved as part of A2). **E1 Findings 3+5 have a written plan** (`docs/design/step_grid_signed_and_decimal_mult_design.md`, 2026-08-11) but Phase C is gated on maintainer worked examples — not built | Cheap, root causes known, touched the same explain path A changed |
+| **3** | ✅ **DONE** — B0 verifier ceiling: sympy installed by the maintainer 2026-08-11, `expression_equiv` shipped same day. Y9-12 maths fully unblocked and built | Gated every Y9+ item in B1/B4/B5 |
+| **4** | ✅ **B3 science: AU_ACARA Y2-8 DONE** (2026-08-11, 24 nodes/7 years) · ✅ **B2 English: AU Y2-8 + generic SG/US/IN Y2-8 DONE** · ✅ **B1 maths: AU Y2-12 DONE** · **B4 India: PARTIAL** — `IN_GENERIC` maths+English shipped (Classes 2/4-8 + existing Class 3), no generic science pack exists for any country yet · **C Singapore: PARTIAL** — `SG_GENERIC` maths+English shipped (Primary 2-6, Secondary 1-2), no Singapore-specific authoring (C3's original scope) since C1 ruled that out on licence grounds, same as India's IN_NCERT→IN_GENERIC pivot | Y2 proved the two-model split; the pattern held for the full breadth |
+| **5** | **D — release**: ✅ D1 licence field, ✅ D2 name reservation (both re-verified 2026-08-11, this table had them wrong), ✅ D4 history sweep, ✅ D7 Khan Academy NC clause now in README (2026-08-11), ✅ D8 doc-truth passes (multiple rounds) — **repo is still PRIVATE, not yet published** (D6 cloud-routine access still blocked on this) | Docs true before publication (verified, not assumed — every doc-truth pass this project has run found stale claims, including this table) |
+| **∞** | D3 safeguarding review — still open, maintainer-commissioned | Runs in parallel, **gates rollout beyond the supervised pilot regardless of everything above** |
 
 **The three real gates:** A before B (or you re-edit hundreds of files). B0 before Y9+ (or
 you author curriculum no verifier can score). C1 before C3 (or you repeat NCERT). Local-LLM
