@@ -1,16 +1,22 @@
 ---
 type: Mentar Design Document
 title: "Step-grid design — signed arithmetic and decimal multiplication (E1 Findings 3+5)"
-description: "PLAN ONLY, not built. Answers docs/EXPLAIN_METHOD_AUDIT.md Findings 3 and 5: draw-dependent step-grid eligibility for au7_integers_add_sub (21%), au8_negative_multiplication (23%), au6_mult_decimals (13%), au7_mult_decimal_by_decimal (1%)."
-tags: [design, reference, arithmetic, show-human-working, plan-only]
+description: "Phases A+B SHIPPED 2026-08-12 (draw-dependent step-grid eligibility 16 nodes -> 4); Phase C still gated on maintainer worked examples. Answers docs/EXPLAIN_METHOD_AUDIT.md Findings 3 and 5."
+tags: [design, reference, arithmetic, show-human-working, partially-shipped]
 timestamp: "2026-08-11T00:00:00Z"
 ---
 
 # Step-grid design — signed arithmetic and decimal multiplication
 
-**Status: PLAN ONLY.** Nothing in this document is built. Written in response to the
-maintainer's explicit ask to turn `docs/EXPLAIN_METHOD_AUDIT.md`'s Findings 3+5 — logged as
-"not a tonight-sized item; needs its own plan" — into an actual plan. This is that plan.
+**Status: PHASES A + B SHIPPED 2026-08-12. PHASE C STILL GATED.** Phase A (decimal
+multiplication) and Phase B (signed multiplication) are built, wired and tested — together they
+took draw-dependent step-grid eligibility from **16 nodes to 4**. Phase C (signed
+addition/subtraction) remains **not built and still gated on maintainer worked examples**; the
+4 remaining nodes are the `*_integers_add_sub` family. See § Outcome at the end.
+
+Originally written in response to the maintainer's ask to turn `docs/EXPLAIN_METHOD_AUDIT.md`'s
+Findings 3+5 — logged as "not a tonight-sized item; needs its own plan" — into an actual plan.
+The plan text below is kept as written; the Outcome section records what shipped against it.
 
 ## 1. Restating the problem precisely
 
@@ -236,3 +242,55 @@ this project has used: 200-300 draws through the real generator + real extractor
 eligibility actually reaches ~100% (not just reading the code and assuming), a handful of
 grids checked by eye against a known-correct worked example, and a regression test file
 alongside the existing `tests/engine/test_arithmetic_steps.py`.
+
+
+---
+
+## Outcome (2026-08-12)
+
+### Phases A + B — shipped
+
+| | Before | After |
+|---|---|---|
+| Draw-dependent nodes | 16 | **4** |
+| Always step-grid | 56 | **68** |
+
+Phase A resolved 8 nodes (`*_mult_decimals` ×4, `*_mult_decimal_by_decimal` ×4), Phase B
+resolved 4 (`*_negative_multiplication` ×4). Both landed as the plan specified: sibling
+extractors rather than widening `extract_multiplication_operands` (its integer-only contract
+and its caller stay untouched), and both builders **wrap the existing, unchanged**
+`build_multiplication_partial_products_steps` rather than re-deriving its carry logic. The
+three multiplication extractors provably partition the input space, so the controller's chain
+order is not load-bearing — asserted by a test, since if that ever stops being true the chain
+becomes silently order-dependent.
+
+Phase B's sign row sits **above** the arithmetic (state the rule, then use it), the default the
+plan recommended. Moving it below is a two-line change. Zero is handled explicitly rather than
+by the sign rule — "same signs → positive" is false for `-7 × 0`, and no shipped generator
+produces it, but the builder is general-purpose.
+
+**Two real bugs caught while building, both by running rather than reading:**
+1. Re-inserting the decimal point widens the grid by one cell, and padding a `LINE` row with a
+   digit-kind cell punched a gap through the rule (`- ---` instead of `-----`). Padding now
+   matches the row's own kind.
+2. A first cut of the test asserted every `gen_negative_multiplication` draw is signed. It
+   isn't — each operand's sign is drawn independently, so ~25% are both-positive and correctly
+   take the plain integer path. **That is exactly the 25.5% eligibility the pre-fix audit
+   measured**, i.e. the "bug" in the test was the audit's own number, confirming both.
+
+A live round-trip through a real `SessionController` puts all three fixed node families at
+**12/12** draws, and `au7_integers_add_sub` at 3/12 (Phase C, unchanged as expected). Note the
+first cut of that round-trip reported 0/12 for a *working* node because it passed a single node
+in isolation, whose prereqs the fringe could then never satisfy — a harness artifact, not a
+product bug, and the same class of self-inflicted false signal seen twice before this session.
+
+### Phase C — still gated, deliberately
+
+The remaining 4 nodes (`*_integers_add_sub`, e.g. `What is 5 - 12?`) need signed
+addition/subtraction. This document's §4 asked for 2–3 worked examples before building, because
+the two candidate conventions (number-line movement vs. the same-sign/different-sign text rule)
+are genuinely different pedagogy, not an implementation detail. That request stands. Option 2
+(text rule + reuse of the existing column grid) remains the recommendation if no preference is
+given — it is structurally identical to Phase B, which is now shipped and proven — but it is a
+teaching-method choice, and the project has already paid once for inventing a layout instead of
+asking (`show_human_working_layout_reference.md`).

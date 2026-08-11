@@ -176,6 +176,55 @@ def extract_multiplication_operands(problem: str) -> tuple[int, int] | None:
     return int(a), int(b)
 
 
+def extract_decimal_multiplication_operands(problem: str) -> tuple[Decimal, Decimal] | None:
+    """Phase A (2026-08-11): the DECIMAL multiplication case
+    `extract_multiplication_operands` deliberately rejects.
+
+    A sibling rather than a widening of that function, on purpose: its
+    integer-only contract is relied on by its existing caller, and the
+    caller -- not the extractor -- is the right place to decide which
+    builder to use (the same split `extract_division_operands` already uses
+    for its `ending`). Non-negative only; at least one operand must actually
+    be non-integer, otherwise the plain integer path already handles it and
+    should keep doing so."""
+    m = _MULTIPLICATION_RE.search(problem)
+    if not m:
+        return None
+    try:
+        a, b = Decimal(m.group(1)), Decimal(m.group(2))
+    except InvalidOperation:
+        return None
+    if a < 0 or b < 0:
+        return None
+    if a == a.to_integral_value() and b == b.to_integral_value():
+        return None  # both whole -- not this path's job
+    return a, b
+
+
+def extract_signed_multiplication_operands(problem: str) -> tuple[int, int] | None:
+    """Phase B (2026-08-11): the NEGATIVE-operand integer multiplication case
+    `extract_multiplication_operands` deliberately rejects (Y8's
+    `gen_negative_multiplication`, e.g. "What is -8 × 3?").
+
+    Integers only -- a signed DECIMAL product would need both this sign rule
+    and Phase A's place-value handling, no shipped generator produces one, and
+    guessing at the combination is how the decimal-multiplication gap got
+    missed in the first place. At least one operand must be negative, so the
+    plain integer path keeps every case it already handles."""
+    m = _MULTIPLICATION_RE.search(problem)
+    if not m:
+        return None
+    try:
+        a, b = Decimal(m.group(1)), Decimal(m.group(2))
+    except InvalidOperation:
+        return None
+    if a != a.to_integral_value() or b != b.to_integral_value():
+        return None
+    if a >= 0 and b >= 0:
+        return None  # nothing signed about it -- not this path's job
+    return int(a), int(b)
+
+
 def extract_division_operands(problem: str) -> tuple[Decimal, Decimal] | None:
     """Pull the two operands out of a division question WE generated (e.g.
     "What is 225 ÷ 5?"). Negative operands and a zero divisor are excluded
@@ -423,6 +472,110 @@ def build_multiplication_partial_products_steps(a: int, b: int) -> StepGrid:
     else:
         rows += [[Cell("", OPERATOR)] + _display(p) for p in str_partials]
     return StepGrid(rows=rows, n_cols=n_cols)
+
+
+def build_multiplication_decimal_steps(a: Decimal | int, b: Decimal | int) -> StepGrid:
+    """Phase A (2026-08-11): decimal multiplication, taught the standard way --
+    ignore the points, multiply as whole numbers, then place the point back
+    counting total decimal places from the right.
+
+    Reuses `build_multiplication_partial_products_steps` UNCHANGED on the
+    scaled integers rather than re-deriving its carry logic, then rewrites
+    only the two operand rows (back to the numbers as the child was given
+    them, points intact) and the result row (point re-inserted). The
+    partial-product rows in between are deliberately left as pure integers
+    with no point -- that is exactly what the method asks the child to do,
+    and showing a point there would misrepresent the step.
+
+    Note the decimal-place arithmetic is a SUM, not the `max` that add/sub's
+    shared `_layout` uses: 2.4 x 3.6 has 1 + 1 = 2 decimal places (8.64), where
+    2.4 + 3.6 would have max(1, 1) = 1. Getting these two confused is the
+    reason `extract_multiplication_operands` refused decimals in the first
+    place instead of guessing."""
+    a_dec, b_dec = Decimal(a), Decimal(b)
+    frac_a, frac_b = _frac_digits(a_dec), _frac_digits(b_dec)
+    frac_total = frac_a + frac_b
+
+    int_a = int((a_dec.scaleb(frac_a)).to_integral_value())
+    int_b = int((b_dec.scaleb(frac_b)).to_integral_value())
+
+    grid = build_multiplication_partial_products_steps(int_a, int_b)
+    rows = [list(r) for r in grid.rows]
+    n_cols = grid.n_cols
+    width = n_cols - 1  # leading operator column
+
+    def _digits_row(text: str, operator: str) -> list[Cell]:
+        padded = text.rjust(width)
+        return [Cell(operator, OPERATOR)] + [
+            Cell(ch if ch != " " else "", POINT if ch == "." else DIGIT) for ch in padded
+        ]
+
+    # Operand rows: show what the child was actually asked, not the scaled ints.
+    rows[0] = _digits_row(str(a_dec), "")
+    rows[1] = _digits_row(str(b_dec), "×")
+
+    # Result row (always last): same digits, point re-inserted from the right.
+    result_digits = str(int_a * int_b)
+    if frac_total:
+        padded = result_digits.rjust(frac_total + 1, "0")  # 0.08 needs its leading 0
+        result_text = f"{padded[:-frac_total]}.{padded[-frac_total:]}"
+    else:
+        result_text = result_digits
+    rows[-1] = _digits_row(result_text, "")
+
+    # Re-inserting the point makes some rows one cell wider than the grid the
+    # integer builder produced, so every other row needs padding to match. Pad
+    # with a cell of the ROW'S OWN kind, not a blank digit: a LINE row padded
+    # with a digit cell renders as "- ---" (a gap punched through the rule)
+    # instead of a continuous "----".
+    widest = max(len(r) for r in rows)
+    for r in rows:
+        pad_kind = LINE if r and all(c.kind == LINE for c in r) else DIGIT
+        while len(r) < widest:
+            r.insert(1, Cell("", pad_kind))
+    return StepGrid(rows=rows, n_cols=widest)
+
+
+def build_signed_multiplication_steps(a: int, b: int) -> StepGrid:
+    """Phase B (2026-08-11): integer multiplication where at least one operand
+    is negative -- the case the unsigned column method deliberately excludes.
+
+    Structure: state the SIGN RULE first, then do the magnitude multiplication
+    with the existing (unchanged) partial-products builder, then apply the sign
+    to the result. The sign row sits ABOVE the arithmetic per the design doc's
+    recommended default -- state the rule, then use it -- and moving it below is
+    a two-line change if the maintainer prefers the other convention.
+
+    Zero is handled explicitly rather than left to the sign rule: 0 is neither
+    positive nor negative, so claiming "same signs -> positive" for -7 x 0 would
+    be teaching something false. No shipped generator produces it
+    (`gen_negative_multiplication` draws magnitudes from 2..12), but this is a
+    general-purpose builder."""
+    magnitude_grid = build_multiplication_partial_products_steps(abs(a), abs(b))
+    rows = [list(r) for r in magnitude_grid.rows]
+    n_cols = magnitude_grid.n_cols
+
+    product = a * b
+    if product == 0:
+        rule = "0 × anything = 0"
+    elif (a < 0) == (b < 0):
+        rule = "same signs → answer is POSITIVE"
+    else:
+        rule = "different signs → answer is NEGATIVE"
+
+    def _full_width(text: str, kind: str) -> list[Cell]:
+        cells = [Cell(text, kind)] + [Cell("", BLANK) for _ in range(n_cols - 1)]
+        return cells
+
+    header = [
+        _full_width(f"{a} × {b}", OPERATOR),
+        _full_width(rule, CARRY),
+        _full_width(f"first multiply {abs(a)} × {abs(b)}:", OPERATOR),
+    ]
+    footer = [
+        _full_width(f"so {a} × {b} = {product}", OPERATOR),
+    ]
+    return StepGrid(rows=header + rows + footer, n_cols=n_cols)
 
 
 def build_long_division_steps(

@@ -29,11 +29,15 @@ from mentar.engine.arithmetic_steps import (
     StepGrid,
     build_addition_steps,
     build_long_division_steps,
+    build_multiplication_decimal_steps,
     build_multiplication_partial_products_steps,
+    build_signed_multiplication_steps,
     build_subtraction_steps,
     extract_addition_operands,
+    extract_decimal_multiplication_operands,
     extract_division_operands,
     extract_multiplication_operands,
+    extract_signed_multiplication_operands,
     extract_subtraction_operands,
 )
 from mentar.engine.bkt import P_L0, bkt_update, params_for
@@ -1568,6 +1572,16 @@ class SessionController:
         mult_operands = extract_multiplication_operands(problem)
         if mult_operands is not None:
             return build_multiplication_partial_products_steps(*mult_operands)
+        # Phases A+B (2026-08-11): the two multiplication shapes the plain
+        # integer extractor deliberately refuses. Each extractor rejects what
+        # the others accept, so the order among these three is not load-bearing
+        # -- they are listed after the integer case only for readability.
+        dec_mult_operands = extract_decimal_multiplication_operands(problem)
+        if dec_mult_operands is not None:
+            return build_multiplication_decimal_steps(*dec_mult_operands)
+        signed_mult_operands = extract_signed_multiplication_operands(problem)
+        if signed_mult_operands is not None:
+            return build_signed_multiplication_steps(*signed_mult_operands)
         div_operands = extract_division_operands(problem)
         if div_operands is not None:
             answer_type = item.answer_type if item is not None else "int"
