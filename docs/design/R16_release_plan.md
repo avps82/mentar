@@ -762,7 +762,19 @@ technique (predict + controller-owned, same seed) since a naive pre-sample-then-
 controller approach double-consumes the shared RNG sequence and silently checks the wrong
 draw; all 6 samples PASS.
 
-**Next-session starting point: Y3+ AU science (extend the proven Y2 shape), then generic Y3/Y4, then SG_GENERIC, then US_GENERIC (maintainer decided 2026-08-11: generic pack, no CCSS codes/branding — OSS-release safety; see CONTENT_LICENSES.md §2b)** |
+**AU Science Year 3 SHIPPED 2026-08-11**, extending Y2's proven 3-node shape: life-cycle
+stages, heat sources, habitats (water vs. land). Codes marked provisional (same caveat
+Y2 already carries — identified via general curriculum knowledge, not fetched from the
+primary ACARA site). 3 new disjoint fact tables in `engine/science_items.py`
+(`AU_SCIENCE_YEAR3_GENERATORS`), 300-draw self-validate each. Built 3 new scaffold files
+(`life_cycles.md`, `heat_energy.md`, `habitats.md`) rather than letting 2 of 3 labels route
+to nothing and the 3rd (habitat) coincidentally match `living_nonliving.md` on the bare
+"living" substring with content (MRS GREN, animal taxonomic groups) that doesn't actually
+teach water-vs-land habitat — same content-relevance discipline as the English wave.
+Verified: routing checked by content marker per label (not just "found a file"), live FSM
+round-trip 3/3 PASS, 786 tests green.
+
+**Next-session starting point: AU Science Year 4+ (continue the shape), then generic Y3/Y4, then SG_GENERIC, then US_GENERIC (maintainer decided 2026-08-11: generic pack, no CCSS codes/branding — OSS-release safety; see CONTENT_LICENSES.md §2b)** |
 | D2 name reservation | ✅ **DONE** — `@mentar/mentar` on npm (published 2026-06-17, confirmed via the registry API 2026-08-11) and `mentar` on PyPI (0.1.0.dev0). **One thing found on verification, not a name-reservation problem**: both placeholders have STALE license metadata — npm says MIT, PyPI says "TBD" — while the repo ratified AGPL-3.0-only weeks ago. Republishing needs the maintainer's own credentials; flagged, not fixed. |
 | D3 safeguarding, D6 cloud routines | D3 is a maintainer action (commissioning a professional; packet ready). D6 self-resolves on going public |
 | htmx 4 migration (E9) | Still beta, still monitoring-only |

@@ -46,7 +46,7 @@ from mentar.engine.generic_items import GENERIC_ITEM_SOURCES
 from mentar.engine.in_generic_items import IN_GENERIC_MATHS_GENERATORS
 from mentar.engine.itemgen import ARITHMETIC_GENERATORS, DEFAULT_GENERATORS
 from mentar.engine.practice_items import ENGLISH_PRACTICE_GENERATORS, MATHS_PRACTICE_GENERATORS
-from mentar.engine.science_items import SCIENCE_GENERATORS
+from mentar.engine.science_items import AU_SCIENCE_YEAR3_GENERATORS, SCIENCE_GENERATORS
 
 
 def build_registry(pilot_itembank_path: Path) -> dict[str, dict]:
@@ -58,6 +58,7 @@ def build_registry(pilot_itembank_path: Path) -> dict[str, dict]:
         "arithmetic": {"generators": ARITHMETIC_GENERATORS, "itembank": None},
         "science": {"generators": SCIENCE_GENERATORS, "itembank": None},
         "au_science_year2": {"generators": SCIENCE_GENERATORS, "itembank": None},
+        "au_science_year3": {"generators": AU_SCIENCE_YEAR3_GENERATORS, "itembank": None},
         "au_year2": {"generators": AU_YEAR2_GENERATORS, "itembank": None},
         "au_year3": {"generators": AU_YEAR3_GENERATORS, "itembank": None},
         "au_year4": {"generators": AU_YEAR4_GENERATORS, "itembank": None},

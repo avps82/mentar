@@ -53,6 +53,23 @@ _MATERIALS_CLASSES = {
     "stays the same shape unless broken": ["a glass cup", "a wooden ruler", "a ceramic plate", "a china bowl"],
 }
 
+# ── Year 3 ─────────────────────────────────────────────────────────────────
+
+_LIFE_CYCLE_CLASSES = {
+    "a stage in a living thing's life cycle": ["an egg", "a caterpillar", "a tadpole", "a seedling", "a chick"],
+    "not a life-cycle stage": ["a rock", "a car", "a chair", "a spoon"],
+}
+
+_HEAT_SOURCE_CLASSES = {
+    "a source of heat": ["the Sun", "a campfire", "a stove", "a heater"],
+    "not a source of heat": ["an ice cube", "a fan", "a mirror", "a window"],
+}
+
+_HABITAT_CLASSES = {
+    "lives mainly in water": ["a fish", "a dolphin", "a crab", "an octopus"],
+    "lives mainly on land": ["a lion", "a spider", "a snail", "a rabbit"],
+}
+
 
 def _gen_classify_animals(rng: random.Random):
     return mc_which_is(rng, "Which of these is a {label}?", _ANIMAL_CLASSES)
@@ -78,6 +95,18 @@ def _gen_materials_change(rng: random.Random):
     return mc_which_is(rng, "Which of these {label}?", _MATERIALS_CLASSES)
 
 
+def _gen_life_cycle(rng: random.Random):
+    return mc_which_is(rng, "Which of these is {label}?", _LIFE_CYCLE_CLASSES)
+
+
+def _gen_heat_sources(rng: random.Random):
+    return mc_which_is(rng, "Which of these is {label}?", _HEAT_SOURCE_CLASSES)
+
+
+def _gen_habitats(rng: random.Random):
+    return mc_which_is(rng, "Which of these {label}?", _HABITAT_CLASSES)
+
+
 # Registry — node_id -> generator (matches the science curriculum template node ids).
 SCIENCE_GENERATORS: dict[str, GenFn] = {
     "classify_animals": _gen_classify_animals,
@@ -86,4 +115,13 @@ SCIENCE_GENERATORS: dict[str, GenFn] = {
     "au2_science_sound": _gen_sound_vibration,
     "au2_science_solar_system": _gen_solar_system,
     "au2_science_materials": _gen_materials_change,
+    "au3_science_life_cycle": _gen_life_cycle,
+    "au3_science_heat_sources": _gen_heat_sources,
+    "au3_science_habitats": _gen_habitats,
+}
+
+AU_SCIENCE_YEAR3_GENERATORS: dict[str, GenFn] = {
+    "au3_science_life_cycle": _gen_life_cycle,
+    "au3_science_heat_sources": _gen_heat_sources,
+    "au3_science_habitats": _gen_habitats,
 }
