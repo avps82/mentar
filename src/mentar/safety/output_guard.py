@@ -66,6 +66,20 @@ _VIOLENT_OR_HARMFUL_PATTERNS: list[re.Pattern[str]] = [
     re.compile(r"how to (kill|hurt|harm) (yourself|myself|someone)", re.IGNORECASE),
     re.compile(r"\b(cut|cutting) yourself\b", re.IGNORECASE),
     re.compile(r"step[s]? to (suicide|self-harm)", re.IGNORECASE),
+    # Added 2026-08-12. Every pattern above required a specific FRAME -- "how
+    # to ...", "steps to ..." -- so a bare imperative went straight through:
+    # "You should kill yourself." was NOT blocked. That is a false negative in
+    # the class this module calls absolute and highest-priority, so the frame
+    # requirement is dropped for self-directed harm.
+    #
+    # Deliberately over-blocking: a children's maths tutor has no legitimate
+    # reason to emit these strings in ANY framing, including a well-meant
+    # "don't hurt yourself". The consequence of a block is a neutral redirect,
+    # which is always a safe thing to say; the consequence of a miss is not.
+    re.compile(r"\b(kill|harm|hurt)\s+(yourself|yourselves)\b", re.IGNORECASE),
+    re.compile(r"\bend (your|ur) (own )?life\b", re.IGNORECASE),
+    re.compile(r"\btake your own life\b", re.IGNORECASE),
+    re.compile(r"\bkill (him|her|them|someone)\b", re.IGNORECASE),
 ]
 
 _ADULT_CONTENT_PATTERNS: list[re.Pattern[str]] = [

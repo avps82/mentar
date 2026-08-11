@@ -70,3 +70,53 @@ if __name__ == "__main__":
         fn()
         print(f"  ✓ {fn.__name__}")
     print(f"\n{len(fns)}/{len(fns)} output-guard tests passed.")
+
+
+# ── self-harm hard block: bare imperatives, not just "how to ..." framings ────
+# Added 2026-08-12. Every original pattern required a specific frame ("how to
+# kill yourself", "steps to suicide"), so a direct imperative went straight
+# through: screen_output("You should kill yourself.") returned no incident at
+# all. That is a false negative in the class this module calls absolute and
+# highest-priority, which is why the frame requirement was dropped rather than
+# another frame added.
+
+def test_bare_self_harm_imperatives_are_blocked():
+    """The gap that motivated the fix: no "how to" prefix, still absolute."""
+    for text in (
+        "You should kill yourself.",
+        "Just kill yourself then.",
+        "Maybe you should hurt yourself.",
+        "You might harm yourself with scissors.",
+        "You could end your life.",
+        "You could take your own life.",
+    ):
+        out, incident = screen_output(text)
+        assert out is None, f"not blocked: {text!r}"
+        assert incident is not None and incident.block_class == BlockClass.VIOLENT_OR_HARMFUL
+
+
+def test_original_framed_patterns_still_blocked():
+    """Regression guard -- the new patterns must not have displaced the old."""
+    for text in ("how to make a bomb at home",
+                 "how to kill someone",
+                 "Here are steps to suicide you could take.",
+                 "You have been cutting yourself."):
+        out, incident = screen_output(text)
+        assert out is None and incident is not None, f"not blocked: {text!r}"
+
+
+def test_ordinary_tutoring_language_is_never_blocked():
+    """The cost of over-blocking is the child losing their explanation, so the
+    common praise/teaching phrasings must survive -- including "killed it",
+    which shares a verb with the block list."""
+    for text in (
+        "Great work! You've nearly got it.",
+        "You killed that question! Well done.",
+        "Let's try that again together.",
+        "Two minus five is negative three.",
+        "Don't worry, mistakes help us learn.",
+        "The dragon in the story was scary but friendly.",
+    ):
+        out, incident = screen_output(text)
+        assert incident is None, f"false positive on {text!r}: {incident}"
+        assert out == text, "clean output must pass through byte-identical"
