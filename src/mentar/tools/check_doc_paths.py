@@ -13,6 +13,16 @@ nothing about whether a doc's *claims* are true. Stale counts, stale status
 markers, and stale prose still need a human. Keeping the scope this tight is
 what lets it run in CI without false positives babysitting.
 
+Known limitation, stated so nobody reads more guarantee into a green run than
+is there: this resolves paths against the LOCAL working tree, not against what
+a fresh clone would contain. A doc naming a gitignored-but-locally-present file
+(e.g. `graphify-out/graph.json`, untracked since 2026-08-11) passes here and
+would still be absent for someone who just cloned. That is acceptable when the
+prose says the file is generated — ARCHITECTURE.md's graphify row does — but it
+is NOT something this check enforces. If that class ever bites, the fix is a
+`git check-ignore` pass over referenced paths; it was left out deliberately
+rather than shipped as a rule that may be mostly noise.
+
     python3 -m mentar.tools.check_doc_paths          # report + exit 1 on findings
     python3 -m mentar.tools.check_doc_paths --list   # just list, always exit 0
 """

@@ -93,7 +93,7 @@ No network call crosses the data path in the default (local Ollama) backend. All
 | `eval/` | Eval DATA: `dataset_v1.jsonl`, `schema.json`, `models.yaml`; code at `src/mentar/eval/` | W1.2; T1.1–T1.5 |
 | `docs/` | SPEC.md, PHASE0.md, TESTS.md, SAFETY.md, SESSION_FSM.md, ARCHITECTURE.md, MODEL.md, REMAINDER_PLAN.md, PHASE0_STATUS.md, `design/`, `research/` | All workstreams |
 | `tests/` | pytest suite (717 tests as of 2026-07-22); mirrors `src/mentar/` layout | TESTS.md §0; T2–T5 suites |
-| `graphify-out/` | Graphify knowledge graph (`graph.json`, `GRAPH_REPORT.md`, `mentar_graph_overview.png`) — regenerated on major refactors | — |
+| `graphify-out/` | Graphify knowledge graph. **Committed:** `GRAPH_REPORT.md` (human-readable), `mentar_graph_overview.png` (embedded in README), `cost.json`. **Generated, NOT committed** (see `graphify-out/.gitignore`): `graph.json`, `graph.html`, `manifest.json` — ~3.5 MB each for the first two and rewritten wholesale each refresh; rebuild with a graphify run. Regenerated on major refactors | — |
 | `pyproject.toml` | Package metadata, extras (`dev`, `web`, `grounding`), entry-point declarations | — |
 
 ---

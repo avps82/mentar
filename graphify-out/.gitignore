@@ -3,3 +3,23 @@ cache/
 # Curriculum graph (scripts/graphify_curriculum.py): regenerated on demand or in
 # CI, using the local LLM -- never committed (changes on every curriculum edit).
 curriculum/
+
+# Machine-generated graph state (2026-08-11 decision, OSS-repo hygiene).
+# graph.json and graph.html were ~3.5 MB EACH and are rewritten wholesale on
+# every refresh, so each regeneration added that much to history permanently.
+# Both are reproducible by anyone: `graphify export html` rebuilds graph.html
+# from graph.json, and a full re-extract rebuilds graph.json itself.
+#
+# manifest.json goes with them ON PURPOSE: it is the incremental-update
+# bookkeeping for graph.json ("these files are already extracted"). Committing
+# it WITHOUT graph.json would be worse than committing neither -- a fresh clone
+# would read a manifest claiming everything is already extracted while having no
+# graph to merge into, and `--update` would find nothing to do and produce
+# nothing. Keep the pair together: both ignored, both rebuilt on first run.
+#
+# Still committed, deliberately: GRAPH_REPORT.md (human-readable, ~100 KB),
+# mentar_graph_overview.png (embedded in README.md), cost.json (a small running
+# token-spend log, not a derived artifact).
+graph.json
+graph.html
+manifest.json
