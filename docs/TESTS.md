@@ -72,6 +72,29 @@ known safety gaps. Per this document's own Blocked protocol the correct state is
 a missing test. `assert_parent_mediated()` enforces the age-mode, which is a different (and
 weaker) thing than the PIN gate this block specifies.
 
+**T2.5 — the emotion-inference assertion has prompt-level defence only, and no
+verification.** Investigated 2026-08-12. Be precise about what is and is not at risk here:
+
+* **SAFETY.md §2.4's claim is TRUE and well-founded.** Mentar implements no emotion
+  recognition, and inferred mood is never an adaptive input — BKT drives difficulty from
+  answer correctness alone. That is the EU AI Act Article 5 concern, and README.md's "no
+  emotion recognition or mood inference" commitment is sound.
+* **T2.5's additional assertion is stricter** — that no *output text* ever asserts the
+  child's emotional state ("you seem sad" class). Its only defence is a prompt instruction
+  (`prompts/system_prompt.md:15`: "Do not claim to know how the child feels, and do not infer
+  their mood or emotions"). `safety/output_guard.py` does **not** screen for it — its
+  BlockClasses are sexual/violent/adult/off-scope — and a probe confirmed all of "You seem
+  sad today", "I can tell you're frustrated", "You look upset" pass the guard untouched.
+* **T2.5's specified verification does not exist**: the "grep-class check over all T1/T2
+  response corpora" has never been implemented, and T2.5 has no test file at all.
+
+Adding a runtime block was considered and NOT done: the guard's only action is to replace the
+whole turn with a neutral redirect, so a false positive costs the child their explanation, and
+"you seem to have mixed up the numerator" is legitimate tutoring that a naive matcher would
+catch. **The proportionate fix is T2.5's own corpus check** — detect and report over real eval
+output rather than block at runtime — which needs an eval-host run. Same architectural shape as
+T2.3: prompt-level defence, verification step unbuilt.
+
 **T4.2 — `sticking_point` is specified but not implemented.** The block requires the 4th Help
 press to (a) link back to a vetted source rather than generate, (b) flag the concept
 `sticking_point`, (c) optionally alert the parent. (a) is implemented and now tested. **(b)
