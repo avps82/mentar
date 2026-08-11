@@ -4,7 +4,7 @@ title: Negative Numbers — Temperature Number Line
 description: Visual scaffold hints for negative numbers in context (temperature, depth, above/below zero).
 tags: [mathematics, negative-numbers, visual-scaffold, number-line, temperature]
 subject: mathematics
-topic_keywords: [negative, negative number, below zero, temperature, minus, above zero, directed number, integers, order of operations with negative]
+topic_keywords: [negative, negative number, below zero, temperature, minus, above zero, directed number, integers]
 timestamp: "2026-07-22T00:00:00Z"
 ---
 
@@ -41,4 +41,6 @@ Mark the start and end temperatures, shade the difference.
 - Introduce negatives via a context (temperature is the most concrete for Year 5–6).
 - For "how much warmer/colder" — model as the distance between two points on the number line.
 - For ordering: always draw the full number line so relative position is visible.
-- For Year 7+ order-of-operations with negatives: show brackets explicitly, e.g. (−3) × (−2) = +6.
+- For Year 7+ order-of-operations with negatives, the PRIMARY structure a child needs is the
+  priority ladder in `order_of_operations.md`, not a number line — that node routes there by
+  design (2026-08-11). Use the sign rule here only as support: (−3) × (−2) = +6.

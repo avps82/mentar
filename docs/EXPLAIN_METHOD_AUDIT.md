@@ -8,15 +8,13 @@ timestamp: "2026-07-25T00:00:00Z"
 
 # Explain-Method Audit — 2026-07-25
 
-> ⚠️ **COVERAGE IS STALE (noted 2026-08-11).** This audit covered **76 nodes**, the entire
-> curriculum as it stood on 2026-07-25. The curriculum has since grown to **319 nodes across
-> 71 templates** (AU maths Y9-12, AU+generic English Y2-8, AU science Y2-8, generic SG/US/IN
-> maths packs). **Everything below is still accurate for the 76 nodes it audited** — the
-> findings were verified by running real draws and have not been invalidated — but roughly
-> **three quarters of today's nodes have never been through this audit**. Findings 1+2
-> (scaffold routing) were fixed 2026-08-10; Findings 3+5 have a plan
-> (`docs/design/step_grid_signed_and_decimal_mult_design.md`) but are not built. Re-running
-> this audit against the full 319 nodes is an open task, not a completed one.
+> ✅ **RE-AUDITED IN FULL 2026-08-11 — this document now covers all 319 nodes.**
+> The original 2026-07-25 pass covered 76 nodes (the whole curriculum at the time); the
+> curriculum has since grown to **319 nodes across 71 templates**. The re-run used the same
+> method — sample real items from the real generator, push each through the real extractor
+> and the real scaffold matcher, infer nothing from reading regexes — and is summarised in
+> **§ Full re-audit (2026-08-11)** at the end. The per-node tables below are the ORIGINAL
+> 76-node pass, kept as the historical record; where the two disagree, the re-audit wins.
 
 **Why this exists.** The maintainer flagged that division's "show human working" output was wrong despite an earlier session reporting it as shipped/correct, and asked for a from-scratch audit of every curriculum concept's explain path — not a repeat of a prior "it's done" claim. This document was built by reading `arithmetic_steps.py`'s regexes, every generator's actual return statement, `visual_scaffold.py`'s matching logic, and every curriculum template's node list directly — not from memory of earlier sessions.
 
@@ -170,3 +168,96 @@ In practice, these two nodes are **effectively always LLM prose**, not the ASCII
 - Whether the LLM actually **draws a legible ASCII diagram** when a visual scaffold hint is injected (that depends on the model's own instruction-following — no automated check exists for this).
 - The **initial Help modalities** (concrete/analogy/story/formal) — these are always LLM prose with no visual aid at all, unaffected by any finding here.
 - Whether `docs/design/comprehensive_math_templates_reference.md` / `year1_12_*_templates_reference.md` (the maintainer's earlier logged-only template dumps for Y1-12 maths/English/science) have been built — **they have not**; those remain reference material only, unrelated to what's actually shipped and audited above.
+
+
+---
+
+## Full re-audit (2026-08-11) — all 319 nodes
+
+Re-run because the curriculum grew 4x after the original pass and none of the new content
+had ever been through it. Method identical to the original: **200 real draws per node**
+through the real `ItemGenerator` (item bank loaded exactly as `web/app.py` does), each
+problem pushed through the real `extract_*_operands` chain in the controller's own
+add→sub→mult→div order, and each label through the real `load_visual_scaffold`.
+
+### Coverage
+
+| | Count |
+|---|---|
+| Nodes audited | **319** (was 76) |
+| Templates | 71 |
+| By subject | maths 183 · English 112 · science 24 |
+| Get a visual scaffold | **319 / 319** |
+| ASCII step-grid on *every* draw | 56 |
+| LLM prose on every draw | 247 |
+| **Draw-dependent (inconsistent)** | **16** |
+
+English (112) and science (24) are 100% prose by construction — they are all `mc4`, and the
+extraction regexes only match plain two-operand arithmetic. That is correct behaviour, not a
+gap.
+
+### Finding 6 — order-of-operations nodes were shown a thermometer, not a priority ladder ✅ FIXED
+
+`au7_order_of_ops_negatives` and its three generic-pack twins generate
+`"What is -13 + 6 × 6?"`. The skill under test is **precedence**. All four routed to
+`negative_numbers.md`, whose three visual structures are a vertical thermometer, a horizontal
+number line, and real-world anchors — precedence appeared only as a single guideline line.
+`order_of_operations.md`, with its priority ladder / worked annotation / brackets-contrast
+structures, is the right target and was losing 2–3.
+
+The cause was deliberate, not accidental: `negative_numbers.md` had explicitly claimed the
+keyword `order of operations with negative` — a keyword it could not back with a matching
+visual structure. Same class as Findings 1+2 and the four routing bugs fixed during the
+2026-08 breadth waves: **a scaffold claiming a topic its body does not actually teach.**
+
+**Fixing it needed both sides, which a simulation caught before any edit.** Dropping the
+keyword from `negative_numbers.md` alone leaves a 2–2 tie, and the tie-break is alphabetical
+— `negative_numbers` < `order_of_operations` — so the wrong file would still have won. Adding
+the keyword to `order_of_operations.md` alone produces a 3–3 tie with the same outcome. Only
+doing both flips it (3–2). `order_of_operations.md` also gained a worked
+`-13 + 6 × 6` example so it genuinely serves the nodes now routed to it, rather than
+repeating the claim-without-content mistake being fixed. Locked by
+`tests/engine/test_scaffold_coverage.py`, including a case asserting the plain negatives
+nodes were *not* dragged along.
+
+Verified by re-running the full audit: exactly **4 routing changes, 0 collateral changes**
+across the other 315 nodes, and 0 step-grid changes.
+
+### Finding 3+5 — draw-dependent eligibility has QUADRUPLED (4 → 16 nodes) ⚠️ still open
+
+The original found 4 nodes whose step-grid eligibility depends on the random draw. There are
+now **16**, because the SG/US/IN generic packs reuse the same generators — one root cause,
+replicated four times:
+
+| Eligibility | Nodes |
+|---|---|
+| 1.5% | `*_mult_decimal_by_decimal` × 4 |
+| 11.0% | `*_mult_decimals` × 4 |
+| 20.5% | `*_integers_add_sub` × 4 |
+| 25.5% | `*_negative_multiplication` × 4 |
+
+A child on the same concept gets a step grid on one draw and prose on the next, purely by
+chance. **This materially raises the priority of
+`docs/design/step_grid_signed_and_decimal_mult_design.md`**, which was written when this was
+a 4-node problem: Phase A (decimal multiplication) and Phase B (signed multiplication) are
+both single fixes in `arithmetic_steps.py` that would resolve **8 nodes each**, not two.
+Phase C remains gated on maintainer worked examples.
+
+### Checked and clean
+
+- **Every node resolves a scaffold** (319/319) and every one produces an item on every draw
+  (0 failures in 63,800 draws).
+- **Scaffold distribution is sane** — no single file is over-matching; the science scaffolds
+  are 1:1 with their nodes, and the large maths/English buckets are the generic packs
+  legitimately repeating the same concepts across countries.
+- **Finding 4** (`fraction_decimal_equiv` → `decimals.md`, "debatable, not wrong") is
+  unchanged and still judged not worth a dual-representation scaffold.
+
+### Known gap, recorded not fixed
+
+`division_word_problems.md` is titled *Division and Sharing Word Problems*, but also receives
+plain-arithmetic nodes (`Division facts`, `Whole-number division`) whose generated text is a
+bare `What is 24 ÷ 6?`. It is the only division scaffold, so this is "best available" rather
+than wrong, and those nodes are 100% step-grid-eligible so Explain-more shows the real long
+division anyway — only the Help→visual modality sees the mismatch. Splitting out a plain
+division-algorithm scaffold is a content decision, not a bug fix.

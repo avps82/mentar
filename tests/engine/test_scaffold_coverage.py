@@ -58,6 +58,17 @@ def test_scaffold_routing_prefers_most_specific_match():
         ("Adding fractions with the same denominator", "1/2 shaded"),          # fractions.md
         ("Adding and subtracting fractions with unlike denominators", "1/2 shaded"),
         ("Adding numbers to 100", "number line"),                  # addition_subtraction.md
+        # Finding 6 (full-corpus re-audit, 2026-08-11): the *_order_of_ops_negatives
+        # nodes generate "What is -13 + 6 x 6?" -- the skill under test is PRECEDENCE,
+        # but the label matched negative_numbers.md 3-2 (it had explicitly claimed the
+        # keyword "order of operations with negative") and a child was shown a
+        # thermometer/number-line where they needed a priority ladder. Fixing this
+        # needed BOTH sides: dropping the keyword alone still lost the resulting 2-2
+        # tie on the alphabetical tie-break ("negative_numbers" < "order_of_operations").
+        ("Order of operations with negative numbers", "priority ladder"),
+        ("Order of operations with negatives", "priority ladder"),
+        # ...and the plain negatives nodes must NOT be dragged along with them.
+        ("Negative numbers (temperature contexts)", "thermometer"),
     ]
     for label, marker in cases:
         body = load_visual_scaffold(SCAFFOLD_ROOT, "mathematics", label)
