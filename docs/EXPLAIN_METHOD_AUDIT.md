@@ -174,6 +174,12 @@ In practice, these two nodes are **effectively always LLM prose**, not the ASCII
 
 ## Full re-audit (2026-08-11) — all 319 nodes
 
+> **Re-running this is now one command:** `python3 -m mentar.tools.audit_explain_paths`
+> (promoted from a scratchpad script 2026-08-12, after it found real bugs twice). It reports;
+> judging the output stays a human job. `tests/tools/test_audit_explain_paths.py` additionally
+> locks the invariants worth gating: every node produces an item and resolves a scaffold, and
+> the draw-dependent set does not grow.
+
 Re-run because the curriculum grew 4x after the original pass and none of the new content
 had ever been through it. Method identical to the original: **200 real draws per node**
 through the real `ItemGenerator` (item bank loaded exactly as `web/app.py` does), each
