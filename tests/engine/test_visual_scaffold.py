@@ -27,7 +27,11 @@ def test_no_keyword_match_returns_empty_string():
 
 
 def test_unmapped_subject_returns_empty_string():
-    assert load_visual_scaffold(_ROOT, "science", "Forces and motion") == ""
+    # "science" is itself mapped (see _SUBJECT_TO_SCAFFOLD_DIR) and "Forces and motion"
+    # legitimately matches forces.md now that AU Science Year 7 shipped a forces topic --
+    # that's correct routing, not a regression. Use a genuinely unmapped subject instead,
+    # matching what this test's name actually claims to check.
+    assert load_visual_scaffold(_ROOT, "history", "Forces and motion") == ""
 
 
 def test_missing_scaffold_root_returns_empty_string(tmp_path):

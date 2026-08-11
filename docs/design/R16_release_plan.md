@@ -814,8 +814,27 @@ labels had no existing scaffold match (safe null) — built `vertebrates.md`, `c
 by content marker — zero mismatches. Live FSM round-trip 3/3 PASS, 786 tests green, ruff
 clean.
 
-**AU Science Year 2-6 complete.** Next-session starting point: AU Science Year 7+ (continue
-the shape), then generic Y3/Y4, then SG_GENERIC, then US_GENERIC (maintainer decided 2026-08-11: generic pack, no CCSS codes/branding — OSS-release safety; see CONTENT_LICENSES.md §2b)** |
+**AU Science Year 7 SHIPPED 2026-08-11**: digestive/circulatory body systems, contact/
+non-contact forces, pure substances/mixtures. 3 new disjoint fact tables in
+`engine/science_items.py` (`AU_SCIENCE_YEAR7_GENERATORS`), 300-draw self-validated. Built 3
+new scaffold files (`body_systems.md`, `forces.md`, `mixtures.md`).
+
+**Found and fixed a real pre-existing test bug, not a regression**: adding `forces.md`
+(keyword "forces") made `tests/engine/test_visual_scaffold.py::test_unmapped_subject_returns_empty_string`
+fail — its own name says "unmapped subject" but it actually queried subject="science"
+(which IS mapped) with a label ("Forces and motion") that just happened not to match
+anything at the time the test was written, before any AU science forces content existed.
+Fixed the test to genuinely test an unmapped subject (a subject key absent from
+`_SUBJECT_TO_SCAFFOLD_DIR`) instead of relying on "science has no forces content yet" as
+an implicit, silently-decaying assumption — the kind of test that looks like a safety net
+but actually just encodes "nobody has built this yet" and breaks (correctly!) the moment
+someone does.
+
+Verified: live FSM round-trip 3/3 PASS, full regression across all 18 shipped science
+labels (Y2-Y7) by content marker — zero mismatches, 786 tests green, ruff clean.
+
+**AU Science Year 2-7 complete.** Next-session starting point: AU Science Year 8 (completes
+the Y2-8 breadth to match maths/English), then generic Y3/Y4, then SG_GENERIC, then US_GENERIC (maintainer decided 2026-08-11: generic pack, no CCSS codes/branding — OSS-release safety; see CONTENT_LICENSES.md §2b)** |
 | D2 name reservation | ✅ **DONE** — `@mentar/mentar` on npm (published 2026-06-17, confirmed via the registry API 2026-08-11) and `mentar` on PyPI (0.1.0.dev0). **One thing found on verification, not a name-reservation problem**: both placeholders have STALE license metadata — npm says MIT, PyPI says "TBD" — while the repo ratified AGPL-3.0-only weeks ago. Republishing needs the maintainer's own credentials; flagged, not fixed. |
 | D3 safeguarding, D6 cloud routines | D3 is a maintainer action (commissioning a professional; packet ready). D6 self-resolves on going public |
 | htmx 4 migration (E9) | Still beta, still monitoring-only |

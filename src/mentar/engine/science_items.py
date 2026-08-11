@@ -141,6 +141,32 @@ _REVERSIBLE_CHANGE_CLASSES = {
     ],
 }
 
+# ── Year 7 ─────────────────────────────────────────────────────────────────
+
+_BODY_SYSTEM_CLASSES = {
+    "part of the digestive system": ["the stomach", "the intestines", "the oesophagus", "the liver"],
+    "part of the circulatory system": ["the heart", "the veins", "the arteries", "red blood cells"],
+}
+
+_FORCE_CLASSES = {
+    "a contact force (needs touching)": [
+        "pushing a door", "kicking a ball", "friction between shoes and the ground", "pulling a rope",
+    ],
+    "a non-contact force (acts at a distance)": [
+        "magnetism pulling a paperclip", "gravity pulling an apple down",
+        "static electricity attracting hair", "a magnet repelling another magnet",
+    ],
+}
+
+_MIXTURE_CLASSES = {
+    "a pure substance (only one type of particle)": [
+        "oxygen gas", "pure gold", "distilled water", "table salt (sodium chloride)",
+    ],
+    "a mixture (more than one substance mixed together)": [
+        "salt water", "air", "soil", "orange juice with pulp",
+    ],
+}
+
 
 def _gen_classify_animals(rng: random.Random):
     return mc_which_is(rng, "Which of these is a {label}?", _ANIMAL_CLASSES)
@@ -214,6 +240,18 @@ def _gen_reversible_change(rng: random.Random):
     return mc_which_is(rng, "Which of these is {label}?", _REVERSIBLE_CHANGE_CLASSES)
 
 
+def _gen_body_systems(rng: random.Random):
+    return mc_which_is(rng, "Which of these is {label}?", _BODY_SYSTEM_CLASSES)
+
+
+def _gen_forces(rng: random.Random):
+    return mc_which_is(rng, "Which of these is {label}?", _FORCE_CLASSES)
+
+
+def _gen_mixtures(rng: random.Random):
+    return mc_which_is(rng, "Which of these is {label}?", _MIXTURE_CLASSES)
+
+
 # Registry — node_id -> generator (matches the science curriculum template node ids).
 SCIENCE_GENERATORS: dict[str, GenFn] = {
     "classify_animals": _gen_classify_animals,
@@ -234,6 +272,9 @@ SCIENCE_GENERATORS: dict[str, GenFn] = {
     "au6_science_vertebrates": _gen_vertebrates,
     "au6_science_circuits": _gen_circuits,
     "au6_science_reversible_change": _gen_reversible_change,
+    "au7_science_body_systems": _gen_body_systems,
+    "au7_science_forces": _gen_forces,
+    "au7_science_mixtures": _gen_mixtures,
 }
 
 AU_SCIENCE_YEAR3_GENERATORS: dict[str, GenFn] = {
@@ -258,4 +299,10 @@ AU_SCIENCE_YEAR6_GENERATORS: dict[str, GenFn] = {
     "au6_science_vertebrates": _gen_vertebrates,
     "au6_science_circuits": _gen_circuits,
     "au6_science_reversible_change": _gen_reversible_change,
+}
+
+AU_SCIENCE_YEAR7_GENERATORS: dict[str, GenFn] = {
+    "au7_science_body_systems": _gen_body_systems,
+    "au7_science_forces": _gen_forces,
+    "au7_science_mixtures": _gen_mixtures,
 }
