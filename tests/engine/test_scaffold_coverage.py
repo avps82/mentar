@@ -76,3 +76,44 @@ def test_scaffold_routing_prefers_most_specific_match():
             f"label {label!r} routed to the wrong scaffold "
             f"(wanted body containing {marker!r}; got: {body[:120]!r})"
         )
+
+
+def test_no_mc4_question_leaks_its_own_answer():
+    """A meaning-label must never contain the word it is asking for.
+
+    Found 2026-08-12: the homophone item asked "Which word means 'over there'
+    or 'in that place'?" with the correct answer "there" -- printed inside its
+    own stem, so a child could score it without knowing the homophone at all.
+    Swept across every mc4 generator in the registry rather than one node,
+    because the generic SG/US/IN packs reuse the same generator functions and
+    replicated the same defect three times.
+    """
+    import random as _random
+
+    from mentar.engine.item_sources import build_registry
+
+    registry = build_registry(REPO / "curriculum" / "itembank" / "pilot_fractions.jsonl")
+    leaks, seen = [], set()
+    for src in registry.values():
+        for node, fn in src["generators"].items():
+            if node in seen:
+                continue
+            seen.add(node)
+            rng = _random.Random(11)
+            for _ in range(40):
+                res = fn(rng)
+                if res[0] != "mc4" or len(res) < 5:
+                    break
+                idx = "ABCD".find(str(res[3]).strip().upper())
+                if idx < 0 or idx >= len(res[4]):
+                    continue
+                correct = str(res[4][idx]).lower()
+                stem = res[2].split("A)")[0].lower()
+                if len(correct) > 3 and correct in stem:
+                    others = [str(c).lower() for i, c in enumerate(res[4]) if i != idx]
+                    # if the stem quotes every option it is a legitimate "which of
+                    # these" framing; only a lone correct answer in the stem leaks
+                    if not any(o in stem for o in others if len(o) > 3):
+                        leaks.append((node, res[2][:120], correct))
+                        break
+    assert leaks == [], f"mc4 questions containing their own answer: {leaks}"

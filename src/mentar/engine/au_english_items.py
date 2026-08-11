@@ -85,9 +85,15 @@ def gen_prefixes_y3(rng: random.Random):
 def gen_homophones_y3(rng: random.Random):
     """AC9E3A alignment: common homophone pairs, matched by meaning."""
     table = {
-        "means 'over there' or 'in that place'": ["there"],
+        # A meaning-label must never contain the word it is asking for: "over
+        # there" printed the answer "there" inside the question stem, so the item
+        # could be answered without knowing the homophone at all (found by an
+        # answer-leak sweep, 2026-08-12).
+        "means 'in that place'": ["there"],
         "means 'belonging to them'": ["their"],
-        "means 'also' or a higher number word": ["too"],
+        # "a higher number word" describes TWO, which is not in this set and is
+        # not what "too" means. "too" = also / more than enough.
+        "means 'also' or 'more than enough'": ["too"],
         "means 'in the direction of'": ["to"],
         "means 'in this place'": ["here"],
         "means 'to listen'": ["hear"],
