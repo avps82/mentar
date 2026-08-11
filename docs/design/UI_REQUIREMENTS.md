@@ -330,7 +330,7 @@ response, same session:
   grammar unchanged, works with JS disabled). Other answer types keep the text input;
   "variations" (mixed numbers etc.) can extend the same widget switch later.
 - **R1-4: more subjects/grades, Australian curriculum** — first two ACARA v9 templates
-  shipped (`curriculum/templates/AU/year3_maths.md`, `year4_maths.md`, Number strand) +
+  shipped (`curriculum/templates/AU_ACARA/year3_maths.md`, `year4_maths.md`, Number strand) +
   `engine/au_items.py` generators; ACARA core content verified CC BY 4.0 (codes referenced
   as alignment identifiers only — CONTENT_LICENSES.md §2b). The per-year pattern is now
   established; more year levels/strands extend it.

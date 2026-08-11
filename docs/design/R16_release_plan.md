@@ -1,8 +1,8 @@
 ---
 type: Mentar Design Doc
 title: R16 — Release Wave (rendering contract, curriculum breadth, Singapore, OSS release)
-description: Complete plan for the open bugs, the one-look-and-feel fix, full maths/science/English curriculum, the Singapore pack, and OSS release readiness. Planning only — nothing in here is built.
-status: LIVE — plan + execution log (waves -1 through 2 and Y2 science shipped; see §H for per-item status)
+description: Plan AND execution log for the open bugs, the one-look-and-feel fix, full maths/science/English curriculum, the Singapore pack, and OSS release readiness. Most of it has since been BUILT — see the per-item status in §G/§H; the original 2026-08-10 text is kept where it still reads true.
+status: LIVE — plan + execution log (waves -1 through 5 substantially shipped: rendering contract, all E-wave bugs, verifier ceiling, AU maths Y2-12, AU+generic English Y2-8, AU science Y2-8; see §G/§H for per-item status)
 timestamp: "2026-08-11T00:00:00Z"
 ---
 

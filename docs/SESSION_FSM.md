@@ -3,7 +3,7 @@ type: Mentar Spec
 title: "Mentar — Session State Machine"
 version: v0.3
 status: "Active — Pilot in progress"
-last-updated: 2026-07-22
+last-updated: 2026-08-11
 sources: "PHASE0.md W6.1; SPEC.md §13-14; SAFETY.md L3 (escalation absorbing state)"
 ---
 
@@ -244,7 +244,7 @@ These flow alongside the FSM and are NOT modeled as separate FSM states (they wo
 
 - **Detailed prompt templates** — see [prompts/README.md](../prompts/README.md) (W6.2).
 - **The verifier itself** — see `src/mentar/eval/verify_numeric.py` and TESTS.md T1.3 / T3.5.
-- **BKT mathematics** — see [bkt_notes.md](bkt_notes.md) (T3.3 output).
+- **BKT mathematics** — see [design/W3.3_bkt.md](design/W3.3_bkt.md). (T3.3's planned `bkt_notes.md` was never created; the BKT design detail landed in the W3.3 design doc instead.)
 - **Escalation trigger list** — see [SAFETY.md](SAFETY.md) §3.2 (W2.2 v0.1-interim).
 - **Pilot UI surface** — see PHASE0.md W6.3 decision.
 

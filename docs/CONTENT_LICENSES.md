@@ -3,7 +3,7 @@ type: Mentar Audit Doc
 title: "Mentar — Content Licence Audit (Pilot Sources)"
 version: v0.6
 status: "Pilot sources cleared. Country strategy settled: AU=ACARA (CC BY), IN/SG/US = GENERIC packs (no claimed alignment) — US decided 2026-08-11"
-last-updated: 2026-07-16
+last-updated: 2026-08-11
 scope: "Phase-0 pilot grounding sources ONLY (W4.1). Not a full content-licensing policy."
 sources: "PHASE0.md W4.1; SPEC §18 (content stack), §24 #12; curriculum/templates/_pilot/fractions.md grounding anchors; REMAINDER_PLAN.md B1 (2026-07-05 re-point to Khan Academy)"
 ---

@@ -3,7 +3,7 @@ type: Mentar Status Doc
 title: Documentation Audit
 description: Staleness register — what's done, what's left, which docs have drifted from the code. Findings + fix log across multiple audit passes.
 tags: [audit, docs, staleness]
-timestamp: "2026-07-23T00:00:00Z"
+timestamp: "2026-08-11T00:00:00Z"
 ---
 
 # Documentation Audit — 2026-06-26 (addendum 2026-07-03 below)
@@ -210,3 +210,59 @@ rather than the spec itself.
 **Lesson, stated plainly:** "I confirmed X is spec-compliant" is only true if the spec was actually
 read. Pattern-matching against sibling files that may themselves be non-compliant produces false
 confidence — this is exactly what happened in the 2026-07-22 pass above.
+
+---
+
+## L. Full-corpus staleness audit (2026-08-11) — maintainer-requested
+
+Fourth staleness pass (after 2026-07-22, 2026-07-23, and the narrower R16-plan spot-check
+earlier the same day). Scope: all ~66 prose docs (`docs/`, top-level, `compliance/`, `config/`,
+`eval/`) — the 125 `curriculum/**.md` are data templates already gated by
+`tests/engine/test_template_catalog.py`, not prose.
+
+**Method:** four mechanical passes (broken path references, frontmatter dates vs. git mtime,
+numeric claims, status/breadth claims), each finding then verified against the actual tree
+before editing. No claim was corrected from memory.
+
+### Fixed
+
+| Finding | Was | Now |
+|---|---|---|
+| `curriculum/templates/AU/` (3 docs, 5 refs) | pre-rename path | `AU_ACARA/` |
+| `docs/HARDWARE.md` (PHASE0.md) | renamed file | `docs/hardware-requirements.md` |
+| `curriculum/packs.py` | wrong extension | `curriculum/packs.json` |
+| `place_value_whole_numbers.md` | wrong scaffold name | `place_value.md` |
+| `.pre-commit-config.yaml` "ships" | **file never existed in git history** | `scripts/git-hooks/pre-commit` (owned shell hook via `core.hooksPath`) |
+| `safety/guardrails.md` cited as existing (eu-ai-act.md ×3) | folded into SAFETY.md long ago | points at `docs/SAFETY.md` + explains the redirect |
+| Test-suite count | 482 (as of 2026-07-10) | 786 |
+| Grounding test count | 57 | 70 |
+| R16 frontmatter | "Planning only — nothing in here is built" | plan **and** execution log; most of it shipped |
+| "shipped breadth tops out around Year 7-8" | pre-Y9-12 | AU maths now reaches Y12 |
+| 5 frontmatter `last-updated` dates | July, content changed in August | 2026-08-11 |
+| `bkt_notes.md` (SESSION_FSM.md) | never created | `docs/design/W3.3_bkt.md` |
+| TESTS.md path-translation note | covered `src/` only | now also covers the `tests/<area>/` reorg |
+
+### Flagged, not silently fixed
+
+- **`docs/EXPLAIN_METHOD_AUDIT.md` covers 76 nodes; the curriculum is now 319 nodes across 71
+  templates.** Its findings remain valid for what it audited — a staleness banner now says so at
+  the top — but ~3/4 of today's nodes have never been through it. Re-running it is an open task.
+- **TESTS.md T-task rows name planned test filenames that were never created** (`test_injection.py`,
+  `test_validator.py`, `test_parent_gate.py`, …). Most coverage exists under other names; the
+  per-row mapping is **unverified** and now says so rather than implying the files exist.
+
+### Left alone deliberately (checked, correctly honest)
+
+`safety/age-modes.md` ("folded in"), `australia.md` ("⚠️ TODO"),
+`tests/test_session_fsm_invariants.py` ("(it doesn't)"), `turn.js` (past-tense stopgap),
+`reports/**` and `eval/scores_*` (runtime outputs), the 2026-07-23 frontmatter cluster (a bulk
+OKF-compliance commit, a 1-day lag, not drift).
+
+### The durable part
+
+Three of four audits re-found the same mechanical class by hand, so it is now automated:
+**`src/mentar/tools/check_doc_paths.py`** + **`tests/tools/test_check_doc_paths.py`** fail the
+suite when a prose doc names a path that doesn't resolve. Deliberately narrow — it checks only
+whether a path exists, never whether a claim is true. Counts, status markers, and prose still
+need a human. Its allowlist carries a written reason per entry so "add it to the allowlist"
+can't quietly become "suppress the signal".

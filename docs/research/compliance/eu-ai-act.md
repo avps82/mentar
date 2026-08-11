@@ -33,7 +33,7 @@ Relevant prohibitions for Mentar:
 1. **AI that exploits vulnerabilities of age** to distort behaviour in a way that causes harm. The Commission's July 2025 guidelines explicitly cite compulsive/gamified mechanics on children as potentially falling under this.
 2. **Manipulation using subliminal techniques** below the threshold of consciousness.
 
-**Design implication:** "No dark patterns / no compulsive gamification" is now a **legal line**, not just ethics. Streak pressure, loss-aversion mechanics, and reward loops designed to maximise session time are potentially Article 5 violations. See `safety/guardrails.md`.
+**Design implication:** "No dark patterns / no compulsive gamification" is now a **legal line**, not just ethics. Streak pressure, loss-aversion mechanics, and reward loops designed to maximise session time are potentially Article 5 violations. See `docs/SAFETY.md` (the former `safety/guardrails.md` was folded into it).
 
 ---
 
@@ -59,13 +59,13 @@ Additionally: purely local, non-commercial self-hosting may not constitute "plac
 
 AI systems that interact with natural persons must disclose that the person is interacting with an AI. Mentar must not impersonate a human tutor.
 
-**Design implication:** Already captured in `safety/guardrails.md` — the system identifies itself as an AI.
+**Design implication:** Already captured in `docs/SAFETY.md` (the former `safety/guardrails.md` was folded into it) — the system identifies itself as an AI.
 
 ---
 
 ## Emotion recognition — prohibited in education (EU)
 
-EU AI Act prohibits emotion recognition systems in education contexts, with narrow exceptions. Mentar does not implement emotion recognition. Adaptive difficulty is based on academic performance signals only. See `safety/guardrails.md`.
+EU AI Act prohibits emotion recognition systems in education contexts, with narrow exceptions. Mentar does not implement emotion recognition. Adaptive difficulty is based on academic performance signals only. See `docs/SAFETY.md` (the former `safety/guardrails.md` was folded into it).
 
 ---
 

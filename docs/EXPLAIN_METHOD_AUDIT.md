@@ -8,6 +8,16 @@ timestamp: "2026-07-25T00:00:00Z"
 
 # Explain-Method Audit — 2026-07-25
 
+> ⚠️ **COVERAGE IS STALE (noted 2026-08-11).** This audit covered **76 nodes**, the entire
+> curriculum as it stood on 2026-07-25. The curriculum has since grown to **319 nodes across
+> 71 templates** (AU maths Y9-12, AU+generic English Y2-8, AU science Y2-8, generic SG/US/IN
+> maths packs). **Everything below is still accurate for the 76 nodes it audited** — the
+> findings were verified by running real draws and have not been invalidated — but roughly
+> **three quarters of today's nodes have never been through this audit**. Findings 1+2
+> (scaffold routing) were fixed 2026-08-10; Findings 3+5 have a plan
+> (`docs/design/step_grid_signed_and_decimal_mult_design.md`) but are not built. Re-running
+> this audit against the full 319 nodes is an open task, not a completed one.
+
 **Why this exists.** The maintainer flagged that division's "show human working" output was wrong despite an earlier session reporting it as shipped/correct, and asked for a from-scratch audit of every curriculum concept's explain path — not a repeat of a prior "it's done" claim. This document was built by reading `arithmetic_steps.py`'s regexes, every generator's actual return statement, `visual_scaffold.py`'s matching logic, and every curriculum template's node list directly — not from memory of earlier sessions.
 
 ## How "explain" actually works (two layers)
@@ -132,7 +142,7 @@ timestamp: "2026-07-25T00:00:00Z"
 
 ### Finding 1 — Whole-number place value wrongly routed to the decimals scaffold
 `au2_place_value`, `au3_place_value`, `au4_place_value` (Years 2–4, **whole-number** place value: tens/hundreds/thousands) all match `visual_scaffolds/maths/decimals.md` because `"place value"` is literally one of that file's `topic_keywords` — but `decimals.md`'s actual content is a tenths/hundredths place-value chart, wrong for a whole-number concept. **No dedicated whole-number place-value scaffold file exists.** Only `au5_decimal_place_value` (genuinely about tenths) should match this file.
-**Fix options:** (a) add a new `place_value_whole_numbers.md` scaffold and make `decimals.md`'s keyword more specific (e.g. drop bare `"place value"`, keep `"decimal place value"`), or (b) narrow `decimals.md`'s `topic_keywords` to require "decimal" co-occurring. Not fixed in this pass — audit only, per the maintainer's request.
+**Fix options:** (a) add a new `place_value.md` scaffold and make `decimals.md`'s keyword more specific (e.g. drop bare `"place value"`, keep `"decimal place value"`), or (b) narrow `decimals.md`'s `topic_keywords` to require "decimal" co-occurring. Not fixed in this pass — audit only, per the maintainer's request.
 
 ### Finding 2 — "Adding/Subtracting fractions..." nodes routed to the wrong scaffold
 `au4_adding_fractions`, `au7_unlike_denom_fractions`, and pilot's `adding_equal_denom`/`subtracting_equal_denom` all have labels starting with "Adding"/"Subtracting" — which matches `addition_subtraction.md`'s keywords (`"adding"`, `"subtracting"`) **before** `fractions.md` ever gets checked, because `visual_scaffold.py` scans scaffold files **alphabetically by filename** and returns the **first** match (`addition_subtraction.md` sorts before `fractions.md`). A child on a fractions node gets a number-line addition hint instead of a fraction bar-model hint. **Root cause: keyword collision + alphabetical-first-match has no tie-break for "which scaffold is more specific to this subject area."** Not fixed in this pass.
