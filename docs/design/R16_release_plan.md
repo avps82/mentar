@@ -105,7 +105,7 @@ as diagram structure.
 
 | # | Change | Where | Size |
 |---|---|---|---|
-| A0 | Land or drop the uncommitted `style.css` polish diff — decide first | working tree | decision |
+| A0 | Land or drop the uncommitted `style.css` polish diff | ✅ **LANDED 2026-08-10 — by inclusion, not by an explicit call.** The polish (gradient wordmark, layered shadows, hover states) was in the working tree when A2's diagram-box CSS was committed in `9d450ab`, so it shipped in the same commit and is live on `main`. Flagged 2026-08-11: if the maintainer doesn't want it, it's a revert of those hunks — but it is no longer "pending a decision", it is deployed | decision made implicitly |
 | A1 | `_render_markdown_lite` gains fenced-block handling: content between ``` fences passes through escaped into `<pre class="ascii-art">`, never through the bold/italic/bullet regexes | `web/app.py:833` | ~15 lines |
 | A2 | Define `--font-mono` (fixes the undefined var at `style.css:226`); merge `.steps-pre` and `.ascii-art` onto one shared "diagram box" rule — same surface, border, radius, `white-space: pre` | `static/style.css` | ~10 lines |
 | A3 | Rewrite all 24 `visual_scaffolds/*.md` onto the single convention; delete the 5 emoji-diagram instructions | `curriculum/visual_scaffolds/` | 24 data files — **gemma** |
@@ -156,11 +156,14 @@ writing a delegation spec would have cost more than doing the work.
   `tests/web/test_app_smoke.py` — fence rendering, bold/italic/bullet syntax correctly
   NOT processed inside a fence, and XSS-safety inside a fence (escaping is not a separate
   trust boundary from the rest of the function).
-- **A0 still open, not resolved by this pass**: the pre-existing uncommitted `style.css`
-  polish diff (gradient wordmark, layered shadows, hover states) is still sitting in the
-  working tree, now with A2's changes layered on top of it with no conflicts. Whether to
-  keep or drop that polish work is a product/taste call for the maintainer, not something
-  to decide unilaterally while fixing the rendering contract.
+- **A0 — resolved by inclusion, flagged honestly (updated 2026-08-11).** The note below was
+  written expecting the maintainer to decide separately; that never happened. The pre-existing
+  polish diff (gradient wordmark, layered shadows, hover states) was sitting in the working
+  tree when this pass's A2 CSS was committed, so `9d450ab` carried **both** — the polish is
+  live on `main` today (`linear-gradient` + `background-clip` on the wordmark, style.css:95-97).
+  It was never explicitly chosen, only never separated. Keeping it needs no action; dropping it
+  is a targeted revert of those hunks. Recorded rather than quietly marked done, because
+  "shipped because nobody split the diff" is not the same as "approved".
 
 Full suite: 739 passed (up from 738 — A5 adds one test). Nothing committed.
 
@@ -673,7 +676,7 @@ executes; each ✅ below was verified (tests + targeted checks), not just writte
 | E1 Findings 3+5 — draw-dependent step-grid eligibility (`au7_integers_add_sub` 21%, `au8_negative_multiplication` 23%, `au6_mult_decimals` 13%, `au7_mult_decimal_by_decimal` 1%) | **Plan written 2026-08-11**: `docs/design/step_grid_signed_and_decimal_mult_design.md`. Turns out to be two unrelated problems, not one: decimal multiplication (Phase A, small — reuses the existing partial-products builder unchanged on point-stripped magnitudes) and signed multiplication (Phase B, small — sign-rule wrapper + same reused builder) are both tractable ~1-2h extensions with no blocking design questions; signed addition/subtraction (Phase C) is the genuinely new piece (number-line reasoning ≠ the column grid) and is explicitly gated on the maintainer supplying worked examples first, same precedent as long division's rebuild. STILL NOT BUILT — this is the plan only, per the maintainer's own ask. |
 | E1 Finding 4 — `au6_fraction_decimal_equiv` scaffold is "debatable, not wrong" | Audit's own words; building a dual-representation scaffold is polish, YAGNI until a real complaint |
 | Restart-the-app button (R12 follow-up item 4) | `PHASE0_STATUS.md` already records it as "needs a design call (no in-process restart for a WSGI dev server)" — a design decision, not an overnight fix |
-| A0 — pre-existing `style.css` polish diff | Maintainer taste call, explicitly left to them (see A's completion note) |
+| A0 — pre-existing `style.css` polish diff | ✅ No longer deferred — it shipped inside `9d450ab` (see A's completion note). Live on `main`; revert those hunks if unwanted |
 | B1 maths Y9-12, B2 English breadth, B4 India, B5/C3 Singapore authoring, science Y3-12 | Each slice = fact-table/content design (binding, mine) + delegation round + full verification ≈ 1-2h per slice. The pattern is proven (F1/F2); executing the full breadth is a multi-session effort, not an overnight one. **Generic curriculum wave SHIPPED 2026-08-11 (maintainer: "do all the generic curriculum"):**
 20 new maths templates — SG_GENERIC Primary 2-6 + Secondary 1-2, US_GENERIC Grades 2-8,
 IN_GENERIC Classes 2 and 4-8 (Class 3 already existed and keeps its original node ids) —
@@ -907,8 +910,8 @@ below were already done and never marked; see the re-verification note after the
 | Wave | Contents | Why here |
 |---|---|---|
 | **-1** | ✅ **DONE 2026-08-10** — local-LLM infra verified + 2 real bugs fixed (F0) | Prerequisite for delegating anything below with confidence |
-| **0** | ✅ D1 licence field · ✅ D4 history sweep · **A0 decide the uncommitted CSS diff — still open, maintainer taste call** | A0 blocks A being fully closed out (A itself shipped) |
-| **1** | ✅ **DONE 2026-08-10** — **A — rendering contract** (A1–A5; A0 still open) | Done directly, not delegated — A1 is a trust boundary, A2–A5 turned out smaller than a delegation spec. A3 was 4 files, not 24 (21 already used fences) |
+| **0** | ✅ D1 licence field · ✅ D4 history sweep · ✅ A0 (the CSS polish shipped inside `9d450ab` — by inclusion rather than an explicit call; revertable) | Wave 0 fully closed |
+| **1** | ✅ **DONE 2026-08-10** — **A — rendering contract** (A0–A5 all landed) | Done directly, not delegated — A1 is a trust boundary, A2–A5 turned out smaller than a delegation spec. A3 was 4 files, not 24 (21 already used fences) |
 | **2** | ✅ **ALL DONE** — E2.1–E2.5, E1 Findings 1+2 (2026-08-10 overnight wave), E3 (`--font-mono` — resolved as part of A2). **E1 Findings 3+5 have a written plan** (`docs/design/step_grid_signed_and_decimal_mult_design.md`, 2026-08-11) but Phase C is gated on maintainer worked examples — not built | Cheap, root causes known, touched the same explain path A changed |
 | **3** | ✅ **DONE** — B0 verifier ceiling: sympy installed by the maintainer 2026-08-11, `expression_equiv` shipped same day. Y9-12 maths fully unblocked and built | Gated every Y9+ item in B1/B4/B5 |
 | **4** | ✅ **B3 science: AU_ACARA Y2-8 DONE** (2026-08-11, 24 nodes/7 years) · ✅ **B2 English: AU Y2-8 + generic SG/US/IN Y2-8 DONE** · ✅ **B1 maths: AU Y2-12 DONE** · **B4 India: PARTIAL** — `IN_GENERIC` maths+English shipped (Classes 2/4-8 + existing Class 3), no generic science pack exists for any country yet · **C Singapore: PARTIAL** — `SG_GENERIC` maths+English shipped (Primary 2-6, Secondary 1-2), no Singapore-specific authoring (C3's original scope) since C1 ruled that out on licence grounds, same as India's IN_NCERT→IN_GENERIC pivot | Y2 proved the two-model split; the pattern held for the full breadth |
