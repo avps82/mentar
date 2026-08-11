@@ -41,6 +41,7 @@ from mentar.engine.au_items import (
     AU_YEAR11_GENERATORS,
     AU_YEAR12_GENERATORS,
 )
+from mentar.engine.generic_english_items import GENERIC_ENGLISH_ITEM_SOURCES
 from mentar.engine.generic_items import GENERIC_ITEM_SOURCES
 from mentar.engine.in_generic_items import IN_GENERIC_MATHS_GENERATORS
 from mentar.engine.itemgen import ARITHMETIC_GENERATORS, DEFAULT_GENERATORS
@@ -87,5 +88,11 @@ def build_registry(pilot_itembank_path: Path) -> dict[str, dict]:
         **{
             name: {"generators": gens, "itembank": None}
             for name, gens in GENERIC_ITEM_SOURCES.items()
+        },
+        # Generic English packs — same reuse discipline, mirrored from AU English
+        # generators (engine/generic_english_items.py) instead of AU maths.
+        **{
+            name: {"generators": gens, "itembank": None}
+            for name, gens in GENERIC_ENGLISH_ITEM_SOURCES.items()
         },
     }

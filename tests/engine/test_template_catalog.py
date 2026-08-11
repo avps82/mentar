@@ -162,6 +162,66 @@ _EXPECTED = {
     "curriculum/templates/IN_GENERIC/c8_maths.md": {
         "key": "in_generic_c8_maths", "label": "Maths — Class 8 🇮🇳 (general)", "item_source": "in_c8_maths",
     },
+    "curriculum/templates/SG_GENERIC/p2_english.md": {
+        "key": "sg_generic_p2_english", "label": "English — Primary 2 🇸🇬 (general)", "item_source": "sg_p2_english",
+    },
+    "curriculum/templates/SG_GENERIC/p3_english.md": {
+        "key": "sg_generic_p3_english", "label": "English — Primary 3 🇸🇬 (general)", "item_source": "sg_p3_english",
+    },
+    "curriculum/templates/SG_GENERIC/p4_english.md": {
+        "key": "sg_generic_p4_english", "label": "English — Primary 4 🇸🇬 (general)", "item_source": "sg_p4_english",
+    },
+    "curriculum/templates/SG_GENERIC/p5_english.md": {
+        "key": "sg_generic_p5_english", "label": "English — Primary 5 🇸🇬 (general)", "item_source": "sg_p5_english",
+    },
+    "curriculum/templates/SG_GENERIC/p6_english.md": {
+        "key": "sg_generic_p6_english", "label": "English — Primary 6 🇸🇬 (general)", "item_source": "sg_p6_english",
+    },
+    "curriculum/templates/SG_GENERIC/s1_english.md": {
+        "key": "sg_generic_s1_english", "label": "English — Secondary 1 🇸🇬 (general)", "item_source": "sg_s1_english",
+    },
+    "curriculum/templates/SG_GENERIC/s2_english.md": {
+        "key": "sg_generic_s2_english", "label": "English — Secondary 2 🇸🇬 (general)", "item_source": "sg_s2_english",
+    },
+    "curriculum/templates/US_GENERIC/g2_english.md": {
+        "key": "us_generic_g2_english", "label": "English — Grade 2 🇺🇸 (general)", "item_source": "us_g2_english",
+    },
+    "curriculum/templates/US_GENERIC/g3_english.md": {
+        "key": "us_generic_g3_english", "label": "English — Grade 3 🇺🇸 (general)", "item_source": "us_g3_english",
+    },
+    "curriculum/templates/US_GENERIC/g4_english.md": {
+        "key": "us_generic_g4_english", "label": "English — Grade 4 🇺🇸 (general)", "item_source": "us_g4_english",
+    },
+    "curriculum/templates/US_GENERIC/g5_english.md": {
+        "key": "us_generic_g5_english", "label": "English — Grade 5 🇺🇸 (general)", "item_source": "us_g5_english",
+    },
+    "curriculum/templates/US_GENERIC/g6_english.md": {
+        "key": "us_generic_g6_english", "label": "English — Grade 6 🇺🇸 (general)", "item_source": "us_g6_english",
+    },
+    "curriculum/templates/US_GENERIC/g7_english.md": {
+        "key": "us_generic_g7_english", "label": "English — Grade 7 🇺🇸 (general)", "item_source": "us_g7_english",
+    },
+    "curriculum/templates/US_GENERIC/g8_english.md": {
+        "key": "us_generic_g8_english", "label": "English — Grade 8 🇺🇸 (general)", "item_source": "us_g8_english",
+    },
+    "curriculum/templates/IN_GENERIC/c2_english.md": {
+        "key": "in_generic_c2_english", "label": "English — Class 2 🇮🇳 (general)", "item_source": "in_c2_english",
+    },
+    "curriculum/templates/IN_GENERIC/c4_english.md": {
+        "key": "in_generic_c4_english", "label": "English — Class 4 🇮🇳 (general)", "item_source": "in_c4_english",
+    },
+    "curriculum/templates/IN_GENERIC/c5_english.md": {
+        "key": "in_generic_c5_english", "label": "English — Class 5 🇮🇳 (general)", "item_source": "in_c5_english",
+    },
+    "curriculum/templates/IN_GENERIC/c6_english.md": {
+        "key": "in_generic_c6_english", "label": "English — Class 6 🇮🇳 (general)", "item_source": "in_c6_english",
+    },
+    "curriculum/templates/IN_GENERIC/c7_english.md": {
+        "key": "in_generic_c7_english", "label": "English — Class 7 🇮🇳 (general)", "item_source": "in_c7_english",
+    },
+    "curriculum/templates/IN_GENERIC/c8_english.md": {
+        "key": "in_generic_c8_english", "label": "English — Class 8 🇮🇳 (general)", "item_source": "in_c8_english",
+    },
 }
 
 

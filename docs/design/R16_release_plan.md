@@ -744,7 +744,25 @@ not just "found a file"); regression-checked existing routing including the spec
 "as"-substring false-match case; live FSM round-trip both templates, 12/12 PASS each. 786
 tests green.
 
-**Next-session starting point: Y3 science (extend the proven Y2 shape), then generic Y3/Y4, then SG_GENERIC, then US_GENERIC (maintainer decided 2026-08-11: generic pack, no CCSS codes/branding — OSS-release safety; see CONTENT_LICENSES.md §2b)** |
+**Generic English packs (SG/US/IN) SHIPPED 2026-08-11:** 20 templates (7+7+6, mirroring
+the maths breadth exactly), 80 nodes, from ONE concept-progression table
+(`engine/generic_english_items.py::STAGE_CONCEPTS`) reusing `engine/au_english_items.py`'s
+already-tested Year 2-8 generator functions verbatim — zero new item logic, same discipline
+`engine/generic_items.py` set for maths. Adding a country's English pack = zero new code
+(PACK_LEVELS is imported straight from generic_items.py, one shared source of truth for
+both subjects' level→stage mapping). item_source is `<prefix>_english` (distinct from
+maths' `<prefix>_maths`) so both subjects ship side by side under the same level prefix
+without collision. Verified: `validate_template.py` clean on all 20; full suite still 786
+(the catalog test is loop-based over its golden dict, not parametrized per file, so count
+doesn't scale with template count — confirmed the golden-list test itself DOES catch
+missing entries by re-running it against a deliberately incomplete dict during review);
+live FSM round-trip through a real `SessionController` on 6 sampled templates (one low-
+and one high-stage per country) — required a two-independently-seeded-ItemGenerator
+technique (predict + controller-owned, same seed) since a naive pre-sample-then-hand-to-
+controller approach double-consumes the shared RNG sequence and silently checks the wrong
+draw; all 6 samples PASS.
+
+**Next-session starting point: Y3+ AU science (extend the proven Y2 shape), then generic Y3/Y4, then SG_GENERIC, then US_GENERIC (maintainer decided 2026-08-11: generic pack, no CCSS codes/branding — OSS-release safety; see CONTENT_LICENSES.md §2b)** |
 | D2 name reservation | ✅ **DONE** — `@mentar/mentar` on npm (published 2026-06-17, confirmed via the registry API 2026-08-11) and `mentar` on PyPI (0.1.0.dev0). **One thing found on verification, not a name-reservation problem**: both placeholders have STALE license metadata — npm says MIT, PyPI says "TBD" — while the repo ratified AGPL-3.0-only weeks ago. Republishing needs the maintainer's own credentials; flagged, not fixed. |
 | D3 safeguarding, D6 cloud routines | D3 is a maintainer action (commissioning a professional; packet ready). D6 self-resolves on going public |
 | htmx 4 migration (E9) | Still beta, still monitoring-only |
