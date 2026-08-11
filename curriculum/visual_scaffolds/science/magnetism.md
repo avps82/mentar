@@ -12,11 +12,11 @@ When writing or explaining this question, use ONE of these visual structures:
 
 **Attracted vs. not attracted** — side-by-side comparison:
 ```
-ATTRACTED TO A MAGNET            NOT ATTRACTED TO A MAGNET
-  an iron nail, a steel spoon      a wooden pencil, a plastic ruler
-  a steel paperclip, a tin can     a rubber band, a glass marble
-  (contains iron or steel)         (wood, plastic, rubber, glass —
-                                     no iron or steel inside)
+ATTRACTED TO A MAGNET               NOT ATTRACTED TO A MAGNET
+  an iron nail, a steel spoon       a wooden pencil, a plastic ruler
+  a steel paperclip, a steel screw  a rubber band, a glass marble
+  (contains iron or steel)          (wood, plastic, rubber, glass —
+                                      no iron or steel inside)
 ```
 
 **Guidelines for the question text:**

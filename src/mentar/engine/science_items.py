@@ -78,7 +78,10 @@ _FOOD_CHAIN_CLASSES = {
 }
 
 _MAGNETIC_CLASSES = {
-    "attracted to a magnet": ["an iron nail", "a steel paperclip", "a steel spoon", "a tin can"],
+    # NB: no "tin can" here -- food cans are tin-plated steel (magnetic) but drink
+    # cans are aluminium (not), so a child testing one at home could fairly conclude
+    # the tutor is wrong. Every member must be unambiguously ferrous.
+    "attracted to a magnet": ["an iron nail", "a steel paperclip", "a steel spoon", "a steel screw"],
     "not attracted to a magnet": ["a wooden pencil", "a plastic ruler", "a rubber band", "a glass marble"],
 }
 
