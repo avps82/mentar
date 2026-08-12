@@ -1155,6 +1155,21 @@ def _store_and_id(learner_uuid: str) -> tuple[LearnerStore | None, int | None]:
     return _stores.get(learner_uuid), _db_learner_ids.get(learner_uuid)
 
 
+def _elaborate_display_lines(ctrl: SessionController) -> list[dict] | None:
+    """"Show human working" (step grids) + explain-mode (method cards, 2026-08-12)
+    render through the SAME `_arithmetic_steps.html` partial -- both are
+    computed, non-LLM, line-oriented monospace content. A node is step-grid- or
+    method-card-eligible, never both, so this is a plain either/or, not a merge.
+    Method-card lines are already short plain sentences (no overflow risk the
+    way a long division "Middle Step" annotation has), so every line renders at
+    the normal size (is_annotation=False)."""
+    if ctrl.elaborate_steps_grid is not None:
+        return render_steps_grid_lines(ctrl.elaborate_steps_grid)
+    if ctrl.elaborate_method_card is not None:
+        return [{"text": line, "is_annotation": False} for line in ctrl.elaborate_method_card]
+    return None
+
+
 def _turn_context(learner_uuid: str, ctrl: SessionController, is_first_turn: bool = False) -> dict:
     """Template context for the _turn.html partial: the STRUCTURED message and
     question fields (TurnResult.message / .question — never string-split from
@@ -1186,10 +1201,7 @@ def _turn_context(learner_uuid: str, ctrl: SessionController, is_first_turn: boo
         # is_annotation tag per line so long "Middle Step"/scale-explanation
         # sentences render at a smaller font (fits on one line, no wrap/scroll)
         # while the numeric rows stay at the normal size.
-        "steps_lines": (
-            render_steps_grid_lines(ctrl.elaborate_steps_grid)
-            if ctrl.elaborate_steps_grid is not None else None
-        ),
+        "steps_lines": _elaborate_display_lines(ctrl),
         # R12-fix2: mastery bar + session counter live INSIDE the swap target so
         # every htmx turn refreshes them (they froze at page-load state before).
         "current_mastery": _current_node_mastery(learner_uuid, ctrl),

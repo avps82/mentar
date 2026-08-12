@@ -220,6 +220,25 @@ def gen_mult_fraction_whole(rng: random.Random):
     return ("fraction", "fraction_equiv", f"What is {n}/{d} × {whole}?", f"{n * whole}/{d}")
 
 
+def _percentage_of_quantity_card(pct: int, quantity: int, answer: int) -> tuple[str, ...]:
+    """Explain-mode (2026-08-12, Phase 0 pilot — docs/design/explain_mode_design.md
+    §3 Type 2): the maintainer's own failing example ("What is 50% of 64?") as the
+    acceptance test. Uses the GENERAL definition of percent (x out of 100) rather
+    than per-value tricks (halves/quarters) -- fewer special cases to author and
+    review, correct for every pct/quantity this or any future percent-of generator
+    draws, and self-validating: the final line's number is `answer`, checked
+    against the item's own ground truth by a pytest fixture, not eyeballed."""
+    product = quantity * pct
+    return (
+        "PERCENTAGE OF A QUANTITY",
+        f"What is {pct}% of {quantity}? → {answer}",
+        f'  1. "{pct}%" means {pct} out of every 100.',
+        f"  2. So {pct}% of {quantity} = {quantity} × {pct} ÷ 100.",
+        f"  3. {quantity} × {pct} = {product}, and {product} ÷ 100 = {answer}.",
+        f"  Answer: {answer}",
+    )
+
+
 def gen_percentage_of_quantity(rng: random.Random):
     """AC9M5N02-aligned: a percentage of a quantity, constructed so it always
     divides exactly (no rounding decisions needed)."""
@@ -231,7 +250,10 @@ def gen_percentage_of_quantity(rng: random.Random):
     else:
         quantity = rng.randint(1, 20) * 4
     answer = quantity * pct // 100
-    return ("int", "int_exact", f"What is {pct}% of {quantity}?", str(answer))
+    return (
+        "int", "int_exact", f"What is {pct}% of {quantity}?", str(answer), None,
+        _percentage_of_quantity_card(pct, quantity, answer),
+    )
 
 
 def gen_negative_numbers(rng: random.Random):
@@ -414,13 +436,30 @@ def gen_negative_multiplication(rng: random.Random):
     return ("int", "int_exact", f"What is {a} × {b}?", str(a * b))
 
 
+def _percentage_change_card(base: int, pct: int, increase: int, new_val: int) -> tuple[str, ...]:
+    """Explain-mode (2026-08-12, Phase 0): same "percent = x out of 100" general
+    definition as _percentage_of_quantity_card, plus the one extra step this
+    shape needs -- add the increase back onto the original."""
+    return (
+        "PERCENTAGE INCREASE",
+        f"A price of ${base} increases by {pct}%. What is the new price? → ${new_val}",
+        f"  1. Find {pct}% of ${base}: {base} × {pct} ÷ 100 = {increase}.",
+        f"  2. \"Increases by\" means add that on: ${base} + ${increase} = ${new_val}.",
+        f"  Answer: ${new_val}",
+    )
+
+
 def gen_percentage_change(rng: random.Random):
     """AC9M8N03-aligned: a percentage increase, constructed to be exact."""
     base = rng.randint(1, 20) * 10
     pct = rng.choice([10, 20, 50])
     increase = base * pct // 100
     new_val = base + increase
-    return ("int", "int_exact", f"A price of ${base} increases by {pct}%. What is the new price?", str(new_val))
+    return (
+        "int", "int_exact",
+        f"A price of ${base} increases by {pct}%. What is the new price?", str(new_val), None,
+        _percentage_change_card(base, pct, increase, new_val),
+    )
 
 
 def gen_div_decimal_by_decimal(rng: random.Random):

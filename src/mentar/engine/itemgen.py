@@ -27,7 +27,11 @@ from mentar.engine.itembank import Item
 # answer, choices) -- the 3rd element is the question WITHOUT inline "A) ..."
 # options (R2.1); compose_mc_problem() builds the full inline form centrally,
 # once, for CLI/transcript surfaces (the web view shows the stem + radios).
-GenFn = Callable[[random.Random], "tuple[str, str, str, str]"]
+# 4-tuple (answer_type, checker, problem/stem, answer) is the baseline every
+# generator supports; a 5th element (mc4 structured choices) and/or a 6th
+# (explain-mode method_steps, 2026-08-12) are optional extensions ItemGenerator
+# ._make reads positionally -- see its docstring for the exact contract.
+GenFn = Callable[[random.Random], tuple]
 
 _LETTERS = "ABCD"
 
@@ -40,13 +44,28 @@ def compose_mc_problem(stem: str, choices: tuple[str, ...] | list[str]) -> str:
     return f"{stem} {opts}. Answer with the letter."
 
 
-def mc_which_is(rng: random.Random, prompt: str, classes: dict[str, list[str]]):
+def mc_which_is(
+    rng: random.Random, prompt: str, classes: dict[str, list[str]], *,
+    glosses: dict[str, str] | None = None, concept_name: str | None = None,
+):
     """Build a "Which of these is a <label>?"-shaped MC item from a
     {label: [members]} table. One correct member of a randomly chosen target
     label + three distractors drawn from the OTHER labels (classes are
     disjoint, so distractors are always wrong). Shared by science_items.py
     and practice_items.py -- any fact table with disjoint categories fits
-    this shape (animal classes, states of matter, synonyms, rhymes...)."""
+    this shape (animal classes, states of matter, synonyms, rhymes...).
+
+    `glosses`/`concept_name` (explain-mode, 2026-08-12, Type 4 — see
+    docs/design/explain_mode_design.md §3): OPTIONAL, and independent of every
+    existing call site (all still pass neither -- item.method_steps stays
+    None, zero behaviour change). When BOTH are given, a Type-4 "fact in
+    category" card is built: the concept's textbook name (rule: name the
+    concept), the correct member's category + a one-line "because" gloss, and
+    every distractor's TRUE category (built from a member->label reverse
+    index, correct for any number of labels -- not just the common
+    2-category case). `glosses` keys are category labels, not members: most
+    fact tables only need one gloss per label, since the reason a member
+    belongs to a category is usually shared across the whole category."""
     labels = list(classes)
     target = rng.choice(labels)
     correct = rng.choice(classes[target])
@@ -56,11 +75,26 @@ def mc_which_is(rng: random.Random, prompt: str, classes: dict[str, list[str]]):
     rng.shuffle(options)
     letter = _LETTERS[options.index(correct)]
     stem = prompt.format(label=target)
+
+    method_steps = None
+    if glosses is not None and concept_name is not None:
+        member_label = {m: lbl for lbl, members in classes.items() for m in members}
+        gloss = glosses.get(target, "")
+        why = f" ({gloss})" if gloss else ""
+        others = " · ".join(f"{d} → {member_label[d]}" for d in distractors)
+        method_steps = (
+            concept_name,
+            f"{stem} → {correct}",
+            f"  {correct} → {target}{why}",
+            f"  The others: {others}",
+        )
+
     # 3rd element is the STEM (no inline "A) ..." options — R2.1: the web view
     # shows stem + radios, the inline form is composed centrally for CLI/
     # transcript by ItemGenerator._make via compose_mc_problem() above.
     # 5th element: structured choices (A/B/C/D order) for the radio buttons.
-    return ("mc4", "mc_choice", stem, letter, options)
+    # 6th element: the Type-4 method card above, or None.
+    return ("mc4", "mc_choice", stem, letter, options, method_steps)
 
 _THINGS = ["stickers", "crayons", "grapes", "marbles", "sweets", "pencils", "apples", "cookies"]
 _GROUPS = ["children", "friends", "baskets", "boxes", "bags", "plates", "pots"]
@@ -213,10 +247,17 @@ class ItemGenerator:
         choices = tuple(result[4]) if len(result) > 4 and result[4] else None
         stem = third if choices else None
         problem = compose_mc_problem(third, choices) if choices else third
+        # explain-mode (2026-08-12): an optional 6th element -- a migrated
+        # generator's computed method card, one line per step. Position 4 is
+        # already choices' slot (present-or-None for EVERY migrated generator,
+        # mc4 or not), so this is always unambiguous: a non-mc4 generator that
+        # wants a card explicitly passes None at index 4.
+        method_steps = tuple(result[5]) if len(result) > 5 and result[5] else None
         return Item(
             id=f"gen-{node_id}-{self._rng.randrange(10 ** 9)}",
             node=node_id, problem=problem, answer=answer,
             answer_type=answer_type, checker=checker, choices=choices, stem=stem,
+            method_steps=method_steps,
         )
 
     def sample(self, node_id: str) -> Item | None:

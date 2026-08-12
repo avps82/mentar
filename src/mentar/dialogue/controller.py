@@ -261,6 +261,11 @@ class _SessionCtx:
     last_explanation: str = ""     # R12.4/12.5: last help explanation shown (variety + elaborate)
     elaborate_count: int = 0       # R12.5: elaborations used this Help chain (cap = ELABORATE_CAP)
     elaborate_steps_grid: StepGrid | None = None  # "show human working", set on HELP_ELABORATE
+    # explain-mode (2026-08-12): the SAME "render directly on Explain-more, skip
+    # the LLM entirely" treatment as elaborate_steps_grid, for a node whose live
+    # item carries a computed method_steps card (Type 2/4) instead of a step
+    # grid (Type 1) -- mutually exclusive with elaborate_steps_grid per node.
+    elaborate_method_card: tuple | None = None
     # A5: per-node, CHILD-INITIATED help only (never the auto-help branch in
     # _do_bkt_update) — the false-confidence probe signal must not be polluted by
     # a previous node's help use or by the system's own auto-help scaffolding.
@@ -626,6 +631,14 @@ class SessionController:
         return self._ctx.elaborate_steps_grid
 
     @property
+    def elaborate_method_card(self) -> tuple | None:
+        """Explain-mode (2026-08-12): the computed method card for the current
+        Explain-more press, when the live item carries one (Type 2/4) and the
+        node isn't step-grid-eligible. None otherwise -- same "no card yet /
+        not this kind of node" collapse as elaborate_steps_grid."""
+        return self._ctx.elaborate_method_card
+
+    @property
     def session_id(self) -> str:
         """The id of this controller's tutoring session (for durable-log reads)."""
         return self._session_id
@@ -872,6 +885,7 @@ class SessionController:
         ctx.last_explanation = ""  # R12.4: fresh question — variety/elaborate context resets
         ctx.elaborate_count = 0
         ctx.elaborate_steps_grid = None  # "show human working": stale grid must not linger
+        ctx.elaborate_method_card = None  # explain-mode: stale card must not linger either
         node = self._curriculum[ctx.current_node_id]
         item = self._sample_item(ctx.current_node_id)
         if item is not None:
@@ -1199,8 +1213,22 @@ class SessionController:
                 ctx.last_explanation = explanation
                 ctx.state = FSMState.HELP_RECHECK_PRESENT
                 return (explanation, True)
+            # explain-mode (2026-08-12): same treatment, one tier down -- a node
+            # without a step grid but whose LIVE item carries a computed method
+            # card (Type 2 maths / Type 4 science) also skips the LLM on
+            # Explain-more. Safe to use the LIVE item here specifically (unlike
+            # _worked_example_for's deliberate sibling-draw below): the child has
+            # already answered or is deep in the Help loop, so nothing is
+            # leaked that isn't already resolved.
+            ctx.elaborate_method_card = getattr(ctx.current_item, "method_steps", None)
+            if ctx.elaborate_method_card is not None:
+                explanation = "Let's see how it's solved! 👇"
+                ctx.last_explanation = explanation
+                ctx.state = FSMState.HELP_RECHECK_PRESENT
+                return (explanation, True)
         else:
             ctx.elaborate_steps_grid = None  # a fresh Help round -- clear any stale grid
+            ctx.elaborate_method_card = None
         node = self._curriculum[ctx.current_node_id]
         passage = resolve_grounding(node.get("grounding", {}), self._grounding_cfg)
         system_text = self._render_system_prompt(node["label"], passage)
@@ -1613,6 +1641,18 @@ class SessionController:
 
         Prefers a node-authored `worked_example`; else a solved item from the bank (excluding
         the live question so its answer isn't revealed); else "".
+
+        explain-mode (2026-08-12): when that sibling item carries a computed
+        `method_steps` card (Type 2/4), its lines replace the bare "(Answer: X)"
+        string -- the LLM is handed an actual method to narrate/build on instead
+        of a fact with no derivation (docs/design/explain_mode_design.md §4a/b,
+        the root cause of the maintainer-reported "not much explanation" gap).
+        Deliberately still a SIBLING draw, never the live item -- this function
+        feeds BOTH the first (non-elaborate) Help explanation and
+        help_elaborate.md, and the live answer must never leak on the first
+        Help press. The live item's OWN card is used only by the elaborate
+        bare-card path in `_do_help_explain`, which runs after the child has
+        already answered.
         """
         node = self._curriculum.get(node_id, {})
         if node.get("worked_example"):
@@ -1621,6 +1661,8 @@ class SessionController:
             cur_id = getattr(self._ctx.current_item, "id", None)
             ex = self._item_bank.example(node_id, exclude_id=cur_id)
             if ex is not None:
+                if getattr(ex, "method_steps", None):
+                    return "\n".join(ex.method_steps)
                 return f"{ex.problem} (Answer: {ex.answer})"
         return ""
 

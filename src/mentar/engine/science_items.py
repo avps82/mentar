@@ -192,100 +192,229 @@ _ELEMENT_COMPOUND_CLASSES = {
 }
 
 
+# ── Explain-mode (2026-08-12): one 'because' gloss per category label + a
+# textbook concept name per fact table -- docs/design/explain_mode_design.md
+# §3 Type 4. Passed to mc_which_is() so a drawn item's method_steps card
+# states WHY the correct answer's category is true and what each wrong
+# option's own true category is, instead of the child having to infer it.
+
+_ANIMAL_GLOSSES = {
+    'mammal': 'mammals have fur or hair and feed their babies milk',
+    'bird': 'birds have feathers and lay eggs',
+    'fish': 'fish live in water and breathe through gills',
+    'insect': 'insects have six legs and a body in three parts',
+}
+
+_MATTER_GLOSSES = {
+    'solid': 'a solid keeps its own shape',
+    'liquid': 'a liquid takes the shape of its container but keeps the same amount of space',
+    'gas': 'a gas spreads out to fill all the space it can',
+}
+
+_LIVING_GLOSSES = {
+    'living thing': 'living things grow, feed, and can reproduce',
+    'non-living thing': "non-living things don't grow, feed, or reproduce on their own",
+}
+
+_SOUND_GLOSSES = {
+    'makes a sound by vibrating': 'sound is made when something vibrates (shakes) very fast',
+    'does not make a sound on its own': "nothing is vibrating, so there's no sound to hear",
+}
+
+_SOLAR_SYSTEM_GLOSSES = {
+    'is a planet': 'a planet is a large round body that orbits the Sun',
+    'is not a planet': "it orbits the Sun too, but it's a star, a moon, or a comet -- not a planet itself",
+}
+
+_MATERIALS_GLOSSES = {
+    'can be bent, twisted or stretched': 'flexible materials change shape easily and often spring back',
+    'stays the same shape unless broken': 'rigid materials hold their shape until real force breaks them',
+}
+
+_LIFE_CYCLE_GLOSSES = {
+    "a stage in a living thing's life cycle": 'living things change through stages as they grow up',
+    'not a life-cycle stage': "it isn't part of how a living thing grows and changes",
+}
+
+_HEAT_SOURCE_GLOSSES = {
+    'a source of heat': 'it gives off heat energy you can feel',
+    'not a source of heat': "it doesn't produce heat itself",
+}
+
+_HABITAT_GLOSSES = {
+    'lives mainly in water': 'its body is suited for swimming and breathing in water',
+    'lives mainly on land': 'its body is suited for moving and breathing on land',
+}
+
+_FOOD_CHAIN_GLOSSES = {
+    'a producer (makes its own food, e.g. using sunlight)': 'producers use sunlight to make their own food',
+    'a consumer (eats other living things for food)': "consumers can't make their own food, so they eat other living things",
+}
+
+_MAGNETIC_GLOSSES = {
+    'attracted to a magnet': 'magnets pull things made of iron or steel',
+    'not attracted to a magnet': "it isn't made of iron or steel, so a magnet can't pull it",
+}
+
+_STATE_CHANGE_GLOSSES = {
+    'caused by ADDING heat': 'adding heat energy makes particles move more and change solid to liquid to gas',
+    'caused by REMOVING heat': 'removing heat energy makes particles move less and change gas to liquid to solid',
+}
+
+_ADAPTATION_GLOSSES = {
+    'a body feature that helps an animal survive in its habitat': 'adaptations are body features shaped by living in a particular habitat',
+    'not linked to survival in a habitat': "it's something added by people, not a body feature suited to a habitat",
+}
+
+_DISSOLVING_GLOSSES = {
+    'dissolves in water': 'its particles spread evenly through the water and seem to disappear',
+    'does not dissolve in water': 'its particles stay separate and settle instead of spreading through the water',
+}
+
+_LIGHT_MATERIAL_GLOSSES = {
+    'transparent (lets light pass through clearly)': 'light passes straight through, so you can see clearly through it',
+    'opaque (blocks light completely)': "light can't pass through, so it blocks your view completely",
+}
+
+_VERTEBRATE_GLOSSES = {
+    'a vertebrate (has a backbone)': 'vertebrates have a backbone inside their body for support',
+    'an invertebrate (no backbone)': 'invertebrates have no backbone at all',
+}
+
+_CIRCUIT_GLOSSES = {
+    'a good conductor of electricity': 'metals let electricity flow through them easily',
+    'an insulator (does not conduct electricity)': 'it blocks the flow of electricity',
+}
+
+_REVERSIBLE_CHANGE_GLOSSES = {
+    'a reversible change (can be undone)': 'no new substance is made, so it can be changed back',
+    'an irreversible change (cannot be undone)': "a new substance is made, so it can't be changed back",
+}
+
+_BODY_SYSTEM_GLOSSES = {
+    'part of the digestive system': 'the digestive system breaks down food so the body can use it',
+    'part of the circulatory system': 'the circulatory system pumps blood around the body',
+}
+
+_FORCE_GLOSSES = {
+    'a contact force (needs touching)': 'contact forces only work when two things are touching',
+    'a non-contact force (acts at a distance)': 'non-contact forces can act without the objects touching',
+}
+
+_MIXTURE_GLOSSES = {
+    'a pure substance (only one type of particle)': 'a pure substance has only ONE type of particle throughout',
+    'a mixture (more than one substance mixed together)': 'a mixture has two or more substances mixed together, each keeping its own properties',
+}
+
+_CELL_STRUCTURE_GLOSSES = {
+    'found in a plant cell but not in an animal cell': 'plant cells need these extra structures for support and making food',
+    'found in both plant and animal cells': 'every cell, plant or animal, needs these basic structures to live',
+}
+
+_ENERGY_SOURCE_GLOSSES = {
+    'a renewable energy source': "renewable sources are naturally replaced and won't run out",
+    'a non-renewable energy source': 'non-renewable sources take millions of years to form, so they can run out',
+}
+
+_ELEMENT_COMPOUND_GLOSSES = {
+    'an element (only one type of atom)': 'an element is made of just one type of atom',
+    'a compound (two or more elements chemically joined)': 'a compound forms when two or more elements bond together chemically',
+}
+
 def _gen_classify_animals(rng: random.Random):
-    return mc_which_is(rng, "Which of these is a {label}?", _ANIMAL_CLASSES)
+    return mc_which_is(rng, "Which of these is a {label}?", _ANIMAL_CLASSES, glosses=_ANIMAL_GLOSSES, concept_name='ANIMAL GROUPS')
 
 
 def _gen_states_of_matter(rng: random.Random):
-    return mc_which_is(rng, "Which of these is a {label}?", _MATTER_CLASSES)
+    return mc_which_is(rng, "Which of these is a {label}?", _MATTER_CLASSES, glosses=_MATTER_GLOSSES, concept_name='STATES OF MATTER')
 
 
 def _gen_living_nonliving(rng: random.Random):
-    return mc_which_is(rng, "Which of these is a {label}?", _LIVING_CLASSES)
+    return mc_which_is(rng, "Which of these is a {label}?", _LIVING_CLASSES, glosses=_LIVING_GLOSSES, concept_name='LIVING VS NON-LIVING')
 
 
 def _gen_sound_vibration(rng: random.Random):
-    return mc_which_is(rng, "Which of these {label}?", _SOUND_CLASSES)
+    return mc_which_is(rng, "Which of these {label}?", _SOUND_CLASSES, glosses=_SOUND_GLOSSES, concept_name='SOUND AND VIBRATION')
 
 
 def _gen_solar_system(rng: random.Random):
-    return mc_which_is(rng, "Which of these {label}?", _SOLAR_SYSTEM_CLASSES)
+    return mc_which_is(rng, "Which of these {label}?", _SOLAR_SYSTEM_CLASSES, glosses=_SOLAR_SYSTEM_GLOSSES, concept_name='THE SOLAR SYSTEM')
 
 
 def _gen_materials_change(rng: random.Random):
-    return mc_which_is(rng, "Which of these {label}?", _MATERIALS_CLASSES)
+    return mc_which_is(rng, "Which of these {label}?", _MATERIALS_CLASSES, glosses=_MATERIALS_GLOSSES, concept_name='MATERIALS AND THEIR PROPERTIES')
 
 
 def _gen_life_cycle(rng: random.Random):
-    return mc_which_is(rng, "Which of these is {label}?", _LIFE_CYCLE_CLASSES)
+    return mc_which_is(rng, "Which of these is {label}?", _LIFE_CYCLE_CLASSES, glosses=_LIFE_CYCLE_GLOSSES, concept_name='LIFE CYCLES')
 
 
 def _gen_heat_sources(rng: random.Random):
-    return mc_which_is(rng, "Which of these is {label}?", _HEAT_SOURCE_CLASSES)
+    return mc_which_is(rng, "Which of these is {label}?", _HEAT_SOURCE_CLASSES, glosses=_HEAT_SOURCE_GLOSSES, concept_name='SOURCES OF HEAT')
 
 
 def _gen_habitats(rng: random.Random):
-    return mc_which_is(rng, "Which of these {label}?", _HABITAT_CLASSES)
+    return mc_which_is(rng, "Which of these {label}?", _HABITAT_CLASSES, glosses=_HABITAT_GLOSSES, concept_name='HABITATS')
 
 
 def _gen_food_chain_roles(rng: random.Random):
-    return mc_which_is(rng, "Which of these is {label}?", _FOOD_CHAIN_CLASSES)
+    return mc_which_is(rng, "Which of these is {label}?", _FOOD_CHAIN_CLASSES, glosses=_FOOD_CHAIN_GLOSSES, concept_name='FOOD CHAINS')
 
 
 def _gen_magnetic_materials(rng: random.Random):
-    return mc_which_is(rng, "Which of these is {label}?", _MAGNETIC_CLASSES)
+    return mc_which_is(rng, "Which of these is {label}?", _MAGNETIC_CLASSES, glosses=_MAGNETIC_GLOSSES, concept_name='MAGNETISM')
 
 
 def _gen_state_change_heat(rng: random.Random):
-    return mc_which_is(rng, "Which of these is {label}?", _STATE_CHANGE_CLASSES)
+    return mc_which_is(rng, "Which of these is {label}?", _STATE_CHANGE_CLASSES, glosses=_STATE_CHANGE_GLOSSES, concept_name='CHANGES OF STATE')
 
 
 def _gen_adaptations(rng: random.Random):
-    return mc_which_is(rng, "Which of these is {label}?", _ADAPTATION_CLASSES)
+    return mc_which_is(rng, "Which of these is {label}?", _ADAPTATION_CLASSES, glosses=_ADAPTATION_GLOSSES, concept_name='ADAPTATIONS')
 
 
 def _gen_dissolving(rng: random.Random):
-    return mc_which_is(rng, "Which of these {label}?", _DISSOLVING_CLASSES)
+    return mc_which_is(rng, "Which of these {label}?", _DISSOLVING_CLASSES, glosses=_DISSOLVING_GLOSSES, concept_name='DISSOLVING')
 
 
 def _gen_light_materials(rng: random.Random):
-    return mc_which_is(rng, "Which of these is {label}?", _LIGHT_MATERIAL_CLASSES)
+    return mc_which_is(rng, "Which of these is {label}?", _LIGHT_MATERIAL_CLASSES, glosses=_LIGHT_MATERIAL_GLOSSES, concept_name='LIGHT AND MATERIALS')
 
 
 def _gen_vertebrates(rng: random.Random):
-    return mc_which_is(rng, "Which of these is {label}?", _VERTEBRATE_CLASSES)
+    return mc_which_is(rng, "Which of these is {label}?", _VERTEBRATE_CLASSES, glosses=_VERTEBRATE_GLOSSES, concept_name='VERTEBRATES AND INVERTEBRATES')
 
 
 def _gen_circuits(rng: random.Random):
-    return mc_which_is(rng, "Which of these is {label}?", _CIRCUIT_CLASSES)
+    return mc_which_is(rng, "Which of these is {label}?", _CIRCUIT_CLASSES, glosses=_CIRCUIT_GLOSSES, concept_name='CONDUCTORS AND INSULATORS')
 
 
 def _gen_reversible_change(rng: random.Random):
-    return mc_which_is(rng, "Which of these is {label}?", _REVERSIBLE_CHANGE_CLASSES)
+    return mc_which_is(rng, "Which of these is {label}?", _REVERSIBLE_CHANGE_CLASSES, glosses=_REVERSIBLE_CHANGE_GLOSSES, concept_name='REVERSIBLE AND IRREVERSIBLE CHANGES')
 
 
 def _gen_body_systems(rng: random.Random):
-    return mc_which_is(rng, "Which of these is {label}?", _BODY_SYSTEM_CLASSES)
+    return mc_which_is(rng, "Which of these is {label}?", _BODY_SYSTEM_CLASSES, glosses=_BODY_SYSTEM_GLOSSES, concept_name='BODY SYSTEMS')
 
 
 def _gen_forces(rng: random.Random):
-    return mc_which_is(rng, "Which of these is {label}?", _FORCE_CLASSES)
+    return mc_which_is(rng, "Which of these is {label}?", _FORCE_CLASSES, glosses=_FORCE_GLOSSES, concept_name='CONTACT AND NON-CONTACT FORCES')
 
 
 def _gen_mixtures(rng: random.Random):
-    return mc_which_is(rng, "Which of these is {label}?", _MIXTURE_CLASSES)
+    return mc_which_is(rng, "Which of these is {label}?", _MIXTURE_CLASSES, glosses=_MIXTURE_GLOSSES, concept_name='PURE SUBSTANCES AND MIXTURES')
 
 
 def _gen_cell_structures(rng: random.Random):
-    return mc_which_is(rng, "Which of these is {label}?", _CELL_STRUCTURE_CLASSES)
+    return mc_which_is(rng, "Which of these is {label}?", _CELL_STRUCTURE_CLASSES, glosses=_CELL_STRUCTURE_GLOSSES, concept_name='PLANT AND ANIMAL CELLS')
 
 
 def _gen_energy_sources(rng: random.Random):
-    return mc_which_is(rng, "Which of these is {label}?", _ENERGY_SOURCE_CLASSES)
+    return mc_which_is(rng, "Which of these is {label}?", _ENERGY_SOURCE_CLASSES, glosses=_ENERGY_SOURCE_GLOSSES, concept_name='RENEWABLE AND NON-RENEWABLE ENERGY')
 
 
 def _gen_elements_compounds(rng: random.Random):
-    return mc_which_is(rng, "Which of these is {label}?", _ELEMENT_COMPOUND_CLASSES)
+    return mc_which_is(rng, "Which of these is {label}?", _ELEMENT_COMPOUND_CLASSES, glosses=_ELEMENT_COMPOUND_GLOSSES, concept_name='ELEMENTS AND COMPOUNDS')
 
 
 # Registry — node_id -> generator (matches the science curriculum template node ids).

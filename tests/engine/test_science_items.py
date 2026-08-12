@@ -58,7 +58,7 @@ def test_mc_answer_letter_points_to_a_real_member():
     rng = random.Random(0)
     letters = "ABCD"
     for _ in range(100):
-        _, _, stem, letter, choices = mc_which_is(rng, "Which is {label}?", classes)
+        _, _, stem, letter, choices, _ = mc_which_is(rng, "Which is {label}?", classes)
         # R2.1: the 3rd element is the STEM only -- no inline "A) ..." options
         # (the web view shows stem + radios; CLI/transcript gets the composed
         # inline form via itemgen.compose_mc_problem, tested separately).

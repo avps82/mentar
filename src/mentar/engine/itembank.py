@@ -42,6 +42,14 @@ class Item:
     # twice. None for non-choice items; `problem` keeps the full inline form for
     # CLI/transcript surfaces that have no radios.
     stem: str | None = None
+    # explain-mode (2026-08-12): a computed, provably-correct method explanation,
+    # one line per step, attached AT DRAW TIME by a migrated generator -- the
+    # generator holds the parameters that make `answer` right (e.g. pct/quantity)
+    # and would otherwise discard them. None for an unmigrated generator or an
+    # authored (non-generated) item. See docs/design/explain_mode_design.md §4a --
+    # this is the "card" the controller prefers over the bare sibling-answer
+    # fallback, and what any future LLM narration is held to.
+    method_steps: tuple[str, ...] | None = None
 
 
 class ItemBank:

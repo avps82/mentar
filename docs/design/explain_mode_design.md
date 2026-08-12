@@ -320,16 +320,39 @@ Same discipline that caught six real bugs during the step-grid builds:
 
 ## 6. Phasing
 
-| Phase | Scope | Size | Depends on |
-|---|---|---|---|
-| **0 — infrastructure + pilot** | `Item.method_steps`, controller preference ladder, rendering reuse, self-check harness, **one family: percentages** (the maintainer's own failing example becomes the acceptance test) | small (R13-ish) | nothing |
-| **1 — maths method cards** | remaining Type 2 families, roughly in the §3 table's order (each family is one function + one test, independent of the others) | medium, embarrassingly parallel | 0 |
-| **2 — English rationale cards** | Type 3: 28 generators; rules per generator + glosses on vocab tables | medium; content-authoring heavy | 0 |
-| **3 — science context cards + ASCII scaffolds** | Type 4: glosses on fact tables, card assembler, one authored ASCII scaffold per science concept (Tier 1 visuals, ratified) | small | 0 |
-| **3b — science SVG diagrams** | Tier 2 visuals: authored/parametric SVG per concept where a diagram genuinely beats words (sample approved-pending-look: `samples/light_scattering.svg`); render partial + CSS | medium; authoring-heavy, per-concept | 3 |
-| **4 — comprehension** | Type 5 | n/a — no such nodes exist yet | new content first |
+| Phase | Scope | Size | Depends on | Status |
+|---|---|---|---|---|
+| **0 — infrastructure + pilot** | `Item.method_steps`, controller preference ladder, rendering reuse, self-check harness, **one family: percentages** (the maintainer's own failing example becomes the acceptance test) | small (R13-ish) | nothing | ✅ **SHIPPED 2026-08-13** |
+| **1 — maths method cards** | remaining Type 2 families, roughly in the §3 table's order (each family is one function + one test, independent of the others) | medium, embarrassingly parallel | 0 | 🔭 open |
+| **2 — English rationale cards** | Type 3: 28 generators; rules per generator + glosses on vocab tables | medium; content-authoring heavy | 0 | 🔭 open |
+| **3 — science context cards** | Type 4: glosses on fact tables, card assembler | small | 0 | ✅ **SHIPPED 2026-08-13** (all 24) |
+| **3a — science ASCII scaffolds** | Tier 1 visuals: one authored diagram per science concept | small | 3 | 🔭 open |
+| **3b — science SVG diagrams** | Tier 2 visuals: authored/parametric SVG per concept where a diagram genuinely beats words (sample approved-pending-look: `samples/light_scattering.svg`); render partial + CSS | medium; authoring-heavy, per-concept | 3 | 🔭 open |
+| **4 — comprehension** | Type 5 | n/a — no such nodes exist yet | new content first | n/a |
 
 Phases 1–3 are independent of each other; any can ship alone once Phase 0 lands.
+
+**Phase 0 + 3 delivery notes (2026-08-13):** `Item.method_steps: tuple[str, ...] | None`
+(`itembank.py`); `ItemGenerator._make` reads an optional 6th tuple element (index 4 is
+choices' slot, present-or-None even for non-mc4 generators that want a card, so the
+position is always unambiguous). Controller preference ladder implemented per §4b exactly:
+`_worked_example_for`'s sibling-draw fallback now renders the card's lines instead of the
+bare `"(Answer: X)"` string when the sibling has one (feeds BOTH the first Help LLM prompt
+and `help_elaborate.md`); a new `elaborate_method_card` ctx field/property mirrors
+`elaborate_steps_grid` exactly and renders the LIVE item's card directly on Explain-more,
+skipping the LLM (safe here specifically — the child has already answered, unlike the
+sibling-draw path). `mc_which_is` (shared by science/English/practice) gained optional
+`glosses`/`concept_name` kwargs, fully backward-compatible (English/practice call sites
+pass neither; unaffected). Card format: `(CONCEPT_NAME, "question → answer", "  answer →
+label (gloss)", "  The others: d1 → label1 · d2 → label2 · d3 → label3")`. All 24 science
+fact tables gloss-authored (48 one-line glosses + 24 concept names), verified against the
+real dict keys programmatically before insertion (no transcription drift). Two new test
+files (`tests/engine/test_method_cards.py`, `tests/engine/test_science_method_cards.py`)
++ controller wiring tests (`tests/dialogue/test_explain_mode_cards.py`) — the reasoning-
+verification design in §5 is real code now, not aspirational. **LLM-narration layer (the
+other half of the ratified §7 Q1 decision) NOT built this pass** — Phase 0 shipped the
+bare-card path only, per the design's own sequencing ("Phase 0 builds the bare-card path
+FIRST anyway"); narration + `explain_check` extension is follow-up work.
 
 ## 7. Open questions (maintainer input wanted, none blocking Phase 0)
 
