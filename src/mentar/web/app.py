@@ -511,6 +511,18 @@ def learn():
         # not just the turn that triggered it (A8).
         return redirect(url_for("frozen"))
 
+    if ctrl.is_terminal:
+        # A stale GET on an already-ended session (browser back after Stop, a
+        # bookmarked /learn link, a plain refresh) previously fell straight
+        # through to the live-turn render below with no question to show and
+        # no answer to accept -- the goodbye message next to a still-live
+        # input box + Help/Stop buttons a maintainer screenshot flagged
+        # 2026-08-12. The done screen is the only sensible landing here; the
+        # POST /answer and first-turn paths already redirect there the same
+        # way on the turn that actually ends the session.
+        _done_messages.setdefault(learner_uuid, _last_messages.get(learner_uuid) or "Session ended.")
+        return redirect(url_for("done"))
+
     # U-35: the assent/transparency lines only ever appear on this first turn
     # (session.py bundles them into the SESSION_START->PRESENT text) -- flag it
     # so the template can give them distinct visual treatment.

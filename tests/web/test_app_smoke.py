@@ -883,6 +883,35 @@ def test_r4_no_js_answer_loop_stays_on_learn_never_bounces_to_picker():
         c.get(r.headers["Location"])  # follow, to keep answering
 
 
+def test_stale_learn_get_after_stop_redirects_to_done():
+    """Maintainer-reported (2026-08-12, screenshot): after typing "stop", a later
+    plain GET /learn (browser back, a bookmarked link, a refresh) rendered the
+    goodbye message next to a still-live "Ready when you are!" input box and
+    Help/Stop buttons -- the session had ended but nothing checked for that on
+    the GET path (only the POST /answer turn that actually ends it redirected).
+    Root cause: is_terminal was never consulted in the /learn handler."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+
+    app_mod, c = _client()
+    c.post("/choose", data={"subject": "fractions"})
+    c.get("/learn")
+
+    r = c.post("/answer", data={"answer": "stop"})
+    assert r.status_code == 302
+    assert "/done" in r.headers["Location"]
+
+    # The stale re-visit: no new answer, just landing on /learn again.
+    r2 = c.get("/learn")
+    assert r2.status_code == 302
+    assert "/done" in r2.headers["Location"]
+    done_html = c.get(r2.headers["Location"]).get_data(as_text=True)
+    assert "Type your answer" not in done_html
+
+
 def test_r4_brand_link_from_any_screen_lands_on_picker():
     """R4 follow-up (maintainer, 2026-07-11): clicking the Mentar brand icon
     from ANY screen, including mid-quiz, must land on the picker. The brand

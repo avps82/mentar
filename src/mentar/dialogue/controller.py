@@ -538,6 +538,14 @@ class SessionController:
         return self._ctx.state.value
 
     @property
+    def is_terminal(self) -> bool:
+        """True once the session has ended (completed / learner-stopped /
+        parent-ended) — a web GET landing here (browser back, a stale bookmark,
+        a refresh) must redirect to the done screen rather than re-render the
+        live-turn UI, which has no question to show and no input to accept."""
+        return self._ctx.state in _TERMINAL
+
+    @property
     def current_node_id(self) -> str | None:
         """The curriculum node the learner is currently on, or None before the
         first PRESENT (read-only display accessor -- e.g. a per-skill mastery
