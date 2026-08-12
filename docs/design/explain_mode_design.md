@@ -63,7 +63,15 @@ no ambiguity, no per-country phrasing drift to chase.
 ## 3. The explain-mode taxonomy
 
 This is the heart of the maintainer's ask: different concept types need different SHAPES of
-explanation, and what "explaining" even means differs between maths/science and English.
+explanation, and what "explaining" even means is a genuinely THREE-way split (maintainer
+correction 2026-08-12 — not maths-with-science-alongside vs English):
+
+- **Maths** has a *derivation*: a rule chain any child can re-run to reach the answer.
+- **English** has a *rule applied to an instance*: nothing to compute, but a reason the right
+  option fits and each wrong one doesn't.
+- **Science** (at this year band) has *neither*: recall of a curated fact, so the honest
+  explanation is the fact's category context — trying to fake a "method" for "which of these
+  is metal?" would be teaching a derivation that doesn't exist.
 
 ### Type 1 — Algorithmic column methods *(SHIPPED — the step grids)*
 
@@ -110,7 +118,7 @@ the remaining maths mc4 nodes are Type 3/4 shaped.
 
 ### Type 3 — Rule application: rule + instance + why-the-others-are-wrong *(English)*
 
-English is the maintainer's explicit "compared to" case, and it IS different: there is no
+English is the second arm of the three-way split, and it IS different: there is no
 derivation to show. But the generator still knows everything needed for a real explanation,
 because mc4 items are drawn from **labelled word tables**:
 
@@ -162,15 +170,23 @@ the taxonomy doesn't silently exclude it: when comprehension items exist, the ge
 WHICH sentence of the passage carries the answer, and the explanation is that quote plus one
 linking line. Deterministic like everything above. No work now.
 
-### The maths/science-vs-English comparison, in one table
+### The Maths vs English vs Science comparison, in one table
 
-| | Maths (Types 1–2) | Science (Type 4) | English (Type 3) |
+Three subjects, three distinct explanation shapes — science is NOT "maths but easier", and
+English is NOT "science with words". Each column is its own case:
+
+| | Maths (Types 1–2) | English (Type 3) | Science (Type 4) |
 |---|---|---|---|
-| What "explaining" means | show the derivation | give the fact its context | state rule, apply to instance, dismiss distractors |
+| What "explaining" means | show the derivation | state rule, apply to instance, dismiss distractors | give the fact its category context |
+| What the child re-runs | the computation, step by step | the rule, on the next sentence they meet | nothing — recall anchored by context |
 | Steps verifiable by arithmetic? | **yes — self-checking** | no — reviewed once at authoring | no — reviewed once at authoring |
-| Source of truth | draw parameters + arithmetic | curated fact table | labelled word tables |
-| New content needed | none (pure code) | one gloss per fact row | one gloss per vocab row; rules per generator |
-| Risk if wrong | wrong maths taught — caught by self-check | wrong fact — caught at table review | wrong rationale — caught at table review |
+| Source of truth | draw parameters + arithmetic | labelled word tables | curated fact table |
+| New content needed | none (pure code) | one gloss per vocab row; rules per generator | one gloss per fact row |
+| Risk if wrong | wrong maths taught — caught by self-check | wrong rationale — caught at table review | wrong fact — caught at table review |
+
+(Science stops being pure recall at higher year bands — a Y7 "balance this equation" node
+WOULD have a derivation and would belong in Type 2. The taxonomy is per concept type, not per
+subject label; today's 24 science nodes all happen to be Type 4.)
 
 ---
 
