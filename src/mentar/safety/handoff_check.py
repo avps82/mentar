@@ -11,10 +11,10 @@ in :mod:`mentar.safety.escalation`). They encode the design-doc properties:
     does not claim to fix it),
   * bounded length + literal text (never LLM-templated).
 
-IMPORTANT — this harness does NOT replace the outstanding human gate. The wording
-still requires sign-off by a **safeguarding / child-communication professional**
-before any rollout beyond the supervised single-family Phase-0 pilot
-(W2.2 §6.2; SAFETY.md §3.4). Passing here is necessary, not sufficient.
+IMPORTANT — this harness does NOT replace human safeguarding sign-off. That
+sign-off is SOUGHT PRO-BONO (an unfunded OSS project cannot commission it; see
+SAFETY.md §3.5.1) and gates UNSUPERVISED mode, not the supervised single-family
+pilot. Passing here is necessary, not sufficient (W2.2 §6.2; SAFETY.md §3.4).
 """
 
 from __future__ import annotations

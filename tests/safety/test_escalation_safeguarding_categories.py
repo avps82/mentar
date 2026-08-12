@@ -15,11 +15,11 @@ that SAFETY.md §3.2 already lists as in-scope had ZERO patterns:
 This is the interim v0.1 list failing to cover its own stated scope, so these
 are additions to a fix, not new scope.
 
-**NOT the W2.2 professional safeguarding review.** SAFETY.md gates rollout
-beyond the supervised pilot on a qualified professional reviewing exactly this
-area, and that gate is unchanged. These patterns are adult-authored and
-engineering-reviewed, not clinically validated. A green suite here is coverage,
-not sign-off. Fixtures are synthetic, adult-authored, child-voiced (register
+**NOT the W2.2 professional safeguarding review.** These patterns are
+adult-authored and engineering-reviewed, not clinically validated. That review is
+sought pro-bono (SAFETY.md §3.5.1 — an unfunded OSS project cannot commission it)
+and gates UNSUPERVISED mode, not the supervised pilot. A green suite here is
+coverage, not clinical sign-off. Fixtures are synthetic, adult-authored, child-voiced (register
 only), per TESTS.md's standing constraint.
 
     python3 tests/safety/test_escalation_safeguarding_categories.py

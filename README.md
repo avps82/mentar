@@ -36,11 +36,13 @@ What this means for you:
 
 - **The human makes the decisions** (scope, safety thresholds, model choices, architecture); the AI
   executes and advises. Changes are test-gated and reviewed — but the author is AI.
-- **It has not had a professional, independent audit.** In particular, the **child-safety** code and
-  spec are AI-authored and reviewed by AI plus the maintainer — *not* by a qualified safeguarding,
-  security, or child-development professional. The safety spec's own rollout guards
-  ([`docs/SAFETY.md`](docs/SAFETY.md)) require that review **before** any use beyond a single,
-  supervised pilot.
+- **It has not had a professional, independent audit.** The **child-safety** code and spec are
+  AI-authored and reviewed by AI plus the maintainer — *not* by a qualified safeguarding, security,
+  or child-development professional. As an unfunded OSS project, Mentar cannot commission that
+  review; it is **actively sought pro-bono** (there is a ready-to-hand
+  [`SAFEGUARDING_REVIEW_PACKET.md`](docs/design/SAFEGUARDING_REVIEW_PACKET.md) for any professional
+  willing to contribute) and gates **unsupervised** mode specifically — see
+  [`docs/SAFETY.md`](docs/SAFETY.md) §3.5.1.
 - Treat the project accordingly: carefully built and openly documented, but **not yet independently
   verified**. Read the code, run the tests, and do not put it in front of a real child outside a
   supervised pilot until the open safety items are closed.
@@ -236,8 +238,12 @@ model explains, it never decides whether an answer is right.
 fractions pilot pack only, not to any of the breadth above; the ratified hybrid content
 architecture that closes that gap is designed but not built
 ([`docs/design/hybrid_content_architecture.md`](docs/design/hybrid_content_architecture.md)).
-Broader rollout beyond the single-family pilot stays gated on two safeguarding-professional
-reviews (handoff wording + emergency-services signposting) — not on code.
+Unsupervised/independent mode (a child using it with no trusted adult present) stays out of
+bounds on the current safety implementation — its safety case needs two things this unfunded OSS
+project cannot commission (professionally-validated handoff wording + emergency-services
+signposting for the parent-is-the-harm case), and they are sought pro-bono, not funded. The
+**supervised** pilot is not blocked by that: its safety rests on a trusted adult being present.
+See [`docs/SAFETY.md`](docs/SAFETY.md) §3.5.1 for the honest position.
 
 Live status tracker: [`docs/PHASE0_STATUS.md`](docs/PHASE0_STATUS.md).
 

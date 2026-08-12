@@ -11,11 +11,13 @@ This is a children's product, so we state the **known safety gaps openly** (full
 
 - **No emergency-services signposting.** On a distress/safety trigger the child is routed to the
   **physically-present parent**, not to crisis numbers. This deliberately leaves a hole when *the
-  parent is the source of harm* — signposting with safeguarding-professional input is required
-  before any unsupervised mode. (W2.2 §6.1)
+  parent is the source of harm*. For the supervised pilot the present adult is the routing target;
+  signposting with safeguarding input is needed before any unsupervised mode and is sought pro-bono
+  (SAFETY.md §3.5.1). (W2.2 §6.1)
 - **Handoff wording not yet professionally reviewed.** The fixed handoff messages pass an
-  automated wording harness (`src/mentar/safety/handoff_check.py`) but still require sign-off by a
-  safeguarding / child-communication professional. (W2.2 §6.2)
+  automated wording harness (`src/mentar/safety/handoff_check.py`); a safeguarding / child-
+  communication professional's sign-off is sought pro-bono (SAFETY.md §3.5.1) and gates
+  unsupervised mode. (W2.2 §6.2)
 - **No PIN gate on parent mediation.** Parent-mediated mode is honour-based for the pilot; there is
   no authentication separating the child from parent controls. (SAFETY.md L5)
 - **Distress auto-stop thresholds pending.** No automatic session-halt on distress yet; the

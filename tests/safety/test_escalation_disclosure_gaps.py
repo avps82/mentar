@@ -19,11 +19,10 @@ missed:
 These are not new categories: the TriggerClass values already existed and are
 CRITICAL. This is the interim v0.1 list failing to cover its own stated scope.
 
-**Not a substitute for the W2.2 safeguarding review.** SAFETY.md gates rollout
-beyond the supervised pilot on a professional review of exactly this area, and
-that gate is unchanged — these patterns are adult-authored, not
-professionally validated. Do not read a green suite here as "disclosure
-handling is signed off".
+**Not a substitute for the W2.2 safeguarding review.** That review is sought
+pro-bono (SAFETY.md §3.5.1 — unfunded OSS) and gates UNSUPERVISED mode, not the
+supervised pilot; these patterns are adult-authored, not clinically validated.
+Do not read a green suite here as "disclosure handling is signed off".
 
 Fixtures are synthetic, adult-authored and child-voiced (register only), per
 TESTS.md's standing constraint for this suite.

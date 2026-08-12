@@ -14,8 +14,8 @@ below) -> FREEZE + WAIT + RESUMPTION GATE (FSM responsibilities, not this module
 
 Two open rollout guards (W2.2 design §7 / SAFETY.md §3.5 — do not lose):
   1. Handoff wording (HANDOFF_MESSAGE_PRIMARY/SUPPORT) has NOT been reviewed by a
-     safeguarding professional or child-communication specialist. Professional review
-     is REQUIRED before any rollout beyond the supervised single-family Phase-0 pilot.
+     safeguarding professional. Such review is SOUGHT PRO-BONO (unfunded OSS; SAFETY.md
+     §3.5.1) and gates UNSUPERVISED mode, not the supervised single-family pilot.
   2. Emergency-services signposting is explicitly absent (pilot routes to physically-
      present parent). This FAILS when the parent is the source of harm (physical_danger /
      abuse_disclosure cases). Crisis-helpline signposting with safeguarding input is

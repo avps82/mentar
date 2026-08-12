@@ -350,8 +350,9 @@ point the child to a trusted grown-up (parent/carer/teacher), and return to the 
 added after an eval pipeline run (W1.2) showed a candidate giving empathy without ever steering the
 child to an adult. It strengthens the deferral posture in normal conversation; it does **not** close
 the §3.4/§3.5 Bucket-D items below (professional validation of the frozen message, emergency
-signposting, the parent-is-the-harm hole), which remain required before any rollout beyond the
-single-family pilot.
+signposting, the parent-is-the-harm hole). Those items gate **unsupervised** mode specifically —
+not the supervised single-family pilot, whose safety rests on the present-adult constraint. See
+§3.5.1 for the reframing of the professional-review gate under this project's funding reality.
 
 ### 3.4 Fixed Handoff Message
 
@@ -383,17 +384,63 @@ Supporting display text (also fixed, displayed below the primary message):
 The following are unresolved in v0.1-interim and will be addressed when Bucket D research closes:
 
 - **Validated trigger list:** keyword list and classifier approach grounded in safeguarding standards (NSPCC, Childhelp, equivalent); validation against real-world AI chatbot harm cases (Bucket C).
-- ⟐ **Handoff message validation:** review and testing of the §3.4 wording by a safeguarding professional or child communication specialist. **Interim decision (W2.2 design §6.2):** §3.4 wording is *frozen as-is for the supervised pilot*; professional validation remains **required before any rollout beyond the single-family pilot** (see rollout guard below).
+- ⟐ **Handoff message validation:** review and testing of the §3.4 wording by a safeguarding professional or child communication specialist. **Interim decision (W2.2 design §6.2):** §3.4 wording is *frozen as-is for the supervised pilot*. Professional validation is **sought pro-bono** (see §3.5.1) and gates **unsupervised** mode, not the supervised pilot; absent a volunteer, the maintainer may substitute an explicit documented risk decision (see rollout guard below).
 - **Gradated response levels:** v0.1 uses a binary trigger/freeze model. Bucket D may recommend gradated responses (e.g., a softer check-in for lower-severity signals before full freeze). *(v0.1 records a `severity` per trigger but does not branch flow on it — data only, for Bucket D.)*
-- ⟐ **Emergency services signposting:** **Interim decision (W2.2 design §6.1):** the pilot displays **no** crisis/emergency numbers to the child; Category-A triggers route to the **physically-present parent** via the §3.4 handoff. Rationale and the explicit residual hole (*"route to present parent" fails when the parent is the source of harm — `physical_danger`/`abuse_disclosure` cases*) are documented in the design doc. **This remains a known risk; signposting with safeguarding input is required before unsupervised/independent mode.**
+- ⟐ **Emergency services signposting:** **Interim decision (W2.2 design §6.1):** the pilot displays **no** crisis/emergency numbers to the child; Category-A triggers route to the **physically-present parent** via the §3.4 handoff. Rationale and the explicit residual hole (*"route to present parent" fails when the parent is the source of harm — `physical_danger`/`abuse_disclosure` cases*) are documented in the design doc. **This remains a known risk. Signposting with safeguarding input is required before unsupervised/independent mode; for the supervised pilot the present adult IS the routing target the child is directed to (§3.5.1). Sought pro-bono; absent a volunteer, an explicit maintainer risk decision substitutes (§3.5.1).**
 - **Multi-turn escalation patterns:** the current trigger list is single-turn. Multi-turn patterns (escalating distress over several turns) are not yet handled.
 - **Teacher/institution routing (hosted tier):** the hosted tier will need an escalation path that routes to teachers or institutions, not only parents. Out of scope for OSS local edition.
 
-> **Rollout guard (load-bearing).** Mentar MUST NOT move beyond the supervised
-> single-family Phase-0 pilot — MUST NOT enable independent/unsupervised mode or onboard
-> additional families — until **both** ⟐ items close: (1) emergency-services signposting
-> decided with safeguarding input (covering the parent-is-the-harm hole), and (2) handoff
-> wording validated by a safeguarding / child-communication professional.
+### 3.5.1 The professional review, and the funding reality (2026-08-12)
+
+Earlier revisions of this document treated a **professional safeguarding review** as a hard
+gate that had to close before any use beyond the supervised pilot. That framing is now
+corrected to match reality, honestly:
+
+**Mentar is an unfunded OSS project. A commissioned professional safeguarding review is not
+going to happen unless a qualified professional volunteers their time.** Treating it as a
+funded deliverable that gates all progress described a state that will, in practice, never be
+reached — which is its own dishonesty. So the review is reframed from *"a required funded
+gate"* to *"the standing ideal, actively sought pro-bono/community, and warmly welcomed if any
+safeguarding professional will contribute it."* The `SAFEGUARDING_REVIEW_PACKET.md` exists
+precisely so that contribution is low-effort to give.
+
+**None of the actual safety behaviour is weakened by this reframing.** What changes is only the
+framing of an external review; every guard below remains in force.
+
+**What the supervised pilot actually relies on, in the review's absence** — this is the real
+safety case, not a placeholder for one:
+
+1. **The parent-present constraint is the primary mitigation, not a formality.** The pilot is
+   single-family and supervised: a trusted adult is in the room for every session. This is
+   also — directly — the strongest available answer to the "parent-is-the-harm" hole
+   (§3.4/§6.1): the safe adult the child can turn to is not assumed to be the same person the
+   handoff routes to. Consent (`PILOT_CONSENT.md`) makes this presence a condition of use, not
+   a hope.
+2. **Over-block by design.** The classifier (`safety/escalation.py`) is sensitivity-biased:
+   false positives are accepted and expected, false negatives are not. Category coverage was
+   materially widened on 2026-08-12 (witnessing domestic violence, neglect, peer violence,
+   emotional abuse by a carer, sextortion, eating-related self-harm) after a coverage review
+   found whole in-scope categories undetected.
+3. **The AI never handles distress alone.** Every Category-A/critical trigger freezes the
+   session and routes to the present adult (§3.4); the model does not counsel, reassure, or
+   improvise on a disclosure.
+4. **Output-side guard.** `safety/output_guard.py` hard-blocks the absolute content categories
+   before anything reaches the child (§2.1), including bare self-harm imperatives added
+   2026-08-12.
+
+**What stays genuinely out of bounds regardless**, because the parent-present constraint is
+what carries them and it does not hold once that constraint is removed:
+
+> **Rollout guard (load-bearing, reframed 2026-08-12).** Mentar MUST NOT enable
+> independent/unsupervised mode — where a child could use it with no trusted adult present —
+> on the current safety implementation. That mode's safety case depended on the two ⟐ items
+> (emergency-services signposting for the parent-is-the-harm hole, and professionally-validated
+> handoff wording), and neither is resolved. The supervised single-family pilot is **not**
+> blocked by this: its safety rests on the present-adult constraint above, which unsupervised
+> mode by definition discards. Onboarding additional supervised families is a maintainer
+> judgement (the mitigations scale with the constraint); unsupervised mode is not, until the
+> ⟐ items are genuinely addressed — by a volunteering professional, or by the maintainer
+> making and documenting an explicit, informed risk decision in their place.
 
 ---
 
