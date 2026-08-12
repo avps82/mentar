@@ -133,6 +133,23 @@ Schema tables (W3.6): learner profile, per-skill BKT state, response log (timest
 
 **Export = file copy.** No extraction pipeline needed for the OSS edition; the file is the backup. Schema version tracked via `PRAGMA user_version` for future migrations.
 
+**In-memory session state (`web/app.py`).** Live session objects — `_controllers`,
+`_turn_logs`, `_stores`, `_db_learner_ids`, `_learner_subject`, `_last_messages`,
+`_done_messages` — are module-level dicts keyed by the Flask session `learner_uuid` (a cookie
+value, so a returning browser reuses its key rather than minting a new one). Durable data lives
+in SQLite; these dicts are a per-process cache of the *active* session, rebuilt on demand and
+wiped on restart (the code handles that restart-vs-cookie-survival case explicitly).
+
+**Known Phase-1 scaling item, out of scope for the single-family supervised pilot:** entries
+are never evicted, so on a long-running multi-user server the dicts (and their per-`LearnerStore`
+SQLite connections) would grow once per distinct cookie and never shrink — a slow memory + fd
+leak. And the dev server runs threaded (`app.run()` defaults `threaded=True`) with no lock around
+these shared dicts, so genuinely concurrent learners could race them. Neither matters for the
+pilot: one supervised child means one cookie and effectively one in-flight request, so growth is
+a handful of entries and contention is nil. A hosted/multi-user edition needs session eviction
+(LRU or TTL) and either per-request locking or a move off module globals — deliberately not built
+now (it would be premature complexity for the pilot's actual deployment).
+
 ---
 
 ## 6. Inference Abstraction
