@@ -183,6 +183,27 @@ a text-native answer:
   ASCII scaffolds may reasonably come from LLM knowledge at AUTHORING time (then reviewed and
   frozen); SVG is authored, full stop.
 
+**Two rules learned from the sample's first render (maintainer review, 2026-08-12):**
+
+1. **Name the concept with its textbook term.** The diagram (and its method card) must SAY
+   "this is called Rayleigh scattering" — not just describe the phenomenon. A child who
+   learns the idea without the name can't find it again in a book, a class, or a search; the
+   name is what connects Mentar's explanation to everything else they'll ever read.
+   Applies to every Type 4 card and diagram, and to Type 2/3 where a method has a standard
+   name ("the distributive law", "a simile").
+2. **An SVG is verified by RENDERING it, never by reading its source.** The sample's first
+   cut passed source-level review and rendered with two defects the maintainer's screenshot
+   caught immediately: a rotated label colliding with another label, and grossly oversized
+   arrowheads (SVG markers scale with stroke-width by default — fixed with
+   `markerUnits="userSpaceOnUse"`). Both invisible in the markup, both obvious at a glance in
+   the render. So the authoring loop is author → **rasterize and look** → correct → freeze; a
+   diagram nobody has SEEN is not done. The maintainer's phrasing is the rule: "You need to
+   observe/render the image to see the correctness of it." (Practical note: the agent sandbox
+   currently has no rasterizer — rsvg/inkscape/cairo absent, installs blocked — so
+   render-verification happens in the maintainer's browser or on the dev host; if SVG
+   authoring scales up, adding `rsvg-convert` to the dev environment makes the loop
+   self-serve.)
+
 ### Type 5 — Evidence pointing *(future: comprehension against a passage)*
 
 Not shipped in any current node (no passage-comprehension generators exist yet), recorded so
