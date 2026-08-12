@@ -147,7 +147,7 @@ def test_signed_grid_result_matches_the_real_product_over_many_draws():
     rng = random.Random(20260811)
     seen_signed = 0
     for _ in range(300):
-        _at, _ck, problem, answer = gen_negative_multiplication(rng)
+        _at, _ck, problem, answer = gen_negative_multiplication(rng)[:4]
         operands = extract_signed_multiplication_operands(problem)
         if operands is None:
             assert extract_multiplication_operands(problem) is not None, problem
@@ -244,7 +244,7 @@ def test_signed_add_results_are_correct_across_the_generator():
     rng = random.Random(20260812)
     plain = signed = 0
     for _ in range(400):
-        _at, _ck, problem, answer = gen_integers_add_sub(rng)
+        _at, _ck, problem, answer = gen_integers_add_sub(rng)[:4]
         ops = extract_signed_addition_operands(problem)
         if ops is None:
             # must then be handled by one of the plain extractors -- never neither

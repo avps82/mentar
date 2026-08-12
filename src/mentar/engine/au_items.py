@@ -35,12 +35,28 @@ from mentar.engine.itemgen import (
 _LETTERS = "ABCD"
 
 
-def _mc(problem_stem: str, options: list[str], correct_index: int):
+def _mc(problem_stem: str, options: list[str], correct_index: int,
+        method_steps: tuple[str, ...] | None = None):
     """An mc4 tuple carrying the STEM (no inline "A) ..." options -- R2.1: the
     web view shows stem + radios; ItemGenerator._make composes the inline
     "A) ..." form centrally for CLI/transcript surfaces) + the structured
-    choices list for the web radio buttons."""
-    return ("mc4", "mc_choice", problem_stem, _LETTERS[correct_index], options)
+    choices list for the web radio buttons. `method_steps` (2026-08-13,
+    explain-mode Type 2): optional computed method card, 6th tuple element."""
+    return ("mc4", "mc_choice", problem_stem, _LETTERS[correct_index], options, method_steps)
+
+
+def _place_value_card(number, digit: int, place_name: str, multiplier: int, correct: int) -> tuple[str, ...]:
+    """Explain-mode (2026-08-13, Phase 1 — docs/design/explain_mode_design.md
+    §3 Type 2, place-value family). Generic over any place (tens/hundreds/
+    thousands) via the caller-supplied place_name/multiplier -- no per-digit-
+    count special-casing needed here."""
+    return (
+        "PLACE VALUE",
+        f"In the number {number}, what is the value of the digit {digit}? → {correct}",
+        f"  1. In {number}, the digit {digit} sits in the {place_name} place.",
+        f"  2. The {place_name} place is worth ×{multiplier}, so {digit} × {multiplier} = {correct}.",
+        f"  Answer: {correct}",
+    )
 
 
 # ── Year 3 (AC9M3N01, AC9M3N02, AC9M3N03, AC9M3N04 alignment) ─────────────────
@@ -61,9 +77,11 @@ def gen_place_value_3digit(rng: random.Random):
     other = digits[(pos + 1) % 3] * (10 ** (2 - ((pos + 1) % 3)))
     options.append(str(other) if str(other) not in options else str(digit * 1000))
     rng.shuffle(options)
+    place_name = "hundreds" if pos == 0 else "tens"
     return _mc(
         f"In the number {number}, what is the value of the digit {digit}?",
         options, options.index(str(correct)),
+        _place_value_card(number, digit, place_name, 10 ** (2 - pos), correct),
     )
 
 
@@ -105,9 +123,11 @@ def gen_place_value_4digit(rng: random.Random):
     correct = digit * (10 ** (3 - pos))
     options = [str(digit * (10 ** p)) for p in range(4)]
     rng.shuffle(options)
+    place_name = ("thousands", "hundreds", "tens")[pos]
     return _mc(
         f"In the number {number}, what is the value of the digit {digit}?",
         options, options.index(str(correct)),
+        _place_value_card(number, digit, place_name, 10 ** (3 - pos), correct),
     )
 
 
@@ -142,7 +162,11 @@ def gen_place_value_2digit(rng: random.Random):
     correct = digit * 10
     options = [str(digits[0]), str(digits[1]), str(digits[0] * 10), str(digits[1] * 10)]
     rng.shuffle(options)
-    return _mc(f"In the number {number}, what is the value of the digit {digit}?", options, options.index(str(correct)))
+    return _mc(
+        f"In the number {number}, what is the value of the digit {digit}?",
+        options, options.index(str(correct)),
+        _place_value_card(number, digit, "tens", 10, correct),
+    )
 
 
 def gen_add_within_100(rng: random.Random):
@@ -195,7 +219,14 @@ def gen_decimal_place_value(rng: random.Random):
     options = [f"{tenths} ones", f"{tenths} tenths", f"{tenths} hundredths", f"{tenths} tens"]
     correct = f"{tenths} tenths"
     rng.shuffle(options)
-    return _mc(f"In {number}, what does the {tenths} represent?", options, options.index(correct))
+    card = (
+        "DECIMAL PLACE VALUE",
+        f"In {number}, what does the {tenths} represent? → {correct}",
+        "  1. Straight after the decimal point is the TENTHS place.",
+        f"  2. The digit {tenths} sits right after the point, so it represents {correct}.",
+        f"  Answer: {correct}",
+    )
+    return _mc(f"In {number}, what does the {tenths} represent?", options, options.index(correct), card)
 
 
 def gen_add_sub_decimals(rng: random.Random):
@@ -260,7 +291,20 @@ def gen_negative_numbers(rng: random.Random):
     """AC9M5N01-aligned: negative numbers via a temperature-drop context."""
     temp = rng.randint(-2, 8)
     drop = rng.randint(5, 15)
-    return ("int", "int_exact", f"The temperature was {temp}°C and dropped by {drop}°C. What is the new temperature?", str(temp - drop))
+    answer = temp - drop
+    card = (
+        "NEGATIVE NUMBERS",
+        f"The temperature was {temp}°C and dropped by {drop}°C. What is the new temperature? → {answer}°C",
+        f"  1. Dropping means going DOWN, so subtract: {temp} − {drop}.",
+        f"  2. {temp} − {drop} = {answer} (past zero and into negative numbers)." if answer < 0
+        else f"  2. {temp} − {drop} = {answer}.",
+        f"  Answer: {answer}°C",
+    )
+    return (
+        "int", "int_exact",
+        f"The temperature was {temp}°C and dropped by {drop}°C. What is the new temperature?",
+        str(answer), None, card,
+    )
 
 
 def gen_division_remainder_as_fraction(rng: random.Random):
@@ -361,13 +405,39 @@ def gen_fraction_decimal_equiv(rng: random.Random):
 # ── Year 7 (AC9M7N/A alignment) ───────────────────────────────────────────────
 # R15, 2026-07-19.
 
+def _integer_op_card(a: int, b: int, op: str, answer: int) -> tuple[str, ...]:
+    """Explain-mode (2026-08-13, Phase 1): generic over both operators and
+    all four sign combinations -- "moving along the number line" is the ONE
+    rule that covers +/− with any sign of a/b, so no per-combo special
+    wording is needed beyond which direction/distance it names."""
+    if op == "+":
+        rule = (f"Adding a positive number moves you UP the number line by {b}." if b >= 0
+                 else f"Adding a negative number moves you DOWN the number line by {abs(b)} "
+                      f"(same as subtracting {abs(b)}).")
+    else:
+        rule = (f"Subtracting a positive number moves you DOWN the number line by {b}." if b >= 0
+                 else f"Subtracting a negative number moves you UP the number line by {abs(b)} "
+                      f"(same as adding {abs(b)}).")
+    return (
+        "ADDING AND SUBTRACTING INTEGERS",
+        f"What is {a} {op} {b}? → {answer}",
+        f"  1. Start at {a} on the number line.",
+        f"  2. {rule}",
+        f"  Answer: {answer}",
+    )
+
+
 def gen_integers_add_sub(rng: random.Random):
     """AC9M7N01-aligned: add or subtract two integers, either may be negative."""
     a = rng.randint(-15, 15)
     b = rng.randint(-15, 15)
     if rng.random() < 0.5:
-        return ("int", "int_exact", f"What is {a} + {b}?", str(a + b))
-    return ("int", "int_exact", f"What is {a} - {b}?", str(a - b))
+        answer = a + b
+        return ("int", "int_exact", f"What is {a} + {b}?", str(answer), None,
+                 _integer_op_card(a, b, "+", answer))
+    answer = a - b
+    return ("int", "int_exact", f"What is {a} - {b}?", str(answer), None,
+             _integer_op_card(a, b, "-", answer))
 
 
 def gen_order_of_ops_negatives(rng: random.Random):
@@ -429,11 +499,31 @@ def gen_squares(rng: random.Random):
     return ("int", "int_exact", f"What is {n} squared ({n}²)?", str(n * n))
 
 
+def _negative_multiplication_card(a: int, b: int, answer: int) -> tuple[str, ...]:
+    """Explain-mode (2026-08-13, Phase 1): the sign rule stated first (matching
+    the maintainer's own precedent for the step-grid's signed multiplication
+    phase — "sign rule stated first, zero handled explicitly"), then the
+    unsigned computation."""
+    same_sign = (a < 0) == (b < 0)
+    sign_word = "the SAME sign" if same_sign else "DIFFERENT signs"
+    result_word = "positive" if same_sign else "negative"
+    return (
+        "MULTIPLYING NEGATIVE NUMBERS",
+        f"What is {a} × {b}? → {answer}",
+        "  1. Sign rule: same signs make a positive answer, different signs make a negative answer.",
+        f"  2. {a} and {b} have {sign_word}, so the answer is {result_word}.",
+        f"  3. {abs(a)} × {abs(b)} = {abs(a) * abs(b)}, so {a} × {b} = {answer}.",
+        f"  Answer: {answer}",
+    )
+
+
 def gen_negative_multiplication(rng: random.Random):
     """AC9M8N01-aligned: multiplying two integers, either sign."""
     a = rng.choice([-1, 1]) * rng.randint(2, 12)
     b = rng.choice([-1, 1]) * rng.randint(2, 12)
-    return ("int", "int_exact", f"What is {a} × {b}?", str(a * b))
+    answer = a * b
+    return ("int", "int_exact", f"What is {a} × {b}?", str(answer), None,
+             _negative_multiplication_card(a, b, answer))
 
 
 def _percentage_change_card(base: int, pct: int, increase: int, new_val: int) -> tuple[str, ...]:

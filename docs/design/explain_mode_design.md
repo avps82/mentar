@@ -323,7 +323,7 @@ Same discipline that caught six real bugs during the step-grid builds:
 | Phase | Scope | Size | Depends on | Status |
 |---|---|---|---|---|
 | **0 — infrastructure + pilot** | `Item.method_steps`, controller preference ladder, rendering reuse, self-check harness, **one family: percentages** (the maintainer's own failing example becomes the acceptance test) | small (R13-ish) | nothing | ✅ **SHIPPED 2026-08-13** |
-| **1 — maths method cards** | remaining Type 2 families, roughly in the §3 table's order (each family is one function + one test, independent of the others) | medium, embarrassingly parallel | 0 | 🔭 open |
+| **1 — maths method cards** | remaining Type 2 families, roughly in the §3 table's order (each family is one function + one test, independent of the others) | medium, embarrassingly parallel | 0 | 🟡 **in progress** — place value (4) + integers (3) shipped 2026-08-13; equations, order of ops, fractions, geometry, algebra, conversions still open |
 | **2 — English rationale cards** | Type 3: 28 generators; rules per generator + glosses on vocab tables | medium; content-authoring heavy | 0 | 🔭 open |
 | **3 — science context cards** | Type 4: glosses on fact tables, card assembler | small | 0 | ✅ **SHIPPED 2026-08-13** (all 24) |
 | **3a — science ASCII scaffolds** | Tier 1 visuals: one authored diagram per science concept | small | 3 | ✅ **SHIPPED 2026-08-13** (all 24, see note) |

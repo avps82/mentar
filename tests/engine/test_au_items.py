@@ -102,7 +102,7 @@ def test_place_value_answer_letter_is_the_digit_value():
     rng = random.Random(0)
     for gen, n_digits in ((gen_place_value_3digit, 3), (gen_place_value_4digit, 4)):
         for _ in range(300):
-            _, _, problem, letter, choices = gen(rng)
+            _, _, problem, letter, choices, _ = gen(rng)
             # Parse "the number N" and "digit D" back out of the stem.
             words = problem.split()
             number = int(words[words.index("number") + 1].rstrip(","))
