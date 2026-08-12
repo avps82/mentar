@@ -1574,7 +1574,8 @@ Ordered by the review's priority table.
 ## C. Maintainer-only (NOT codeable — flagged so they're not lost)
 - ~~Paste the full **AGPL-3.0 text** into `LICENSE`~~ — **done 2026-08-12 (159bb25)**: canonical
   661-line text fetched and installed verbatim; LICENSING.md + CLA.md shipped alongside.
-- **Rotate** the eval-host token.
+- ~~**Rotate** the eval-host token~~ — **done (maintainer confirmed 2026-08-12)**; the key in
+  `.claude/settings.local.json` is the post-rotation one (auth verified same day).
 - **Safeguarding professional review** — handoff wording + child-facing emergency signposting
   (gates rollout beyond the supervised single-family pilot).
 - ~~Place Vikidia + Simple-WP on a writable runtime `zim_dir`~~ — **superseded 2026-07-05 (B1):
