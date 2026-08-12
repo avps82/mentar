@@ -126,3 +126,51 @@ if __name__ == "__main__":
         fn()
         print(f"  ✓ {fn.__name__}")
     print(f"\n{len(fns)}/{len(fns)} au-items tests passed.")
+
+
+def test_expression_answers_are_written_the_way_a_child_would():
+    """Content review 2026-08-12: the shown ground truth must not read
+    "6*x + 0" (dangling zero constant) or "1*x" (bare-one coefficient). The
+    verifier is expression_equiv so both WOULD score, but this is the answer
+    the child sees, and it should model clean algebra, not sloppy output.
+
+    Swept across every expression generator because the SG/US/IN packs reuse
+    them and would replicate any defect."""
+    import random as _random
+    import re as _re
+
+    from mentar.engine.au_items import (
+        AU_YEAR9_GENERATORS,
+        AU_YEAR10_GENERATORS,
+        AU_YEAR11_GENERATORS,
+        AU_YEAR12_GENERATORS,
+    )
+
+    bare_one = _re.compile(r"(?<![0-9])1\*[a-z]")
+    offenders = []
+    for gens in (AU_YEAR9_GENERATORS, AU_YEAR10_GENERATORS,
+                 AU_YEAR11_GENERATORS, AU_YEAR12_GENERATORS):
+        for node, fn in gens.items():
+            rng = _random.Random(2)
+            for _ in range(300):
+                answer = fn(rng)[3]
+                if answer.endswith(" 0") or "+ 0" in answer or "- 0" in answer:
+                    offenders.append((node, answer, "dangling zero constant"))
+                    break
+                if bare_one.search(answer):
+                    offenders.append((node, answer, "bare 1* coefficient"))
+                    break
+                if "+ -" in answer:
+                    offenders.append((node, answer, "+ -n instead of - n"))
+                    break
+    assert offenders == [], f"badly-formatted expression answers: {offenders}"
+
+
+def test_linear_expr_formats_cleanly():
+    from mentar.engine.au_items import _linear_expr
+    assert _linear_expr(6, 0, "x") == "6*x"
+    assert _linear_expr(1, 5, "x") == "x + 5"
+    assert _linear_expr(-1, 3, "y") == "-y + 3"
+    assert _linear_expr(4, -9, "y") == "4*y - 9"
+    assert _linear_expr(1, 0, "x") == "x"
+    assert _linear_expr(3, 7, "x") == "3*x + 7"

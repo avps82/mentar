@@ -511,6 +511,23 @@ AU_YEAR8_GENERATORS = {
 # "Expand X" / "factorise X" / "simplify X" single-expression-transform tasks
 # are NOT safe for this checker and are deliberately not attempted here.
 
+def _linear_expr(coef: int, const: int, var: str) -> str:
+    """Format `coef*var + const` the way a child would WRITE it, so the shown
+    ground truth never reads "6*x + 0" (2026-08-12 content review). The verifier
+    is expression_equiv so "6*x + 0" would still score, but it's the answer the
+    child sees, and a dangling "+ 0" teaches a sloppy habit. Drops a zero
+    constant and renders a negative constant as "- n" rather than "+ -n"."""
+    if coef == 1:
+        term = var
+    elif coef == -1:
+        term = f"-{var}"
+    else:
+        term = f"{coef}*{var}"
+    if const == 0:
+        return term
+    return f"{term} + {const}" if const > 0 else f"{term} - {abs(const)}"
+
+
 def gen_word_to_expression(rng: random.Random):
     """"Three more than twice a number n" -> "2n + 3". Forces translation from
     words, not transformation of an already-algebraic prompt."""
@@ -594,7 +611,7 @@ def gen_combine_three_expressions(rng: random.Random):
     return ("expression", "expression_equiv",
             f"If a = {a1}{var} + {a0}, b = {b1}{var} + {b0} and c = {c1}{var} + {c0}, "
             "what is a + b - c? Give your answer as a simplified expression.",
-            f"{a1+b1-c1}*{var} + {a0+b0-c0}")
+            _linear_expr(a1 + b1 - c1, a0 + b0 - c0, var))
 
 
 def gen_square_expression(rng: random.Random):
@@ -679,7 +696,7 @@ def gen_difference_of_expressions(rng: random.Random):
     return ("expression", "expression_equiv",
             f"A number is {var}. A second number is {k} times {var}, minus {n}. "
             "Write an expression for the SECOND number minus the FIRST number.",
-            f"{k-1}*{var} - {n}")
+            _linear_expr(k - 1, -n, var))
 
 
 AU_YEAR11_GENERATORS = {
