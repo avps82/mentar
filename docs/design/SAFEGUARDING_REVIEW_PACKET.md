@@ -135,6 +135,12 @@ locked to the supervised pilot.
   How much of a concern is this in practice for this age group and use?
 - **The trigger categories/coverage** in Part 2: are any categories missing, and are the
   example phrasings representative of how a real child of this age would express these things?
+  *(Engineering note, 2026-08-12: an internal coverage review widened the classifier to add
+  categories that were entirely undetected — witnessing domestic violence, neglect, peer/school
+  physical violence, emotional abuse by a carer, sextortion/online coercion, eating-related
+  self-harm — all of which SAFETY §3.2 already listed as in-scope. These additions are
+  adult-authored and engineering-tested, NOT clinically validated; confirming the categories are
+  complete and the phrasings realistic is exactly the kind of judgement this review is for.)*
 
 ---
 
