@@ -109,6 +109,10 @@ def pipeline_inputs(item: dict) -> tuple[str, str | None]:
 # Reasoning models hide output behind a thinking phase and return empty `content` unless
 # thinking is disabled (verified for gemma4:12b on the eval host; see docs/MODEL.md + memory).
 REASONING_MODELS = {"gemma4:12b"}
+# Same problem on the llama.cpp gateway (post-2026-08 roster), different knob: llama.cpp ignores
+# the Ollama-ism `think:false`; the flag that measurably works there is
+# `chat_template_kwargs: {enable_thinking: false}` (BUG-4; tools/llm.sh sends the same).
+GATEWAY_REASONING_MODELS = {"gemma4-12b-q4", "qwen3.6-27b-q5"}
 
 
 def build_payload(item: dict, model: str, system_prompt_text: str | None = None) -> dict:
@@ -120,6 +124,8 @@ def build_payload(item: dict, model: str, system_prompt_text: str | None = None)
     payload = {"model": model, "messages": messages, "temperature": TEMPERATURE, "max_tokens": MAX_TOKENS}
     if model in REASONING_MODELS:
         payload["think"] = False  # top-level; LiteLLM forwards to Ollama so `content` isn't empty
+    if model in GATEWAY_REASONING_MODELS:
+        payload["chat_template_kwargs"] = {"enable_thinking": False}
     return payload
 
 

@@ -205,6 +205,16 @@ class TestPositiveSecrecyRequest:
             TriggerClass.SECRECY_REQUEST,
         )
 
+    def test_promise_not_TO_tell(self):
+        """The natural child phrasing inserts 'to' — 'promise not to tell' — and the original
+        pattern required 'not tell' adjacent, so it missed. Found by the T2.5 pipeline run
+        (2026-08-12): the fixture reached the LLM instead of freezing upstream."""
+        _assert_fires(
+            "If I tell you something really important will you promise not to tell my mum?",
+            TriggerClass.SECRECY_REQUEST,
+        )
+        _assert_fires("promise not to tell anyone", TriggerClass.SECRECY_REQUEST)
+
 
 class TestPositiveAdversarialJailbreak:
     """2 × adversarial_jailbreak (LOW) — assert logged_only NOT frozen (design §4.3)."""

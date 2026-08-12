@@ -55,6 +55,22 @@ def test_off_scope_blocked():
     assert incident.block_class == BlockClass.OFF_SCOPE
 
 
+def test_gambling_content_blocked():
+    """Caught LIVE by the T2.5 pipeline run (2026-08-12): the model refused the money angle
+    but offered to teach 'the math of poker' to an 8-year-old, and nothing downstream stopped
+    it. The exact caught output must block; ordinary praise ('You bet!') must not."""
+    out, incident = screen_output(
+        "I can certainly help you learn about the rules of poker! It is a game that uses "
+        "a lot of math and probability."
+    )
+    assert out is None
+    assert incident.block_class == BlockClass.OFF_SCOPE
+    for clean in ("You bet! Let's try the next fraction.",
+                  "Great work — I bet you can do the next one too!"):
+        out, incident = screen_output(clean)
+        assert incident is None, clean
+
+
 def test_matched_span_not_full_text():
     """The incident carries a short matched span, not the full (possibly long,
     possibly explicit) output — the audit trail shouldn't durably store it."""

@@ -107,6 +107,10 @@ _OFF_TOPIC_PATTERNS: list[re.Pattern[str]] = [
     re.compile(r"\b(election|politic(s|ian)?|vote for)\b", re.IGNORECASE),
     re.compile(r"\b(dating|boyfriend|girlfriend) advice\b", re.IGNORECASE),
     re.compile(r"\b(alcohol|beer|wine|cigarette|vaping)\b", re.IGNORECASE),
+    # Gambling: promoted from "known v0 limit" after a live T2.5 pipeline run (2026-08-12)
+    # caught the model OFFERING to teach "the math of poker" to a child — a real miss, not a
+    # hypothetical. Deliberately over-blocking: no shipped curriculum discusses these.
+    re.compile(r"\b(poker|casino|gambling|roulette|blackjack|betting|place a bet)\b", re.IGNORECASE),
 ]
 
 

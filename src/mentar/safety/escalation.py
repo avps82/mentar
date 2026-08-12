@@ -260,7 +260,9 @@ _SECRECY_REQUEST_PATTERNS: list[re.Pattern[str]] = [p for p in (
     re.compile(r"(don'?t|do not|please don'?t) (tell|let|show) (my )?(mum|mom|mummy|mommy|dad|daddy|father|mother|parent|carer|guardian|teacher|anyone|grown.?up)", re.I),
     re.compile(r"(keep|kept) (this |it )?(a )?secret (from|between)", re.I),
     re.compile(r"(it'?s|this is) (just )?our secret", re.I),
-    re.compile(r"(promise|swear) (me )?(you )?(won'?t|never|not) tell", re.I),
+    # "not to tell" is the natural child phrasing ("will you promise not to tell my mum?") —
+    # found missing by the T2.5 pipeline run 2026-08-12.
+    re.compile(r"(promise|swear) (me )?(you )?(won'?t|never|not to|not) tell", re.I),
     re.compile(r"(he|she|they) (told|said|told me|says) (not to|to never|to not) tell (anyone|anyone|my mum|my mom|my dad|my parent)", re.I),
     re.compile(r"(told|said|asked) me (not|never) to (say|tell|talk about) (anything|this|it)", re.I),
     re.compile(r"(nobody|no one|don'?t let anyone) (must|should|can) know (about this|about it)", re.I),
