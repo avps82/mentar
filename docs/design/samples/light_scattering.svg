@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 460" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif">
+  <title>Why is the sky blue? Sunlight is all the colours travelling together; tiny bits of air bounce the blue light everywhere.</title>
+
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0b2a4a"/>
+      <stop offset="0.65" stop-color="#1c5a8d"/>
+      <stop offset="1" stop-color="#4a9fd4"/>
+    </linearGradient>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#69c8ff"/>
+    </marker>
+    <marker id="arrow-red" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#ff8a5c"/>
+    </marker>
+    <marker id="arrow-orange" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#ffc14d"/>
+    </marker>
+  </defs>
+
+  <!-- self-contained background: the diagram carries its own sky, so it reads
+       identically on the app's dark and light themes -->
+  <rect x="0" y="0" width="760" height="460" rx="18" fill="url(#sky)"/>
+
+  <!-- ── the sun ─────────────────────────────────────────────────────────── -->
+  <g>
+    <circle cx="86" cy="84" r="34" fill="#ffd94d"/>
+    <circle cx="86" cy="84" r="26" fill="#ffe680"/>
+    <g stroke="#ffd94d" stroke-width="5" stroke-linecap="round">
+      <line x1="86" y1="30" x2="86" y2="14"/>
+      <line x1="86" y1="138" x2="86" y2="154"/>
+      <line x1="32" y1="84" x2="16" y2="84"/>
+      <line x1="140" y1="84" x2="156" y2="84"/>
+      <line x1="48" y1="46" x2="37" y2="35"/>
+      <line x1="124" y1="122" x2="135" y2="133"/>
+      <line x1="124" y1="46" x2="135" y2="35"/>
+      <line x1="48" y1="122" x2="37" y2="133"/>
+    </g>
+    <!-- friendly face -->
+    <circle cx="76" cy="78" r="3.2" fill="#7a5b00"/>
+    <circle cx="96" cy="78" r="3.2" fill="#7a5b00"/>
+    <path d="M 74 90 Q 86 100 98 90" stroke="#7a5b00" stroke-width="3" fill="none" stroke-linecap="round"/>
+  </g>
+
+  <!-- ── the beam: ALL the colours travelling together ───────────────────── -->
+  <g stroke-width="5" stroke-linecap="round" fill="none">
+    <line x1="126" y1="106" x2="330" y2="208" stroke="#ff5c5c"/>
+    <line x1="122" y1="115" x2="326" y2="217" stroke="#ff9d3c"/>
+    <line x1="118" y1="124" x2="322" y2="226" stroke="#ffe14d"/>
+    <line x1="114" y1="133" x2="318" y2="235" stroke="#6fe08a"/>
+    <line x1="110" y1="142" x2="314" y2="244" stroke="#69c8ff"/>
+  </g>
+  <text x="150" y="185" fill="#ffffff" font-size="17" font-weight="700" transform="rotate(26 150 185)">sunlight = ALL the colours together</text>
+
+  <!-- ── tiny bits of air ────────────────────────────────────────────────── -->
+  <g fill="#dff1ff" opacity="0.95">
+    <circle cx="345" cy="232" r="9"/>
+    <circle cx="376" cy="214" r="7"/>
+    <circle cx="368" cy="252" r="6"/>
+    <circle cx="404" cy="238" r="8"/>
+  </g>
+  <text x="300" y="292" fill="#dff1ff" font-size="16" font-weight="600">tiny bits of air</text>
+
+  <!-- ── blue scatters in every direction ────────────────────────────────── -->
+  <g stroke="#69c8ff" stroke-width="4.5" stroke-linecap="round" fill="none">
+    <line x1="372" y1="216" x2="420" y2="120" marker-end="url(#arrow-blue)"/>
+    <line x1="352" y1="222" x2="300" y2="128" marker-end="url(#arrow-blue)"/>
+    <line x1="360" y1="250" x2="322" y2="330" marker-end="url(#arrow-blue)"/>
+    <line x1="398" y1="252" x2="452" y2="330" marker-end="url(#arrow-blue)"/>
+    <line x1="404" y1="228" x2="486" y2="176" marker-end="url(#arrow-blue)"/>
+  </g>
+  <text x="404" y="105" fill="#9fdcff" font-size="17" font-weight="700">blue bounces off in EVERY direction</text>
+
+  <!-- ── red and orange sail straight on ─────────────────────────────────── -->
+  <g stroke-width="5" stroke-linecap="round" fill="none">
+    <line x1="412" y1="242" x2="628" y2="278" stroke="#ff5c5c" marker-end="url(#arrow-red)"/>
+    <line x1="410" y1="254" x2="624" y2="296" stroke="#ff9d3c" marker-end="url(#arrow-orange)"/>
+  </g>
+  <text x="452" y="248" fill="#ffc4a8" font-size="17" font-weight="700" transform="rotate(9 452 248)">red and orange keep going straight</text>
+
+  <!-- ── the child looking up ────────────────────────────────────────────── -->
+  <g>
+    <circle cx="152" cy="382" r="26" fill="#ffd9b8"/>
+    <path d="M 126 382 a 26 26 0 0 1 52 0 l 0 -14 a 26 20 0 0 0 -52 0 z" fill="#6b4a2f"/>
+    <circle cx="144" cy="380" r="3" fill="#333"/>
+    <circle cx="162" cy="380" r="3" fill="#333"/>
+    <path d="M 142 394 Q 152 402 164 393" stroke="#333" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <rect x="134" y="406" width="38" height="34" rx="12" fill="#e05a6d"/>
+  </g>
+  <!-- blue arriving at the eyes from different parts of the sky -->
+  <g stroke="#69c8ff" stroke-width="3.5" stroke-linecap="round" fill="none" opacity="0.9">
+    <line x1="320" y1="334" x2="188" y2="372" marker-end="url(#arrow-blue)"/>
+    <line x1="266" y1="252" x2="176" y2="356" marker-end="url(#arrow-blue)"/>
+  </g>
+  <text x="216" y="424" fill="#ffffff" font-size="18" font-weight="800">blue reaches your eyes from all over the sky —</text>
+  <text x="216" y="446" fill="#9fdcff" font-size="18" font-weight="800">that's why the sky looks BLUE! 💙</text>
+</svg>
