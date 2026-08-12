@@ -13,7 +13,20 @@ Status input for the **W4.2 OSS-license decision** — this audit *informs* the 
 
 ## TL;DR — the dependency graph constrains the choice
 
-**`libzim` (python-libzim) is `GPL-3.0-or-later` and a *core* dependency.** This is the single
+> **⚠️ STALE FINDING — corrected 2026-08-12.** The TL;DR below dates from when `libzim` was a
+> *core* dependency. It no longer is: `pyproject.toml` moved it to the optional `[grounding]`
+> extra (imports are lazy; grounding degrades to "" without it). Verified against installed
+> metadata 2026-08-12: every CORE dependency is permissive or weak-copyleft — pyyaml MIT,
+> openai Apache-2.0, sympy BSD, pint BSD, inflect MIT, num2words **LGPL** (weak copyleft:
+> fine to depend on as a library; does not force the project's licence). **Nothing in the
+> core forces GPL/AGPL any more.** AGPL remains a *choice* (and a defensible one), not a
+> constraint. A permissive or source-available licence is now viable, with the `[grounding]`
+> extra remaining GPL-encumbered for whoever opts into it. Additional facts relevant to any
+> relicensing decision, verified the same day: all 427 commits are the maintainer (no external
+> contributors — no third-party copyright to clear), and the repo is still private (no one has
+> yet received the code under AGPL, so a licence change today has zero downstream effect).
+
+**`libzim` (python-libzim) is `GPL-3.0-or-later` and ~~a *core* dependency~~ (now the optional `[grounding]` extra — see the stale-finding note above).** This was the single
 decisive fact:
 
 - **AGPL-3.0 for Mentar → compatible** with the GPL libzim core. ✅
