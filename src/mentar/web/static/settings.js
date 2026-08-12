@@ -61,7 +61,10 @@
                 }
 
                 // R12.3: group by country -- the list grows to dozens of packs
-                // as curriculum breadth ships (R14/R15).
+                // as curriculum breadth ships (R14/R15). Country -> Grade -> Subject
+                // (maintainer ask 2026-08-12): the backend already sorts each
+                // country's packs by grade then subject, so grouping by grade here
+                // just adds the sub-heading -- no re-sorting needed.
                 var groups = {};
                 data.curricula.forEach(function (c) {
                     var key = c.country || "General";
@@ -75,7 +78,17 @@
                     heading.textContent = groupName;
                     container.appendChild(heading);
 
+                    var lastGrade = null;
                     groups[groupName].forEach(function (c) {
+                        var grade = c.year_level || "";
+                        if (grade !== lastGrade) {
+                            var gradeHeading = document.createElement("h4");
+                            gradeHeading.className = "curricula-grade-heading";
+                            gradeHeading.textContent = grade || "General";
+                            container.appendChild(gradeHeading);
+                            lastGrade = grade;
+                        }
+
                         var row = document.createElement("div");
                         row.style.marginBottom = "12px";
 

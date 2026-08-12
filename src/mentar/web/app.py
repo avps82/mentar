@@ -687,12 +687,32 @@ def _is_safe_path_component(name: str) -> bool:
     return bool(name) and "/" not in name and "\\" not in name and name not in (".", "..")
 
 
+def _grade_sort_key(year_level: str | None) -> tuple[int, int | str]:
+    """Numeric sort for a free-text year_level ("Year 10", "Class 2", "pilot").
+
+    Plain string sort put "Year 10/11/12" before "Year 2" (lexicographic: "1" <
+    "2") -- the exact bug a maintainer screenshot flagged 2026-08-12 on the
+    Settings page. Extract the trailing number and sort on that; a non-numeric
+    level (only "pilot" today, always under the "General" country group so it
+    never collides with a real grade) sorts after every numbered grade.
+    """
+    if not year_level:
+        return (1, "")
+    digits = "".join(ch for ch in year_level if ch.isdigit())
+    return (0, int(digits)) if digits else (1, year_level)
+
+
 def _all_packs_with_state() -> list[dict]:
     """R10: every in-repo curriculum pack (discovered template), with its current
     on/off state -- INCLUDING disabled ones (which SUBJECTS excludes), so the
     Settings toggle list can show them for re-enabling. `enabled` reflects the
     live _DISABLED_PACKS set (updated on toggle); whether that state is actually
-    APPLIED to the picker waits for the next restart (discovery is at startup)."""
+    APPLIED to the picker waits for the next restart (discovery is at startup).
+
+    Sort is Country -> Grade -> Subject (maintainer ask 2026-08-12, matching how
+    the Settings page groups them): country groups form at the JS layer, so the
+    ordering here only needs grade-then-subject within a country.
+    """
     out = []
     for path in _discover_template_paths():
         try:
@@ -706,9 +726,10 @@ def _all_packs_with_state() -> list[dict]:
             "description": meta["description"] or "",
             "country": meta["country"],
             "year_level": meta["year_level"],
+            "subject": meta["subject"] or "",
             "enabled": key not in _DISABLED_PACKS,
         })
-    out.sort(key=lambda p: (p["country"] or "", p["year_level"] or "", p["key"]))
+    out.sort(key=lambda p: (p["country"] or "", _grade_sort_key(p["year_level"]), p["subject"], p["key"]))
     return out
 
 

@@ -88,15 +88,20 @@ a { color: var(--primary-strong); }
   font-size: 1.7rem;
   font-weight: 800;
   letter-spacing: -0.01em;
-  /* A flat text-color wordmark reads as "unstyled default heading" next to
-     the coral/teal palette everywhere else on the page. A gradient text
-     fill costs nothing extra (no image, no font) but makes the one piece of
-     text that's on every screen actually look like a brand. */
+  text-decoration: none;
+}
+
+/* Gradient fill lives on the TEXT ONLY, not the whole .brand element. Applying
+   background-clip:text + color:transparent to a container that also holds an
+   emoji strips the emoji's native color layers in WebKit/Blink -- it renders
+   as a flat silhouette painted with the gradient (the 🍕 became a solid teal
+   wedge, flagged by a maintainer screenshot 2026-08-12). The emoji now sits in
+   its own untouched span. */
+.brand-text {
   background: linear-gradient(135deg, var(--primary) 0%, var(--primary-strong) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  text-decoration: none;
 }
 
 .brand .subject-label { font-size: 1rem; font-weight: 400; -webkit-text-fill-color: var(--text-muted); color: var(--text-muted); }
@@ -434,6 +439,14 @@ details.settings-section > summary {
 }
 details.settings-section[open] > summary { margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
 .curricula-group-heading { font-size: 1rem; margin: 14px 0 6px; color: var(--text-muted); }
+.curricula-grade-heading {
+  font-size: 0.8rem;
+  margin: 10px 0 4px 8px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.75;
+}
 
 @media (max-width: 480px) {
   body { padding: 0 12px 32px; }

@@ -505,7 +505,23 @@ def build_multiplication_partial_products_steps(a: int, b: int) -> StepGrid:
         rows.append(line_row)
         rows.append([Cell("", OPERATOR)] + _display(str(result)))
     else:
+        # b has only ONE nonzero digit (e.g. 7x10, 6x7, 8x300) -- the partial-
+        # products method decomposes b by place value, so with one place
+        # there is nothing to sum, and the grid alone would just be the bare
+        # fact with no visible "steps" (maintainer-flagged 2026-08-12: "not
+        # much of explanation is happening" for 7x10). Rather than guess at
+        # a general-purpose teaching trick that may not hold for every case,
+        # this states in words what the grid shows a child would otherwise
+        # have to infer -- computed from `a`/`b`, same annotation-row
+        # convention division already uses for its "Quotient is..." line.
         rows += [[Cell("", OPERATOR)] + _display(p) for p in str_partials]
+        nonzero_digit = str_b.rstrip("0") or "0"
+        n_zeros = len(str_b) - len(str_b.rstrip("0"))
+        if n_zeros:
+            note = f"{a} x {b} = {a} x {nonzero_digit} with {n_zeros} zero(s) on the end"
+        else:
+            note = f"{a} x {b} is a single multiplication fact -- one place value, nothing to add"
+        rows.append([Cell(f"  <-- {note}", OPERATOR)])
     return StepGrid(rows=rows, n_cols=n_cols)
 
 

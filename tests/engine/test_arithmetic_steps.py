@@ -120,8 +120,12 @@ def test_render_steps_grid_text_multiplication():
 
 def _result_from_grid(grid) -> str:
     """Read the digits (and decimal point, if any) back out of the final
-    (result) row, in left-to-right order."""
-    last_row = grid.rows[-1]
+    (result) row, in left-to-right order. Skips trailing single-cell
+    annotation rows (division's "Quotient is..." line, multiplication's
+    single-partial-product caption) -- a single-cell row is never a real
+    digit row in this codebase's convention."""
+    rows = [r for r in grid.rows if len(r) > 1]
+    last_row = rows[-1]
     return "".join(c.text for c in last_row if c.kind in (DIGIT, POINT) and c.text)
 
 
@@ -418,6 +422,29 @@ def test_multiplication_by_zero():
     assert _result_from_grid(build_multiplication_partial_products_steps(5, 0)) == "0"
 
 
+def test_multiplication_single_partial_product_gets_an_explanatory_caption():
+    """Maintainer-flagged (2026-08-12): a single-partial-product grid (e.g.
+    7 x 10) rendered as just the bare fact with no visible 'steps' -- 'not
+    much of explanation is happening'. Both single-digit-multiplier and
+    trailing-zero-multiplier cases now carry a trailing single-cell caption
+    row (same convention as division's annotation rows) explaining in words
+    what the collapsed grid shows."""
+    grid = build_multiplication_partial_products_steps(7, 10)
+    caption = grid.rows[-1]
+    assert len(caption) == 1
+    assert "7 x 10 = 7 x 1 with 1 zero" in caption[0].text
+
+    grid2 = build_multiplication_partial_products_steps(6, 7)
+    caption2 = grid2.rows[-1]
+    assert len(caption2) == 1
+    assert "single multiplication fact" in caption2[0].text
+
+    # A genuine multi-partial-product grid (64 x 32) gets NO caption -- the
+    # summed partial-product rows already show the steps visibly.
+    grid3 = build_multiplication_partial_products_steps(64, 32)
+    assert len(grid3.rows[-1]) == grid3.n_cols
+
+
 def test_multiplication_three_digit_multiplier():
     grid = build_multiplication_partial_products_steps(123, 45)
     assert _result_from_grid(grid) == "5535"
@@ -435,9 +462,15 @@ def test_multiplication_self_validates_against_real_verifier():
 
 
 def test_multiplication_grid_shape_is_rectangular():
+    """Every DIGIT row is exactly n_cols wide. A single-partial-product result
+    also carries a trailing single-cell annotation row (2026-08-12, same
+    convention as division's "Quotient is..." line) -- deliberately NOT
+    n_cols wide, same as every other annotation row in this module."""
     for a, b in [(64, 32), (7, 8), (50, 20), (0, 5), (123, 45)]:
         grid = build_multiplication_partial_products_steps(a, b)
         for row in grid.rows:
+            if len(row) == 1:
+                continue
             assert len(row) == grid.n_cols, (a, b, row)
 
 
