@@ -249,6 +249,18 @@ Live status tracker: [`docs/PHASE0_STATUS.md`](docs/PHASE0_STATUS.md).
 
 ---
 
+## License
+
+**AGPL-3.0-only** ([LICENSE](LICENSE)). Free to use — including commercially — provided any
+version you distribute or run as a network service keeps its source open under the same terms.
+The network clause is deliberate child-safety policy, not ideology: nobody should be able to
+offer children a modified Mentar whose safety changes can't be inspected. Commercial licences
+outside the AGPL's terms are available from the maintainer; contributions go through a CLA so
+that stays possible. Full reasoning, stated honestly: [LICENSING.md](LICENSING.md). Curriculum
+content licences are tracked separately in [`docs/CONTENT_LICENSES.md`](docs/CONTENT_LICENSES.md).
+
+---
+
 ## Author's Funny Thoughts
 
 Plot twist: this is secretly an LLM training pipeline. The child is the model, the ZIMs are

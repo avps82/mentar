@@ -46,6 +46,16 @@ reminder; it doesn't run the eval itself.
   guards secret filenames/inline secrets — activate it via `core.hooksPath` (see `config/README.md`).
 - Don't weaken a protected path (see `AGENTS.md` → RULES) without explicit maintainer sign-off.
 
+## Licensing of contributions (CLA)
+
+Mentar is AGPL-3.0-only and **dual-licensed**: the maintainer also offers commercial licences,
+which requires the project's copyright to stay consolidated. Before a first external
+contribution is merged you'll be asked to agree to a Contributor License Agreement granting
+the maintainer the right to relicense your contribution. The full, honest reasoning — including
+what you give up and what the AGPL guarantees you regardless — is in
+[`LICENSING.md`](LICENSING.md). If that trade isn't acceptable to you, say so before investing
+work; it's a fair position and better discussed up front.
+
 ## Where work is tracked
 `docs/PHASE0_STATUS.md` is the canonical task ledger; `docs/REMAINDER_PLAN.md` holds the
 prioritised remaining work.
