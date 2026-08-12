@@ -1,0 +1,260 @@
+# Explain-mode design — a proper method explanation for every concept type
+
+**Status: PLAN ONLY (2026-08-12). Nothing in here is built.**
+Maintainer-requested after the live report logged in `PHASE0_STATUS.md`'s backlog
+("worked-example gap"): *"explain more doesn't really work. Needs more on how to solve this
+properly.. There is huge gaps. We need to see if a type of math or english as a proper explain
+mode for every part.. this is common for all countries."*
+
+---
+
+## 1. The problem, precisely
+
+**0 of 319 curriculum nodes have an authored `worked_example`.** When a child presses Help or
+"Explain more" on any node outside the four step-grid arithmetic shapes, the prompt's
+worked-example slot is filled by `controller.py::_worked_example_for`'s fallback: a random
+solved sibling item formatted as `"{problem} (Answer: {answer})"`. The LLM is told to "build
+on" it — but a bare question-and-answer contains no method, so the child gets:
+
+> *"Here's a similar question and its answer to compare with: What is 50% of 64? (Answer: 32).
+> Look at how the answer comes from the numbers, then try yours the same way."*
+
+That is the live failure the maintainer screenshotted. "Look at how the answer comes from the
+numbers" is asking an 8-year-old to reverse-engineer the method the tutor was supposed to teach.
+
+The step-grid system (`engine/arithmetic_steps.py`) already solves this completely — but only
+for column addition/subtraction/multiplication/division and their decimal/signed variants.
+Everything else falls through: **percentages, fractions-of, equations, place value, order of
+operations, area/perimeter, and ALL of English and science.**
+
+### Inventory (scanned 2026-08-12, all 6 authority packs)
+
+| Subject | Nodes | Answer types |
+|---|---|---|
+| mathematics | 183 | int 87 · fraction 35 · decimal 28 · expression 15 · mc4 18 |
+| english | 112 | mc4 112 |
+| science | 24 | mc4 24 |
+
+~77 distinct generator functions produce every item. **Generators are shared across country
+packs** (IN_GENERIC/SG_GENERIC/US_GENERIC reuse the same functions AU uses) — so an explainer
+written per GENERATOR automatically covers every country. That is the maintainer's "this is
+common for all countries" requirement, satisfied by construction rather than by translation.
+
+---
+
+## 2. The architectural principle (unchanged, extended)
+
+Same posture as the step grids and every item generator: **the method explanation is computed,
+never composed.** An LLM asked to "show the steps" is exactly the failure class A14
+(`engine/explain_check.py`) exists to catch. The LLM's job stays warmth and re-phrasing; the
+method itself must come from code that provably knows the answer.
+
+**The key design fact this plan turns on:** every generator already holds, at draw time, the
+exact parameters that make the answer right — `gen_percentage_of_quantity` draws `pct=50,
+quantity=64` before it formats the question string. Today those parameters are discarded the
+moment the `(answer_type, checker, problem, answer)` tuple is returned. The step-grid system
+had to *re-parse* them out of the problem text with regexes (its extractors) because it was
+retrofitted onto existing items. New explain-mode work should not repeat that: **the generator
+attaches its explanation at draw time**, when the parameters are simply in scope. No parsing,
+no ambiguity, no per-country phrasing drift to chase.
+
+---
+
+## 3. The explain-mode taxonomy
+
+This is the heart of the maintainer's ask: different concept types need different SHAPES of
+explanation, and what "explaining" even means differs between maths/science and English.
+
+### Type 1 — Algorithmic column methods *(SHIPPED — the step grids)*
+
+The school algorithm has a visual/positional layout: column addition with carries, long
+division. Already covered by `arithmetic_steps.py` for +, −, ×, ÷ including decimal and signed
+variants. Nothing to do here; this row exists so the taxonomy is complete.
+
+### Type 2 — Procedural numeric: the "method card" *(maths — the big win)*
+
+Most maths nodes are not column algorithms but short fixed **rule chains**. A percentage-of,
+a fraction-of, a one-step equation — each has a 2–5 step method a child is taught, and every
+step is computable from the draw parameters:
+
+```
+What is 50% of 64?
+  1. "50%" means 50 out of every 100 — as a fraction that is 50/100 = 1/2.
+  2. "of" means multiply: 1/2 × 64.
+  3. Half of 64 is 64 ÷ 2 = 32.
+  Answer: 32
+```
+
+Every line above is an f-string over `(pct, quantity)` plus arithmetic the generator already
+did. Different `pct` values pick different wordings (10% → "divide by 10"; 25% → "a quarter —
+divide by 4"; 75% → "three quarters — a quarter times 3") — a small dict of per-parameter
+phrasings, exactly like the fact tables science items already use.
+
+Real generator families this covers (names from `engine/au_items.py` / `itemgen.py` /
+`practice_items.py`):
+
+| Family | Generators (examples) | Method card shape |
+|---|---|---|
+| Percentages | `gen_percentage_of_quantity`, `gen_percentage_change` | percent → fraction → multiply |
+| Fraction arithmetic | `gen_unlike_denom_fractions`, `gen_mult_fraction_whole`, `gen_halves_quarters` | common denominator / of-means-multiply chains |
+| Place value | `gen_place_value_2digit/3digit/4digit`, `gen_decimal_place_value` | expand the number by columns, point at the asked digit |
+| Equations | `gen_one_step_equations`, `gen_two_step_equations` | undo operations one at a time, show both sides |
+| Order of operations | `gen_order_of_operations`, `gen_order_of_ops_negatives` | priority ladder, resolve one operation per step |
+| Integers | `gen_integers_add_sub`, `gen_negative_numbers`, `gen_negative_multiplication` | sign rule stated, then the unsigned computation |
+| Geometry-numeric | `gen_area_perimeter`, `gen_compound_shape_area`, `gen_combined_rectangles_perimeter` | formula stated → substitute → compute |
+| Algebra expressions | `gen_word_to_expression`, `gen_combine_expressions`, `gen_distributive_word_to_expression`, quadratic variants | translate each phrase → combine like terms term-by-term |
+| Conversions | `gen_fraction_decimal_equiv`, `gen_division_remainder_as_fraction`/`_decimal` | the equivalence rule, then the computation |
+
+Rough coverage: **~130 of the 183 maths nodes** (int/fraction/decimal/expression answered);
+the remaining maths mc4 nodes are Type 3/4 shaped.
+
+### Type 3 — Rule application: rule + instance + why-the-others-are-wrong *(English)*
+
+English is the maintainer's explicit "compared to" case, and it IS different: there is no
+derivation to show. But the generator still knows everything needed for a real explanation,
+because mc4 items are drawn from **labelled word tables**:
+
+- **the rule** — fixed per generator: "an adverb tells you HOW an action happens; it usually
+  describes a verb";
+- **the instance** — which word was drawn and its label: "in 'the thunder grumbled angrily',
+  'angrily' tells you HOW it grumbled";
+- **the distractor rationale** — the wrong options were drawn from OTHER labelled pools, so
+  their true labels are known: "'thunder' is a noun (a thing), 'grumbled' is the verb itself".
+
+```
+Which word is the adverb? "The thunder grumbled angrily."
+  Rule:    an adverb tells you HOW something happens — it describes the verb.
+  Here:    the action is "grumbled". Which word tells you HOW it grumbled? → "angrily".
+  Others:  "thunder" names a thing (noun) · "grumbled" is the action itself (verb).
+```
+
+All three parts are template text over data the generator already holds at draw time.
+The distractor-rationale line is the piece the current system cannot produce at all, and for
+mc4 it is most of what "explaining" means — a child who picked "grumbled" needs to hear why
+that specific choice was wrong, not the rule restated.
+
+Covers all **112 English nodes** (28 generators: word classes, synonyms/antonyms, homophones,
+prefixes/suffixes, figurative language, active/passive, clauses, connotation, …). One nuance:
+vocabulary generators (synonyms/antonyms) have per-WORD rationale, so their word tables gain a
+one-line gloss per entry — a content-authoring cost, not a design problem (same shape as the
+science fact tables).
+
+### Type 4 — Fact in category: context around a recall item *(science + some English vocab)*
+
+Science mc4 items are curated **fact-table lookups** ("Which of these is made of metal?").
+There is no method and no rule — the honest explanation shape is the fact, its category
+context, and the distractors' true categories, all already present in the fact table:
+
+```
+Which of these is made of metal? → a steel screw
+  A steel screw is made of metal — metals feel cold, hard and shiny.
+  The others: a rubber band is rubber (stretchy) · a glass jar is glass (see-through).
+```
+
+Covers the **24 science nodes** and the handful of English vocab generators whose tables
+already carry category labels. Requires each fact table row to gain one "because" gloss —
+again content authoring against an existing structure, reviewed once, deterministic forever.
+
+### Type 5 — Evidence pointing *(future: comprehension against a passage)*
+
+Not shipped in any current node (no passage-comprehension generators exist yet), recorded so
+the taxonomy doesn't silently exclude it: when comprehension items exist, the generator knows
+WHICH sentence of the passage carries the answer, and the explanation is that quote plus one
+linking line. Deterministic like everything above. No work now.
+
+### The maths/science-vs-English comparison, in one table
+
+| | Maths (Types 1–2) | Science (Type 4) | English (Type 3) |
+|---|---|---|---|
+| What "explaining" means | show the derivation | give the fact its context | state rule, apply to instance, dismiss distractors |
+| Steps verifiable by arithmetic? | **yes — self-checking** | no — reviewed once at authoring | no — reviewed once at authoring |
+| Source of truth | draw parameters + arithmetic | curated fact table | labelled word tables |
+| New content needed | none (pure code) | one gloss per fact row | one gloss per vocab row; rules per generator |
+| Risk if wrong | wrong maths taught — caught by self-check | wrong fact — caught at table review | wrong rationale — caught at table review |
+
+---
+
+## 4. Delivery mechanism
+
+### 4a. Carry the explanation on the Item
+
+`engine/itembank.py::Item` gains one optional field:
+
+```python
+method_steps: tuple[str, ...] | None = None   # computed method card, one line per step
+```
+
+Generators fill it at draw time (opt-in — an unmigrated generator returns items exactly as
+today). The existing 4-tuple return convention stays; migrated generators return a 5th element
+or the item-source layer attaches it, whichever proves cleaner at implementation time.
+
+### 4b. Controller wiring (the preference ladder)
+
+In `_do_help_explain` / `_worked_example_for`, the worked-example slot's source becomes:
+
+1. **step grid** (Type 1) — unchanged, still skips the LLM entirely on Explain-more;
+2. **`item.method_steps`** — rendered directly (Help) or given to `help_elaborate.md` as the
+   worked example (so the LLM elaborates ON a real method instead of a bare answer);
+3. node-authored `worked_example` — still wins if a template author writes one;
+4. today's sibling-item fallback — becomes the last resort instead of the only behaviour.
+
+The current "Explain more skips the LLM when a step grid exists" precedent extends naturally:
+a method card can ALSO render LLM-free (same `<pre class="steps-pre">` annotation convention),
+with the LLM used only for the warm lead-in sentence — decision point for implementation,
+recorded in §6.
+
+### 4c. Rendering
+
+Reuse the existing steps-pre block (`_arithmetic_steps.html` + `.steps-pre` CSS): method cards
+are line-oriented plain text, exactly what that pipeline renders, and it already bypasses the
+U-32 markdown-lite whitelist for computed (non-LLM) content. No new UI surface.
+
+---
+
+## 5. Verification — the harness IS the feature
+
+Same discipline that caught six real bugs during the step-grid builds:
+
+- **Type 2 (maths): self-validating by construction.** A pytest fixture draws N items per
+  migrated generator and asserts the method card's final line contains `item.answer` verbatim
+  (and, where the card shows intermediate values, recomputes them). A card that can't produce
+  its own item's answer fails CI. This is the same "computed ground truth" loop
+  `test_multiplication_self_validates_against_real_verifier` runs today.
+- **Types 3–4 (English/science): reviewed data, guarded shape.** Glosses live in the same
+  tables as the content they explain (one review surface, no drift); a pytest asserts every
+  drawn mc4 item's card mentions the correct choice text and every distractor exactly once —
+  shape-checking what can't be arithmetic-checked. The content-marker spot-check practice
+  (established during the science waves, 4/6 waves caught something) applies at authoring.
+- **audit tooling:** `tools/audit_explain_paths.py` gains a per-node "explain source" column
+  (grid / method card / authored / bare-sibling-fallback) so coverage is measurable and the
+  remaining gap is always visible instead of anecdotal.
+
+---
+
+## 6. Phasing
+
+| Phase | Scope | Size | Depends on |
+|---|---|---|---|
+| **0 — infrastructure + pilot** | `Item.method_steps`, controller preference ladder, rendering reuse, self-check harness, **one family: percentages** (the maintainer's own failing example becomes the acceptance test) | small (R13-ish) | nothing |
+| **1 — maths method cards** | remaining Type 2 families, roughly in the §3 table's order (each family is one function + one test, independent of the others) | medium, embarrassingly parallel | 0 |
+| **2 — English rationale cards** | Type 3: 28 generators; rules per generator + glosses on vocab tables | medium; content-authoring heavy | 0 |
+| **3 — science context cards** | Type 4: glosses on fact tables, card assembler | small | 0 |
+| **4 — comprehension** | Type 5 | n/a — no such nodes exist yet | new content first |
+
+Phases 1–3 are independent of each other; any can ship alone once Phase 0 lands.
+
+## 7. Open questions (maintainer input wanted, none blocking Phase 0)
+
+1. **LLM-free or LLM-wrapped?** Should a method card render directly like the step grids
+   (deterministic, instant, no failure modes), or stay inside `help_elaborate.md` as the
+   worked-example slot (warmer prose, but the LLM can still garble the method)? Phase 0 will
+   build the direct path — it's strictly simpler — and the wrapped path stays possible later.
+   Recommendation: **direct**, matching the step-grid precedent the maintainer already liked.
+2. **First Help press vs Explain-more only?** Step grids deliberately render only on
+   Explain-more (the maintainer's original placement ask). Method cards could justify the same
+   placement, or could replace the first Help explanation for mc4 items where the modality
+   prose adds little. Phase 0 keeps the step-grid precedent (Explain-more only); revisit with
+   real usage.
+3. **Gloss authoring for English/science tables** is content work with the same review burden
+   as the original tables — worth confirming the maintainer wants that before Phase 2/3 start
+   (Phase 0/1 need no new content at all).
