@@ -28,11 +28,15 @@ from mentar.engine.au_items import (  # noqa: E402
     gen_integers_add_sub,
     gen_negative_multiplication,
     gen_negative_numbers,
+    gen_one_step_equations,
+    gen_order_of_operations,
+    gen_order_of_ops_negatives,
     gen_percentage_change,
     gen_percentage_of_quantity,
     gen_place_value_2digit,
     gen_place_value_3digit,
     gen_place_value_4digit,
+    gen_two_step_equations,
 )
 from mentar.engine.itemgen import ItemGenerator  # noqa: E402
 
@@ -46,6 +50,10 @@ _MIGRATED_INT_MC_GENERATORS = (
     gen_negative_numbers,
     gen_integers_add_sub,
     gen_negative_multiplication,
+    gen_one_step_equations,
+    gen_two_step_equations,
+    gen_order_of_operations,
+    gen_order_of_ops_negatives,
 )
 _MIGRATED_MC4_GENERATORS = (
     gen_place_value_2digit,

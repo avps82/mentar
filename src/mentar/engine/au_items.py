@@ -341,6 +341,20 @@ def gen_division_remainder_as_decimal(rng: random.Random):
 
 # ── Year 6 (AC9M6N01/N02/N03/M01 alignment) ───────────────────────────────────
 
+def _order_of_ops_card(a: int, op_low: str, high_expr: str, high_val: int, result: int) -> tuple[str, ...]:
+    """Explain-mode (2026-08-13, Phase 1): shared by gen_order_of_operations and
+    gen_order_of_ops_negatives, which are identical past `a`'s sign range --
+    one card builder, no duplication."""
+    return (
+        "ORDER OF OPERATIONS",
+        f"What is {a} {op_low} {high_expr}? → {result}",
+        "  1. Multiplication and division come BEFORE addition and subtraction.",
+        f"  2. Work out {high_expr} = {high_val} first.",
+        f"  3. Then {a} {op_low} {high_val} = {result}.",
+        f"  Answer: {result}",
+    )
+
+
 def gen_order_of_operations(rng: random.Random):
     """AC9M6N01-aligned: a two-term expression where the higher-precedence
     operator (×/÷) is evaluated before the lower one (+/−)."""
@@ -349,15 +363,17 @@ def gen_order_of_operations(rng: random.Random):
     if rng.random() < 0.5:
         b, c = rng.randint(2, 9), rng.randint(2, 9)
         high_val = b * c
-        expr = f"{a} {op_low} {b} × {c}"
+        high_expr = f"{b} × {c}"
     else:
         c = rng.randint(2, 9)
         q = rng.randint(2, 9)
         b = c * q
         high_val = q
-        expr = f"{a} {op_low} {b} ÷ {c}"
+        high_expr = f"{b} ÷ {c}"
     result = a + high_val if op_low == "+" else a - high_val
-    return ("int", "int_exact", f"What is {expr}?", str(result))
+    expr = f"{a} {op_low} {high_expr}"
+    return ("int", "int_exact", f"What is {expr}?", str(result), None,
+             _order_of_ops_card(a, op_low, high_expr, high_val, result))
 
 
 def gen_mult_decimals(rng: random.Random):
@@ -447,15 +463,17 @@ def gen_order_of_ops_negatives(rng: random.Random):
     if rng.random() < 0.5:
         b, c = rng.randint(2, 9), rng.randint(2, 9)
         high_val = b * c
-        expr = f"{a} {op_low} {b} × {c}"
+        high_expr = f"{b} × {c}"
     else:
         c = rng.randint(2, 9)
         q = rng.randint(2, 9)
         b = c * q
         high_val = q
-        expr = f"{a} {op_low} {b} ÷ {c}"
+        high_expr = f"{b} ÷ {c}"
     result = a + high_val if op_low == "+" else a - high_val
-    return ("int", "int_exact", f"What is {expr}?", str(result))
+    expr = f"{a} {op_low} {high_expr}"
+    return ("int", "int_exact", f"What is {expr}?", str(result), None,
+             _order_of_ops_card(a, op_low, high_expr, high_val, result))
 
 
 def gen_unlike_denom_fractions(rng: random.Random):
@@ -472,7 +490,14 @@ def gen_one_step_equations(rng: random.Random):
     a = rng.randint(1, 20)
     x_true = rng.randint(1, 20)
     b = x_true + a
-    return ("int", "int_exact", f"If x + {a} = {b}, what is x?", str(x_true))
+    card = (
+        "SOLVING A ONE-STEP EQUATION",
+        f"If x + {a} = {b}, what is x? → {x_true}",
+        f'  1. To get x alone, undo the "+ {a}" by subtracting {a} from BOTH sides.',
+        f"  2. x + {a} − {a} = {b} − {a}, so x = {x_true}.",
+        f"  Answer: {x_true}",
+    )
+    return ("int", "int_exact", f"If x + {a} = {b}, what is x?", str(x_true), None, card)
 
 
 def gen_mult_decimal_by_decimal(rng: random.Random):
@@ -490,7 +515,17 @@ def gen_two_step_equations(rng: random.Random):
     coef = rng.randint(2, 5)
     a = rng.randint(1, 20)
     b = coef * x_true + a
-    return ("int", "int_exact", f"If {coef}x + {a} = {b}, what is x?", str(x_true))
+    after_subtract = b - a
+    card = (
+        "SOLVING A TWO-STEP EQUATION",
+        f"If {coef}x + {a} = {b}, what is x? → {x_true}",
+        f'  1. First undo the "+ {a}": subtract {a} from BOTH sides. '
+        f"{coef}x = {b} − {a} = {after_subtract}.",
+        f'  2. Then undo the "× {coef}": divide BOTH sides by {coef}. '
+        f"x = {after_subtract} ÷ {coef} = {x_true}.",
+        f"  Answer: {x_true}",
+    )
+    return ("int", "int_exact", f"If {coef}x + {a} = {b}, what is x?", str(x_true), None, card)
 
 
 def gen_squares(rng: random.Random):
