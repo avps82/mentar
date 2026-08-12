@@ -46,7 +46,7 @@ from mentar.engine.bkt import P_L0, bkt_update, params_for
 from mentar.engine.explain_check import has_verified_failure, realign_algebra_blocks
 from mentar.engine.fringe import DEFAULT_MASTERY_THRESHOLD, is_mastered, select_next
 from mentar.engine.probe_classify import ProbeClass, classify_probe
-from mentar.engine.visual_scaffold import load_visual_scaffold
+from mentar.engine.visual_scaffold import first_diagram, load_visual_scaffold
 from mentar.eval.verify_numeric import CheckResult, check
 from mentar.grounding import resolve_grounding
 from mentar.safety.credential_guard import redact_credentials
@@ -1222,6 +1222,25 @@ class SessionController:
             # leaked that isn't already resolved.
             ctx.elaborate_method_card = getattr(ctx.current_item, "method_steps", None)
             if ctx.elaborate_method_card is not None:
+                # explain-mode Phase 3a (2026-08-13): fold in the concept's
+                # authored ASCII diagram, when one exists, so the bare card
+                # isn't text-only for topics where a picture genuinely helps
+                # (science's whole reason for this tier -- docs/design/
+                # explain_mode_design.md §3 Type 4). Deterministic, LLM-free
+                # extraction (first_diagram) -- same "computed, not composed"
+                # posture as the card itself. Split into individual lines to
+                # match the one-tuple-element-per-line convention every other
+                # card/grid line already follows.
+                if self._scaffold_dir is not None:
+                    node_for_scaffold = self._curriculum[ctx.current_node_id]
+                    scaffold = load_visual_scaffold(
+                        self._scaffold_dir, self._subject, node_for_scaffold.get("label", "")
+                    )
+                    diagram = first_diagram(scaffold) if scaffold else None
+                    if diagram:
+                        ctx.elaborate_method_card = (
+                            *ctx.elaborate_method_card, "", *diagram.splitlines()
+                        )
                 explanation = "Let's see how it's solved! 👇"
                 ctx.last_explanation = explanation
                 ctx.state = FSMState.HELP_RECHECK_PRESENT

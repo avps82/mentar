@@ -7,10 +7,15 @@ Lives in engine/ alongside curriculum.py (same no-Flask-dependency reason).
 
 from __future__ import annotations
 
+import re
 from functools import lru_cache
 from pathlib import Path
 
 import yaml
+
+# explain-mode (2026-08-13, Phase 3a — docs/design/explain_mode_design.md Tier 1
+# science visuals): the FIRST fenced ``` block in a scaffold body, verbatim.
+_FIRST_FENCE_RE = re.compile(r"```[^\n]*\n(.*?)\n```", re.S)
 
 # Template `subject:` front-matter values -> visual_scaffolds/ subdirectory name.
 # Subjects with no scaffold directory yet (e.g. "science") simply find no files
@@ -75,3 +80,26 @@ def load_visual_scaffold(scaffold_root: Path, subject: str, label: str) -> str:
         if count > best_count:
             best_body, best_count = body, count
     return best_body
+
+
+def first_diagram(scaffold_body: str) -> str | None:
+    """The FIRST fenced ``` block in a scaffold body, verbatim, or None.
+
+    Scaffold bodies are authored FOR AN LLM to choose from and weave into
+    prose -- "use ONE of these visual structures", multiple alternative
+    diagrams, a trailing "Guidelines for the question text" section aimed at
+    the model, not a child. None of that is fit to show a child directly.
+
+    Explain-mode's bare-card path (2026-08-13, Phase 3a) needs the opposite:
+    deterministic, LLM-free, child-facing text -- so this extracts just the
+    diagram, dropping every instruction and every alternative after the
+    first. Spot-checked across the full science scaffold set: the first
+    fenced block is consistently the strongest, most self-contained diagram
+    in every file (the author's own natural lead choice), so "first" is not
+    an arbitrary pick -- it is not, however, a substitute for a maintainer's
+    eyes on the actual rendered result (same render-verification discipline
+    §3's SVG rules state for Tier 2 -- ASCII in a `<pre>` has no layout
+    engine to introduce NEW defects the source can't already show, but a
+    diagram nobody has looked at rendered is still not verified praise)."""
+    m = _FIRST_FENCE_RE.search(scaffold_body)
+    return m.group(1) if m else None

@@ -26,8 +26,10 @@ sys.path.insert(0, str(REPO / "src"))
 from mentar.dialogue.controller import FSMState, SessionController  # noqa: E402
 from mentar.engine.au_items import gen_percentage_of_quantity  # noqa: E402
 from mentar.engine.itemgen import ItemGenerator  # noqa: E402
+from mentar.engine.science_items import SCIENCE_GENERATORS  # noqa: E402
 
 PROMPTS = REPO / "prompts"
+SCAFFOLDS = REPO / "curriculum" / "visual_scaffolds"
 
 _PERCENTAGE_CURRICULUM = {
     "percentage_of_quantity": {
@@ -139,6 +141,44 @@ def test_method_card_does_not_leak_across_a_fresh_question():
     correct = ctrl._ctx.current_item.answer
     ctrl.step(correct)
     assert ctrl.elaborate_method_card is None, "a fresh question must clear the stale card"
+
+
+def test_elaborate_on_science_node_folds_in_the_ascii_diagram():
+    """Phase 3a (2026-08-13): the bare Type-4 card is fact-plus-gloss text
+    only -- for science specifically (the whole reason Tier 1 visuals exist,
+    docs/design/explain_mode_design.md §3 Type 4), the concept's authored
+    ASCII diagram must be folded into the SAME bare display, not left
+    stranded in a scaffold file the bare-card path never reads."""
+    curriculum = {
+        "au4_science_magnetic_materials": {
+            "label": "Materials attracted to a magnet", "answer_type": "mc4",
+            "checker": "mc_choice", "expected_answer": "A", "grounding": {}, "prerequisites": [],
+        },
+    }
+    llm = _PromptCapturingLlm()
+    ctrl = SessionController(
+        llm_call=llm, prompt_dir=PROMPTS, grounding_cfg={},
+        curriculum=curriculum, db_store=_FakeStore(), learner_id="L",
+        item_bank=ItemGenerator(generators={
+            "au4_science_magnetic_materials": SCIENCE_GENERATORS["au4_science_magnetic_materials"],
+        }),
+        rng_seed=7, scaffold_dir=SCAFFOLDS, subject="science",
+    )
+    ctrl.step(None)
+    ctrl.step("?")
+    ctrl.step("more")
+    card = ctrl.elaborate_method_card
+    assert card is not None
+    assert card[0] == "MAGNETISM"
+    text = "\n".join(card)
+    # the fact-card content is still there...
+    assert "→" in text  # the card's own arrow-format lines
+    # ...AND the authored diagram is folded in beneath it.
+    assert "ATTRACTED TO A MAGNET" in text
+    assert "NOT ATTRACTED TO A MAGNET" in text
+    # meta-instructions aimed at an LLM must NEVER reach the child.
+    assert "Guidelines for the question text" not in text
+    assert "use ONE of these" not in text
 
 
 def test_a_node_with_neither_grid_nor_card_falls_through_unchanged():

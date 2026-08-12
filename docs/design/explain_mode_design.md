@@ -326,7 +326,7 @@ Same discipline that caught six real bugs during the step-grid builds:
 | **1 — maths method cards** | remaining Type 2 families, roughly in the §3 table's order (each family is one function + one test, independent of the others) | medium, embarrassingly parallel | 0 | 🔭 open |
 | **2 — English rationale cards** | Type 3: 28 generators; rules per generator + glosses on vocab tables | medium; content-authoring heavy | 0 | 🔭 open |
 | **3 — science context cards** | Type 4: glosses on fact tables, card assembler | small | 0 | ✅ **SHIPPED 2026-08-13** (all 24) |
-| **3a — science ASCII scaffolds** | Tier 1 visuals: one authored diagram per science concept | small | 3 | 🔭 open |
+| **3a — science ASCII scaffolds** | Tier 1 visuals: one authored diagram per science concept | small | 3 | ✅ **SHIPPED 2026-08-13** (all 24, see note) |
 | **3b — science SVG diagrams** | Tier 2 visuals: authored/parametric SVG per concept where a diagram genuinely beats words (sample approved-pending-look: `samples/light_scattering.svg`); render partial + CSS | medium; authoring-heavy, per-concept | 3 | 🔭 open |
 | **4 — comprehension** | Type 5 | n/a — no such nodes exist yet | new content first | n/a |
 
@@ -353,6 +353,38 @@ verification design in §5 is real code now, not aspirational. **LLM-narration l
 other half of the ratified §7 Q1 decision) NOT built this pass** — Phase 0 shipped the
 bare-card path only, per the design's own sequencing ("Phase 0 builds the bare-card path
 FIRST anyway"); narration + `explain_check` extension is follow-up work.
+
+**Phase 3a delivery notes (2026-08-13) — a stale-status correction, not a new build from
+scratch.** Auditing what "the rest of the ASCII text option" actually needed found
+`curriculum/visual_scaffolds/science/` **already existed with all 24 concepts covered**
+(22 files; two pairs of prereq-linked concepts intentionally share one file each —
+`living_nonliving.md` covers both living-vs-nonliving AND animal groups,
+`states_of_matter.md` covers both the three states AND the heat-driven change between
+them — verified by running the REAL routing function, `load_visual_scaffold`, against
+every node's actual curriculum label, not by eyeballing filenames). This doc's own §6
+table had marked 3a "🔭 open" earlier the same day — itself stale, exactly the class of
+error prior staleness audits kept finding: verify a status claim against the running
+code, never trust a marker.
+
+The REAL gap, found by checking what the bare-card Explain-more path actually renders:
+the scaffolds exist and are well-authored, but were written FOR AN LLM to choose from and
+weave into prose ("use ONE of these visual structures", multiple alternative diagrams, a
+trailing "Guidelines for the question text" section) — and Phase 0's bare-card path is
+LLM-free by design, so it never read them at all. Fixed with one new function,
+`visual_scaffold.first_diagram()`: deterministically extracts just the first fenced
+```` ``` ```` block (spot-checked across the full science set — consistently the
+strongest, most self-contained diagram, the author's own natural lead choice), dropping
+every instruction and every alternative. Wired into `_do_help_explain`'s elaborate branch:
+when a method card exists, the concept's scaffold is looked up (existing
+`load_visual_scaffold`, keyed off the node's real label) and its first diagram folded
+into the SAME bare-card display as extra lines, after a blank-line separator. Verified
+end-to-end, not just at the extractor level:
+`test_elaborate_on_science_node_folds_in_the_ascii_diagram` drives a real controller turn
+on a real science node and asserts both that the diagram text is present AND that no
+LLM-meta-instruction ("Guidelines for the question text", "use ONE of these") ever reaches
+the rendered card. `tests/engine/test_scaffold_coverage.py` (pre-existing) already
+CI-gates the "every node has a scaffold" invariant this all depends on. 895 tests green
+(was 894), ruff clean, doc-path checker clean.
 
 ## 7. Open questions (maintainer input wanted, none blocking Phase 0)
 
