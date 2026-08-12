@@ -25,7 +25,10 @@ sys.path.insert(0, str(REPO / "src"))
 
 from mentar.engine.au_items import (  # noqa: E402
     gen_area_perimeter,
+    gen_combine_expressions,
+    gen_combine_three_expressions,
     gen_decimal_place_value,
+    gen_distributive_word_to_expression,
     gen_fraction_decimal_equiv,
     gen_halves_quarters,
     gen_integers_add_sub,
@@ -40,10 +43,23 @@ from mentar.engine.au_items import (  # noqa: E402
     gen_place_value_2digit,
     gen_place_value_3digit,
     gen_place_value_4digit,
+    gen_rectangle_area_expression,
+    gen_rectangle_perimeter_expression,
     gen_two_step_equations,
     gen_unlike_denom_fractions,
+    gen_word_to_expression,
 )
 from mentar.engine.itemgen import ItemGenerator  # noqa: E402
+from mentar.eval.verify_numeric import CheckResult, check  # noqa: E402
+
+_MIGRATED_EXPRESSION_GENERATORS = (
+    gen_word_to_expression,
+    gen_combine_expressions,
+    gen_rectangle_perimeter_expression,
+    gen_rectangle_area_expression,
+    gen_distributive_word_to_expression,
+    gen_combine_three_expressions,
+)
 
 # Every Type 2 (maths method card) generator migrated so far -- Phase 1,
 # docs/design/explain_mode_design.md §3. Not just int-answer despite the
@@ -118,6 +134,43 @@ def test_every_migrated_mc4_generator_card_states_the_real_correct_choice():
             correct_text = choices[_LETTERS.index(letter)]
             assert correct_text in method_steps[1], (gen.__name__, correct_text, method_steps[1])
             assert correct_text in method_steps[-1], (gen.__name__, correct_text, method_steps[-1])
+
+
+def test_every_migrated_expression_generator_self_validates_over_many_draws():
+    """Same registry-sweep discipline for Type 2's expression-answer family
+    (algebra). The card embeds the generator's OWN `answer` string verbatim
+    (never re-derives it independently), so a substring check is already
+    rigorous here -- but see the next test for an ADDITIONAL cross-check
+    against the real expression_equiv verifier, for the intermediate
+    arithmetic specifically."""
+    rng = random.Random(3030)
+    trailing_instruction = " Give your answer as a simplified expression."
+    for gen in _MIGRATED_EXPRESSION_GENERATORS:
+        for _ in range(200):
+            result = gen(rng)
+            problem, answer, method_steps = result[2], result[3], result[5]
+            assert method_steps is not None, gen.__name__
+            assert answer in method_steps[-1], (gen.__name__, answer, method_steps[-1])
+            # Some cards drop the UI instruction suffix for brevity -- the
+            # QUESTION itself must still be echoed either way.
+            core_problem = problem.removesuffix(trailing_instruction)
+            assert core_problem in method_steps[1], (gen.__name__, core_problem, method_steps[1])
+
+
+def test_expression_cards_final_answer_passes_the_real_verifier():
+    """Cross-check against verify_numeric.check (expression_equiv, sympy-based)
+    rather than trusting string equality -- catches a card whose displayed
+    answer is textually present but not what the real verifier would accept
+    (e.g. a stray sign or a malformed operator), which a substring check
+    alone cannot."""
+    rng = random.Random(5050)
+    for gen in _MIGRATED_EXPRESSION_GENERATORS:
+        for _ in range(50):
+            result = gen(rng)
+            answer = result[3]
+            outcome = check(answer_type="expression", checker="expression_equiv",
+                             llm_output=answer, ground_truth=answer)
+            assert outcome.result is CheckResult.PASS, (gen.__name__, answer, outcome)
 
 
 def test_method_steps_flows_through_item_generator_onto_the_item():

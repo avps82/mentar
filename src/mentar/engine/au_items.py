@@ -790,12 +790,18 @@ def gen_word_to_expression(rng: random.Random):
     const = rng.randint(1, 10)
     var = rng.choice("nxy")
     templates = [
-        (f"{const} more than {coef} times a number {var}", f"{coef}*{var} + {const}"),
-        (f"{coef} times a number {var}, minus {const}", f"{coef}*{var} - {const}"),
+        (f"{const} more than {coef} times a number {var}", f"{coef}*{var} + {const}",
+         (f'  1. "{coef} times a number {var}" means {coef} × {var}, written {coef}{var}.',
+          f'  2. "{const} more than" means add {const}: {coef}{var} + {const}.')),
+        (f"{coef} times a number {var}, minus {const}", f"{coef}*{var} - {const}",
+         (f'  1. "{coef} times a number {var}" means {coef} × {var}, written {coef}{var}.',
+          f'  2. "minus {const}" means subtract {const}: {coef}{var} - {const}.')),
     ]
-    phrase, expr = rng.choice(templates)
+    phrase, expr, steps = rng.choice(templates)
+    card = ("WRITING EXPRESSIONS FROM WORDS",
+            f"Write an algebraic expression for: {phrase}. → {expr}", *steps, f"  Answer: {expr}")
     return ("expression", "expression_equiv",
-            f"Write an algebraic expression for: {phrase}.", expr)
+            f"Write an algebraic expression for: {phrase}.", expr, None, card)
 
 
 def gen_combine_expressions(rng: random.Random):
@@ -804,20 +810,41 @@ def gen_combine_expressions(rng: random.Random):
     var = rng.choice("xy")
     a1, a0 = rng.randint(2, 8), rng.randint(1, 9)
     b1, b0 = rng.randint(2, 8), rng.randint(1, 9)
+    sum1, sum0 = a1 + b1, a0 + b0
+    answer = f"{sum1}*{var} + {sum0}"
+    card = (
+        "COMBINING LIKE TERMS",
+        f"If a = {a1}{var} + {a0} and b = {b1}{var} + {b0}, what is a + b? → {answer}",
+        f"  1. Add the {var}-terms together: {a1}{var} + {b1}{var} = {sum1}{var}.",
+        f"  2. Add the number terms together: {a0} + {b0} = {sum0}.",
+        f"  3. So a + b = {answer}.",
+        f"  Answer: {answer}",
+    )
     return ("expression", "expression_equiv",
             f"If a = {a1}{var} + {a0} and b = {b1}{var} + {b0}, what is a + b? "
             "Give your answer as a simplified expression.",
-            f"{a1+b1}*{var} + {a0+b0}")
+            answer, None, card)
 
 
 def gen_rectangle_perimeter_expression(rng: random.Random):
     """Width x, length x+n -> simplified perimeter expression. The setup is a
     WORD description of a shape, not an expression the child could just echo."""
     n = rng.randint(1, 9)
+    doubled_n = 2 * n
+    answer = f"4*x + {doubled_n}"
+    card = (
+        "PERIMETER AS AN EXPRESSION",
+        f"A rectangle has width x and length (x + {n}). "
+        f"Write a simplified expression for its perimeter. → {answer}",
+        f"  1. Perimeter = 2 × (width + length) = 2 × (x + (x + {n})).",
+        f"  2. Add width and length first: x + (x + {n}) = 2x + {n}.",
+        f"  3. Multiply by 2: 2 × (2x + {n}) = {answer}.",
+        f"  Answer: {answer}",
+    )
     return ("expression", "expression_equiv",
             f"A rectangle has width x and length (x + {n}). Write a simplified "
             "expression for its perimeter.",
-            f"4*x + {2*n}")
+            answer, None, card)
 
 
 def gen_rectangle_area_expression(rng: random.Random):
@@ -826,10 +853,18 @@ def gen_rectangle_area_expression(rng: random.Random):
     expanded form too, e.g. x^2+{n}x, since both are correct answers to
     "an expression for the area", not a "must show expanded" instruction)."""
     n = rng.randint(1, 9)
+    answer = f"x*(x + {n})"
+    card = (
+        "AREA AS AN EXPRESSION",
+        f"A rectangle has width x and length (x + {n}). Write an expression for its area. → {answer}",
+        "  1. Area = width × length.",
+        f"  2. = x × (x + {n}) = {answer}.",
+        f"  Answer: {answer}",
+    )
     return ("expression", "expression_equiv",
             f"A rectangle has width x and length (x + {n}). Write an expression "
             "for its area.",
-            f"x*(x + {n})")
+            answer, None, card)
 
 
 AU_YEAR9_GENERATORS = {
@@ -851,9 +886,17 @@ def gen_distributive_word_to_expression(rng: random.Random):
     var = rng.choice("xy")
     n = rng.randint(2, 9)
     k = rng.randint(2, 6)
+    answer = f"{k}*({var} + {n})"
+    card = (
+        "THE DISTRIBUTIVE LAW FROM WORDS",
+        f"Write an algebraic expression for: the sum of {var} and {n}, all multiplied by {k}. → {answer}",
+        f'  1. "The sum of {var} and {n}" means the WHOLE group ({var} + {n}) together.',
+        f'  2. "All multiplied by {k}" means the whole group is multiplied: {k} × ({var} + {n}).',
+        f"  Answer: {answer}",
+    )
     return ("expression", "expression_equiv",
             f"Write an algebraic expression for: the sum of {var} and {n}, all multiplied by {k}.",
-            f"{k}*({var} + {n})")
+            answer, None, card)
 
 
 def gen_combine_three_expressions(rng: random.Random):
@@ -863,10 +906,29 @@ def gen_combine_three_expressions(rng: random.Random):
     a1, a0 = rng.randint(2, 9), rng.randint(1, 9)
     b1, b0 = rng.randint(2, 9), rng.randint(1, 9)
     c1, c0 = rng.randint(2, 5), rng.randint(1, 9)  # c1>=2: avoid "1x" printing as a coefficient
+    answer = _linear_expr(a1 + b1 - c1, a0 + b0 - c0, var)
+    # Same "don't print a bare 1x" convention _linear_expr uses for the final
+    # answer, applied to the intermediate step too (in the BARE "3x" style
+    # this card's other terms already use, not _linear_expr's "3*x" -- that
+    # asterisk form is for the expression_equiv answer string, not human
+    # reading) -- a draw with a1+b1-c1==1 would otherwise show "...= 1x" on
+    # the step but "x" on the answer line, a mismatch found by a 2000-draw
+    # sweep, not eyeballed.
+    x_coef = a1 + b1 - c1
+    x_coef_display = var if x_coef == 1 else f"-{var}" if x_coef == -1 else f"{x_coef}{var}"
+    card = (
+        "COMBINING LIKE TERMS (ADD AND SUBTRACT)",
+        f"If a = {a1}{var} + {a0}, b = {b1}{var} + {b0} and c = {c1}{var} + {c0}, "
+        f"what is a + b - c? → {answer}",
+        f"  1. Combine the {var}-terms: {a1}{var} + {b1}{var} - {c1}{var} = {x_coef_display}.",
+        f"  2. Combine the number terms: {a0} + {b0} - {c0} = {a0 + b0 - c0}.",
+        f"  3. So a + b - c = {answer}.",
+        f"  Answer: {answer}",
+    )
     return ("expression", "expression_equiv",
             f"If a = {a1}{var} + {a0}, b = {b1}{var} + {b0} and c = {c1}{var} + {c0}, "
             "what is a + b - c? Give your answer as a simplified expression.",
-            _linear_expr(a1 + b1 - c1, a0 + b0 - c0, var))
+            answer, None, card)
 
 
 def gen_square_expression(rng: random.Random):
