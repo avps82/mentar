@@ -92,4 +92,7 @@ eval/redteam/output/
 # not a Mentar component and not part of the shipped package -- R16 §F0 already
 # described these as "git-excluded", but they were merely untracked until
 # 2026-08-11, which left them one `git add -A` away from shipping.
-tools/
+# ANCHORED to the repo root: the unanchored form also matched tests/tools/ and
+# src/mentar/tools/ (both tracked), silently excluding any NEW file added there --
+# caught 2026-08-12 when a new tests/tools/ test refused to stage.
+/tools/

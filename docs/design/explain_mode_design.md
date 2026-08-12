@@ -204,6 +204,24 @@ a text-native answer:
    authoring scales up, adding `rsvg-convert` to the dev environment makes the loop
    self-serve.)
 
+**Round 3 (same day) sharpened the rule into a two-layer discipline.** The corrected sample
+shipped with `--` inside an XML comment — illegal in XML, so the browser stopped parsing the
+file entirely ("Double hyphen within comment"); the maintainer's render caught it again. The
+lesson splits verification into what belongs where:
+
+- **Machine layer (CI, now built):** well-formedness is checkable without eyes —
+  `tests/tools/test_svg_wellformed.py` XML-parses every repo SVG (which inherently rejects
+  the double-hyphen class) and enforces self-containment (no scripts/external refs). An SVG
+  that cannot parse must never reach a render review.
+- **Eyes layer (render):** everything geometric — collisions, sizes, legibility — still
+  needs the rasterize-and-look loop; no source-level check replaces it.
+
+**Local-LLM authoring pipeline (maintainer-requested, spec written 2026-08-12):** the full
+requirements prompt — a draft → lint → render → vision-review loop, every defect class from
+all three rounds encoded as a machine check, plus the per-concept generation prompt and the
+render-review checklist as embedded templates — lives in the infra repo at
+`local-llm-infra/prompts/svg-pipeline-requirements.md`, ready to hand to the harness.
+
 ### Type 5 — Evidence pointing *(future: comprehension against a passage)*
 
 Not shipped in any current node (no passage-comprehension generators exist yet), recorded so
