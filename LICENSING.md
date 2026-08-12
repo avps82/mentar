@@ -52,7 +52,9 @@ remains consolidated — which is what the CLA below protects.
 ## Contributor License Agreement (CLA)
 
 Before a first external contribution is merged, the contributor must agree to the project's
-CLA (grant of copyright licence to the maintainer, including the right to relicense).
+CLA — the full text and the agreement mechanism (a comment on your first PR) are in
+[`CLA.md`](CLA.md). Its core grant: a copyright licence to the maintainer, including the
+right to relicense.
 
 **The honest reason:** dual licensing requires the maintainer to hold sufficient rights over
 the whole codebase. Every external patch merged *without* a CLA would give its author a

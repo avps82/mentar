@@ -49,9 +49,9 @@ reminder; it doesn't run the eval itself.
 ## Licensing of contributions (CLA)
 
 Mentar is AGPL-3.0-only and **dual-licensed**: the maintainer also offers commercial licences,
-which requires the project's copyright to stay consolidated. Before a first external
-contribution is merged you'll be asked to agree to a Contributor License Agreement granting
-the maintainer the right to relicense your contribution. The full, honest reasoning — including
+which requires the project's copyright to stay consolidated. Before your first contribution is
+merged you must agree to the Contributor License Agreement — read [`CLA.md`](CLA.md), then post
+the agreement comment it specifies on your first PR. The full, honest reasoning — including
 what you give up and what the AGPL guarantees you regardless — is in
 [`LICENSING.md`](LICENSING.md). If that trade isn't acceptable to you, say so before investing
 work; it's a fair position and better discussed up front.
