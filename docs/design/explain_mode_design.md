@@ -116,6 +116,21 @@ Real generator families this covers (names from `engine/au_items.py` / `itemgen.
 Rough coverage: **~130 of the 183 maths nodes** (int/fraction/decimal/expression answered);
 the remaining maths mc4 nodes are Type 3/4 shaped.
 
+**Two corrections found while building Phase 1, not caught when this table was first
+written (2026-08-13):**
+
+- **`gen_compound_shape_area`/`gen_combined_rectangles_perimeter` are Algebra expressions,
+  not Geometry-numeric.** Their answer_type is `expression` (a simplified algebraic
+  expression, e.g. `8*x + 12`), not a number — reading the actual generator bodies (not
+  just their names) shows they belong with the Algebra family below, not Geometry.
+  Geometry-numeric in practice is just `gen_area_perimeter` (Year 6, genuinely numeric).
+- **`gen_division_remainder_as_fraction`/`_decimal` are ALREADY Type 1, not Type 2.** Their
+  own docstrings say so — they exist specifically to feed `build_long_division_steps` on
+  Explain-more (the "fraction"/"decimal" endings the division step-grid rebuild added).
+  A method card on these generators would be dead code: the controller's preference ladder
+  checks the step grid FIRST (§4b), so it would never be reached. Conversions in practice
+  is just `gen_fraction_decimal_equiv` — genuinely uncovered, migrated in Phase 1.
+
 ### Type 3 — Rule application: rule + instance + why-the-others-are-wrong *(English)*
 
 English is the second arm of the three-way split, and it IS different: there is no
@@ -323,7 +338,7 @@ Same discipline that caught six real bugs during the step-grid builds:
 | Phase | Scope | Size | Depends on | Status |
 |---|---|---|---|---|
 | **0 — infrastructure + pilot** | `Item.method_steps`, controller preference ladder, rendering reuse, self-check harness, **one family: percentages** (the maintainer's own failing example becomes the acceptance test) | small (R13-ish) | nothing | ✅ **SHIPPED 2026-08-13** |
-| **1 — maths method cards** | remaining Type 2 families, roughly in the §3 table's order (each family is one function + one test, independent of the others) | medium, embarrassingly parallel | 0 | 🟡 **in progress** — place value (4) + integers (3) + equations (2) + order of ops (2) shipped 2026-08-13; fraction arithmetic, geometry, algebra, conversions still open |
+| **1 — maths method cards** | remaining Type 2 families, roughly in the §3 table's order (each family is one function + one test, independent of the others) | medium, embarrassingly parallel | 0 | 🟡 **in progress** — place value (4) + integers (3) + equations (2) + order of ops (2) + fraction arithmetic (3) + geometry-numeric (1 of 3 — the other 2 are algebra-expression generators, misclassified in this table, see note) + conversions (1 of 3 — other 2 already Type 1) shipped 2026-08-13; algebra expressions still open |
 | **2 — English rationale cards** | Type 3: 28 generators; rules per generator + glosses on vocab tables | medium; content-authoring heavy | 0 | 🔭 open |
 | **3 — science context cards** | Type 4: glosses on fact tables, card assembler | small | 0 | ✅ **SHIPPED 2026-08-13** (all 24) |
 | **3a — science ASCII scaffolds** | Tier 1 visuals: one authored diagram per science concept | small | 3 | ✅ **SHIPPED 2026-08-13** (all 24, see note) |

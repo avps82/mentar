@@ -24,8 +24,12 @@ REPO = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "src"))
 
 from mentar.engine.au_items import (  # noqa: E402
+    gen_area_perimeter,
     gen_decimal_place_value,
+    gen_fraction_decimal_equiv,
+    gen_halves_quarters,
     gen_integers_add_sub,
+    gen_mult_fraction_whole,
     gen_negative_multiplication,
     gen_negative_numbers,
     gen_one_step_equations,
@@ -37,13 +41,16 @@ from mentar.engine.au_items import (  # noqa: E402
     gen_place_value_3digit,
     gen_place_value_4digit,
     gen_two_step_equations,
+    gen_unlike_denom_fractions,
 )
 from mentar.engine.itemgen import ItemGenerator  # noqa: E402
 
 # Every Type 2 (maths method card) generator migrated so far -- Phase 1,
-# docs/design/explain_mode_design.md §3. Extend this tuple as more families
-# are migrated; every test below sweeps the whole list, so a new family gets
-# the same self-validation for free.
+# docs/design/explain_mode_design.md §3. Not just int-answer despite the
+# name -- fraction-answer generators fit the same shape (this test only
+# checks substring containment of the answer string, type-agnostic). Extend
+# this tuple as more families are migrated; every test below sweeps the
+# whole list, so a new family gets the same self-validation for free.
 _MIGRATED_INT_MC_GENERATORS = (
     gen_percentage_of_quantity,
     gen_percentage_change,
@@ -54,6 +61,11 @@ _MIGRATED_INT_MC_GENERATORS = (
     gen_two_step_equations,
     gen_order_of_operations,
     gen_order_of_ops_negatives,
+    gen_halves_quarters,
+    gen_mult_fraction_whole,
+    gen_unlike_denom_fractions,
+    gen_area_perimeter,
+    gen_fraction_decimal_equiv,
 )
 _MIGRATED_MC4_GENERATORS = (
     gen_place_value_2digit,

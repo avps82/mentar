@@ -196,7 +196,17 @@ def gen_halves_quarters(rng: random.Random):
     """AC9M2N04-aligned: halves and quarters of a whole (denominator restricted
     to {2, 4} -- Year 3+ introduces the fuller unit-fraction range)."""
     d = rng.choice([2, 4])
-    return ("fraction", "fraction_equiv", f"A pizza is cut into {d} equal slices. What fraction is ONE slice?", f"1/{d}")
+    card = (
+        "UNIT FRACTIONS",
+        f"A pizza is cut into {d} equal slices. What fraction is ONE slice? → 1/{d}",
+        f"  1. The whole pizza is split into {d} equal slices.",
+        f"  2. ONE slice out of {d} equal slices is written as 1/{d}.",
+        f"  Answer: 1/{d}",
+    )
+    return (
+        "fraction", "fraction_equiv",
+        f"A pizza is cut into {d} equal slices. What fraction is ONE slice?", f"1/{d}", None, card,
+    )
 
 
 # ── Year 5 (AC9M5N01/N02/N06 alignment) ───────────────────────────────────────
@@ -248,7 +258,16 @@ def gen_mult_fraction_whole(rng: random.Random):
     n = rng.randint(1, 4)
     d = rng.randint(n + 1, 10)
     whole = rng.randint(2, 5)
-    return ("fraction", "fraction_equiv", f"What is {n}/{d} × {whole}?", f"{n * whole}/{d}")
+    new_n = n * whole
+    card = (
+        "MULTIPLYING A FRACTION BY A WHOLE NUMBER",
+        f"What is {n}/{d} × {whole}? → {new_n}/{d}",
+        f"  1. Multiply the numerator by the whole number: {n} × {whole} = {new_n}.",
+        f"  2. Keep the denominator the same: {d}.",
+        f"  3. So {n}/{d} × {whole} = {new_n}/{d}.",
+        f"  Answer: {new_n}/{d}",
+    )
+    return ("fraction", "fraction_equiv", f"What is {n}/{d} × {whole}?", f"{new_n}/{d}", None, card)
 
 
 def _percentage_of_quantity_card(pct: int, quantity: int, answer: int) -> tuple[str, ...]:
@@ -397,8 +416,33 @@ def gen_area_perimeter(rng: random.Random):
     length = rng.randint(3, 12)
     width = rng.randint(2, 10)
     if rng.random() < 0.5:
-        return ("int", "int_exact", f"A rectangle is {length}cm by {width}cm. What is its area, in square centimetres?", str(length * width))
-    return ("int", "int_exact", f"A rectangle is {length}cm by {width}cm. What is its perimeter, in centimetres?", str(2 * (length + width)))
+        area = length * width
+        card = (
+            "AREA OF A RECTANGLE",
+            f"A rectangle is {length}cm by {width}cm. What is its area, in square centimetres? → {area}",
+            "  1. Area of a rectangle = length × width.",
+            f"  2. {length} × {width} = {area}.",
+            f"  Answer: {area}",
+        )
+        return (
+            "int", "int_exact",
+            f"A rectangle is {length}cm by {width}cm. What is its area, in square centimetres?",
+            str(area), None, card,
+        )
+    total = length + width
+    perimeter = 2 * total
+    card = (
+        "PERIMETER OF A RECTANGLE",
+        f"A rectangle is {length}cm by {width}cm. What is its perimeter, in centimetres? → {perimeter}",
+        "  1. Perimeter of a rectangle = 2 × (length + width).",
+        f"  2. 2 × ({length} + {width}) = 2 × {total} = {perimeter}.",
+        f"  Answer: {perimeter}",
+    )
+    return (
+        "int", "int_exact",
+        f"A rectangle is {length}cm by {width}cm. What is its perimeter, in centimetres?",
+        str(perimeter), None, card,
+    )
 
 
 # Curated, hand-verified fact table -- every pair terminates cleanly as a
@@ -413,9 +457,28 @@ _FRACTION_DECIMAL_PAIRS = [
 
 
 def gen_fraction_decimal_equiv(rng: random.Random):
-    """AC9M6N03-aligned: convert a common fraction to its decimal equivalent."""
+    """AC9M6N03-aligned: convert a common fraction to its decimal equivalent.
+
+    explain-mode (2026-08-13, Phase 1): the card shows real division (n ÷ d)
+    as the method even though the generator itself is a lookup table -- n/d
+    genuinely DOES equal n÷d regardless of implementation, and every pair in
+    _FRACTION_DECIMAL_PAIRS is picked specifically because that division
+    terminates cleanly (see the table's own comment), so the shown method
+    always matches the looked-up answer. (`gen_division_remainder_as_fraction`/
+    `_decimal`, the other two generators in this "conversions" family, are
+    already Type 1 -- their problem text is written to feed
+    build_long_division_steps on Explain-more, so a method card there would
+    never be shown; deliberately not migrated.)"""
     frac, dec = rng.choice(_FRACTION_DECIMAL_PAIRS)
-    return ("decimal", "decimal_exact", f"Write {frac} as a decimal.", dec)
+    n, d = frac.split("/")
+    card = (
+        "FRACTIONS AS DECIMALS",
+        f"Write {frac} as a decimal. → {dec}",
+        f"  1. {frac} means {n} divided by {d}.",
+        f"  2. {n} ÷ {d} = {dec}.",
+        f"  Answer: {dec}",
+    )
+    return ("decimal", "decimal_exact", f"Write {frac} as a decimal.", dec, None, card)
 
 
 # ── Year 7 (AC9M7N/A alignment) ───────────────────────────────────────────────
@@ -476,13 +539,41 @@ def gen_order_of_ops_negatives(rng: random.Random):
              _order_of_ops_card(a, op_low, high_expr, high_val, result))
 
 
+def _unlike_denom_fraction_card(n1: int, d1: int, n2: int, d2: int, result: Fraction) -> tuple[str, ...]:
+    """Explain-mode (2026-08-13, Phase 1): cross-multiplication common
+    denominator (d1 × d2 -- always a valid common denominator, whether or
+    not it's the LOWEST one), then a simplify step ONLY when the raw
+    cross-multiplied sum differs from `result` (already reduced by
+    fractions.Fraction) -- self-validating either way, since the final
+    line is always `result` itself, never re-derived separately."""
+    common = d1 * d2
+    over1, over2 = n1 * d2, n2 * d1
+    raw_num = over1 + over2
+    lines = [
+        "ADDING FRACTIONS WITH DIFFERENT DENOMINATORS",
+        f"What is {n1}/{d1} + {n2}/{d2}? → {result.numerator}/{result.denominator}",
+        f"  1. Find a common denominator: {d1} × {d2} = {common}.",
+        f"  2. Rewrite each fraction over {common}: {n1}/{d1} = {over1}/{common}, "
+        f"and {n2}/{d2} = {over2}/{common}.",
+        f"  3. Add the numerators: {over1}/{common} + {over2}/{common} = {raw_num}/{common}.",
+    ]
+    if (raw_num, common) != (result.numerator, result.denominator):
+        lines.append(f"  4. Simplify: {raw_num}/{common} = {result.numerator}/{result.denominator}.")
+    lines.append(f"  Answer: {result.numerator}/{result.denominator}")
+    return tuple(lines)
+
+
 def gen_unlike_denom_fractions(rng: random.Random):
     """AC9M7N04-aligned: adding two fractions with different denominators.
     fractions.Fraction reduces automatically -- the answer is always canonical."""
     n1, d1 = rng.randint(1, 4), rng.randint(2, 6)
     n2, d2 = rng.randint(1, 4), rng.randint(2, 6)
     result = Fraction(n1, d1) + Fraction(n2, d2)
-    return ("fraction", "fraction_equiv", f"What is {n1}/{d1} + {n2}/{d2}?", f"{result.numerator}/{result.denominator}")
+    return (
+        "fraction", "fraction_equiv", f"What is {n1}/{d1} + {n2}/{d2}?",
+        f"{result.numerator}/{result.denominator}", None,
+        _unlike_denom_fraction_card(n1, d1, n2, d2, result),
+    )
 
 
 def gen_one_step_equations(rng: random.Random):
