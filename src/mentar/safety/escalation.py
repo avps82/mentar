@@ -120,6 +120,10 @@ _HARM_TO_SELF_PATTERNS: list[re.Pattern[str]] = [p for p in (
     re.compile(r"thinking (about|of) (ending|killing) (it|myself|my life)", re.I),
     # "I've been cutting myself" / "I cut myself on purpose"
     re.compile(r"(cutting|cut) myself (on purpose|to hurt|because)", re.I),
+    # Deliberate eating-related self-harm (2026-08-12 safeguarding review). SAFETY §3.2 Cat A.
+    re.compile(r"\bmake myself (sick|throw up|vomit)\b", re.I),
+    re.compile(r"\bhaven'?t eaten (for|in) [^.?!]{0,20}\bon purpose\b", re.I),
+    re.compile(r"\b(refuse|refusing) to eat\b[^.?!]{0,20}\bon purpose\b", re.I),
 )]
 
 # ── A: physical_danger (CRITICAL) ────────────────────────────────────────────
@@ -138,6 +142,26 @@ _PHYSICAL_DANGER_PATTERNS: list[re.Pattern[str]] = [p for p in (
     # "I'm in danger" / "I'm scared someone will hurt me"
     re.compile(r"(i'?m|i am) in danger", re.I),
     re.compile(r"scared (that )?(someone|he|she|they) will (hurt|hit|kill|harm) me", re.I),
+    # Dangerous situation / peer violence / witnessing DV / neglect / running away (2026-08-12 safeguarding review). SAFETY §3.2 Cat A stated scope; over-block by design.
+    re.compile(r"\b(kids?|boys?|girls?|children|they|everyone) (at|in) (school|class)\b[^.?!]{0,40}\b(hit|hurt|beat|kick|punch)(s|ing|ed)? me\b", re.I),
+    re.compile(r"\b(a |the )?(kid|boy|girl)\b[^.?!]{0,30}\bkeeps? (hitting|hurting|beating|kicking|punching) me\b", re.I),
+    re.compile(r"\b(they|he|she) (said|says) (they|he|she)('| wi)ll (beat|hurt|hit|kill) me\b", re.I),
+    re.compile(r"\bscared to go to school\b", re.I),
+    re.compile(r"\b(dad|daddy|father|mum|mummy|mom|mother|step ?\w*|he|she|they)\b[^.?!]{0,25}\b(hits?|hitting|beats?|beating|pushed|pushes|hurts?|hurting|threw|throws)\b[^.?!]{0,25}\b(my |the )?(dad|daddy|father|mum|mummy|mom|mother|each other)\b", re.I),  # t7.3-exempt: regex alternation, not a prompt
+    re.compile(r"\bmy parents (fight|are fighting|throw things|scream|hit each other)\b", re.I),
+    re.compile(r"\bi hide\b[^.?!]{0,40}\b(shouts?|shouting|screams?|screaming|fights?|fighting|angry|drunk)\b", re.I),
+    re.compile(r"\bno food (in the house|at home)\b", re.I),
+    re.compile(r"\bhaven'?t eaten since (yesterday|this morning|last night)\b", re.I),
+    re.compile(r"\b(nobody|no ?one)('s| has| is)? (been )?(home|here) (for|since|in) \w{1,8} (days?|nights?|weeks?)\b", re.I),
+    re.compile(r"\b(look after|looking after|take care of)\b[^.?!]{0,30}\b(baby|little|younger)\b[^.?!]{0,30}\b(scared|frightened|alone|by myself|on my own)\b", re.I),
+    re.compile(r"\bcan'?t wake (my |her |him |them )*(mum|mom|mummy|dad|daddy|mother|father)\b", re.I),
+    re.compile(r"\bneedles? in (the|our|my) house\b", re.I),
+    re.compile(r"\b(drinks|drunk|drinking) until (she|he|they) (falls?|fell|pass(es)?|passed) (asleep|out)\b", re.I),
+    re.compile(r"\b(i'?m|i am) (going to|gonna) run away\b", re.I),
+    re.compile(r"\bran away from home\b", re.I),
+    re.compile(r"\bslept (rough|in the street|on a bench|in a doorway)\b", re.I),
+    re.compile(r"\bslept outside\b(?![^.?!]{0,20}\b(tent|camping|camp|sleepover|garden|star)\b)[^.?!]{0,20}\b(because|couldn'?t|had to|scared|cold|alone)\b", re.I),
+    re.compile(r"\bcouldn'?t go home\b", re.I),
 )]
 
 # ── B: severe_distress (HIGH) ────────────────────────────────────────────────
@@ -155,8 +179,19 @@ _SEVERE_DISTRESS_PATTERNS: list[re.Pattern[str]] = [p for p in (
     re.compile(r"(can'?t|cannot) (cope|go on|take (it|this|anymore)|keep going)", re.I),
     re.compile(r"(every ?thing|my whole life) is (falling apart|ruined|over|destroyed)", re.I),
     # persistent despair markers
-    re.compile(r"(always|never) (feel|felt|going to) (better|happy|good|okay|ok)\b", re.I),
+    # "I never feel better" / "I'll never be happy" -- despair. Deliberately NOT
+    # "always feel better" (a positive; a pre-2026-08-12 cut fired on "I always
+    # feel better after a nap"). "always" only pairs with a NEGATIVE state word.
+    re.compile(r"\bnever (feel|felt|going to feel|be|going to be) (better|happy|good|okay|ok|alright)\b", re.I),
+    re.compile(r"\balways (feel|felt) (worse|sad|awful|terrible|empty|alone|like this)\b", re.I),
     re.compile(r"(too much|no point) (to|in) (living|life|going on|continuing)", re.I),
+    # Emotional / psychological abuse BY someone (2026-08-12 safeguarding review). SAFETY §3.2 Cat B; repeated/severe element required so ordinary meanness stays below threshold.
+    re.compile(r"\b(says?|tells? me|calls? me)\b[^.?!]{0,20}\b(worthless|useless|stupid|pathetic|a mistake)\b[^.?!]{0,20}\b(every ?day|all the time|always)\b", re.I),
+    re.compile(r"\b(every ?day|all the time|always)\b[^.?!]{0,20}\b(says?|tells? me|calls? me)\b[^.?!]{0,20}\b(worthless|useless|stupid|pathetic)\b", re.I),
+    re.compile(r"\bwish(es)? (i|you) (was|were|had) never born\b", re.I),
+    re.compile(r"\block(s|ed)? me in (my room|the (house|basement|cupboard|closet))\b", re.I),
+    re.compile(r"\bget called names at home\b", re.I),
+    re.compile(r"\bnot allowed to (eat|leave|come out|see anyone)\b", re.I),
 )]
 
 # ── C: abuse_disclosure (CRITICAL) ───────────────────────────────────────────
@@ -203,6 +238,11 @@ _ABUSE_DISCLOSURE_PATTERNS: list[re.Pattern[str]] = [p for p in (
         r"(him|her|them)?\s*(a\s+|some\s+)?(photo|photos|picture|pictures|pic|pics|video|videos|selfie|selfies)\b",
         re.I,
     ),
+    # Sextortion / online coercion (2026-08-12 safeguarding review). SAFETY §3.2 Cat C exploitation.
+    re.compile(r"\b(share|post|send|show)\b[^.?!]{0,20}\b(my )?(photos?|pictures?|pics?|videos?)\b[^.?!]{0,25}\bif i don'?t\b", re.I),
+    re.compile(r"\b(threatens?|threatened|threatening) (to )?(share|post|send|show|tell)\b", re.I),
+    re.compile(r"\b(knows?|found out) (my school|where i live|my address)\b", re.I),
+    re.compile(r"\bkeeps? (messaging|texting|contacting) me\b[^.?!]{0,30}\b(asked|told) (them|him|her) to stop\b", re.I),
     # Grooming: an online contact pressing to meet or move off-platform.
     re.compile(
         r"\b(someone|somebody|a man|a woman|a person|a boy|a girl|a stranger|he|she|they)\b"  # t7.3-exempt: regex alternation, not a prompt
