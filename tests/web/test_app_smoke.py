@@ -122,7 +122,7 @@ def test_parent_view_reads_db_and_persists_ack():
     assert "I want to die" not in frozen_html        # no verbatim trigger text
     assert "confirm" not in frozen_html.lower()       # no ack control on the child's screen
     assert "<a " not in frozen_html                  # U-60: zero navigation on the frozen screen
-    assert "theme-toggle" not in frozen_html          # U-60: zero chrome, not just zero nav
+    assert "theme-picker" not in frozen_html          # U-60: zero chrome, not just zero nav
 
     # R4: / is picker-only, unconditionally -- re-visiting it while frozen
     # never leaks the trigger text or an ack control either.
@@ -948,13 +948,52 @@ def test_r5_settings_route_renders_voice_select_and_theme_toggle():
     body = r.get_data(as_text=True)
     assert '<select id="voice-select">' in body
     assert 'id="test-voice-btn"' in body
-    assert 'class="theme-toggle"' in body
+    # 2026-08-14: the binary light/dark toggle became a multi-theme picker,
+    # rendered by theme.js from its own registry (hence the empty host div).
+    assert 'id="theme-picker"' in body
 
 
-def test_r5_theme_toggle_moved_out_of_shared_header_not_duplicated():
-    """R5: the shared header (_base.html) no longer contains .theme-toggle on
-    any page using the default header block -- it lives ONLY on /settings
-    now, replaced in the header by a Settings link."""
+def test_gallery_is_dev_gated_and_renders_every_theme():
+    """Part 2 (2026-08-14): the theme gallery is a DESIGN tool. It must be
+    unreachable in a family's install (no env var -> 404), and when enabled it
+    must stamp the requested theme SERVER-SIDE so a headless screenshot needs
+    no JS interaction. An unknown ?theme= falls back to light rather than
+    rendering an unstyled page."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+
+    app_mod, c = _client()
+
+    os.environ.pop("MENTAR_DEV_GALLERY", None)
+    assert c.get("/gallery").status_code == 404, "gallery must not exist without the env var"
+
+    os.environ["MENTAR_DEV_GALLERY"] = "1"
+    try:
+        for theme in app_mod._GALLERY_THEMES:
+            r = c.get(f"/gallery?theme={theme}")
+            assert r.status_code == 200, theme
+            body = r.get_data(as_text=True)
+            assert f'setAttribute("data-theme", "{theme}")' in body, f"{theme} not stamped server-side"
+            # the components a theme review has to see, spot-checked by the
+            # real class names (not invented gallery-only ones)
+            for cls in ("steps-pre", "choice-option", "subject-card", "btn-accent",
+                        "banner-warn", "turn-mastery", "theme-swatch"):
+                assert cls in body, f"gallery missing {cls} in {theme}"
+
+        fallback = c.get("/gallery?theme=not-a-theme").get_data(as_text=True)
+        assert 'setAttribute("data-theme", "light")' in fallback
+    finally:
+        os.environ.pop("MENTAR_DEV_GALLERY", None)
+
+
+def test_r5_theme_control_moved_out_of_shared_header_not_duplicated():
+    """R5: the shared header (_base.html) no longer contains the theme control
+    on any page using the default header block -- it lives ONLY on /settings
+    now, replaced in the header by a Settings link. (2026-08-14: the control is
+    the multi-theme picker; the assertion tracks the new selector.)"""
     try:
         import flask  # noqa: F401
     except ImportError:
@@ -966,11 +1005,11 @@ def test_r5_theme_toggle_moved_out_of_shared_header_not_duplicated():
 
     for path in ("/", "/learn", "/progress"):
         body = c.get(path).get_data(as_text=True)
-        assert 'class="theme-toggle"' not in body, f"{path} still has the header theme toggle"
+        assert 'id="theme-picker"' not in body, f"{path} still has the header theme control"
         assert 'class="settings-link"' in body, f"{path} is missing the Settings header link"
 
     settings_body = c.get("/settings").get_data(as_text=True)
-    assert settings_body.count('class="theme-toggle"') == 1  # present exactly once, not duplicated
+    assert settings_body.count('id="theme-picker"') == 1  # present exactly once, not duplicated
 
 
 def test_r5_footer_settings_link_on_learner_and_progress_not_frozen_or_parent():
@@ -1000,7 +1039,7 @@ def test_r5_footer_settings_link_on_learner_and_progress_not_frozen_or_parent():
     r = c.post("/answer", data={"answer": "I want to die"}, follow_redirects=True)
     frozen_html = r.get_data(as_text=True)
     assert 'href="/settings"' not in frozen_html
-    assert "theme-toggle" not in frozen_html
+    assert "theme-picker" not in frozen_html
     assert "settings-link" not in frozen_html
 
 
@@ -1316,8 +1355,10 @@ if __name__ == "__main__":
     print("  ✓ test_r4_brand_link_from_any_screen_lands_on_picker")
     test_r5_settings_route_renders_voice_select_and_theme_toggle()
     print("  ✓ test_r5_settings_route_renders_voice_select_and_theme_toggle")
-    test_r5_theme_toggle_moved_out_of_shared_header_not_duplicated()
-    print("  ✓ test_r5_theme_toggle_moved_out_of_shared_header_not_duplicated")
+    test_gallery_is_dev_gated_and_renders_every_theme()
+    print("  ✓ test_gallery_is_dev_gated_and_renders_every_theme")
+    test_r5_theme_control_moved_out_of_shared_header_not_duplicated()
+    print("  ✓ test_r5_theme_control_moved_out_of_shared_header_not_duplicated")
     test_r5_footer_settings_link_on_learner_and_progress_not_frozen_or_parent()
     print("  ✓ test_r5_footer_settings_link_on_learner_and_progress_not_frozen_or_parent")
     test_llm_status_reports_ok_when_backend_reachable()

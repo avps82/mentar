@@ -650,10 +650,39 @@ def frozen():
 
 @app.route("/settings")
 def settings():
-    """R5: voice picker + the relocated theme toggle. Purely static -- the
+    """R5: voice picker + the relocated theme picker. Purely static -- the
     voice list is client-side only (speechSynthesis.getVoices() can't be
     queried server-side), so this route has no controller/session logic."""
     return render_template("settings.html")
+
+
+# Theme names must match the [data-theme] blocks in style.css AND theme.js's
+# THEMES registry. Only the gallery needs them server-side (the real picker
+# renders from the JS registry), so this stays a plain list rather than a
+# second source of truth: tests/web/test_theme_tokens.py checks the CSS side,
+# and the gallery smoke test checks this list resolves.
+_GALLERY_THEMES = ("light", "dark", "ocean", "space", "forest", "sunshine")
+
+
+@app.route("/gallery")
+def gallery():
+    """DEV-ONLY theme gallery (2026-08-14): every component on one page so a
+    theme review is one screenshot instead of five screens.
+
+    Gated behind MENTAR_DEV_GALLERY=1 and 404s otherwise -- it is a design
+    tool, and a family's install should never be able to reach a page full of
+    fake questions and fake feedback. Read at request time (not import time)
+    so a test can toggle it without reimporting the module.
+
+    The theme comes from ?theme= and is stamped server-side by the template,
+    so a headless screenshot needs no JS interaction. An unknown name falls
+    back to light rather than rendering an unstyled page."""
+    if os.environ.get("MENTAR_DEV_GALLERY") != "1":
+        return ("Not found", 404)
+    theme = request.args.get("theme", "light")
+    if theme not in _GALLERY_THEMES:
+        theme = "light"
+    return render_template("gallery.html", theme=theme, theme_names=_GALLERY_THEMES)
 
 
 @app.route("/settings/llm-status")

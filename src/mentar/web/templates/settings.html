@@ -35,7 +35,11 @@
 
 <details class="settings-section" open>
   <summary>🎨 Appearance</summary>
-  <button class="theme-toggle" type="button" aria-label="Toggle dark mode">🌙 Dark</button>
+  <p class="hint">Pick the colours you like best. This only changes how Mentar looks —
+    your progress and lessons stay exactly the same.</p>
+  {# Rendered by theme.js from its own THEMES registry (the single place the
+     theme list lives), so adding a theme never means editing this template. #}
+  <div id="theme-picker" class="theme-picker" role="group" aria-label="Colour theme">Loading…</div>
 </details>
 
 <script src="/static/settings.js"></script>

@@ -13,6 +13,18 @@
   --primary: #2F8F9D;
   --primary-strong: #21707C;
   --accent: #FF7F50;
+  /* Button LABEL inks (2026-08-14). Buttons hardcoded `color: #fff` over
+     var(--primary)/(--accent)/(--danger), which measured 2.50:1 on light
+     --accent and 1.94:1 on dark --primary -- a child reading white-on-cyan on
+     the main action button. Darkening those backgrounds instead was measured
+     and rejected: --primary doubles as the brand-gradient/border colour, so a
+     dark-mode value that fixes the button drops the wordmark to 2.77:1. Three
+     separate inks, not one, because within a single theme the three
+     backgrounds need different ones (light: white passes on primary 3.79 and
+     danger 4.23, fails on accent 2.50). */
+  --on-primary: #FFFFFF;
+  --on-accent: #26303A;
+  --on-danger: #FFFFFF;
   --mastered: #2F8F9D;
   --learning: #FFB300;
   --not-started: #E3E6EA;
@@ -44,6 +56,9 @@
   --primary: #5FC9D6;
   --primary-strong: #7FDBE6;
   --accent: #FF9776;
+  --on-primary: #16202A;
+  --on-accent: #16202A;
+  --on-danger: #16202A;
   --mastered: #5FC9D6;
   --learning: #FFC857;
   --not-started: #3A4550;
@@ -54,6 +69,111 @@
   --border: #2D3946;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 18px rgba(0, 0, 0, 0.35);
   --shadow-hover: 0 2px 4px rgba(0, 0, 0, 0.35), 0 12px 30px rgba(0, 0, 0, 0.45);
+}
+
+/* ── Named child-facing themes (2026-08-14) ──────────────────────────────────
+   A theme is exactly this: one [data-theme] block redefining the THEMATIC
+   tokens. Colour and shadow only -- never --radius/--font/--font-mono, which
+   are structural: a theme must not move or resize anything, or every layout
+   fix would need testing N ways. tests/web/test_theme_tokens.py enforces both
+   halves of that contract (exact token set, structural tokens absent) plus
+   eight contrast pairs as arithmetic. Every palette below was chosen by
+   running that maths, not by eye. */
+
+[data-theme="ocean"] {
+  --bg: #EAF4FA;
+  --surface: #FFFFFF;
+  --text: #12303D;
+  --text-muted: #5A7684;
+  --primary: #0E7C99;
+  --primary-strong: #0A5F76;
+  --accent: #F2792B;
+  --on-primary: #FFFFFF;
+  --on-accent: #12303D;
+  --on-danger: #FFFFFF;
+  --mastered: #0E7C99;
+  --learning: #E8A33D;
+  --not-started: #D5E4EC;
+  --danger: #C62828;
+  --danger-bg: #FDECEC;
+  --warn-bg: #FFF4D6;
+  --warn-border: #D19A20;
+  --border: #CFE1EA;
+  --shadow: 0 1px 2px rgba(18, 48, 61, 0.07), 0 6px 16px rgba(18, 48, 61, 0.08);
+  --shadow-hover: 0 2px 4px rgba(18, 48, 61, 0.10), 0 12px 28px rgba(18, 48, 61, 0.14);
+}
+
+[data-theme="space"] {
+  --bg: #0F1428;
+  --surface: #1B2242;
+  --text: #E9ECFB;
+  --text-muted: #A6AED0;
+  --primary: #8B9DFF;
+  --primary-strong: #AEBAFF;
+  --accent: #FFB86B;
+  --on-primary: #0F1428;
+  --on-accent: #0F1428;
+  --on-danger: #0F1428;
+  --mastered: #8B9DFF;
+  --learning: #FFCE5C;
+  --not-started: #333B5C;
+  --danger: #FF7A85;
+  --danger-bg: #3A1F28;
+  --warn-bg: #3A3320;
+  --warn-border: #C9A23A;
+  --border: #2C3454;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 6px 18px rgba(0, 0, 0, 0.40);
+  --shadow-hover: 0 2px 4px rgba(0, 0, 0, 0.40), 0 12px 30px rgba(0, 0, 0, 0.50);
+}
+
+[data-theme="forest"] {
+  --bg: #F2EFE3;
+  --surface: #FFFDF6;
+  --text: #1F2E1C;
+  --text-muted: #5A6E53;
+  --primary: #2E7D46;
+  --primary-strong: #1C5A31;
+  --accent: #C4622D;
+  --on-primary: #FFFFFF;
+  --on-accent: #FFFFFF;
+  --on-danger: #FFFFFF;
+  --mastered: #2E7D46;
+  --learning: #D9A227;
+  --not-started: #DFDCC6;
+  --danger: #B3261E;
+  --danger-bg: #FBEAE8;
+  --warn-bg: #FBF0D5;
+  --warn-border: #B9891C;
+  --border: #DCD8C0;
+  --shadow: 0 1px 2px rgba(31, 46, 28, 0.08), 0 6px 16px rgba(31, 46, 28, 0.09);
+  --shadow-hover: 0 2px 4px rgba(31, 46, 28, 0.11), 0 12px 28px rgba(31, 46, 28, 0.15);
+}
+
+/* Sunshine's accent/danger were #D9453F and #C0392B -- a 0.051 luminance gap,
+   two near-identical reds. Caught by LOOKING at the render (the contrast maths
+   passed both): a child could not tell the celebratory accent from the stop
+   colour. Now bright coral-orange vs deep brick, gap 0.165. */
+[data-theme="sunshine"] {
+  --bg: #FFF7E6;
+  --surface: #FFFFFF;
+  --text: #3A2A16;
+  --text-muted: #77613F;
+  --primary: #B25A00;
+  --primary-strong: #8A4500;
+  --accent: #E8613C;
+  --on-primary: #FFFFFF;
+  --on-accent: #3A2A16;
+  --on-danger: #FFFFFF;
+  --mastered: #57862F;
+  --learning: #E0A020;
+  --not-started: #EDE2CC;
+  --danger: #A32A1E;
+  --danger-bg: #FDECEA;
+  --warn-bg: #FFF3D0;
+  --warn-border: #C08A16;
+  --border: #EBDFC4;
+  --shadow: 0 1px 2px rgba(58, 42, 22, 0.08), 0 6px 16px rgba(58, 42, 22, 0.09);
+  --shadow-hover: 0 2px 4px rgba(58, 42, 22, 0.11), 0 12px 28px rgba(58, 42, 22, 0.15);
 }
 
 * { box-sizing: border-box; }
@@ -106,7 +226,6 @@ a { color: var(--primary-strong); }
 
 .brand .subject-label { font-size: 1rem; font-weight: 400; -webkit-text-fill-color: var(--text-muted); color: var(--text-muted); }
 
-.theme-toggle,
 .settings-link {
   background: var(--surface);
   border: 2px solid var(--border);
@@ -118,8 +237,58 @@ a { color: var(--primary-strong); }
   text-decoration: none;
   transition: border-color 0.15s ease, transform 0.15s ease;
 }
-.theme-toggle:hover,
 .settings-link:hover { border-color: var(--primary); transform: translateY(-1px); }
+
+/* Theme picker (2026-08-14) -- one swatch per registered theme, rendered by
+   theme.js. Selection is carried by THREE signals, never colour alone: a
+   thicker --primary border, a ✓ badge, and aria-pressed. */
+.theme-picker { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
+.theme-swatch {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 84px;
+  min-height: 84px;
+  padding: 10px 12px;
+  background: var(--surface);
+  color: var(--text);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+.theme-swatch:hover { border-color: var(--primary); transform: translateY(-1px); box-shadow: var(--shadow); }
+.theme-swatch.is-active { border-color: var(--primary); border-width: 3px; box-shadow: var(--shadow); }
+.theme-swatch.is-active::after {
+  content: "✓";
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 22px;
+  height: 22px;
+  line-height: 22px;
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border-radius: 999px;
+  background: var(--primary);
+  color: var(--on-primary);
+}
+/* The dot previews that theme's OWN --primary: the element carries its own
+   [data-theme], so the token resolves from the theme's block in this file --
+   never a duplicated hex that could drift from the palette. */
+.theme-swatch-dot {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: var(--primary);
+  border: 2px solid var(--border);
+}
+.theme-swatch-face { font-size: 1.15rem; line-height: 1; }
+.theme-swatch-label { font-weight: 600; }
 
 .trust-strip {
   display: inline-block;
@@ -173,7 +342,7 @@ input[type=text], input[type=number] {
   font-weight: 600;
   padding: 10px 24px;
   background: var(--primary);
-  color: #fff;
+  color: var(--on-primary);
   border: none;
   border-radius: 8px;
   cursor: pointer;
@@ -189,8 +358,8 @@ input[type=text], input[type=number] {
 .btn:active { transform: translateY(0); filter: brightness(0.96); }
 .btn:focus-visible { outline: 2px solid var(--learning); outline-offset: 2px; }
 
-.btn-accent { background: var(--accent); }
-.btn-danger { background: var(--danger); }
+.btn-accent { background: var(--accent); color: var(--on-accent); }
+.btn-danger { background: var(--danger); color: var(--on-danger); }
 .btn-quiet {
   background: var(--surface);
   color: var(--text);
@@ -344,7 +513,7 @@ th { background: var(--bg); }
   color: var(--text);
   text-decoration: none;
 }
-.switcher-link.active { border-color: var(--primary); background: var(--primary); color: #fff; }
+.switcher-link.active { border-color: var(--primary); background: var(--primary); color: var(--on-primary); }
 .switcher-count { opacity: 0.8; font-size: 0.8em; }
 /* Grid, not flex-wrap: flex-wrap's justify-content:center centers each
    wrapped ROW independently, so rows with different item counts (a 1-card
