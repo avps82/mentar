@@ -65,6 +65,14 @@ CONTRAST_PAIRS = [
     ("--on-primary", "--primary", 3.0, ".btn label"),
     ("--on-accent", "--accent", 3.0, ".btn-accent label"),
     ("--on-danger", "--danger", 3.0, ".btn-danger label"),
+    # --primary is ALSO drawn as text: it is the brand wordmark's gradient start
+    # (.brand-text) and the hover border on .choice-option/.settings-link. Added
+    # 2026-08-14 after finding NEITHER this gate nor the infra theme linter
+    # checked it -- which is precisely the pair the rejected "just darken the
+    # button backgrounds" fix would have destroyed (dark-mode --primary at
+    # #0E6E7A measures 2.77:1 on its own --bg: a legible button and an
+    # unreadable logo). 3.0 not 4.5: the wordmark is 1.7rem/800, WCAG large text.
+    ("--primary", "--bg", 3.0, "brand wordmark + hover borders on the page"),
 ]
 
 _HEX_RE = re.compile(r"^#[0-9A-Fa-f]{6}$")
