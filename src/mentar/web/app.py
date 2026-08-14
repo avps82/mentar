@@ -244,8 +244,17 @@ def _subject_groups() -> list[tuple[str, list[str]]]:
     for key, cfg in SUBJECTS.items():
         by_year.setdefault(cfg["year_level"] or "pilot", []).append(key)
 
-    def _sort_key(year: str) -> tuple[int, str]:
-        return (1, "") if year == "pilot" else (0, year)
+    def _sort_key(year: str) -> tuple[int, str, int]:
+        """Band, then NUMBER inside the band. 2026-08-15: this sorted the raw
+        string, so the picker read "Class 11, Class 12, Class 2..." and "Year 10,
+        Year 11, Year 12, Year 2..." -- the same lexicographic trap _grade_sort_key
+        was written for on the Settings page, in the one place that never got it.
+        India's Class 11-12 made it impossible to miss."""
+        if year == "pilot":
+            return (1, "", 0)
+        band = "".join(ch for ch in year if not ch.isdigit()).strip()
+        rank = _grade_sort_key(year)[1]
+        return (0, band, rank if isinstance(rank, int) else 0)
 
     groups = []
     for year in sorted(by_year, key=_sort_key):

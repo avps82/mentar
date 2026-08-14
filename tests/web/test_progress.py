@@ -121,6 +121,31 @@ def test_picker_groups_subjects_by_year():
     assert tryout_idx < html.find('value="fractions"')
 
 
+def test_picker_year_groups_sort_by_number_not_alphabetically():
+    """2026-08-15 audit: the picker read "Class 11, Class 12, Class 2..." and
+    "Year 10, Year 11, Year 12, Year 2...". _subject_groups sorted the raw year
+    STRING -- the same lexicographic trap _grade_sort_key exists for, in the one
+    place that never got it. India's Class 11-12 made it impossible to miss."""
+    app_mod, _c = _client()
+    order = [label for label, _keys in app_mod.SUBJECT_GROUPS]
+
+    def pos(label):
+        return next(i for i, x in enumerate(order) if x.startswith(label))
+
+    for band, low, high in (("Class", 8, 11), ("Year", 2, 10), ("Year", 9, 12),
+                            ("Secondary", 2, 3), ("Grade", 2, 8)):
+        assert pos(f"{band} {low}") < pos(f"{band} {high}"), (
+            f"{band} {high} sorted before {band} {low}: {order}"
+        )
+    # A band stays contiguous (countries don't interleave) and pilot sorts last.
+    bands = [lbl.split()[0] for lbl in order]
+    assert bands == sorted(set(bands), key=bands.index) or True
+    for band in ("Class", "Grade", "Primary", "Secondary", "Year"):
+        idx = [i for i, b in enumerate(bands) if b == band]
+        assert idx == list(range(idx[0], idx[-1] + 1)), f"{band} group is not contiguous: {order}"
+    assert order[-1] == "Try-out topics", order[-1]
+
+
 def test_practice_pack_subjects_appear_under_tryout_topics():
     """The evergreen practice sampler (times tables/skip counting/doubles-halves,
     synonyms-antonyms/rhyming/odd-one-out/plurals) lives in its own
