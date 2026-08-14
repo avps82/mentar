@@ -126,6 +126,25 @@ def test_no_mc4_question_leaks_its_own_answer():
 # table, a cohesion question showing claim/evidence, syntax-for-effect showing
 # word origins...). Pinning the marker is what makes that regression loud.
 _SENIOR_ROUTING = {
+    # Senior science (2026-08-15): Physics / Chemistry / Biology.
+    ('biology', 'Diffusion, osmosis and active transport'): 'DIFFUSION         high -> low conc',
+    ('biology', 'Enzymes'): 'a PROTEIN catalyst',
+    ('biology', 'Genotype and phenotype'): 'GENOTYPE   the alleles themselves ',
+    ('biology', 'Homeostasis and negative feedback'): 'set point',
+    ('biology', 'Photosynthesis and respiration'): 'PHOTOSYNTHESIS   carbon dioxide + ',
+    ('biology', 'Trophic levels in a food chain'): 'PRODUCER (makes its own food)     ',
+    ('chemistry', 'Groups of the periodic table'): 'GROUP 1   alkali metals   1 outer ',
+    ('chemistry', 'Ionic, covalent and metallic bonding'): 'IONIC       metal + non-metal     ',
+    ('chemistry', 'Oxidation and reduction'): 'Oxidation Is Loss    of electrons ',
+    ('chemistry', 'Strong acids, weak acids and bases'): 'STRONG acid   nearly every molecul',
+    ('chemistry', 'The mole and amount of substance'): 'HOW MANY particles?    amount of s',
+    ('chemistry', 'What changes the rate of a reaction'): 'CHANGE                       EFFEC',
+    ('physics', 'Forms of energy'): 'GRAVITATIONAL POTENTIAL   lifted u',
+    ('physics', "Newton's laws of motion"): 'FIRST   no resultant force  ->  no',
+    ('physics', 'Scalars and vectors'): 'SCALAR   size only                ',
+    ('physics', 'Series and parallel circuits'): 'SERIES                            ',
+    ('physics', 'The electromagnetic spectrum'): 'LOWER ENERGY  <-------------------',
+    ('physics', 'What is conserved in a collision'): 'ALWAYS conserved        total mome',
     ("english", "High and low modality"): "LOW  <",
     ("english", "Nominalisation (verb or adjective to noun)"): "NOMINALISATION (the noun form)",
     ("english", "Rhetorical devices in persuasive writing"): "rhetorical question",

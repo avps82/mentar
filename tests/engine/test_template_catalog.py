@@ -324,6 +324,60 @@ _EXPECTED = {
     "curriculum/templates/AU_ACARA/year10_science.md": {
         "key": "au_acara_year10_science", "label": "Science — Year 10 🇦🇺", "item_source": "au_science_year10",
     },
+    "curriculum/templates/AU_ACARA/year11_biology.md": {
+        "key": "au_acara_year11_biology", "label": "Biology — Year 11 🇦🇺", "item_source": "au11_biology",
+    },
+    "curriculum/templates/AU_ACARA/year11_chemistry.md": {
+        "key": "au_acara_year11_chemistry", "label": "Chemistry — Year 11 🇦🇺", "item_source": "au11_chemistry",
+    },
+    "curriculum/templates/AU_ACARA/year11_physics.md": {
+        "key": "au_acara_year11_physics", "label": "Physics — Year 11 🇦🇺", "item_source": "au11_physics",
+    },
+    "curriculum/templates/AU_ACARA/year12_biology.md": {
+        "key": "au_acara_year12_biology", "label": "Biology — Year 12 🇦🇺", "item_source": "au12_biology",
+    },
+    "curriculum/templates/AU_ACARA/year12_chemistry.md": {
+        "key": "au_acara_year12_chemistry", "label": "Chemistry — Year 12 🇦🇺", "item_source": "au12_chemistry",
+    },
+    "curriculum/templates/AU_ACARA/year12_physics.md": {
+        "key": "au_acara_year12_physics", "label": "Physics — Year 12 🇦🇺", "item_source": "au12_physics",
+    },
+    "curriculum/templates/IN_GENERIC/c11_biology.md": {
+        "key": "in_generic_c11_biology", "label": "Biology — Class 11 🇮🇳", "item_source": "in_c11_biology",
+    },
+    "curriculum/templates/IN_GENERIC/c11_chemistry.md": {
+        "key": "in_generic_c11_chemistry", "label": "Chemistry — Class 11 🇮🇳", "item_source": "in_c11_chemistry",
+    },
+    "curriculum/templates/IN_GENERIC/c11_physics.md": {
+        "key": "in_generic_c11_physics", "label": "Physics — Class 11 🇮🇳", "item_source": "in_c11_physics",
+    },
+    "curriculum/templates/IN_GENERIC/c12_biology.md": {
+        "key": "in_generic_c12_biology", "label": "Biology — Class 12 🇮🇳", "item_source": "in_c12_biology",
+    },
+    "curriculum/templates/IN_GENERIC/c12_chemistry.md": {
+        "key": "in_generic_c12_chemistry", "label": "Chemistry — Class 12 🇮🇳", "item_source": "in_c12_chemistry",
+    },
+    "curriculum/templates/IN_GENERIC/c12_physics.md": {
+        "key": "in_generic_c12_physics", "label": "Physics — Class 12 🇮🇳", "item_source": "in_c12_physics",
+    },
+    "curriculum/templates/SG_GENERIC/s3_biology.md": {
+        "key": "sg_generic_s3_biology", "label": "Biology — Secondary 3 🇸🇬", "item_source": "sg_s3_biology",
+    },
+    "curriculum/templates/SG_GENERIC/s3_chemistry.md": {
+        "key": "sg_generic_s3_chemistry", "label": "Chemistry — Secondary 3 🇸🇬", "item_source": "sg_s3_chemistry",
+    },
+    "curriculum/templates/SG_GENERIC/s3_physics.md": {
+        "key": "sg_generic_s3_physics", "label": "Physics — Secondary 3 🇸🇬", "item_source": "sg_s3_physics",
+    },
+    "curriculum/templates/SG_GENERIC/s4_biology.md": {
+        "key": "sg_generic_s4_biology", "label": "Biology — Secondary 4 🇸🇬", "item_source": "sg_s4_biology",
+    },
+    "curriculum/templates/SG_GENERIC/s4_chemistry.md": {
+        "key": "sg_generic_s4_chemistry", "label": "Chemistry — Secondary 4 🇸🇬", "item_source": "sg_s4_chemistry",
+    },
+    "curriculum/templates/SG_GENERIC/s4_physics.md": {
+        "key": "sg_generic_s4_physics", "label": "Physics — Secondary 4 🇸🇬", "item_source": "sg_s4_physics",
+    },
 }
 
 

@@ -62,6 +62,7 @@ from mentar.engine.science_items import (
     AU_SCIENCE_YEAR10_GENERATORS,
     SCIENCE_GENERATORS,
 )
+from mentar.engine.senior_science_items import SENIOR_SCIENCE_ITEM_SOURCES
 
 
 def build_registry(pilot_itembank_path: Path) -> dict[str, dict]:
@@ -127,6 +128,13 @@ def build_registry(pilot_itembank_path: Path) -> dict[str, dict]:
         **{
             name: {"generators": gens, "itembank": None}
             for name, gens in GENERIC_ENGLISH_ITEM_SOURCES.items()
+        },
+        # Senior science (2026-08-15): Physics / Chemistry / Biology as SEPARATE
+        # subjects at senior level, for AU, India and Singapore. Junior years stay
+        # combined; senior years do not, because that is what a student enrols in.
+        **{
+            name: {"generators": gens, "itembank": None}
+            for name, gens in SENIOR_SCIENCE_ITEM_SOURCES.items()
         },
         # Generic Science packs (2026-08-14) — third subject on the same shared
         # stage table, reusing engine/science_items.py's already-shipped AU
