@@ -1312,7 +1312,33 @@ def test_curriculum_pack_uninstall_rejects_not_installed():
         assert "not installed" in r.get_json()["error"]
 
 
+def test_method_card_wraps_but_step_grid_does_not():
+    """2026-08-14 bug: explain-mode method cards rendered through the step-grid
+    <pre>, whose overflow-x:hidden clipped a long question line mid-word
+    ("...What is the new pr"). Prose wraps (steps_wrap); a digit grid must NOT
+    (column alignment IS the meaning)."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+
+    app_mod, _ = _client()
+    lines = [{"text": "A price of $160 increases by 20%. What is the new price?", "is_annotation": False}]
+    with app_mod.app.app_context():
+        wrapped = flask.render_template("_arithmetic_steps.html", steps_lines=lines, steps_wrap=True)
+        grid = flask.render_template("_arithmetic_steps.html", steps_lines=lines, steps_wrap=False)
+    assert 'class="steps-pre steps-pre-wrap"' in wrapped
+    assert 'class="steps-pre"' in grid and "steps-pre-wrap" not in grid
+
+    css = (pathlib.Path(app_mod.__file__).parent / "static" / "style.css").read_text()
+    rule = css.split(".steps-pre-wrap {")[1].split("}")[0]  # IndexError if the class is gone
+    assert "white-space: pre-wrap" in rule and "overflow-x: visible" in rule
+
+
 if __name__ == "__main__":
+    test_method_card_wraps_but_step_grid_does_not()
+    print("  ✓ test_method_card_wraps_but_step_grid_does_not")
     test_trust_strip_on_child_and_parent_screens()
     print("  ✓ test_trust_strip_on_child_and_parent_screens")
     test_web_learner_flow()

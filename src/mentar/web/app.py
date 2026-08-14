@@ -1189,9 +1189,10 @@ def _elaborate_display_lines(ctrl: SessionController) -> list[dict] | None:
     render through the SAME `_arithmetic_steps.html` partial -- both are
     computed, non-LLM, line-oriented monospace content. A node is step-grid- or
     method-card-eligible, never both, so this is a plain either/or, not a merge.
-    Method-card lines are already short plain sentences (no overflow risk the
-    way a long division "Middle Step" annotation has), so every line renders at
-    the normal size (is_annotation=False)."""
+    Method-card lines render at the normal size (is_annotation=False) but WRAP
+    (steps_wrap below) -- they are prose, not aligned columns, and 2026-08-14
+    showed a percentage card's question line clipped mid-word by the step
+    grid's overflow-x:hidden."""
     if ctrl.elaborate_steps_grid is not None:
         return render_steps_grid_lines(ctrl.elaborate_steps_grid)
     if ctrl.elaborate_method_card is not None:
@@ -1231,6 +1232,9 @@ def _turn_context(learner_uuid: str, ctrl: SessionController, is_first_turn: boo
         # sentences render at a smaller font (fits on one line, no wrap/scroll)
         # while the numeric rows stay at the normal size.
         "steps_lines": _elaborate_display_lines(ctrl),
+        # Step grids must never wrap (column alignment IS the meaning); method
+        # cards must, or long sentences get clipped. See _elaborate_display_lines.
+        "steps_wrap": ctrl.elaborate_steps_grid is None,
         # R12-fix2: mastery bar + session counter live INSIDE the swap target so
         # every htmx turn refreshes them (they froze at page-load state before).
         "current_mastery": _current_node_mastery(learner_uuid, ctrl),

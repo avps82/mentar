@@ -423,6 +423,15 @@ input[type=text], input[type=number] {
      holds; .ascii-art below has no such guarantee (free-form content). */
   overflow-x: hidden;
 }
+.steps-pre-wrap {
+  /* Explain-mode method cards are prose sentences (+ an optional appended
+     diagram), NOT aligned digit columns -- the width guarantee .steps-pre
+     relies on does not hold, and overflow-x:hidden silently chopped the tail
+     off long lines ("...What is the new pr"). Wrap instead: short diagram
+     lines are untouched, long sentences stay readable. */
+  white-space: pre-wrap;
+  overflow-x: visible;
+}
 .steps-pre-line { font-size: 1.4rem; }
 .steps-pre-annotation { font-size: 0.75rem; color: var(--text-muted); }
 .ascii-art {
