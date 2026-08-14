@@ -25,6 +25,13 @@ _SUBJECT_TO_SCAFFOLD_DIR = {
     "maths": "maths",
     "english": "english",
     "science": "science",
+    # Senior science splits into three certificate subjects (2026-08-15,
+    # engine/senior_science_items.py) but they are still science: one scaffold
+    # directory, so a senior physics node can reuse a junior forces scaffold
+    # rather than duplicating it under a fourth directory.
+    "physics": "science",
+    "chemistry": "science",
+    "biology": "science",
 }
 
 _RESERVED_NAMES = {"index.md", "log.md"}
@@ -56,6 +63,33 @@ def _scan_scaffold_dir(scaffold_dir: str) -> tuple[tuple[tuple[str, ...], str], 
     return tuple(entries)
 
 
+@lru_cache(maxsize=2048)
+def _kw_pattern(keyword: str) -> re.Pattern[str]:
+    """A keyword matches on WORD boundaries, tolerating a plural suffix.
+
+    2026-08-15: plain substring matching routed three senior-science nodes to the
+    acids-and-bases scaffold, because the keyword "ph" is inside "phenotype",
+    "photosynthesis" AND "trophic" -- and sent the electromagnetic spectrum to the
+    magnetism scaffold via "magnet" inside "electromagnetic". Every one of those
+    would have shown a child the wrong diagram in explain mode.
+
+    Substring matching existed so "fraction" would match "fractions" and
+    "multiply" would reach "Multiplying whole numbers", so the fix keeps that:
+    bounded on both sides, with a short list of common inflections. Keywords
+    that are themselves phrases or contain punctuation still work -- the bound is
+    only applied where the keyword's own edge is a word character.
+    """
+    left = r"(?<![a-z0-9])" if keyword[:1].isalnum() else ""
+    # Common inflections only -- NOT an arbitrary suffix, which is what let "ph"
+    # match "phenotype". "multiply" must still reach "Multiplying whole numbers".
+    right = r"(?:e?s|ing|ed)?(?![a-z0-9])" if keyword[-1:].isalnum() else ""
+    return re.compile(left + re.escape(keyword) + right)
+
+
+def _kw_matches(keyword: str, label_lower: str) -> bool:
+    return bool(_kw_pattern(keyword).search(label_lower))
+
+
 def load_visual_scaffold(scaffold_root: Path, subject: str, label: str) -> str:
     """Return the body of the scaffold file whose `topic_keywords` best match
     *label* (case-insensitive substring), or "" if none match / the subject
@@ -76,7 +110,7 @@ def load_visual_scaffold(scaffold_root: Path, subject: str, label: str) -> str:
     scaffold_dir = str(Path(scaffold_root) / subdir)
     best_body, best_count = "", 0
     for keywords, body in _scan_scaffold_dir(scaffold_dir):
-        count = sum(1 for kw in keywords if kw in label_lower)
+        count = sum(1 for kw in keywords if _kw_matches(kw, label_lower))
         if count > best_count:
             best_body, best_count = body, count
     return best_body
