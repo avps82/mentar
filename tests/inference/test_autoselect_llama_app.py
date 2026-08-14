@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "src"))
@@ -19,8 +20,16 @@ import mentar.inference.autoselect as A  # noqa: E402
 
 
 def _patch(present: set[str]) -> None:
-    """Simulate which() availability + deterministic sizing/AVX detection (module attrs)."""
-    A.shutil.which = lambda name: f"/usr/bin/{name}" if name in present else None
+    """Simulate which() availability + deterministic sizing/AVX detection (module attrs).
+
+    Rebinds autoselect's OWN `shutil` name, never `shutil.which` on the shared module
+    object: the latter leaked for the rest of the pytest session (no teardown here),
+    and on 2026-08-14 it silently skipped a later test that checks for `node`.
+    autoselect uses shutil for which() only (two call sites).
+    """
+    A.shutil = SimpleNamespace(
+        which=lambda name: f"/usr/bin/{name}" if name in present else None
+    )
     A._need_gb = lambda model, runtime, n_ctx: (float(model.get("params_b", 7)), True)
     A._has_avx2 = lambda: True
 

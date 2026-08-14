@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import pathlib
 import sys
+from types import SimpleNamespace
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "src"))
@@ -37,8 +38,13 @@ def _patch(monkeypatch, *, ollama: bool, avx2, need_per_b=1.0):
         (monkeypatch.setattr(A, name, val) if monkeypatch
          else setattr(A, name, val))
     which = (lambda x: "/usr/bin/ollama" if (x == "ollama" and ollama) else None)
-    (monkeypatch.setattr(A.shutil, "which", which) if monkeypatch
-     else setattr(A.shutil, "which", which))
+    # Rebind autoselect's OWN `shutil` name (which() is its only use of it), never
+    # `which` on the shared module object: patching the real module leaked past this
+    # file -- monkeypatch is None here in practice, so the else-branch ran and stuck
+    # -- and on 2026-08-14 it silently skipped a later test that checks for `node`.
+    stub = SimpleNamespace(which=which)
+    (monkeypatch.setattr(A, "shutil", stub) if monkeypatch
+     else setattr(A, "shutil", stub))
 
 
 def _roster():
