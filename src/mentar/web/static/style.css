@@ -577,12 +577,25 @@ th { background: var(--bg); }
 .graph-wrap { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px; margin-bottom: 24px; }
 .graph-legend { display: flex; gap: 18px; font-size: 0.85rem; color: var(--text-muted); margin-top: 10px; flex-wrap: wrap; }
 .graph-legend .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; }
-.graph-edge { stroke: var(--border); stroke-width: 0.6; }
-.graph-node { stroke: var(--surface); stroke-width: 0.8; }
+.graph-edge { stroke: var(--border); stroke-width: 1.6; }
+.graph-node { stroke: var(--surface); stroke-width: 2; }
 .graph-node.node-mastered { fill: var(--mastered); }
 .graph-node.node-learning { fill: var(--learning); }
 .graph-node.node-not_started { fill: var(--not-started); }
-.graph-node-label { font-size: 3.1px; fill: var(--text-muted); font-family: var(--font); }
+/* px, in a px viewBox -- keep in sync with app.py::_GRAPH_LABEL_PX, which sizes
+   the column the label has to wrap into. */
+.graph-node-label {
+  font-size: 13px;
+  fill: var(--text-muted);
+  font-family: var(--font);
+  /* Edges are drawn first, so a label sitting on a prereq line was read
+     through it. A surface-coloured stroke UNDER the glyphs (paint-order) is
+     the whole fix -- no layout gymnastics to keep text off the lines. */
+  paint-order: stroke;
+  stroke: var(--surface);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
 
 .calm-card { background: var(--surface); border-radius: 14px; padding: 32px 24px; box-shadow: var(--shadow); font-size: 1.15rem; text-align: center; margin-top: 60px; }
 

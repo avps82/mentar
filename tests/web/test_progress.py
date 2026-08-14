@@ -324,39 +324,81 @@ def test_r6_2_display_name_unified_across_all_four_surfaces():
     assert "au3_place_value" not in done_html
 
 
-def test_graph_layout_au_year3_bottom_row_no_longer_clipped():
-    """R6.1 regression: _compute_graph_layout's y-position scale and its
-    returned viewBox height used to be two uncoupled scales. For the AU Year 3
-    template (3 levels), the bug put the bottom row at y=83.3 while height
-    was only 78 -- clipped off-screen. Reproduce the exact before/after."""
+def test_graph_labels_never_overlap_a_neighbour_in_any_template():
+    """2026-08-14 (maintainer screenshot: "Plural formsRhyming wordsSimple
+    synonyms..."): labels ran into each other. The cause was two uncoupled
+    scales -- x was a percentage of a 0-100 viewBox (a 4-node row gave each node
+    20 units) while the label font was sized in those same units (~27 units for
+    16 chars). Layout is px now, so a label's wrap width and its column are
+    directly comparable; hold that with the estimate the layout itself uses.
+    """
+    _app_mod, _c = _client()  # all packs on: this must hold for every country
+    from mentar.web.app import (
+        _GRAPH_CHAR_W,
+        _GRAPH_COL_W,
+        _GRAPH_LABEL_PX,
+        _SUBJECT_CURRICULA,
+        _compute_graph_layout,
+    )
+
+    def half_width(node):
+        widest = max(len(line) for line in node["label_lines"])
+        return widest * _GRAPH_LABEL_PX * _GRAPH_CHAR_W / 2
+
+    for subject_key, curriculum in _SUBJECT_CURRICULA.items():
+        graph = _compute_graph_layout(curriculum, {})
+        rows = {}
+        for node in graph["nodes"]:
+            rows.setdefault(node["y"], []).append(node)
+        for row in rows.values():
+            row.sort(key=lambda n: n["x"])
+            for left, right in zip(row, row[1:]):
+                gap = (right["x"] - half_width(right)) - (left["x"] + half_width(left))
+                assert gap > 0, (
+                    f"{subject_key}: {left['id']!r} and {right['id']!r} labels overlap "
+                    f"by {-gap:.1f}px on the same row"
+                )
+        # ...and no label runs off either side of the viewBox.
+        for node in graph["nodes"]:
+            assert node["x"] - half_width(node) >= -1, f"{subject_key}: {node['id']} clipped left"
+            assert node["x"] + half_width(node) <= graph["width"] + 1, (
+                f"{subject_key}: {node['id']} clipped right"
+            )
+        assert graph["width"] % _GRAPH_COL_W == 0, "rows are whole columns wide"
+
+
+def test_graph_box_is_only_as_tall_as_the_graph_is_deep():
+    """The other half of the same screenshot: a screenful of whitespace under a
+    shallow graph. Height was n_levels * 26 in the SAME units as the 0-100 width,
+    so a 1-level graph rendered as a near-square box. Now it is content-sized --
+    a single row must be a short band, far wider than it is tall."""
+    _app_mod, _c = _client()
     from mentar.web.app import _SUBJECT_CURRICULA, _compute_graph_layout
 
-    curriculum = _SUBJECT_CURRICULA["au_acara_year3_maths"]
-    graph = _compute_graph_layout(curriculum, {})
-
-    # Old buggy formula for reference (must NOT match the new height).
-    old_height = 78
-    bottom_row_nodes = [n for n in graph["nodes"] if n["y"] == max(n2["y"] for n2 in graph["nodes"])]
-    assert bottom_row_nodes, "expected at least one bottom-row node"
-    for node in bottom_row_nodes:
-        assert node["y"] < old_height, "bottom row must sit above the OLD (buggy) height too now"
-    assert graph["height"] > old_height  # the new height has real padding, not the bare old value
+    # practice_english is one flat level of 4 nodes (no prerequisites).
+    graph = _compute_graph_layout(_SUBJECT_CURRICULA["practice_english"], {})
+    assert len({n["y"] for n in graph["nodes"]}) == 1, "expected a single row"
+    assert graph["height"] < graph["width"] / 3, (
+        f"a one-row graph must be a band, got {graph['width']}x{graph['height']}"
+    )
 
 
 def test_graph_layout_bottom_row_within_viewbox_for_all_templates():
-    """R6.1: for every shipped template, the bottom-most node's y + circle
-    radius (4, per progress.html's <circle r="4">) + full wrapped-label
-    extent (up to 3 lines: 8 + (lines-1)*4, per progress.html's <text
-    y="{{ n.y + 8 }}"> / <tspan dy="4">) must stay <= the returned height."""
+    """R6.1: for every shipped template, the bottom-most node's full extent
+    (circle + every wrapped label line) must stay <= the returned height -- the
+    AU Year 3 template once put its bottom row at y=83.3 inside a height of 78.
+    Geometry comes from the layout itself (node_r/label_dy/line_h are what the
+    template renders), so this can't drift from what the browser draws."""
+    _app_mod, _c = _client()
     from mentar.web.app import _SUBJECT_CURRICULA, _compute_graph_layout
 
-    RADIUS = 4
     for subject_key, curriculum in _SUBJECT_CURRICULA.items():
         graph = _compute_graph_layout(curriculum, {})
         for node in graph["nodes"]:
-            label_extent = 8 + (len(node["label_lines"]) - 1) * 4
-            bottom_edge = node["y"] + RADIUS + label_extent
-            assert bottom_edge <= graph["height"], (
-                f"{subject_key}: node {node['id']!r} bottom edge {bottom_edge} "
+            last_baseline = node["y"] + graph["label_dy"] + (
+                len(node["label_lines"]) - 1) * graph["line_h"]
+            assert last_baseline <= graph["height"], (
+                f"{subject_key}: node {node['id']!r} last label baseline {last_baseline} "
                 f"exceeds viewBox height {graph['height']}"
             )
+            assert node["y"] - graph["node_r"] >= 0, f"{subject_key}: {node['id']} clipped at top"

@@ -21,15 +21,19 @@
 </nav>
 {% if graph and graph.nodes %}
 <div class="graph-wrap">
-  <svg viewBox="0 0 100 {{ graph.height }}" role="img" aria-label="Concept map showing which skills are mastered, in progress, or not started yet" style="width:100%;height:auto;display:block">
+  {# Geometry is px in a content-sized viewBox (see _compute_graph_layout): the
+     svg renders at its natural width on a wide screen -- so the label font is
+     the real 13px, not scaled up until neighbours collide -- and scales down
+     proportionally on a narrow one. #}
+  <svg viewBox="0 0 {{ graph.width }} {{ graph.height }}" role="img" aria-label="Concept map showing which skills are mastered, in progress, or not started yet" style="width:{{ graph.width }}px;max-width:100%;height:auto;display:block;margin:0 auto">
     {% for e in graph.edges %}
     <line x1="{{ e.x1 }}" y1="{{ e.y1 }}" x2="{{ e.x2 }}" y2="{{ e.y2 }}" class="graph-edge" />
     {% endfor %}
     {% for n in graph.nodes %}
     <g>
       <title>{{ n.label }} — {{ n.status | replace("_", " ") }} ({{ n.pct }}%)</title>
-      <circle cx="{{ n.x }}" cy="{{ n.y }}" r="4" class="graph-node node-{{ n.status }}" />
-      <text x="{{ n.x }}" y="{{ n.y + 8 }}" text-anchor="middle" class="graph-node-label">{% for line in n.label_lines %}<tspan x="{{ n.x }}" {% if not loop.first %}dy="4"{% endif %}>{{ line }}</tspan>{% endfor %}</text>
+      <circle cx="{{ n.x }}" cy="{{ n.y }}" r="{{ graph.node_r }}" class="graph-node node-{{ n.status }}" />
+      <text x="{{ n.x }}" y="{{ n.y + graph.label_dy }}" text-anchor="middle" class="graph-node-label">{% for line in n.label_lines %}<tspan x="{{ n.x }}" {% if not loop.first %}dy="{{ graph.line_h }}"{% endif %}>{{ line }}</tspan>{% endfor %}</text>
     </g>
     {% endfor %}
   </svg>

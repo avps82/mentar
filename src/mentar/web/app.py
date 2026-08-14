@@ -1091,12 +1091,34 @@ def _wrap_label(label: str, max_chars: int = 16, max_lines: int = 3) -> list[str
     return lines
 
 
+# Concept-map geometry, in PX -- the SVG's user units ARE px (viewBox width ==
+# the svg's own px width), so a label's font size and a node's horizontal slot
+# are directly comparable. 2026-08-14: they were not. The layout used a 0-100
+# percentage x-axis, which made the two uncoupled -- a 4-node row gave each node
+# 20 units while a 16-char label at font-size 3.1 needed ~27, so labels
+# overlapped their neighbours (maintainer screenshot: "Plural formsRhyming
+# wordsSimple synonyms..."), and the height, in those same 0-100 units, forced a
+# near-square box with a screenful of whitespace under a shallow graph.
+# _GRAPH_LABEL_PX / _GRAPH_NODE_R / _GRAPH_LINE_H must match style.css's
+# .graph-node-label font-size and the values the template renders (both take
+# them from this layout, except the font size, which CSS owns).
+_GRAPH_COL_W = 184       # horizontal slot per node
+_GRAPH_ROW_GAP = 22      # vertical gap between a row's deepest label and the next row
+_GRAPH_NODE_R = 13
+_GRAPH_LABEL_PX = 13     # keep in sync with .graph-node-label's font-size
+_GRAPH_LINE_H = 16       # wrapped-label line height
+_GRAPH_LABEL_TOP = 12    # circle edge -> first label baseline
+_GRAPH_CHAR_W = 0.58     # em-width upper bound for the UI sans font
+_GRAPH_LABEL_MAX_CHARS = int((_GRAPH_COL_W - 14) / (_GRAPH_LABEL_PX * _GRAPH_CHAR_W))
+
+
 def _compute_graph_layout(curriculum: dict, node_pct: dict[str, int]) -> dict:
     """U-40/U-41: an owned layered layout for the concept-graph map -- no
     graph library. Works for any curriculum (node count/edges not hardcoded):
     level(n) = 0 if no prereqs, else 1 + max(level(prereq)); nodes in the same
-    level are spread evenly across a 0-100 x-axis so the SVG (viewBox 0 0 100
-    H) scales responsively. Percentage coordinates keep this pure/testable."""
+    level sit on one row, one _GRAPH_COL_W-wide slot each, the row centred.
+    Coordinates are px in a content-sized viewBox, so labels wrap to a slot that
+    genuinely fits them and the box is only as tall as the graph is deep."""
     levels: dict[str, int] = {}
 
     def _level(nid: str, seen: frozenset[str] = frozenset()) -> int:
@@ -1118,28 +1140,47 @@ def _compute_graph_layout(curriculum: dict, node_pct: dict[str, int]) -> dict:
     for row in by_level.values():
         row.sort()
 
-    n_levels = max(by_level, default=0) + 1
-    base_height = max(n_levels * 26, 26)
-    row_height = base_height / n_levels
-    BOTTOM_MARGIN = 24  # circle radius (4) + up to 3 wrapped label lines (~16) + descender slack, so the last row's content never sits flush against the viewBox edge
+    widest_row = max((len(r) for r in by_level.values()), default=1)
+    width = max(widest_row, 2) * _GRAPH_COL_W
+    label_dy = _GRAPH_NODE_R + _GRAPH_LABEL_TOP  # circle centre -> first baseline
+    wrapped = {
+        nid: _wrap_label(curriculum[nid].get("label", nid), max_chars=_GRAPH_LABEL_MAX_CHARS)
+        for nid in curriculum
+    }
+    # Each row is only as tall as ITS tallest label needs -- a fixed row height
+    # sized for the 3-line worst case padded every single-line row with dead
+    # space (the pilot's 7-level chain came out 368x711, a tall empty strip).
+    row_top: dict[int, float] = {}
+    _top = 0.0
+    for lvl in sorted(by_level):
+        row_top[lvl] = _top
+        max_lines = max(len(wrapped[nid]) for nid in by_level[lvl])
+        _top += _GRAPH_NODE_R * 2 + _GRAPH_LABEL_TOP + max_lines * _GRAPH_LINE_H + _GRAPH_ROW_GAP
+
     pos: dict[str, tuple[float, float]] = {}
     nodes = []
+    bottom = 0.0
     for lvl in sorted(by_level):
         row = by_level[lvl]
         for i, node_id in enumerate(row):
-            x = (i + 1) / (len(row) + 1) * 100
-            y = lvl * row_height + row_height / 2
+            # Centre each row: a 2-node row over a 4-node row stays centred
+            # rather than bunching at the left.
+            x = width / 2 + (i - (len(row) - 1) / 2) * _GRAPH_COL_W
+            y = row_top[lvl] + _GRAPH_NODE_R + 4
             pos[node_id] = (x, y)
             pct = node_pct.get(node_id)
             status = "not_started" if pct is None else ("mastered" if pct >= 85 else "learning")
             label = curriculum[node_id].get("label", node_id)
+            lines = wrapped[node_id]
             nodes.append({
                 "id": node_id,
                 "label": label,
-                "label_lines": _wrap_label(label),
+                "label_lines": lines,
                 "x": round(x, 1), "y": round(y, 1),
                 "pct": pct or 0, "status": status,
             })
+            # Deepest ink under this node: last label baseline + descender.
+            bottom = max(bottom, y + label_dy + (len(lines) - 1) * _GRAPH_LINE_H + 5)
 
     edges = []
     for node_id, node in curriculum.items():
@@ -1150,7 +1191,18 @@ def _compute_graph_layout(curriculum: dict, node_pct: dict[str, int]) -> dict:
             x1, y1 = pos[prereq]
             edges.append({"x1": round(x1, 1), "y1": round(y1, 1), "x2": round(x2, 1), "y2": round(y2, 1)})
 
-    return {"nodes": nodes, "edges": edges, "height": base_height + BOTTOM_MARGIN}
+    return {
+        "nodes": nodes,
+        "edges": edges,
+        "width": width,
+        # Content-sized: the box ends just below the deepest label, so a
+        # one-level graph is a short band, not a tall empty square.
+        "height": round(bottom + 6),
+        # The template renders these rather than repeating the constants.
+        "node_r": _GRAPH_NODE_R,
+        "label_dy": label_dy,
+        "line_h": _GRAPH_LINE_H,
+    }
 
 
 @app.route("/progress")
