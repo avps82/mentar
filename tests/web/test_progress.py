@@ -6,6 +6,7 @@ temp DB so there is no live LLM and no shared state between tests.
 
 from __future__ import annotations
 
+import json
 import os
 import pathlib
 import sys
@@ -15,14 +16,29 @@ REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
 
-def _client():
-    """Return a freshly-reloaded (app_mod, test_client) pair backed by a temp DB."""
+def _client(all_packs_on: bool = True):
+    """Return a freshly-reloaded (app_mod, test_client) pair backed by a temp DB.
+
+    Since 2026-08-14 a fresh install enables only the country-less General packs, but
+    these tests are about the picker's Year-group headings and the AU graph layouts --
+    they need the country packs loaded. So the default here writes a pack_state.json
+    turning EVERY discovered pack on (a state a family reaches with the Settings
+    country master switches). Pass all_packs_on=False for the shipped default.
+    """
     os.environ["MENTAR_DB_PATH"] = os.path.join(tempfile.mkdtemp(), "test_progress.db")
     os.environ.pop("MENTAR_PACK_STATE", None)  # isolation: don't inherit a toggle test's state file
     import importlib
 
     import mentar.web.app as app_mod
     app_mod = importlib.reload(app_mod)
+    if all_packs_on:
+        state = pathlib.Path(tempfile.mkdtemp()) / "pack_state.json"
+        state.write_text(
+            json.dumps({"enabled": [p["key"] for p in app_mod._all_packs_with_state()]}),
+            encoding="utf-8",
+        )
+        os.environ["MENTAR_PACK_STATE"] = str(state)
+        app_mod = importlib.reload(app_mod)  # discovery re-runs with everything on
     app_mod._llm_call_cached = lambda messages: "stub tutor reply"  # no network in tests
     app_mod._SETUP_GATE_BYPASS = True  # R9: not testing setup/first-run here
     return app_mod, app_mod.app.test_client()

@@ -921,6 +921,16 @@ base (max parental control).
   (`{"disabled": [subject_key, ...]}`), env-overridable via `MENTAR_PACK_STATE`
   (like `MENTAR_DB_PATH`). Startup discovery skips disabled keys; a corrupt file
   defaults to all-enabled (never breaks startup).
+  > **SUPERSEDED 2026-08-14** (maintainer: "default setting is all toggles are
+  > disabled for all subjects and grades for each country. Only toggle enabled is
+  > the general ones — thereby, user doesn't need to switch off any unwanted
+  > ones"). The file is now an ALLOW-list, `{"enabled": [subject_key, ...]}`, and
+  > the default with no file is the country-less General packs only. A pack is on
+  > iff listed, so a country pack shipped by a later release also defaults to off
+  > instead of appearing uninvited. A legacy `{"disabled": [...]}` file is still
+  > honoured as written (an existing install keeps its packs) and is rewritten in
+  > the new shape on the next toggle. A corrupt file now falls back to the
+  > General-only default, not all-enabled.
 - **New routes:** `GET /settings/curricula` (every in-repo pack + on/off state,
   including disabled ones so they can be re-enabled) and
   `POST /settings/curricula/<key>/<enable|disable>`. New Settings "Curricula" toggle

@@ -103,11 +103,11 @@ _PACKS_BASE_URL = "https://raw.githubusercontent.com/avps82/mentar/main"
 _PACKS_MANIFEST_PATH = _REPO / "curriculum" / "packs.json"
 
 # R10: per-install curriculum enable/disable. A gitignored JSON file holds the
-# set of subject keys a family has turned OFF -- so every in-repo pack ships
-# discoverable (no download step for content already on disk) but a parent can
-# hide the ones that don't apply to their child. Disabled packs are simply
-# skipped during startup discovery, so the toggle is applied on the next
-# restart (deliberate -- discovery is scan-once-at-startup; see R8's same note).
+# set of subject keys a family has turned ON -- so every in-repo pack ships
+# discoverable (no download step for content already on disk) but only what a
+# parent picked is loaded. Disabled packs are simply skipped during startup
+# discovery, so a toggle is applied on the next restart (deliberate -- discovery
+# is scan-once-at-startup; see R8's same note).
 # Env-overridable (like MENTAR_DB_PATH) so a deployment can relocate it and tests
 # can point it at a scratch file BEFORE discovery reads it.
 _PACK_STATE_PATH = Path(
@@ -115,21 +115,56 @@ _PACK_STATE_PATH = Path(
 )
 
 
-def _load_disabled_packs() -> set[str]:
+def _load_pack_state() -> dict[str, set[str]] | None:
+    """The family's stored choice, or None when they haven't made one.
+
+    Two shapes, because the default flipped on 2026-08-14 (maintainer: "default
+    setting is all toggles disabled for all subjects and grades for each country,
+    only the general ones enabled" -- so nobody has to switch off 66 packs for
+    countries they don't live in):
+
+    * ``{"enabled": [...]}`` -- current. An explicit allow-list: a pack is on iff
+      it is listed, so a country pack shipped by a later release defaults to OFF
+      too, rather than appearing uninvited.
+    * ``{"disabled": [...]}`` -- legacy (pre-2026-08-14) deny-list. Honoured as
+      written so an existing install's choices survive the flip; the next toggle
+      rewrites the file in the current shape.
+
+    A corrupt or unreadable file must never break startup: treated as "no choice
+    made yet", i.e. the General-only default.
+    """
     import json
     if not _PACK_STATE_PATH.exists():
-        return set()
+        return None
     try:
         data = json.loads(_PACK_STATE_PATH.read_text(encoding="utf-8"))
-        return set(data.get("disabled", []))
+        if isinstance(data.get("enabled"), list):
+            return {"enabled": set(data["enabled"])}
+        if isinstance(data.get("disabled"), list):
+            return {"disabled": set(data["disabled"])}
     except Exception:
-        return set()  # a corrupt state file must never break startup -- default to all-enabled
+        pass
+    return None
 
 
-def _save_disabled_packs(disabled: set[str]) -> None:
+def _pack_is_enabled(state: dict[str, set[str]] | None, key: str, country: str | None) -> bool:
+    """Whether one discovered pack should load, under whichever state shape exists.
+
+    Fresh install (state is None): only the country-less General packs (the
+    pilot/practice try-out content) are on -- a child can start a lesson
+    immediately, and nothing from a country they don't live in is in the way.
+    """
+    if state is None:
+        return country is None
+    if "enabled" in state:
+        return key in state["enabled"]
+    return key not in state["disabled"]
+
+
+def _save_enabled_packs(enabled: set[str]) -> None:
     import json
     _PACK_STATE_PATH.write_text(
-        json.dumps({"disabled": sorted(disabled)}, indent=2) + "\n", encoding="utf-8"
+        json.dumps({"enabled": sorted(enabled)}, indent=2) + "\n", encoding="utf-8"
     )
 
 
@@ -144,15 +179,20 @@ def _discover_template_paths() -> list[Path]:
     return [CURRICULUM_PATH if p.resolve() == default_fractions else p for p in paths]
 
 
-_DISABLED_PACKS = _load_disabled_packs()
+_PACK_STATE = _load_pack_state()
+# The live enabled set, filled during discovery below (which already parses every
+# template's front matter -- the `country` a fresh install's default keys off).
+# Toggle routes mutate this and persist it via _save_enabled_packs.
+_ENABLED_PACKS: set[str] = set()
 SUBJECTS: dict[str, dict] = {}
 for _path in _discover_template_paths():
     _meta = load_template_meta(_path)
     # derive_subject_key: fully automatic (directory = namespace) — no
     # per-template authoring step. See its docstring for the rule.
     _key = derive_subject_key(_path, _meta)
-    if _key in _DISABLED_PACKS:
-        continue  # R10: a family turned this curriculum off -- skip it entirely.
+    if not _pack_is_enabled(_PACK_STATE, _key, _meta["country"]):
+        continue  # R10: not turned on for this install -- skip it entirely.
+    _ENABLED_PACKS.add(_key)
     # A16: validate BEFORE anything else touches this template — a cyclic/bad-
     # prereq template silently produces an empty fringe and a false "you've
     # mastered everything!" completion for the child. Fail loud at startup.
@@ -774,7 +814,7 @@ def _all_packs_with_state() -> list[dict]:
     """R10: every in-repo curriculum pack (discovered template), with its current
     on/off state -- INCLUDING disabled ones (which SUBJECTS excludes), so the
     Settings toggle list can show them for re-enabling. `enabled` reflects the
-    live _DISABLED_PACKS set (updated on toggle); whether that state is actually
+    live _ENABLED_PACKS set (updated on toggle); whether that state is actually
     APPLIED to the picker waits for the next restart (discovery is at startup).
 
     Sort is Country -> Grade -> Subject (maintainer ask 2026-08-12, matching how
@@ -795,7 +835,7 @@ def _all_packs_with_state() -> list[dict]:
             "country": meta["country"],
             "year_level": meta["year_level"],
             "subject": meta["subject"] or "",
-            "enabled": key not in _DISABLED_PACKS,
+            "enabled": key in _ENABLED_PACKS,
         })
     out.sort(key=lambda p: (p["country"] or "", _grade_sort_key(p["year_level"]), p["subject"], p["key"]))
     return out
@@ -811,7 +851,7 @@ def curricula_list():
 @app.route("/settings/curricula/<key>/<action>", methods=["POST"])
 def curricula_toggle(key, action):
     """R10: enable/disable one in-repo pack. Updates the gitignored
-    pack_state.json AND the in-memory _DISABLED_PACKS so the listing reflects
+    pack_state.json AND the in-memory _ENABLED_PACKS so the listing reflects
     it at once; the picker itself updates on the next restart (discovery is
     scan-once-at-startup -- same restart note R8 uses)."""
     if action not in ("enable", "disable"):
@@ -821,11 +861,11 @@ def curricula_toggle(key, action):
         return jsonify({"ok": False, "error": "unknown curriculum"}), 404
 
     if action == "disable":
-        _DISABLED_PACKS.add(key)
+        _ENABLED_PACKS.discard(key)
     else:
-        _DISABLED_PACKS.discard(key)
-    _save_disabled_packs(_DISABLED_PACKS)
-    return jsonify({"ok": True, "enabled": key not in _DISABLED_PACKS, "restart_required": True})
+        _ENABLED_PACKS.add(key)
+    _save_enabled_packs(_ENABLED_PACKS)
+    return jsonify({"ok": True, "enabled": key in _ENABLED_PACKS, "restart_required": True})
 
 
 @app.route("/settings/curricula/country/<country>/<action>", methods=["POST"])
@@ -844,10 +884,10 @@ def curricula_toggle_country(country, action):
         return jsonify({"ok": False, "error": "unknown country"}), 404
 
     if action == "disable":
-        _DISABLED_PACKS.update(keys)
+        _ENABLED_PACKS.difference_update(keys)
     else:
-        _DISABLED_PACKS.difference_update(keys)
-    _save_disabled_packs(_DISABLED_PACKS)
+        _ENABLED_PACKS.update(keys)
+    _save_enabled_packs(_ENABLED_PACKS)
     return jsonify({
         "ok": True, "enabled": action == "enable", "count": len(keys), "restart_required": True,
     })
