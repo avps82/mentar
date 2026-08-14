@@ -1365,6 +1365,40 @@ def test_curriculum_pack_uninstall_rejects_not_installed():
         assert "not installed" in r.get_json()["error"]
 
 
+def test_help_button_is_named_for_what_it_does_and_can_be_nudged():
+    """2026-08-14 (maintainer): "🆘 Help" framed asking for help as a distress
+    signal — as failing — when bkt.py deliberately scores a hinted win AS a win.
+    The button is renamed, and nudge.js can draw a stalled child's eye to it. The
+    typed `?`/`help` tokens are an input contract and must NOT change with the
+    copy: pressing the renamed button still posts answer=help."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+
+    app_mod, c = _client()  # noqa: F841
+    c.post("/choose", data={"subject": "fractions"})
+    body = c.get("/learn").get_data(as_text=True)
+
+    assert "💡 Show me how" in body
+    assert "🆘" not in body, "the distress-signal framing must be gone"
+    assert 'value="help"' in body, "the posted token is unchanged"
+    assert 'id="help-btn"' in body and 'id="nudge-hint"' in body
+    assert "/static/nudge.js" in body
+
+    css = (pathlib.Path(app_mod.__file__).parent / "static" / "style.css").read_text()
+    assert ".btn.is-nudging" in css
+    # The pulse must not be the ONLY cue: reduced-motion keeps a static one.
+    reduced = css.split("@media (prefers-reduced-motion: reduce)")[1].split("}\n}")[0]
+    assert "is-nudging" in reduced and "animation: none" in reduced
+
+    # And the loop it points at still works when pressed.
+    frag = c.post("/answer", data={"answer": "help"},
+                  headers={"HX-Request": "true"}).get_data(as_text=True)
+    assert frag.strip(), "the help press must return a turn fragment"
+
+
 def test_method_card_wraps_but_step_grid_does_not():
     """2026-08-14 bug: explain-mode method cards rendered through the step-grid
     <pre>, whose overflow-x:hidden clipped a long question line mid-word

@@ -1,6 +1,7 @@
 {% extends "_base.html" %}
 {% block extra_head %}<script src="/static/htmx.min.js" defer></script>
-<script src="/static/tts.js" defer></script>{% endblock %}
+<script src="/static/tts.js" defer></script>
+<script src="/static/nudge.js" defer></script>{% endblock %}
 {% block content %}
 {# R12-fix2: the mastery bar moved INSIDE _turn.html / #turn-area — outside the
    swap target it froze at page-load state (wrong topic + stale % every htmx
@@ -13,17 +14,26 @@
 <div id="turn-area">
 {% include "_turn.html" %}
 </div>
+{# 2026-08-14 (maintainer): was "🆘 Help" -- 🆘 is the international DISTRESS
+   signal, so the button framed asking as an emergency, i.e. as failing. This
+   engine already scores a hinted win AS a win (bkt.py's elevated-guess), so the
+   button is named for what it DOES and ladders into the existing second tier,
+   "💡 Explain more". The typed `?`/`help`/`h` tokens are unchanged
+   (controller.py::HELP_WORDS) -- that's an input contract, not copy. #}
 <div class="quick-actions" style="margin-top:8px">
   <form method="POST" action="/answer" hx-post="/answer" hx-target="#turn-area" hx-swap="innerHTML" style="display:inline-block">
     <input type="hidden" name="answer" value="help">
-    <button class="btn btn-quiet" type="submit">🆘 Help</button>
+    <button id="help-btn" class="btn btn-quiet" type="submit">💡 Show me how</button>
   </form>
   <form method="POST" action="/answer" hx-post="/answer" hx-target="#turn-area" hx-swap="innerHTML" style="display:inline-block">
     <input type="hidden" name="answer" value="stop">
     <button class="btn btn-quiet" type="submit">🛑 Stop</button>
   </form>
 </div>
-<p class="hint">Type <b>?</b> or <b>help</b> for a hint &nbsp;·&nbsp; <b>stop</b> to finish.</p>
+{# The idle nudge's caption (nudge.js fills and unhides it). Server-rendered
+   empty so there is no layout shift when it appears. #}
+<p id="nudge-hint" class="hint nudge-hint" hidden aria-live="polite"></p>
+<p class="hint">Stuck? Tap <b>💡 Show me how</b> &nbsp;·&nbsp; or type <b>?</b> &nbsp;·&nbsp; <b>stop</b> to finish.</p>
 {% endblock %}
 {% block footer %}
 <div class="footer-nav">
