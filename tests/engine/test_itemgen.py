@@ -119,6 +119,25 @@ def test_controller_scores_generated_item():
     assert ctrl._store.skills.get("adding_equal_denom") is not None
 
 
+def test_sample_does_not_repeat_a_small_domain_question_back_to_back():
+    """2026-08-14 (maintainer-reported): "Which word means the SAME as 'happy'?" was
+    asked twice inside one 10-question session. A small-domain mc generator draws with
+    replacement, so sample() must re-roll against a recent-stem window. With a 3-stem
+    domain, consecutive draws must all be DIFFERENT stems."""
+    from mentar.engine.itemgen import mc_which_is
+
+    # 4 labels x 1 member: mc_which_is needs 3 distractors from the other labels.
+    table = {"happy": ["glad"], "sad": ["upset"], "big": ["large"], "cold": ["icy"]}
+    gen = ItemGenerator(
+        {"syn": lambda rng: mc_which_is(rng, "Which word means the SAME as '{label}'?", table)},
+        rng=random.Random(7),
+    )
+    stems = [gen.sample("syn").stem for _ in range(4)]
+    assert len(set(stems)) == 4, stems
+    # Domain exhausted -> a repeat is unavoidable; it must still serve an item, not None.
+    assert gen.sample("syn") is not None
+
+
 if __name__ == "__main__":
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     for fn in fns:

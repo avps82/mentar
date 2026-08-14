@@ -18,6 +18,7 @@ equivalent form, so the child may reduce or not.
 from __future__ import annotations
 
 import random
+from collections import deque
 from collections.abc import Callable
 
 from mentar.engine.itembank import Item
@@ -231,6 +232,7 @@ class ItemGenerator:
                  rng: random.Random | None = None) -> None:
         self._gens = generators if generators is not None else DEFAULT_GENERATORS
         self._rng = rng or random.Random()
+        self._recent: dict[str, deque[str]] = {}  # per-node no-repeat window (see sample)
 
     def has(self, node_id: str) -> bool:
         return node_id in self._gens
@@ -260,11 +262,32 @@ class ItemGenerator:
             method_steps=method_steps,
         )
 
+    _NO_REPEAT_WINDOW = 8  # remember this many recent problems per node
+
     def sample(self, node_id: str) -> Item | None:
-        return self._make(node_id)
+        """A fresh item, avoiding the last _NO_REPEAT_WINDOW problems for this node.
+
+        2026-08-14: a small-domain generator (e.g. an mc_which_is synonym set with a
+        handful of targets) draws with replacement, so "Which word means the SAME as
+        'happy'?" came up twice in one 10-question session. Re-roll a few times against
+        a bounded recent-window instead: once the domain really is that small, a repeat
+        is unavoidable and we serve it rather than loop.
+        """
+        recent = self._recent.setdefault(node_id, deque(maxlen=self._NO_REPEAT_WINDOW))
+        item = None
+        for _ in range(self._NO_REPEAT_WINDOW):
+            item = self._make(node_id)
+            # Key on the STEM for mc4: same question with reshuffled distractors is
+            # still "exactly the same question" to the child.
+            if item is None or (item.stem or item.problem) not in recent:
+                break
+        if item is not None:
+            recent.append(item.stem or item.problem)
+        return item
 
     def example(self, node_id: str, exclude_id: str | None = None) -> Item | None:
-        # Generated items are effectively unique; exclude_id is irrelevant.
+        # Doesn't consume/record — an example must not push a live question out of
+        # the no-repeat window. exclude_id is irrelevant (ids are unique per draw).
         return self._make(node_id)
 
 
