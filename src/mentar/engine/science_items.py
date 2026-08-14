@@ -480,3 +480,132 @@ AU_SCIENCE_YEAR8_GENERATORS: dict[str, GenFn] = {
     "au8_science_energy_sources": _gen_energy_sources,
     "au8_science_elements_compounds": _gen_elements_compounds,
 }
+
+
+# ── Year 9-10 (2026-08-14) ───────────────────────────────────────────────────
+# AU science stopped at Year 8 while AU maths ran to Year 12. Year 9 and 10 are
+# still a single "Science" subject in the Australian Curriculum, so they extend
+# cleanly. Years 11-12 deliberately stop here: senior science splits into
+# Physics / Chemistry / Biology as separate certificate subjects, and shipping a
+# merged "Science — Year 11" would misrepresent what a student actually studies.
+# That split is a content-scope decision for the maintainer, not something to
+# invent here (see docs/PHASE0_STATUS.md).
+#
+# ACARA codes are alignment REFERENCES and PROVISIONAL, same caveat as Year 3-8.
+
+_ATOMIC_STRUCTURE_CLASSES = {
+    "a particle found in the NUCLEUS of an atom": ["a proton", "a neutron"],
+    "a particle found OUTSIDE the nucleus": ["an electron"],
+    "not a subatomic particle at all": ["a molecule", "a compound", "an ion pair"],
+}
+_ATOMIC_STRUCTURE_GLOSSES = {
+    "a particle found in the NUCLEUS of an atom": "protons and neutrons are packed into the tiny central nucleus",
+    "a particle found OUTSIDE the nucleus": "electrons move around the nucleus in shells",
+    "not a subatomic particle at all": "these are made OF atoms, so they are bigger than the parts inside one",
+}
+
+_WAVES_CLASSES = {
+    "a transverse wave (the wave moves across the direction of travel)": [
+        "a light wave", "a water ripple", "a wave on a shaken rope",
+    ],
+    "a longitudinal wave (the wave moves along the direction of travel)": [
+        "a sound wave in air", "a compression wave in a spring", "an ultrasound pulse",
+        "a seismic P-wave",
+    ],
+}
+_WAVES_GLOSSES = {
+    "a transverse wave (the wave moves across the direction of travel)": "the particles or fields move at right angles to the way the wave travels",
+    "a longitudinal wave (the wave moves along the direction of travel)": "the particles squash and stretch in the same direction the wave travels",
+}
+
+_PLATE_BOUNDARY_CLASSES = {
+    "caused by plates moving APART": ["a mid-ocean ridge", "a rift valley"],
+    "caused by plates moving TOWARDS each other": [
+        "a deep ocean trench", "a fold mountain range", "a volcanic island arc",
+    ],
+    "caused by plates sliding PAST each other": ["a transform fault"],
+}
+_PLATE_BOUNDARY_GLOSSES = {
+    "caused by plates moving APART": "new crust forms in the gap as the plates separate",
+    "caused by plates moving TOWARDS each other": "one plate is pushed down or the crust is crumpled upwards",
+    "caused by plates sliding PAST each other": "the plates grind sideways without making or destroying crust",
+}
+
+_GENETICS_CLASSES = {
+    "a molecule that carries genetic information": ["DNA", "a chromosome", "a gene"],
+    "a protein, not genetic information": ["haemoglobin", "insulin", "an enzyme"],
+}
+_GENETICS_GLOSSES = {
+    "a molecule that carries genetic information": "DNA is the code; a gene is a section of it, and a chromosome is a packaged length of it",
+    "a protein, not genetic information": "proteins are what the code BUILDS, not the code itself",
+}
+
+_EVOLUTION_CLASSES = {
+    "evidence for evolution over time": [
+        "fossils in dated rock layers", "shared bone structures in different species",
+        "DNA similarities between species",
+    ],
+    "not evidence for evolution": [
+        "the colour of a painted wall", "the price of fossil fuels", "the phases of the Moon",
+    ],
+}
+_EVOLUTION_GLOSSES = {
+    "evidence for evolution over time": "each one shows a pattern of inherited change across generations",
+    "not evidence for evolution": "these have nothing to do with inherited change in living things",
+}
+
+_REACTION_TYPE_CLASSES = {
+    "a combustion reaction": ["methane burning in air", "a candle burning", "petrol burning in an engine"],
+    "a neutralisation reaction": [
+        "an acid reacting with a base", "indigestion tablets reacting with stomach acid",
+    ],
+    "a precipitation reaction": ["two solutions mixing to make an insoluble solid"],
+}
+_REACTION_TYPE_GLOSSES = {
+    "a combustion reaction": "a fuel reacts with oxygen and releases energy",
+    "a neutralisation reaction": "an acid and a base cancel out to make a salt and water",
+    "a precipitation reaction": "two dissolved substances swap partners and one of the products will not dissolve",
+}
+
+
+def _gen_atomic_structure(rng: random.Random):
+    return mc_which_is(rng, "Which of these is {label}?", _ATOMIC_STRUCTURE_CLASSES,
+                       glosses=_ATOMIC_STRUCTURE_GLOSSES, concept_name="ATOMIC STRUCTURE")
+
+
+def _gen_wave_types(rng: random.Random):
+    return mc_which_is(rng, "Which of these is {label}?", _WAVES_CLASSES,
+                       glosses=_WAVES_GLOSSES, concept_name="TRANSVERSE AND LONGITUDINAL WAVES")
+
+
+def _gen_plate_boundaries(rng: random.Random):
+    return mc_which_is(rng, "Which of these landforms is {label}?", _PLATE_BOUNDARY_CLASSES,
+                       glosses=_PLATE_BOUNDARY_GLOSSES, concept_name="PLATE BOUNDARIES")
+
+
+def _gen_genetic_molecules(rng: random.Random):
+    return mc_which_is(rng, "Which of these is {label}?", _GENETICS_CLASSES,
+                       glosses=_GENETICS_GLOSSES, concept_name="DNA, GENES AND CHROMOSOMES")
+
+
+def _gen_evolution_evidence(rng: random.Random):
+    return mc_which_is(rng, "Which of these is {label}?", _EVOLUTION_CLASSES,
+                       glosses=_EVOLUTION_GLOSSES, concept_name="EVIDENCE FOR EVOLUTION")
+
+
+def _gen_reaction_types(rng: random.Random):
+    return mc_which_is(rng, "Which of these is {label}?", _REACTION_TYPE_CLASSES,
+                       glosses=_REACTION_TYPE_GLOSSES, concept_name="TYPES OF CHEMICAL REACTION")
+
+
+AU_SCIENCE_YEAR9_GENERATORS: dict[str, GenFn] = {
+    "au9_science_atomic_structure": _gen_atomic_structure,
+    "au9_science_wave_types": _gen_wave_types,
+    "au9_science_plate_boundaries": _gen_plate_boundaries,
+}
+
+AU_SCIENCE_YEAR10_GENERATORS: dict[str, GenFn] = {
+    "au10_science_genetic_molecules": _gen_genetic_molecules,
+    "au10_science_evolution_evidence": _gen_evolution_evidence,
+    "au10_science_reaction_types": _gen_reaction_types,
+}

@@ -117,3 +117,49 @@ def test_no_mc4_question_leaks_its_own_answer():
                         leaks.append((node, res[2][:120], correct))
                         break
     assert leaks == [], f"mc4 questions containing their own answer: {leaks}"
+
+# The senior (Year 9-12) nodes added 2026-08-14, and the FIRST fenced diagram each
+# one must route to. explain-mode's card path shows exactly that first block to a
+# child (visual_scaffold.first_diagram), and keyword matching is count-based, so a
+# later keyword edit elsewhere can silently steal a node: the routing check that
+# built these found SIX real mis-routes (an irony question showing the simile
+# table, a cohesion question showing claim/evidence, syntax-for-effect showing
+# word origins...). Pinning the marker is what makes that regression loud.
+_SENIOR_ROUTING = {
+    ("english", "High and low modality"): "LOW  <",
+    ("english", "Nominalisation (verb or adjective to noun)"): "NOMINALISATION (the noun form)",
+    ("english", "Rhetorical devices in persuasive writing"): "rhetorical question",
+    ("english", "Simple, compound and complex sentences"): "SIMPLE    [ The train left early. ]",
+    ("english", "Identifying tone"): "CRITICAL",
+    ("english", "Irony and satire"): "LITERAL   means exactly what it says",
+    ("english", "Evaluative and neutral language"): "EVALUATIVE (it judges)",
+    ("english", "Cohesive devices between sentences"): "CONTRAST",
+    ("english", "Claim, evidence and rebuttal"): "CLAIM      what you are arguing",
+    ("english", "Matching register to audience"): "FORMAL",
+    ("english", "Biased and balanced wording"): "loaded",
+    ("english", "Allusion"): "ALLUSION",
+    ("english", "Syntax chosen for effect"): "SHORT sentence",
+    ("english", "How English changes over time"): "BORROWED from another language",
+    ("science", "Inside the atom — protons, neutrons, electrons"): "ELECTRONS",
+    ("science", "Transverse and longitudinal waves"): "TRANSVERSE",
+    ("science", "Plate boundaries and the landforms they make"): "MOVING APART",
+    ("science", "DNA, genes and chromosomes"): "CHROMOSOME  >  GENE",
+    ("science", "Evidence for evolution"): "FOSSIL RECORD",
+    ("science", "Types of chemical reaction"): "COMBUSTION",
+}
+
+
+def test_senior_nodes_route_to_their_own_diagram():
+    from mentar.engine.visual_scaffold import first_diagram
+
+    _scan_scaffold_dir.cache_clear()
+    wrong = []
+    for (subject, label), marker in _SENIOR_ROUTING.items():
+        body = load_visual_scaffold(SCAFFOLD_ROOT, subject, label)
+        diagram = first_diagram(body) or ""
+        if marker not in diagram:
+            wrong.append(f"{label!r} -> {diagram.splitlines()[0][:60] if diagram else 'NO DIAGRAM'!r}")
+    assert not wrong, (
+        "these nodes' first scaffold diagram is not their own topic:\n"
+        + "\n".join(f"  {w}" for w in wrong)
+    )

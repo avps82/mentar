@@ -306,6 +306,24 @@ _EXPECTED = {
     "curriculum/templates/US_GENERIC/g8_science.md": {
         "key": "us_generic_g8_science", "label": "Science — Grade 8 🇺🇸 (general)", "item_source": "us_g8_science",
     },
+    "curriculum/templates/AU_ACARA/year9_english.md": {
+        "key": "au_acara_year9_english", "label": "English — Year 9 🇦🇺", "item_source": "au_english_year9",
+    },
+    "curriculum/templates/AU_ACARA/year10_english.md": {
+        "key": "au_acara_year10_english", "label": "English — Year 10 🇦🇺", "item_source": "au_english_year10",
+    },
+    "curriculum/templates/AU_ACARA/year11_english.md": {
+        "key": "au_acara_year11_english", "label": "English — Year 11 🇦🇺", "item_source": "au_english_year11",
+    },
+    "curriculum/templates/AU_ACARA/year12_english.md": {
+        "key": "au_acara_year12_english", "label": "English — Year 12 🇦🇺", "item_source": "au_english_year12",
+    },
+    "curriculum/templates/AU_ACARA/year9_science.md": {
+        "key": "au_acara_year9_science", "label": "Science — Year 9 🇦🇺", "item_source": "au_science_year9",
+    },
+    "curriculum/templates/AU_ACARA/year10_science.md": {
+        "key": "au_acara_year10_science", "label": "Science — Year 10 🇦🇺", "item_source": "au_science_year10",
+    },
 }
 
 

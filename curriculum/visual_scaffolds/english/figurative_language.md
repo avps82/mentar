@@ -4,7 +4,7 @@ title: Figurative Language — Similes and Metaphors
 description: Visual scaffold hints for identifying and writing similes and metaphors.
 tags: [english, figurative-language, simile, metaphor, visual-scaffold, creative-writing]
 subject: english
-topic_keywords: [simile, metaphor, figurative, comparison, figure of speech, idiom, personification, imagery, onomatopoeia, sounds like]
+topic_keywords: [simile, metaphor, figurative, comparison, figure of speech, idiom, personification, imagery, onomatopoeia, sounds like, technique, quotation]
 timestamp: "2026-07-22T00:00:00Z"
 ---
 

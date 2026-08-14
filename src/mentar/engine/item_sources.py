@@ -27,6 +27,10 @@ from mentar.engine.au_english_items import (
     AU_ENGLISH_YEAR6_GENERATORS,
     AU_ENGLISH_YEAR7_GENERATORS,
     AU_ENGLISH_YEAR8_GENERATORS,
+    AU_ENGLISH_YEAR9_GENERATORS,
+    AU_ENGLISH_YEAR10_GENERATORS,
+    AU_ENGLISH_YEAR11_GENERATORS,
+    AU_ENGLISH_YEAR12_GENERATORS,
 )
 from mentar.engine.au_items import (
     AU_YEAR2_GENERATORS,
@@ -54,6 +58,8 @@ from mentar.engine.science_items import (
     AU_SCIENCE_YEAR6_GENERATORS,
     AU_SCIENCE_YEAR7_GENERATORS,
     AU_SCIENCE_YEAR8_GENERATORS,
+    AU_SCIENCE_YEAR9_GENERATORS,
+    AU_SCIENCE_YEAR10_GENERATORS,
     SCIENCE_GENERATORS,
 )
 
@@ -73,6 +79,12 @@ def build_registry(pilot_itembank_path: Path) -> dict[str, dict]:
         "au_science_year6": {"generators": AU_SCIENCE_YEAR6_GENERATORS, "itembank": None},
         "au_science_year7": {"generators": AU_SCIENCE_YEAR7_GENERATORS, "itembank": None},
         "au_science_year8": {"generators": AU_SCIENCE_YEAR8_GENERATORS, "itembank": None},
+        # 2026-08-14: AU science reached Year 8 while AU maths reached Year 12.
+        # Years 9-10 are still a single "Science" subject in the AU curriculum;
+        # Years 11-12 stop deliberately (senior science splits into Physics /
+        # Chemistry / Biology -- see science_items.py's note).
+        "au_science_year9": {"generators": AU_SCIENCE_YEAR9_GENERATORS, "itembank": None},
+        "au_science_year10": {"generators": AU_SCIENCE_YEAR10_GENERATORS, "itembank": None},
         "au_year2": {"generators": AU_YEAR2_GENERATORS, "itembank": None},
         "au_year3": {"generators": AU_YEAR3_GENERATORS, "itembank": None},
         "au_year4": {"generators": AU_YEAR4_GENERATORS, "itembank": None},
@@ -91,6 +103,12 @@ def build_registry(pilot_itembank_path: Path) -> dict[str, dict]:
         "au_english_year6": {"generators": AU_ENGLISH_YEAR6_GENERATORS, "itembank": None},
         "au_english_year7": {"generators": AU_ENGLISH_YEAR7_GENERATORS, "itembank": None},
         "au_english_year8": {"generators": AU_ENGLISH_YEAR8_GENERATORS, "itembank": None},
+        # 2026-08-14: AU English reached Year 8 while AU maths reached Year 12.
+        # English stays one subject through Year 12, so it extends cleanly.
+        "au_english_year9": {"generators": AU_ENGLISH_YEAR9_GENERATORS, "itembank": None},
+        "au_english_year10": {"generators": AU_ENGLISH_YEAR10_GENERATORS, "itembank": None},
+        "au_english_year11": {"generators": AU_ENGLISH_YEAR11_GENERATORS, "itembank": None},
+        "au_english_year12": {"generators": AU_ENGLISH_YEAR12_GENERATORS, "itembank": None},
         "maths_practice": {"generators": MATHS_PRACTICE_GENERATORS, "itembank": None},
         "english_practice": {"generators": ENGLISH_PRACTICE_GENERATORS, "itembank": None},
         # IN_GENERIC ships in-repo under curriculum/templates/ like every other

@@ -399,3 +399,370 @@ AU_ENGLISH_YEAR6_GENERATORS: dict[str, GenFn] = {
     "aue6_antonyms_nuanced": gen_antonyms_nuanced_y6,
     "aue6_word_classes_conjunctions_prepositions": gen_word_classes_conj_prep_y6,
 }
+
+
+# ── Year 9-12 (senior secondary, 2026-08-14) ─────────────────────────────────
+# The AU packs stopped at Year 8 for English while maths ran to Year 12 -- a
+# breadth asymmetry nobody had ratified (docs/PHASE0_STATUS.md's "what's missing"
+# audit flagged it). Same fact-table shape as every generator above: disjoint
+# categories, four options, one correct, deterministic verifier.
+#
+# ACARA codes are alignment REFERENCES only, and PROVISIONAL for these years --
+# the same caveat the Year 3-8 science packs carry.
+
+def gen_modality_y9(rng: random.Random):
+    """AC9E9A alignment: high vs. low modality (how certain or forceful a word
+    makes a claim) -- the core lever in persuasive writing."""
+    table = {
+        "HIGH modality (very certain or forceful)": ["must", "definitely", "always", "never", "certainly"],
+        "LOW modality (tentative or hedged)": ["might", "possibly", "sometimes", "could", "perhaps"],
+    }
+    return mc_which_is(rng, "Which of these words shows {label}?", table,
+        glosses={
+            'HIGH modality (very certain or forceful)': 'leaves the reader no room to doubt the claim',
+            'LOW modality (tentative or hedged)': 'leaves room for the claim to be wrong',
+        },
+        concept_name='MODALITY')
+
+
+def gen_nominalisation_y9(rng: random.Random):
+    """AC9E9A alignment: nominalisation -- turning a verb or adjective into a
+    noun, which makes writing denser and more formal."""
+    table = {
+        "a nominalisation (a noun made from a verb or adjective)": [
+            "decision", "arrival", "failure", "happiness", "assessment",
+        ],
+        "a plain verb or adjective (not nominalised)": [
+            "decide", "arrive", "fail", "happy", "assess",
+        ],
+    }
+    return mc_which_is(rng, "Which of these is {label}?", table,
+        glosses={
+            'a nominalisation (a noun made from a verb or adjective)': 'the action or quality has become a THING you can discuss -- often ending -tion, -ment, -ness, -al, -ure',
+            'a plain verb or adjective (not nominalised)': 'still names an action or a quality, not a thing',
+        },
+        concept_name='NOMINALISATION')
+
+
+def gen_rhetorical_devices_y9(rng: random.Random):
+    """AC9E9A alignment: naming the persuasive device in a short example."""
+    table = {
+        "a rhetorical question (asked for effect, not for an answer)": [
+            "Who wouldn't want cleaner air?", "Isn't it time we acted?", "How much longer must we wait?",
+        ],
+        "a direct address to the reader": [
+            "You can change this today.", "Think about your own street.", "Your voice matters here.",
+        ],
+        "a repetition for emphasis": [
+            "We tried, we failed, we tried again.", "Faster, cleaner, cheaper.", "Never again, never again.",
+        ],
+    }
+    return mc_which_is(rng, "Which of these is {label}?", table,
+        glosses={
+            'a rhetorical question (asked for effect, not for an answer)': 'the answer is assumed, so the reader agrees without being told to',
+            'a direct address to the reader': "speaking to 'you' makes the issue personal",
+            'a repetition for emphasis': 'the repeated words drum the idea in',
+        },
+        concept_name='RHETORICAL DEVICES')
+
+
+def gen_sentence_types_y9(rng: random.Random):
+    """AC9E9A alignment: simple / compound / complex sentence structure."""
+    table = {
+        "a simple sentence (one main clause)": [
+            "The train left early.", "She writes poetry.", "The lights went out.",
+        ],
+        "a compound sentence (two main clauses joined by and/but/so)": [
+            "The train left early, but we caught it.",
+            "She writes poetry and she paints.",
+            "The lights went out, so we lit a candle.",
+        ],
+        "a complex sentence (a main clause plus a subordinate clause)": [
+            "Although the train left early, we caught it.",
+            "She writes poetry because it calms her.",
+            "When the lights went out, we lit a candle.",
+        ],
+    }
+    return mc_which_is(rng, "Which of these is {label}?", table,
+        glosses={
+            'a simple sentence (one main clause)': 'one complete idea, standing alone',
+            'a compound sentence (two main clauses joined by and/but/so)': 'two ideas of equal weight -- either half could stand alone',
+            'a complex sentence (a main clause plus a subordinate clause)': 'one idea depends on the other, so it cannot stand alone',
+        },
+        concept_name='SENTENCE TYPES')
+
+
+def gen_tone_y10(rng: random.Random):
+    """AC9E10A alignment: identifying the tone a short line takes."""
+    table = {
+        "a CRITICAL tone": [
+            "The plan was careless and poorly argued.",
+            "Once again, the council has ignored the evidence.",
+            "This is a shallow response to a serious problem.",
+        ],
+        "an OPTIMISTIC tone": [
+            "With small changes, this street could thrive.",
+            "There is every reason to expect a better year.",
+            "The early results are genuinely encouraging.",
+        ],
+        "a NEUTRAL, factual tone": [
+            "The council met on Tuesday to review the plan.",
+            "Rainfall was 12 mm below the monthly average.",
+            "The report was published in March.",
+        ],
+    }
+    return mc_which_is(rng, "Which of these takes {label}?", table,
+        glosses={
+            'a CRITICAL tone': 'the word choices find fault',
+            'an OPTIMISTIC tone': 'the word choices expect a good outcome',
+            'a NEUTRAL, factual tone': 'it reports without judging',
+        },
+        concept_name='TONE')
+
+
+def gen_irony_satire_y10(rng: random.Random):
+    """AC9E10A alignment: irony vs. satire vs. a literal statement."""
+    table = {
+        "irony (saying the opposite of what is meant)": [
+            "What a perfect day for a picnic, he said in the pouring rain.",
+            "Brilliant timing, she muttered as the bus pulled away.",
+        ],
+        "satire (mocking something to criticise it)": [
+            "A cartoon showing the minister asleep at a fire drill.",
+            "A mock award for the town's least useful new law.",
+        ],
+        "a literal statement (means exactly what it says)": [
+            "It rained for most of the afternoon.",
+            "The bus arrived four minutes late.",
+        ],
+    }
+    return mc_which_is(rng, "Which of these is {label}?", table,
+        glosses={
+            'irony (saying the opposite of what is meant)': 'the gap between the words and the situation IS the irony',
+            'satire (mocking something to criticise it)': 'it mocks a target in order to criticise it',
+            'a literal statement (means exactly what it says)': 'no gap and no target -- it just reports',
+        },
+        concept_name='IRONY AND SATIRE')
+
+
+def gen_evaluative_language_y10(rng: random.Random):
+    """AC9E10A alignment: evaluative (judging) vs. neutral (reporting) wording --
+    the distinction that separates an argument from a report."""
+    table = {
+        "EVALUATIVE language (it judges)": [
+            "a disgraceful decision", "an outstanding performance",
+            "a reckless proposal", "a masterful reply",
+        ],
+        "NEUTRAL language (it reports)": [
+            "a unanimous decision", "a two-hour performance",
+            "a written proposal", "a same-day reply",
+        ],
+    }
+    return mc_which_is(rng, "Which of these is {label}?", table,
+        glosses={
+            'EVALUATIVE language (it judges)': 'the wording passes judgement on the thing',
+            'NEUTRAL language (it reports)': 'the wording describes without judging',
+        },
+        concept_name='EVALUATIVE LANGUAGE')
+
+
+def gen_cohesion_y10(rng: random.Random):
+    """AC9E10A alignment: the cohesive device holding two sentences together."""
+    table = {
+        "a contrast connective": ["however", "nevertheless", "on the other hand", "whereas"],
+        "a cause-and-effect connective": ["therefore", "consequently", "as a result", "because of this"],
+        "a sequencing connective": ["firstly", "meanwhile", "subsequently", "finally"],
+    }
+    return mc_which_is(rng, "Which of these is {label}?", table,
+        glosses={
+            'a contrast connective': 'signals that what follows cuts against what came before',
+            'a cause-and-effect connective': 'signals that what follows results from what came before',
+            'a sequencing connective': 'signals where this step sits in an order',
+        },
+        concept_name='COHESIVE DEVICES')
+
+
+def gen_textual_analysis_y11(rng: random.Random):
+    """Senior English: naming the technique at work in a short quotation. Codes
+    are provisional -- senior English is state-certificate territory, so this is
+    universally-taught technique naming, not a claimed unit alignment."""
+    table = {
+        "a metaphor (says one thing IS another)": [
+            "Her voice was a warm blanket.", "The city is a furnace in January.",
+            "His memory is a locked room.",
+        ],
+        "a simile (compares using like or as)": [
+            "Her voice was like a warm blanket.", "The city felt as hot as a furnace.",
+            "His memory is like a locked room.",
+        ],
+        "personification (gives human traits to a thing)": [
+            "The wind argued with the shutters.", "The old house sighed in the heat.",
+            "The clock scolded us from the wall.",
+        ],
+    }
+    return mc_which_is(rng, "Which of these is {label}?", table,
+        glosses={
+            'a metaphor (says one thing IS another)': "no 'like' or 'as' -- the comparison is stated as fact",
+            'a simile (compares using like or as)': "the comparison is signalled by 'like' or 'as'",
+            'personification (gives human traits to a thing)': 'a non-human thing is given a human action or feeling',
+        },
+        concept_name='LITERARY TECHNIQUES')
+
+
+def gen_argument_structure_y11(rng: random.Random):
+    """Senior English: the part an argument sentence is doing (claim / evidence /
+    rebuttal) -- the shape every senior essay is marked on."""
+    table = {
+        "a CLAIM (the position being argued)": [
+            "Public transport should be free at peak times.",
+            "School should start an hour later.",
+            "Local libraries deserve more funding.",
+        ],
+        "EVIDENCE (a fact or example supporting a claim)": [
+            "Ridership rose 14% in the year fares were cut.",
+            "Sleep studies show teenagers need nine hours.",
+            "Library visits doubled after the late-opening trial.",
+        ],
+        "a REBUTTAL (answering the opposing view)": [
+            "Critics say it costs too much, but road repairs cost more.",
+            "Some argue standards would slip; the trial found the opposite.",
+            "Opponents call it a luxury, yet the demand is measurable.",
+        ],
+    }
+    return mc_which_is(rng, "Which of these is {label}?", table,
+        glosses={
+            'a CLAIM (the position being argued)': 'it states what the writer wants you to accept',
+            'EVIDENCE (a fact or example supporting a claim)': 'it offers something checkable in support',
+            'a REBUTTAL (answering the opposing view)': 'it names the opposing view, then answers it',
+        },
+        concept_name='ARGUMENT STRUCTURE')
+
+
+def gen_register_shift_y11(rng: random.Random):
+    """Senior English: matching wording to audience and purpose."""
+    table = {
+        "FORMAL register (suited to an academic essay)": [
+            "The evidence suggests a modest improvement.",
+            "This paper examines three competing explanations.",
+            "The results were inconsistent with the hypothesis.",
+        ],
+        "INFORMAL register (suited to a message to a friend)": [
+            "Looks like it got a bit better.",
+            "So there are three ways people explain it.",
+            "Yeah, that didn't go how we thought.",
+        ],
+    }
+    return mc_which_is(rng, "Which of these is {label}?", table,
+        glosses={
+            'FORMAL register (suited to an academic essay)': 'no contractions, precise verbs, distance from the reader',
+            'INFORMAL register (suited to a message to a friend)': 'contractions and everyday words, close to the reader',
+        },
+        concept_name='REGISTER')
+
+
+def gen_bias_y12(rng: random.Random):
+    """Senior English: loaded vs. balanced reporting of the same event -- media
+    literacy, and the closest thing to a life skill in this pack."""
+    table = {
+        "BIASED wording (it slants the reader)": [
+            "A mob of protesters swarmed the square.",
+            "The so-called expert made yet another excuse.",
+            "Taxpayers were forced to foot the bill again.",
+        ],
+        "BALANCED wording (it reports the same event neutrally)": [
+            "A crowd of protesters gathered in the square.",
+            "The researcher gave a further explanation.",
+            "The cost was met from public funds.",
+        ],
+    }
+    return mc_which_is(rng, "Which of these is {label}?", table,
+        glosses={
+            'BIASED wording (it slants the reader)': 'the loaded words push a judgement the facts do not carry',
+            'BALANCED wording (it reports the same event neutrally)': 'same event, no loaded words',
+        },
+        concept_name='BIAS IN REPORTING')
+
+
+def gen_allusion_y12(rng: random.Random):
+    """Senior English: allusion (a reference to a known text or event) vs. a
+    plain description."""
+    table = {
+        "an allusion (a reference to another text or event)": [
+            "He met his Waterloo in the final round.",
+            "She opened a Pandora's box of paperwork.",
+            "The plan was his Achilles heel.",
+        ],
+        "a plain description (no reference)": [
+            "He lost badly in the final round.",
+            "She started a great deal of paperwork.",
+            "The plan had one serious weakness.",
+        ],
+    }
+    return mc_which_is(rng, "Which of these is {label}?", table,
+        glosses={
+            'an allusion (a reference to another text or event)': 'understanding the line depends on knowing the thing referred to',
+            'a plain description (no reference)': 'it says the same idea without borrowing from anywhere',
+        },
+        concept_name='ALLUSION')
+
+
+def gen_syntax_for_effect_y12(rng: random.Random):
+    """Senior English: a deliberate syntactic choice and the effect it creates."""
+    table = {
+        "a short sentence used for impact": ["It failed.", "Nobody moved.", "That was the end."],
+        "a long, accumulating sentence used to build detail": [
+            "The room, still smelling of rain and old paper, filled slowly with people who had "
+            "waited outside for hours.",
+            "She read the letter twice, folded it, put it in her pocket, and said nothing at all.",
+            "Across the valley, past the fence line and the dry creek, the smoke was already rising.",
+        ],
+    }
+    return mc_which_is(rng, "Which of these is {label}?", table,
+        glosses={
+            'a short sentence used for impact': 'the abruptness lands the point',
+            'a long, accumulating sentence used to build detail': 'the piling-up slows the reader and builds the picture',
+        },
+        concept_name='SYNTAX FOR EFFECT')
+
+
+def gen_language_change_y12(rng: random.Random):
+    """Senior English: how English changes -- borrowed words vs. words coined for
+    new technology."""
+    table = {
+        "a word BORROWED from another language": ["kindergarten", "safari", "typhoon", "bungalow"],
+        "a word COINED for new technology": ["podcast", "smartphone", "software", "livestream"],
+    }
+    return mc_which_is(rng, "Which of these is {label}?", table,
+        glosses={
+            'a word BORROWED from another language': 'English took the word from another language',
+            'a word COINED for new technology': 'the word was built for something that did not exist before',
+        },
+        concept_name='HOW ENGLISH CHANGES')
+
+
+AU_ENGLISH_YEAR9_GENERATORS: dict[str, GenFn] = {
+    "aue9_modality": gen_modality_y9,
+    "aue9_nominalisation": gen_nominalisation_y9,
+    "aue9_rhetorical_devices": gen_rhetorical_devices_y9,
+    "aue9_sentence_types": gen_sentence_types_y9,
+}
+
+AU_ENGLISH_YEAR10_GENERATORS: dict[str, GenFn] = {
+    "aue10_tone": gen_tone_y10,
+    "aue10_irony_satire": gen_irony_satire_y10,
+    "aue10_evaluative_language": gen_evaluative_language_y10,
+    "aue10_cohesion": gen_cohesion_y10,
+}
+
+AU_ENGLISH_YEAR11_GENERATORS: dict[str, GenFn] = {
+    "aue11_textual_analysis": gen_textual_analysis_y11,
+    "aue11_argument_structure": gen_argument_structure_y11,
+    "aue11_register_shift": gen_register_shift_y11,
+}
+
+AU_ENGLISH_YEAR12_GENERATORS: dict[str, GenFn] = {
+    "aue12_bias": gen_bias_y12,
+    "aue12_allusion": gen_allusion_y12,
+    "aue12_syntax_for_effect": gen_syntax_for_effect_y12,
+    "aue12_language_change": gen_language_change_y12,
+}
