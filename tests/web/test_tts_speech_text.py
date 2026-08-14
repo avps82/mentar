@@ -50,11 +50,14 @@ def test_spoken_text_fixes_caps_and_arrows_but_keeps_choice_letters():
         import pytest
         pytest.skip("node not installed (tts.js is browser code)")
 
-    caps, arrow, letters, emoji = _speak([
+    caps, arrow, letters, emoji, dna, atp, genotype = _speak([
         "Which word means the SAME as 'happy'?",
         "In the number 41, what is the value of the digit 4? → 40",
         "A) cheerful. B) upset. C) tiny. D) giant",
         "Yes, that's it — great job! 🎉",
+        "Which of these carries genetic information? A) DNA  B) haemoglobin",
+        "Which of these is a PRODUCT of respiration? A) ATP energy  B) glucose",
+        "Which of these is a GENOTYPE? A) BB  B) brown eyes",
     ])
 
     assert "same" in caps and "SAME" not in caps, caps
@@ -63,6 +66,14 @@ def test_spoken_text_fixes_caps_and_arrows_but_keeps_choice_letters():
     assert letters.startswith("A) cheerful"), letters
     assert "D) giant" in letters, letters
     assert "🎉" not in emoji, emoji
+
+    # 2026-08-15 audit: senior science added GENUINE acronyms to the corpus
+    # (DNA x66, ATP x90, BB x54 as a genotype). Lowercasing those makes the
+    # engine read "dna"/"atp" as nonsense words and "BB" as a syllable, so they
+    # are held in caps by name while emphasis words around them are not.
+    assert "DNA" in dna and "genetic" in dna, dna
+    assert "ATP" in atp and "product" in atp, atp        # ATP kept, PRODUCT lowered
+    assert "BB" in genotype and "genotype" in genotype, genotype
 
 
 if __name__ == "__main__":

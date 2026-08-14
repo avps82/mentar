@@ -80,11 +80,19 @@
   //      where no single English word fits both, so it becomes a PAUSE. Only
   //      the reported symbols are mapped -- the rest (×, ÷, =) are left to the
   //      engine rather than guessed at blind, since TTS can't be tested here.
+  // Genuine acronyms and symbols, which the caps rule below must NOT lowercase:
+  // an engine says "dee-en-ay" for DNA but reads "dna" as a nonsense word, and
+  // "BB" is a genotype whose letters ARE the answer. Measured against the real
+  // corpus 2026-08-15 (every generated question + choice across all 117 packs);
+  // senior science introduced all three. A new acronym in new content needs a
+  // line here -- tests/web/test_tts_speech_text.py pins these.
+  var KEEP_CAPS = {DNA: 1, ATP: 1, BB: 1};
+
   function forSpeech(text) {
     return text
       .replace(EMOJI_RE, "")
       .replace(/[→⇒]/g, ",")
-      .replace(/\b[A-Z]{2,}\b/g, function (w) { return w.toLowerCase(); })
+      .replace(/\b[A-Z]{2,}\b/g, function (w) { return KEEP_CAPS[w] ? w : w.toLowerCase(); })
       .replace(/\s+/g, " ")
       .trim();
   }
