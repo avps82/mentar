@@ -1075,6 +1075,58 @@ def test_llm_status_reports_ok_when_backend_reachable():
         assert isinstance(data["latency_ms"], int)
         # The client was constructed against the RESOLVED endpoint.
         assert mock_openai_cls.call_args.kwargs["base_url"] == app_mod._LLM_STATUS_ENDPOINT["base_url"]
+        # 2026-08-14: green requires a real GENERATION against the configured
+        # model, not just a catalog listing (see the next test).
+        assert mock_client.chat.completions.create.call_args.kwargs["model"] == \
+            app_mod._LLM_STATUS_ENDPOINT["model"]
+
+
+def test_llm_status_is_red_when_the_server_answers_but_the_model_is_unloaded():
+    """2026-08-14 (maintainer, live): gemma was unloaded and the status line still
+    showed 🟢. A gateway (llama-swap / llama.cpp server / LiteLLM) answers
+    models.list() from its CATALOG whether or not a model is loaded, so the old
+    reachability-only probe could not tell "ready" from "nothing loaded". Only the
+    generation call can, and its failure must surface as red."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+    from unittest.mock import MagicMock, patch
+
+    app_mod, c = _client()
+    with patch("openai.OpenAI") as mock_openai_cls:
+        mock_client = MagicMock()
+        mock_openai_cls.return_value = mock_client
+        mock_client.models.list.return_value = []          # server up, catalog served
+        mock_client.chat.completions.create.side_effect = RuntimeError("model not loaded")
+
+        data = c.get("/settings/llm-status").get_json()
+        assert data["ok"] is False, "an unloaded model must not read as connected"
+        assert "model not loaded" in data["error"]
+        assert data["checked_at"], "a re-check must visibly change even when the verdict doesn't"
+
+
+def test_setup_gate_probe_stays_shallow_and_never_generates():
+    """The gate runs on EVERY request, so it must stay a cheap reachability check --
+    a generation call there would put a cold model load (12-60s) in front of a page
+    load. Only /settings/llm-status goes deep."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+    from unittest.mock import MagicMock, patch
+
+    app_mod, c = _client()  # noqa: F841
+    with patch("openai.OpenAI") as mock_openai_cls:
+        mock_client = MagicMock()
+        mock_openai_cls.return_value = mock_client
+        ok, _latency, _err = app_mod._probe_llm_backend({
+            "base_url": "http://x/v1", "api_key": "k", "model": "m",
+        })
+        assert ok is True
+        assert mock_client.chat.completions.create.call_count == 0
 
 
 def test_llm_status_reports_info_for_in_process_backend():

@@ -26,6 +26,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import time
 import uuid
 from pathlib import Path
 
@@ -278,20 +279,43 @@ def _llm_call(messages: list[dict]) -> str:
     return _llm_call_cached(messages)
 
 
-def _probe_llm_backend(endpoint: dict) -> tuple[bool, int, str | None]:
-    """Short-timeout reachability probe against an OpenAI-compatible endpoint --
-    shared by /settings/llm-status and the setup gate so they can never
-    disagree about what "working" means. Deliberately a much shorter timeout
+def _probe_llm_backend(endpoint: dict, deep: bool = False) -> tuple[bool, int, str | None]:
+    """Probe an OpenAI-compatible endpoint. Deliberately a much shorter timeout
     than the app's own generation calls (see make_llm_call's config), so an
-    unreachable backend can't hang a page load."""
+    unreachable backend can't hang a page load.
+
+    Two depths, because the setup gate and the Settings status line are asking
+    genuinely different questions:
+
+    * shallow (default, the setup gate) -- `models.list()`: is there a server
+      here at all? A routing decision on every request, so it must stay cheap.
+    * deep (/settings/llm-status) -- a 1-token chat completion against the
+      CONFIGURED model, exactly the call a lesson makes. 2026-08-14
+      (maintainer): with the model unloaded the status line still showed green,
+      because a gateway (llama-swap/llama.cpp server/LiteLLM) answers
+      `models.list()` from its catalog whether or not anything is loaded. Only
+      asking it to generate proves a lesson would work. Longer timeout: this
+      request may trigger a cold model load (12-60s on the eval host).
+    """
     import time as _time
 
     from openai import OpenAI
 
     start = _time.monotonic()
     try:
-        client = OpenAI(base_url=endpoint["base_url"], api_key=endpoint["api_key"], timeout=5.0)
+        client = OpenAI(
+            base_url=endpoint["base_url"], api_key=endpoint["api_key"],
+            timeout=60.0 if deep else 5.0,
+        )
         client.models.list()
+        if deep:
+            resp = client.chat.completions.create(
+                model=endpoint["model"],
+                messages=[{"role": "user", "content": "Say OK."}],
+                max_tokens=1,
+            )
+            if not resp.choices:
+                raise RuntimeError(f"model {endpoint['model']} returned no choices")
         return True, round((_time.monotonic() - start) * 1000), None
     except Exception as exc:
         return False, round((_time.monotonic() - start) * 1000), str(exc)
@@ -703,13 +727,16 @@ def settings_llm_status():
             "error": "In-process model -- no HTTP endpoint to check.",
         })
 
-    ok, latency_ms, error = _probe_llm_backend(_LLM_STATUS_ENDPOINT)
+    # deep=True: prove the configured MODEL generates, not just that a server
+    # answers -- an unloaded model showed green before (2026-08-14).
+    ok, latency_ms, error = _probe_llm_backend(_LLM_STATUS_ENDPOINT, deep=True)
     return jsonify({
         "ok": ok,
         "model": _LLM_STATUS_ENDPOINT["model"],
         "base_url": _LLM_STATUS_ENDPOINT["base_url"],
         "latency_ms": latency_ms,
         "error": error,
+        "checked_at": time.strftime("%H:%M:%S"),
     })
 
 

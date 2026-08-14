@@ -11,25 +11,37 @@
     function checkLlmStatus() {
         var statusLine = document.getElementById("llm-status-line");
         if (!statusLine) return;
+        var btn = document.getElementById("llm-recheck-btn");
 
-        statusLine.textContent = "Checking…";
+        // 2026-08-14 (maintainer: "check again is not doing anything"): the check
+        // now asks the model to generate, which can take a cold load's worth of
+        // seconds, and a re-check often returns the SAME text -- so say it's
+        // running, block a second click, and stamp the time so an unchanged
+        // answer still visibly updates.
+        statusLine.textContent = "Checking… (this can take a moment if the model has to load)";
+        if (btn) btn.disabled = true;
 
         fetch("/settings/llm-status")
             .then(function (response) {
                 return response.json();
             })
             .then(function (data) {
+                var at = data.checked_at ? " · checked " + data.checked_at : "";
                 if (data.ok) {
-                    statusLine.textContent = "🟢 Connected (" + data.model + ", " + data.latency_ms + "ms)";
+                    statusLine.textContent = "🟢 Connected (" + data.model + ", " + data.latency_ms + "ms)" + at;
                 } else if (data.ok === null) {
                     // In-process model: nothing to probe over HTTP.
                     statusLine.textContent = "ℹ️ " + data.error;
                 } else {
-                    statusLine.textContent = "🔴 Not reachable at " + data.base_url + " (" + data.error + ")";
+                    statusLine.textContent = "🔴 " + data.model + " not answering at " +
+                        data.base_url + " (" + data.error + ")" + at;
                 }
             })
             .catch(function () {
                 statusLine.textContent = "🔴 Could not check status.";
+            })
+            .then(function () {
+                if (btn) btn.disabled = false;
             });
     }
 
