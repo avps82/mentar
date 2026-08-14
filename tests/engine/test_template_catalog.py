@@ -225,6 +225,9 @@ _EXPECTED = {
     "curriculum/templates/IN_GENERIC/c2_english.md": {
         "key": "in_generic_c2_english", "label": "English — Class 2 🇮🇳 (general)", "item_source": "in_c2_english",
     },
+    "curriculum/templates/IN_GENERIC/c3_english.md": {
+        "key": "in_generic_c3_english", "label": "English — Class 3 🇮🇳 (general)", "item_source": "in_c3_english",
+    },
     "curriculum/templates/IN_GENERIC/c4_english.md": {
         "key": "in_generic_c4_english", "label": "English — Class 4 🇮🇳 (general)", "item_source": "in_c4_english",
     },

@@ -162,6 +162,13 @@ PACK_LEVELS: dict[str, list[tuple[str, str, int]]] = {
     ],
     "IN_GENERIC": [
         ("in_c2", "Class 2", 2),
+        # Class 3's MATHS ships from the legacy `in_generic_maths` source
+        # (class3_maths.md predates this table), so the in_c3_maths generators
+        # built from this line are unreferenced -- deliberately. The level is
+        # here so Class 3's English and Science hang off the same stage table as
+        # every other level instead of being hand-written one-offs (2026-08-14:
+        # Class 3 was the one India level with maths but no English).
+        ("in_c3", "Class 3", 3),
         ("in_c4", "Class 4", 4),
         ("in_c5", "Class 5", 5),
         ("in_c6", "Class 6", 6),
