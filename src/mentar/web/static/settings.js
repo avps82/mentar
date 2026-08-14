@@ -73,7 +73,7 @@
         US: "🇺🇸 United States",
         General: "🧪 General",
     };
-    var activeCountry = null;  // survives a re-render (a toggle refetches the list)
+    var activeCountry = null;  // survives a re-render (switching tabs rebuilds the panel)
 
     function switchWidget(checked, ariaLabel) {
         // R12.2: a real switch widget (native checkbox), not a text button.
@@ -129,10 +129,10 @@
         row.appendChild(label);
         row.appendChild(sw);
         row.appendChild(status);
-        return row;
+        return {row: row, input: input, pack: c};
     }
 
-    function countryPanel(country, packs, reload) {
+    function countryPanel(country, packs) {
         var panel = document.createElement("div");
         panel.className = "tab-panel";
         panel.id = "curricula-panel";
@@ -153,22 +153,39 @@
         var masterStatus = document.createElement("span");
         masterStatus.className = "hint";
 
+        // Every per-grade switch in this panel, so the master can move them all in
+        // place. 2026-08-14 (maintainer: "the country toggle doesn't disable all the
+        // subjects under it"): this used to re-fetch the listing and rebuild the
+        // panel, which left the rows showing their old state -- a GET with no
+        // cache headers can be served from the browser's cache, so the "truth" the
+        // rebuild painted was the state from before the POST. The server has already
+        // confirmed what it did, so repaint from that instead of asking again.
+        var rowSwitches = [];
+
         masterInput.onchange = function () {
             var action = masterInput.checked ? "enable" : "disable";
+            var wasOn = enabledCount > 0;
             fetch("/settings/curricula/country/" + encodeURIComponent(country) + "/" + action, {
                 method: "POST",
             }).then(function (r) {
                 return r.json();
             }).then(function (res) {
                 if (res.ok) {
-                    reload();  // server is the truth -- re-render every row from it
+                    rowSwitches.forEach(function (row) {
+                        row.pack.enabled = res.enabled;
+                        row.input.checked = res.enabled;
+                    });
+                    enabledCount = res.enabled ? rowSwitches.length : 0;
+                    masterInput.indeterminate = false;
+                    masterStatus.textContent = "Saved (" + res.count +
+                        " turned " + (res.enabled ? "on" : "off") + ") — restart Mentar to apply.";
                 } else {
                     masterStatus.textContent = "Error: " + res.error;
-                    masterInput.checked = enabledCount > 0;
+                    masterInput.checked = wasOn;
                 }
             }).catch(function () {
                 masterStatus.textContent = "Error: could not save.";
-                masterInput.checked = enabledCount > 0;
+                masterInput.checked = wasOn;
             });
         };
 
@@ -187,13 +204,16 @@
                 panel.appendChild(gradeHeading);
                 lastGrade = grade;
             }
-            panel.appendChild(packRow(c, function () {
+            var built = packRow(c, function () {
                 // A single pack changed -- repaint the master switch's tri-state
                 // without discarding the "Saved" hints already on screen.
                 var on = packs.filter(function (p) { return p.enabled; }).length;
+                enabledCount = on;
                 masterInput.checked = on > 0;
                 masterInput.indeterminate = on > 0 && on < packs.length;
-            }));
+            });
+            rowSwitches.push(built);
+            panel.appendChild(built.row);
         });
         return panel;
     }
@@ -202,7 +222,7 @@
         var container = document.getElementById("curricula-toggle-list");
         if (!container) return;
 
-        fetch("/settings/curricula")
+        fetch("/settings/curricula", {cache: "no-store"})
             .then(function (response) {
                 return response.json();
             })
@@ -270,9 +290,7 @@
                         tab.tabIndex = selected ? 0 : -1;
                     });
                     container.appendChild(tablist);
-                    container.appendChild(
-                        countryPanel(activeCountry, groups[activeCountry], loadCurricula)
-                    );
+                    container.appendChild(countryPanel(activeCountry, groups[activeCountry]));
                 }
                 render();
             })
