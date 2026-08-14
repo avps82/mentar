@@ -66,8 +66,27 @@
   // most speech engines vocalize them literally ("green square emoji"...).
   // Strip for the SPOKEN copy only; the visible text is untouched.
   var EMOJI_RE = new RegExp("[\\u200d\\ufe0f\\p{Extended_Pictographic}]", "gu");
-  function stripEmoji(text) {
-    return text.replace(EMOJI_RE, "").replace(/\s+/g, " ").trim();
+
+  // 2026-08-14 (maintainer, listening): two things the engines get wrong on
+  // OUR text specifically. Spoken copy only -- the visible text is untouched.
+  //   1. An ALL-CAPS word looks like an acronym, so "READ"/"SAME" is spelled
+  //      out letter by letter. Lowercase words of 2+ caps; single letters are
+  //      left alone (the A/B/C/D choice labels must still be read as letters).
+  //      ponytail: a GENUINE acronym in child-facing text would now be read as
+  //      a word ("ncert"); no such text exists in the read-aloud surfaces
+  //      (question, choices, feedback), so no exception list until one does.
+  //   2. "→" is vocalized as "arrow". It's used as "gives/therefore" in method
+  //      cards ("... digit 4? → 40") and category cards ("copper → conductor"),
+  //      where no single English word fits both, so it becomes a PAUSE. Only
+  //      the reported symbols are mapped -- the rest (×, ÷, =) are left to the
+  //      engine rather than guessed at blind, since TTS can't be tested here.
+  function forSpeech(text) {
+    return text
+      .replace(EMOJI_RE, "")
+      .replace(/[→⇒]/g, ",")
+      .replace(/\b[A-Z]{2,}\b/g, function (w) { return w.toLowerCase(); })
+      .replace(/\s+/g, " ")
+      .trim();
   }
 
   function cancelCurrent() {
@@ -122,7 +141,7 @@
           parts.push(opt.textContent.trim());
         });
       }
-      var text = stripEmoji(parts.join(". "));
+      var text = forSpeech(parts.join(". "));
       if (!text) return;
 
       var utterance = new SpeechSynthesisUtterance(text);
@@ -153,4 +172,8 @@
       paint(btn);
     }
   });
+
+  // Test seam only (tests/web/test_tts_speech_text.py runs this file under node
+  // with a stub window). Nothing in the app reads this.
+  window.MentarSpeech = { forSpeech: forSpeech };
 })();
