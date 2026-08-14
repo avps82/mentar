@@ -801,6 +801,31 @@ def curricula_toggle(key, action):
     return jsonify({"ok": True, "enabled": key not in _DISABLED_PACKS, "restart_required": True})
 
 
+@app.route("/settings/curricula/country/<country>/<action>", methods=["POST"])
+def curricula_toggle_country(country, action):
+    """The country-level master switch behind the Settings curriculum tabs
+    (maintainer ask 2026-08-14: one tab per country, its on/off switch first,
+    grades under it). Server-side because a country holds up to 25 packs --
+    one call and ONE state-file write, not 25 POSTs and 25 writes from the
+    browser. `country` is the group name the listing groups by, so the
+    country-less pilot/practice packs are addressed as "General".
+    """
+    if action not in ("enable", "disable"):
+        return jsonify({"ok": False, "error": "unknown action"}), 404
+    keys = [p["key"] for p in _all_packs_with_state() if (p["country"] or "General") == country]
+    if not keys:
+        return jsonify({"ok": False, "error": "unknown country"}), 404
+
+    if action == "disable":
+        _DISABLED_PACKS.update(keys)
+    else:
+        _DISABLED_PACKS.difference_update(keys)
+    _save_disabled_packs(_DISABLED_PACKS)
+    return jsonify({
+        "ok": True, "enabled": action == "enable", "count": len(keys), "restart_required": True,
+    })
+
+
 @app.route("/settings/curriculum-packs")
 def curriculum_packs():
     """R8 (dormant): list downloadable REMOTE packs (curriculum/packs.json) with

@@ -616,7 +616,43 @@ details.settings-section > summary {
   list-style-position: outside;
 }
 details.settings-section[open] > summary { margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
-.curricula-group-heading { font-size: 1rem; margin: 14px 0 6px; color: var(--text-muted); }
+/* Country tabs inside the Curricula card (2026-08-14 maintainer ask). Replaced
+   the per-country <h3> heading stack (.curricula-group-heading, deleted) -- 71
+   packs from 5 countries in one scrolling column read as a mess. The grade
+   headings below survive; they now live INSIDE a country's tab panel.
+   Horizontal scroll on the tab strip only
+   (never the page) so a 6th country doesn't reflow into a second row. */
+.tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 14px;
+}
+.tab-btn {
+  flex: none;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  padding: 8px 14px;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.tab-btn[aria-selected="true"] { color: var(--text); font-weight: 600; border-bottom-color: var(--primary); }
+.tab-btn:focus-visible { outline: 2px solid var(--learning); outline-offset: -2px; }
+/* The country master switch, above the grades it governs. */
+.curricula-master {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.curricula-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.curricula-row .hint, .curricula-master .hint { margin-top: 0; }
 .curricula-grade-heading {
   font-size: 0.8rem;
   margin: 10px 0 4px 8px;

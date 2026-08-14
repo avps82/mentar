@@ -45,6 +45,147 @@
     }
 
     // ── Curricula: on/off toggle for in-repo packs (R10) ────────────────────
+    // 2026-08-14 (maintainer: "settings is still a mess... use tabs"): ONE TAB
+    // PER COUNTRY, each panel opening with that country's master switch, grades
+    // under it. Before this, all 71 packs from every country were stacked in one
+    // scrolling column with <h3>/<h4> headings.
+    //
+    // "General" is the group for the country-less pilot/practice packs; it sorts
+    // last (same posture as the picker's "Try-out topics"). The backend already
+    // sorts each country's packs grade-then-subject, so grouping here only adds
+    // the sub-heading -- never re-sort grade strings in JS ("Year 10" < "Year 2").
+    var COUNTRY_NAMES = {
+        AU: "🇦🇺 Australia",
+        IN: "🇮🇳 India",
+        SG: "🇸🇬 Singapore",
+        US: "🇺🇸 United States",
+        General: "🧪 General",
+    };
+    var activeCountry = null;  // survives a re-render (a toggle refetches the list)
+
+    function switchWidget(checked, ariaLabel) {
+        // R12.2: a real switch widget (native checkbox), not a text button.
+        var sw = document.createElement("label");
+        sw.className = "switch";
+        var input = document.createElement("input");
+        input.type = "checkbox";
+        input.checked = checked;
+        input.setAttribute("aria-label", ariaLabel);
+        var slider = document.createElement("span");
+        slider.className = "slider";
+        sw.appendChild(input);
+        sw.appendChild(slider);
+        return sw;
+    }
+
+    function packRow(c, onSaved) {
+        var row = document.createElement("div");
+        row.className = "curricula-row";
+
+        var label = document.createElement("strong");
+        label.textContent = c.label;
+
+        var sw = switchWidget(c.enabled, "Turn " + c.label + " on or off");
+        var input = sw.querySelector("input");
+
+        var status = document.createElement("span");
+        status.className = "hint";
+
+        input.onchange = function () {
+            var action = input.checked ? "enable" : "disable";
+            fetch("/settings/curricula/" + encodeURIComponent(c.key) + "/" + action, {
+                method: "POST",
+            }).then(function (r) {
+                return r.json();
+            }).then(function (res) {
+                if (res.ok) {
+                    c.enabled = res.enabled;
+                    input.checked = res.enabled;
+                    status.textContent = "Saved — restart Mentar to apply.";
+                    onSaved();
+                } else {
+                    // Never show a state the server rejected.
+                    status.textContent = "Error: " + res.error;
+                    input.checked = c.enabled;
+                }
+            }).catch(function () {
+                status.textContent = "Error: could not save.";
+                input.checked = c.enabled;
+            });
+        };
+
+        row.appendChild(label);
+        row.appendChild(sw);
+        row.appendChild(status);
+        return row;
+    }
+
+    function countryPanel(country, packs, reload) {
+        var panel = document.createElement("div");
+        panel.className = "tab-panel";
+        panel.id = "curricula-panel";
+        panel.setAttribute("role", "tabpanel");
+        panel.setAttribute("aria-labelledby", "curricula-tab-" + country);
+
+        // The master switch, FIRST -- the whole country on or off in one call.
+        var master = document.createElement("div");
+        master.className = "curricula-master";
+        var masterLabel = document.createElement("strong");
+        masterLabel.textContent = "Use the " + COUNTRY_NAMES[country].replace(/^\S+\s/, "") +
+            " curriculum";
+        var enabledCount = packs.filter(function (c) { return c.enabled; }).length;
+        var masterSw = switchWidget(enabledCount > 0, "Turn the whole " + country + " curriculum on or off");
+        var masterInput = masterSw.querySelector("input");
+        // Native tri-state: SOME on shows a dash, not a lie in either direction.
+        masterInput.indeterminate = enabledCount > 0 && enabledCount < packs.length;
+        var masterStatus = document.createElement("span");
+        masterStatus.className = "hint";
+
+        masterInput.onchange = function () {
+            var action = masterInput.checked ? "enable" : "disable";
+            fetch("/settings/curricula/country/" + encodeURIComponent(country) + "/" + action, {
+                method: "POST",
+            }).then(function (r) {
+                return r.json();
+            }).then(function (res) {
+                if (res.ok) {
+                    reload();  // server is the truth -- re-render every row from it
+                } else {
+                    masterStatus.textContent = "Error: " + res.error;
+                    masterInput.checked = enabledCount > 0;
+                }
+            }).catch(function () {
+                masterStatus.textContent = "Error: could not save.";
+                masterInput.checked = enabledCount > 0;
+            });
+        };
+
+        master.appendChild(masterLabel);
+        master.appendChild(masterSw);
+        master.appendChild(masterStatus);
+        panel.appendChild(master);
+
+        var lastGrade = null;
+        packs.forEach(function (c) {
+            var grade = c.year_level || "";
+            if (grade !== lastGrade) {
+                var gradeHeading = document.createElement("h4");
+                gradeHeading.className = "curricula-grade-heading";
+                gradeHeading.textContent = grade || "General";
+                panel.appendChild(gradeHeading);
+                lastGrade = grade;
+            }
+            panel.appendChild(packRow(c, function () {
+                // A single pack changed -- repaint the master switch's tri-state
+                // without discarding the "Saved" hints already on screen.
+                var on = packs.filter(function (p) { return p.enabled; }).length;
+                masterInput.checked = on > 0;
+                masterInput.indeterminate = on > 0 && on < packs.length;
+            }));
+        });
+        return panel;
+    }
+
     function loadCurricula() {
         var container = document.getElementById("curricula-toggle-list");
         if (!container) return;
@@ -60,86 +201,68 @@
                     return;
                 }
 
-                // R12.3: group by country -- the list grows to dozens of packs
-                // as curriculum breadth ships (R14/R15). Country -> Grade -> Subject
-                // (maintainer ask 2026-08-12): the backend already sorts each
-                // country's packs by grade then subject, so grouping by grade here
-                // just adds the sub-heading -- no re-sorting needed.
                 var groups = {};
                 data.curricula.forEach(function (c) {
                     var key = c.country || "General";
+                    if (!COUNTRY_NAMES[key]) COUNTRY_NAMES[key] = key;  // a new pack's country
                     if (!groups[key]) groups[key] = [];
                     groups[key].push(c);
                 });
-
-                Object.keys(groups).sort().forEach(function (groupName) {
-                    var heading = document.createElement("h3");
-                    heading.className = "curricula-group-heading";
-                    heading.textContent = groupName;
-                    container.appendChild(heading);
-
-                    var lastGrade = null;
-                    groups[groupName].forEach(function (c) {
-                        var grade = c.year_level || "";
-                        if (grade !== lastGrade) {
-                            var gradeHeading = document.createElement("h4");
-                            gradeHeading.className = "curricula-grade-heading";
-                            gradeHeading.textContent = grade || "General";
-                            container.appendChild(gradeHeading);
-                            lastGrade = grade;
-                        }
-
-                        var row = document.createElement("div");
-                        row.style.marginBottom = "12px";
-
-                        var label = document.createElement("strong");
-                        label.textContent = c.label;
-
-                        // R12.2: a real switch widget (native checkbox), not a text button.
-                        var sw = document.createElement("label");
-                        sw.className = "switch";
-                        sw.style.marginLeft = "10px";
-                        var input = document.createElement("input");
-                        input.type = "checkbox";
-                        input.checked = c.enabled;
-                        input.setAttribute("aria-label", "Turn " + c.label + " on or off");
-                        var slider = document.createElement("span");
-                        slider.className = "slider";
-                        sw.appendChild(input);
-                        sw.appendChild(slider);
-
-                        var status = document.createElement("span");
-                        status.className = "hint";
-                        status.style.marginLeft = "10px";
-
-                        input.onchange = function () {
-                            var action = input.checked ? "enable" : "disable";
-                            fetch("/settings/curricula/" + encodeURIComponent(c.key) + "/" + action, {
-                                method: "POST",
-                            }).then(function (r) {
-                                return r.json();
-                            }).then(function (res) {
-                                if (res.ok) {
-                                    c.enabled = res.enabled;
-                                    input.checked = res.enabled;
-                                    status.textContent = "Saved — restart Mentar to apply.";
-                                } else {
-                                    // Never show a state the server rejected.
-                                    status.textContent = "Error: " + res.error;
-                                    input.checked = c.enabled;
-                                }
-                            }).catch(function () {
-                                status.textContent = "Error: could not save.";
-                                input.checked = c.enabled;
-                            });
-                        };
-
-                        row.appendChild(label);
-                        row.appendChild(sw);
-                        row.appendChild(status);
-                        container.appendChild(row);
-                    });
+                var countries = Object.keys(groups).sort(function (a, b) {
+                    if (a === "General") return 1;      // try-out packs last
+                    if (b === "General") return -1;
+                    return COUNTRY_NAMES[a].localeCompare(COUNTRY_NAMES[b]);
                 });
+                if (countries.indexOf(activeCountry) === -1) activeCountry = countries[0];
+
+                var tablist = document.createElement("div");
+                tablist.className = "tabs";
+                tablist.setAttribute("role", "tablist");
+                tablist.setAttribute("aria-label", "Curriculum country");
+
+                countries.forEach(function (country) {
+                    var tab = document.createElement("button");
+                    tab.type = "button";
+                    tab.className = "tab-btn";
+                    tab.id = "curricula-tab-" + country;
+                    tab.textContent = COUNTRY_NAMES[country];
+                    tab.setAttribute("role", "tab");
+                    tab.setAttribute("aria-controls", "curricula-panel");
+                    var selected = country === activeCountry;
+                    tab.setAttribute("aria-selected", selected ? "true" : "false");
+                    tab.tabIndex = selected ? 0 : -1;  // roving tabindex (ARIA tabs pattern)
+                    tab.onclick = function () {
+                        activeCountry = country;
+                        render();
+                        var fresh = document.getElementById("curricula-tab-" + country);
+                        if (fresh) fresh.focus();
+                    };
+                    tab.onkeydown = function (evt) {
+                        var step = evt.key === "ArrowRight" ? 1 : (evt.key === "ArrowLeft" ? -1 : 0);
+                        if (!step) return;
+                        evt.preventDefault();
+                        var i = countries.indexOf(activeCountry);
+                        activeCountry = countries[(i + step + countries.length) % countries.length];
+                        render();
+                        var next = document.getElementById("curricula-tab-" + activeCountry);
+                        if (next) next.focus();
+                    };
+                    tablist.appendChild(tab);
+                });
+
+                function render() {
+                    container.innerHTML = "";
+                    Array.prototype.forEach.call(tablist.children, function (tab) {
+                        var selected = tab.id === "curricula-tab-" + activeCountry;
+                        tab.setAttribute("aria-selected", selected ? "true" : "false");
+                        tab.tabIndex = selected ? 0 : -1;
+                    });
+                    container.appendChild(tablist);
+                    container.appendChild(
+                        countryPanel(activeCountry, groups[activeCountry], loadCurricula)
+                    );
+                }
+                render();
             })
             .catch(function () {
                 container.textContent = "Could not load curricula.";

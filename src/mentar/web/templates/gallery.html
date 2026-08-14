@@ -122,8 +122,7 @@
 </div>
 
 <div class="gallery-section"><h2>Subject picker</h2></div>
-<h3 class="curricula-group-heading">AU</h3>
-<h4 class="curricula-grade-heading">Year 4</h4>
+<h3 class="year-group-heading">Year 4 (AU)</h3>
 <div class="subject-grid">
   <button class="subject-card" type="button">
     <span class="subject-icon">🍕</span>
@@ -144,11 +143,25 @@
   </button>
 </div>
 
-<div class="gallery-section"><h2>Settings rows — switch, theme picker</h2></div>
-<div style="margin-bottom:12px">
+<div class="gallery-section"><h2>Settings rows — country tabs, switch, theme picker</h2></div>
+{# Static mock of what settings.js builds at runtime (country tabs + master
+   switch + grade heading + pack rows) -- the gallery is a THEME review tool, so
+   every component a theme has to colour must appear here without JS. #}
+<div class="tabs" role="tablist" aria-label="Curriculum country">
+  <button class="tab-btn" type="button" role="tab" aria-selected="true">🇦🇺 Australia</button>
+  <button class="tab-btn" type="button" role="tab" aria-selected="false">🇮🇳 India</button>
+  <button class="tab-btn" type="button" role="tab" aria-selected="false">🧪 General</button>
+</div>
+<div class="curricula-master">
+  <strong>Use the Australia curriculum</strong>
+  <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+  <span class="hint">Saved — restart Mentar to apply.</span>
+</div>
+<h4 class="curricula-grade-heading">Year 4</h4>
+<div class="curricula-row">
   <strong>Maths — Year 4 🇦🇺</strong>
-  <label class="switch" style="margin-left:10px"><input type="checkbox" checked><span class="slider"></span></label>
-  <span class="hint" style="margin-left:10px">Saved — restart Mentar to apply.</span>
+  <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+  <span class="hint">Saved — restart Mentar to apply.</span>
 </div>
 <div class="theme-picker">
   {% for t in theme_names %}

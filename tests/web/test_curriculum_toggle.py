@@ -148,6 +148,62 @@ def test_all_disabled_shows_friendly_picker_message_and_settings_still_reachable
     assert all(x["enabled"] is False for x in listing["curricula"])
 
 
+def test_country_master_switch_toggles_every_pack_of_that_country_only():
+    """2026-08-14: the Settings curriculum card is country TABS, each opening with a
+    master switch. That switch is one server call (a country holds up to 25 packs),
+    and it must move only its own country's packs."""
+    _skip_if_no_flask()
+    _app_mod, c, state = _client()
+
+    def by_country():
+        out = {}
+        for x in c.get("/settings/curricula").get_json()["curricula"]:
+            out.setdefault(x["country"] or "General", []).append(x["enabled"])
+        return out
+
+    before = by_country()
+    assert all(all(v) for v in before.values()), "packs start enabled"
+
+    r = c.post("/settings/curricula/country/IN/disable")
+    assert r.status_code == 200
+    body = r.get_json()
+    assert body["ok"] is True and body["enabled"] is False
+    assert body["count"] == len(before["IN"])
+
+    after = by_country()
+    assert not any(after["IN"]), "every IN pack must be off"
+    for country in after:
+        if country != "IN":
+            assert all(after[country]), f"{country} must be untouched"
+
+    # One state-file write, and re-enabling is symmetric.
+    assert set(json.loads(state.read_text())["disabled"]) == {
+        x["key"] for x in c.get("/settings/curricula").get_json()["curricula"]
+        if x["country"] == "IN"
+    }
+    assert c.post("/settings/curricula/country/IN/enable").status_code == 200
+    assert all(all(v) for v in by_country().values())
+
+
+def test_country_master_switch_covers_the_country_less_packs_as_general():
+    """The pilot/practice packs have no country; the tabs group them as "General",
+    so that name has to address them (they'd be unreachable from the UI otherwise)."""
+    _skip_if_no_flask()
+    _app_mod, c, _state = _client()
+    r = c.post("/settings/curricula/country/General/disable")
+    assert r.status_code == 200 and r.get_json()["count"] > 0
+    listing = c.get("/settings/curricula").get_json()["curricula"]
+    assert all(not x["enabled"] for x in listing if not x["country"])
+    assert all(x["enabled"] for x in listing if x["country"])
+
+
+def test_country_master_switch_rejects_unknown_country_and_bad_action():
+    _skip_if_no_flask()
+    _app_mod, c, _state = _client()
+    assert c.post("/settings/curricula/country/ZZ/disable").status_code == 404
+    assert c.post("/settings/curricula/country/AU/frobnicate").status_code == 404
+
+
 def test_corrupt_state_file_defaults_to_all_enabled():
     """A malformed pack_state.json must never break startup -- default to
     all-enabled rather than crash or silently hide everything."""

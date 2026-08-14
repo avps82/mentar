@@ -980,7 +980,8 @@ def test_gallery_is_dev_gated_and_renders_every_theme():
             # the components a theme review has to see, spot-checked by the
             # real class names (not invented gallery-only ones)
             for cls in ("steps-pre", "choice-option", "subject-card", "btn-accent",
-                        "banner-warn", "turn-mastery", "theme-swatch"):
+                        "banner-warn", "turn-mastery", "theme-swatch",
+                        "tab-btn", "curricula-master"):
                 assert cls in body, f"gallery missing {cls} in {theme}"
 
         fallback = c.get("/gallery?theme=not-a-theme").get_data(as_text=True)
