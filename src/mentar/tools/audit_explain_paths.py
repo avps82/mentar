@@ -1,8 +1,9 @@
 """Audit what "explain" actually produces for every curriculum node.
 
 Answers two questions per node, by RUNNING the real code rather than reading it:
-  1. Does "Explain more" show a deterministic ASCII step-grid, LLM prose, or --
-     the interesting case -- a coin-flip between them depending on the draw?
+  1. Does "Explain more" show a deterministic ASCII step-grid, a computed METHOD
+     CARD, LLM prose, or -- the interesting case -- a coin-flip between them
+     depending on the draw?
   2. Which visual scaffold does the node's label route to?
 
 Why it lives here rather than in a scratchpad: this has now found real, shipped
@@ -13,10 +14,17 @@ The 2026-08-11 full-corpus re-run found a 5th scaffold mis-route and showed the
 draw-dependent problem had quadrupled to 16 nodes as the generic packs
 replicated one root cause.
 
+2026-08-15 audit: this tool was written before explain-mode's method cards
+shipped, so it counted every non-step-grid node as "prose" -- including the
+hundreds that now show a deterministic Type-2/4 card. It reported "always prose:
+389" for a corpus where most of those nodes explain themselves without the model.
+An instrument that under-reports coverage is worse than none, because the next
+session reads it and re-solves a solved problem. It now classifies three ways,
+straight off the drawn item (`item.method_steps` is what the controller checks).
+
 Deliberately a REPORTER, not a gate. It prints and exits 0 -- there is no
-"correct" number of prose nodes to assert (English and science are 100% prose by
-construction, and that is right). Judging the output is the human's job; what
-this removes is the cost of gathering it.
+"correct" number of prose nodes to assert. Judging the output is the human's job;
+what this removes is the cost of gathering it.
 
     python3 -m mentar.tools.audit_explain_paths            # summary
     python3 -m mentar.tools.audit_explain_paths --json OUT # full per-node data
@@ -124,13 +132,19 @@ def audit():
                 if sample_problem is None:
                     sample_problem = item.problem
                 answer_types[item.answer_type] += 1
-                kinds[step_grid_kind(item.problem) or "prose"] += 1
+                # Mirrors controller._do_help_explain's order exactly: a step grid
+                # wins, else the live item's method card, else LLM prose.
+                kind = step_grid_kind(item.problem)
+                if kind is None:
+                    kind = "method-card" if item.method_steps else "prose"
+                kinds[kind] += 1
 
             body = load_visual_scaffold(SCAFFOLD_ROOT, subject, label)
             scaffold_file = BODY_TO_FILE.get(body.strip()) if body else None
 
             total = sum(kinds.values()) or 1
-            grid_hits = total - kinds.get("prose", 0) - kinds.get("<no item>", 0)
+            card_hits = kinds.get("method-card", 0)
+            grid_hits = total - card_hits - kinds.get("prose", 0) - kinds.get("<no item>", 0)
             rows.append({
                 "template": rel,
                 "subject": subject,
@@ -138,7 +152,10 @@ def audit():
                 "label": label,
                 "answer_types": dict(answer_types),
                 "grid_pct": round(100.0 * grid_hits / total, 1),
-                "grid_kinds": {k: v for k, v in kinds.items() if k not in ("prose", "<no item>")},
+                "card_pct": round(100.0 * card_hits / total, 1),
+                "deterministic_pct": round(100.0 * (grid_hits + card_hits) / total, 1),
+                "grid_kinds": {k: v for k, v in kinds.items()
+                               if k not in ("prose", "method-card", "<no item>")},
                 "no_item": kinds.get("<no item>", 0),
                 "scaffold": scaffold_file,
                 "sample": sample_problem,
@@ -164,14 +181,22 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     always = sum(1 for r in nodes if r["grid_pct"] == 100)
-    never = sum(1 for r in nodes if r["grid_pct"] == 0)
+    cards = sum(1 for r in nodes if r["card_pct"] == 100)
+    never = sum(1 for r in nodes if r["deterministic_pct"] == 0)
+    partial_det = [r for r in nodes if 0 < r["deterministic_pct"] < 100]
     by_subject = Counter(r["subject"] for r in nodes)
     unscaffolded = [r for r in nodes if not r["scaffold"]]
 
     print(f"nodes {len(nodes)} across {len({r['template'] for r in nodes})} templates "
           f"({', '.join(f'{k} {v}' for k, v in sorted(by_subject.items()))})")
     print(f"  always step-grid : {always}")
-    print(f"  always prose     : {never}")
+    print(f"  always method-card: {cards}")
+    print(f"  always prose (no deterministic explanation at all): {never}")
+    if partial_det:
+        print(f"  PART-DETERMINISTIC: {len(partial_det)}"
+              "  <-- some draws explain themselves, some fall to the model")
+        for r in partial_det[:10]:
+            print(f"      {r['deterministic_pct']:6.1f}%  {r['node']}")
     print(f"  DRAW-DEPENDENT   : {len(partial)}"
           + ("  <-- same concept, different output per draw" if partial else ""))
     for r in partial:
