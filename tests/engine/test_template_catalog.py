@@ -243,6 +243,69 @@ _EXPECTED = {
     "curriculum/templates/IN_GENERIC/c8_english.md": {
         "key": "in_generic_c8_english", "label": "English — Class 8 🇮🇳 (general)", "item_source": "in_c8_english",
     },
+    "curriculum/templates/IN_GENERIC/c2_science.md": {
+        "key": "in_generic_c2_science", "label": "Science — Class 2 🇮🇳 (general)", "item_source": "in_c2_science",
+    },
+    "curriculum/templates/IN_GENERIC/c3_science.md": {
+        "key": "in_generic_c3_science", "label": "Science — Class 3 🇮🇳 (general)", "item_source": "in_c3_science",
+    },
+    "curriculum/templates/IN_GENERIC/c4_science.md": {
+        "key": "in_generic_c4_science", "label": "Science — Class 4 🇮🇳 (general)", "item_source": "in_c4_science",
+    },
+    "curriculum/templates/IN_GENERIC/c5_science.md": {
+        "key": "in_generic_c5_science", "label": "Science — Class 5 🇮🇳 (general)", "item_source": "in_c5_science",
+    },
+    "curriculum/templates/IN_GENERIC/c6_science.md": {
+        "key": "in_generic_c6_science", "label": "Science — Class 6 🇮🇳 (general)", "item_source": "in_c6_science",
+    },
+    "curriculum/templates/IN_GENERIC/c7_science.md": {
+        "key": "in_generic_c7_science", "label": "Science — Class 7 🇮🇳 (general)", "item_source": "in_c7_science",
+    },
+    "curriculum/templates/IN_GENERIC/c8_science.md": {
+        "key": "in_generic_c8_science", "label": "Science — Class 8 🇮🇳 (general)", "item_source": "in_c8_science",
+    },
+    "curriculum/templates/SG_GENERIC/p2_science.md": {
+        "key": "sg_generic_p2_science", "label": "Science — Primary 2 🇸🇬 (general)", "item_source": "sg_p2_science",
+    },
+    "curriculum/templates/SG_GENERIC/p3_science.md": {
+        "key": "sg_generic_p3_science", "label": "Science — Primary 3 🇸🇬 (general)", "item_source": "sg_p3_science",
+    },
+    "curriculum/templates/SG_GENERIC/p4_science.md": {
+        "key": "sg_generic_p4_science", "label": "Science — Primary 4 🇸🇬 (general)", "item_source": "sg_p4_science",
+    },
+    "curriculum/templates/SG_GENERIC/p5_science.md": {
+        "key": "sg_generic_p5_science", "label": "Science — Primary 5 🇸🇬 (general)", "item_source": "sg_p5_science",
+    },
+    "curriculum/templates/SG_GENERIC/p6_science.md": {
+        "key": "sg_generic_p6_science", "label": "Science — Primary 6 🇸🇬 (general)", "item_source": "sg_p6_science",
+    },
+    "curriculum/templates/SG_GENERIC/s1_science.md": {
+        "key": "sg_generic_s1_science", "label": "Science — Secondary 1 🇸🇬 (general)", "item_source": "sg_s1_science",
+    },
+    "curriculum/templates/SG_GENERIC/s2_science.md": {
+        "key": "sg_generic_s2_science", "label": "Science — Secondary 2 🇸🇬 (general)", "item_source": "sg_s2_science",
+    },
+    "curriculum/templates/US_GENERIC/g2_science.md": {
+        "key": "us_generic_g2_science", "label": "Science — Grade 2 🇺🇸 (general)", "item_source": "us_g2_science",
+    },
+    "curriculum/templates/US_GENERIC/g3_science.md": {
+        "key": "us_generic_g3_science", "label": "Science — Grade 3 🇺🇸 (general)", "item_source": "us_g3_science",
+    },
+    "curriculum/templates/US_GENERIC/g4_science.md": {
+        "key": "us_generic_g4_science", "label": "Science — Grade 4 🇺🇸 (general)", "item_source": "us_g4_science",
+    },
+    "curriculum/templates/US_GENERIC/g5_science.md": {
+        "key": "us_generic_g5_science", "label": "Science — Grade 5 🇺🇸 (general)", "item_source": "us_g5_science",
+    },
+    "curriculum/templates/US_GENERIC/g6_science.md": {
+        "key": "us_generic_g6_science", "label": "Science — Grade 6 🇺🇸 (general)", "item_source": "us_g6_science",
+    },
+    "curriculum/templates/US_GENERIC/g7_science.md": {
+        "key": "us_generic_g7_science", "label": "Science — Grade 7 🇺🇸 (general)", "item_source": "us_g7_science",
+    },
+    "curriculum/templates/US_GENERIC/g8_science.md": {
+        "key": "us_generic_g8_science", "label": "Science — Grade 8 🇺🇸 (general)", "item_source": "us_g8_science",
+    },
 }
 
 

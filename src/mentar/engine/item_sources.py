@@ -43,6 +43,7 @@ from mentar.engine.au_items import (
 )
 from mentar.engine.generic_english_items import GENERIC_ENGLISH_ITEM_SOURCES
 from mentar.engine.generic_items import GENERIC_ITEM_SOURCES
+from mentar.engine.generic_science_items import GENERIC_SCIENCE_ITEM_SOURCES
 from mentar.engine.in_generic_items import IN_GENERIC_MATHS_GENERATORS
 from mentar.engine.itemgen import ARITHMETIC_GENERATORS, DEFAULT_GENERATORS
 from mentar.engine.practice_items import ENGLISH_PRACTICE_GENERATORS, MATHS_PRACTICE_GENERATORS
@@ -108,5 +109,12 @@ def build_registry(pilot_itembank_path: Path) -> dict[str, dict]:
         **{
             name: {"generators": gens, "itembank": None}
             for name, gens in GENERIC_ENGLISH_ITEM_SOURCES.items()
+        },
+        # Generic Science packs (2026-08-14) — third subject on the same shared
+        # stage table, reusing engine/science_items.py's already-shipped AU
+        # generators. Before this, science existed for AU only.
+        **{
+            name: {"generators": gens, "itembank": None}
+            for name, gens in GENERIC_SCIENCE_ITEM_SOURCES.items()
         },
     }
