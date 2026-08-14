@@ -1071,6 +1071,14 @@ class SessionController:
             )
         example = self._worked_example_for(node_id)
         if example:
+            lines = example.splitlines()
+            if len(lines) > 1:
+                # A method card (multi-line, computed) -- render it in the CARD box,
+                # not pasted into prose. 2026-08-14: two consecutive Explain-more
+                # presses showed the SAME card two ways (proportional wrapped prose
+                # here, monospace box on the next press). One shape, one look.
+                self._ctx.elaborate_method_card = tuple(lines)
+                return "Let's take it one step at a time. Here's a similar one worked through 👇"
             return (
                 "Let's take it one step at a time. Here's a similar question and its "
                 f"answer to compare with:\n{example}\n"

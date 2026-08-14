@@ -181,6 +181,25 @@ def test_elaborate_on_science_node_folds_in_the_ascii_diagram():
     assert "use ONE of these" not in text
 
 
+def test_fallback_hint_shows_a_card_in_the_card_box_not_pasted_into_prose():
+    """2026-08-14 (maintainer-reported): with the LLM unavailable, the first Help
+    press pasted the sibling's method-card LINES into the prose bubble, and the next
+    Explain-more press showed the same shape of content in the monospace card box --
+    the same card, two completely different looks. Card content goes in the card."""
+    ctrl = SessionController(
+        llm_call=lambda messages: "",  # LLM unavailable -> _fallback_hint
+        prompt_dir=PROMPTS, grounding_cfg={},
+        curriculum=_PERCENTAGE_CURRICULUM, db_store=_FakeStore(), learner_id="L",
+        item_bank=_percentage_bank(), rng_seed=7,
+    )
+    ctrl.step(None)
+    result = ctrl.step("?")
+    card = ctrl.elaborate_method_card
+    assert card is not None and card[0] == "PERCENTAGE OF A QUANTITY"
+    assert "PERCENTAGE OF A QUANTITY" not in result.text, "card lines must not be inlined as prose"
+    assert result.text.strip(), "still a lead-in sentence"
+
+
 def test_a_node_with_neither_grid_nor_card_falls_through_unchanged():
     llm = _PromptCapturingLlm()
     ctrl = SessionController(
