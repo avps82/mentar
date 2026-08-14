@@ -97,17 +97,27 @@ class _Browser:
              "--remote-allow-origins=*", "about:blank"],
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
         )
-        port_file = pathlib.Path(self.profile) / "DevToolsActivePort"
-        for _ in range(150):
-            if port_file.exists() and "\n" in port_file.read_text():
-                break
-            time.sleep(0.1)
-        else:
-            raise RuntimeError("chromium never reported a debugging port")
-        port = int(port_file.read_text().splitlines()[0])
-        targets = json.load(urllib.request.urlopen(f"http://127.0.0.1:{port}/json"))
-        page = next(t for t in targets if t["type"] == "page")
-        self.ws = websocket.create_connection(page["webSocketDebuggerUrl"], timeout=30)
+        # Everything after the spawn must clean the process up on failure. A
+        # chromium left running per failed connect is a leak CI would accumulate
+        # silently -- found in this session's own audit: a browser spawned by a
+        # scratchpad probe whose websocket handshake raised was still alive 37
+        # minutes later.
+        try:
+            port_file = pathlib.Path(self.profile) / "DevToolsActivePort"
+            for _ in range(150):
+                if port_file.exists() and "\n" in port_file.read_text():
+                    break
+                time.sleep(0.1)
+            else:
+                raise RuntimeError("chromium never reported a debugging port")
+            port = int(port_file.read_text().splitlines()[0])
+            targets = json.load(urllib.request.urlopen(f"http://127.0.0.1:{port}/json"))
+            page = next(t for t in targets if t["type"] == "page")
+            self.ws = websocket.create_connection(page["webSocketDebuggerUrl"], timeout=30)
+        except Exception:
+            self.proc.terminate()
+            self.proc.wait(timeout=10)
+            raise
         self._id = 0
 
     def send(self, method, **params):
@@ -143,9 +153,15 @@ class _Browser:
     def close(self):
         try:
             self.ws.close()
-        finally:
-            self.proc.terminate()
+        except Exception:
+            pass          # a dead socket must never stop us killing the browser
+        self.proc.terminate()
+        try:
             self.proc.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            self.proc.kill()
+            self.proc.wait(timeout=10)
+        shutil.rmtree(self.profile, ignore_errors=True)
 
 
 def test_country_master_switch_turns_off_every_row_under_it():
@@ -231,8 +247,41 @@ def test_idle_nudge_appears_on_a_live_question_then_stops():
         server.stop()
 
 
+def test_picker_cards_in_a_row_are_the_same_height():
+    """2026-08-15 audit, maintainer-reported ("these cards are not even sized,
+    looks odd") and then MEASURED: 33 of 40 rows held cards of different heights
+    (210 / 225 / 240px). Each card is wrapped in its own <form>, so the form is
+    the grid item -- the grid stretched the form and the button inside kept its
+    content height. Only a browser can see this; no server test can."""
+    _skip_unless_browser()
+    server, browser = _Server(), None
+    try:
+        browser = _Browser()
+        browser.goto(server.url + "/choose")
+        browser.wait_for("document.querySelectorAll('.subject-card').length > 10")
+        uneven = browser.js("""
+            (() => {
+              const rows = {};
+              document.querySelectorAll('.subject-card').forEach(c => {
+                const r = c.getBoundingClientRect();
+                (rows[Math.round(r.top)] = rows[Math.round(r.top)] || []).push(Math.round(r.height));
+              });
+              return Object.entries(rows)
+                .filter(([, hs]) => new Set(hs).size > 1)
+                .map(([top, hs]) => top + ': ' + hs.join('/'));
+            })()
+        """)
+        assert uneven == [], f"rows with mismatched card heights: {uneven[:5]}"
+    finally:
+        if browser:
+            browser.close()
+        server.stop()
+
+
 if __name__ == "__main__":
     test_country_master_switch_turns_off_every_row_under_it()
     print("  ✓ test_country_master_switch_turns_off_every_row_under_it")
     test_idle_nudge_appears_on_a_live_question_then_stops()
     print("  ✓ test_idle_nudge_appears_on_a_live_question_then_stops")
+    test_picker_cards_in_a_row_are_the_same_height()
+    print("  ✓ test_picker_cards_in_a_row_are_the_same_height")

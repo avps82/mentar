@@ -552,6 +552,14 @@ th { background: var(--bg); }
   justify-content: center;
   margin-top: 24px;
 }
+/* Each card is wrapped in its own <form> (one POST per subject), so the FORM is
+   the grid item -- the grid stretched the form to the row height and the button
+   inside kept its content height, which is why cards in one row came out 210 /
+   225 / 240px tall (measured in-browser 2026-08-15, maintainer: "these cards are
+   not even sized, looks odd"). Let the form fill its cell and the button fill
+   the form. */
+.subject-grid > form { display: flex; justify-content: center; }
+.subject-grid > form > .subject-card { flex: 1; }
 .subject-card {
   font-size: 1.1rem;
   padding: 22px 26px;
@@ -566,8 +574,10 @@ th { background: var(--bg); }
   transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
 .subject-card .subject-icon {
+  /* Block, not inline: inline let the title start ON the icon's line and wrap
+     mid-phrase, orphaning the flag ("Maths — Year 10" / "🇦🇺"). */
   font-size: 1.6rem;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
   width: 44px;
