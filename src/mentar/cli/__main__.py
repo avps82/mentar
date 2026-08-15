@@ -518,6 +518,12 @@ def _serve(args) -> int:
         print("  Only THIS computer can reach it (the default, and the supported setup).")
         print("  To use a tablet on your home network:  mentar serve --lan   (advanced)")
         print("  Stop it with Ctrl-C.")
+        # Flush before handing control to a server that blocks forever. stdout is
+        # BLOCK-buffered whenever it is not a terminal (a log file, a service
+        # manager, a launcher capturing output), so without this the banner -- and
+        # the URL a parent needs -- stays in the buffer until the process exits.
+        # Found in CI capturing the packaged binary's real output: the log was empty.
+        sys.stdout.flush()
         # Waitress for the default path too, when it is available -- which is always
         # for `mentar[web]` and always in the packaged binary. Two reasons, and the
         # second is why this changed:
@@ -575,6 +581,8 @@ def _serve(args) -> int:
         print("  Allow it for PRIVATE networks only -- never for public ones.")
     print()
     print("  Stop it with Ctrl-C.")
+    sys.stdout.flush()  # see the note in the default branch -- same reason, and here
+                        # the text a parent must read to make an informed choice.
     waitress_serve(app, host="0.0.0.0", port=port, threads=8)  # noqa: S104 -- the point of --lan
     return 0
 
