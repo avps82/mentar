@@ -56,22 +56,30 @@ def test_frozen_never_writes_family_data_into_the_disposable_bundle(frozen):
 
 
 @pytest.mark.parametrize(
-    "platform, env, expected_tail",
-    [
-        ("win32", {"LOCALAPPDATA": "C:\\Users\\kid\\AppData\\Local"}, "Mentar"),
-        ("darwin", {}, "Mentar"),
-        ("linux", {}, "mentar"),
-    ],
+    "platform, expected_tail",
+    [("win32", "Mentar"), ("darwin", "Mentar"), ("linux", "mentar")],
 )
 def test_frozen_uses_the_conventional_place_on_each_platform(
-    frozen, monkeypatch, platform, env, expected_tail
+    frozen, monkeypatch, tmp_path, platform, expected_tail
 ):
+    """data_dir() MKDIRS what it returns, so every base here must be a temp dir.
+
+    The darwin/linux branches go through Path.home(), which the `frozen` fixture
+    already redirects into tmp_path. The win32 branch does NOT -- it reads
+    LOCALAPPDATA, and this passed the literal "C:\\Users\\kid\\AppData\\Local".
+    On POSIX that is a *relative* path, so every run of this suite created a
+    real `C:\\Users\\kid\\AppData\\Local/Mentar` directory in the repo root
+    (found sitting there on 2026-08-16, dated the day packaging landed).
+    """
     monkeypatch.setattr(sys, "platform", platform)
     for k in ("LOCALAPPDATA", "XDG_DATA_HOME"):
         monkeypatch.delenv(k, raising=False)
-    for k, v in env.items():
-        monkeypatch.setenv(k, v)
-    assert paths.data_dir().name == expected_tail
+    if platform == "win32":
+        monkeypatch.setenv("LOCALAPPDATA", str(tmp_path))
+
+    result = paths.data_dir()
+    assert result.name == expected_tail
+    assert tmp_path in result.parents, f"{result} escaped the temp dir"
 
 
 def test_frozen_linux_honours_xdg_data_home(frozen, monkeypatch, tmp_path):
