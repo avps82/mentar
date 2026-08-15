@@ -129,6 +129,20 @@
     var activeCountry = null;  // survives a re-render (switching tabs rebuilds the panel)
     var activeCountries = [];  // countries switched on, from the server (see /settings/curricula)
 
+    // A toggle now re-scans the whole curriculum server-side (~1.4s), so "clicked
+    // but nothing visible" is long enough to read as broken -- and the fix for a
+    // parent who thinks it is broken is to click again, which races the rescan.
+    // Show a spinner for the duration and make the switch unclickable while it runs.
+    function busy(statusEl, inputEl, on) {
+        if (on) {
+            statusEl.className = "hint toggle-busy";
+            statusEl.textContent = "Saving\u2026";
+        } else {
+            statusEl.className = "hint";
+        }
+        if (inputEl) inputEl.disabled = on;
+    }
+
     function switchWidget(checked, ariaLabel) {
         // R12.2: a real switch widget (native checkbox), not a text button.
         var sw = document.createElement("label");
@@ -159,11 +173,13 @@
 
         input.onchange = function () {
             var action = input.checked ? "enable" : "disable";
+            busy(status, input, true);
             fetch("/settings/curricula/" + encodeURIComponent(c.key) + "/" + action, {
                 method: "POST",
             }).then(function (r) {
                 return r.json();
             }).then(function (res) {
+                busy(status, input, false);
                 if (res.ok) {
                     c.enabled = res.enabled;
                     input.checked = res.enabled;
@@ -175,6 +191,7 @@
                     input.checked = c.enabled;
                 }
             }).catch(function () {
+                busy(status, input, false);
                 status.textContent = "Error: could not save.";
                 input.checked = c.enabled;
             });
@@ -235,11 +252,15 @@
         masterInput.onchange = function () {
             var action = masterInput.checked ? "enable" : "disable";
             var wasOn = enabledCount > 0;
+            // The country switch can clear ~25 packs in one call, so it is the SLOWEST
+            // thing on this page -- the one that most needs to look busy.
+            busy(masterStatus, masterInput, true);
             fetch("/settings/curricula/country/" + encodeURIComponent(country) + "/" + action, {
                 method: "POST",
             }).then(function (r) {
                 return r.json();
             }).then(function (res) {
+                busy(masterStatus, masterInput, false);
                 if (res.ok) {
                     // ON reveals the years and subjects; it does NOT switch them on
                     // (maintainer 2026-08-15: "the parent will turn on what they
@@ -264,6 +285,7 @@
                     masterInput.checked = wasOn;
                 }
             }).catch(function () {
+                busy(masterStatus, masterInput, false);
                 masterStatus.textContent = "Error: could not save.";
                 masterInput.checked = wasOn;
             });

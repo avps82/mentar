@@ -187,7 +187,11 @@ def test_country_master_switch_turns_off_every_row_under_it():
         assert rows_before > 5, f"expected AU's rows to start on, got {rows_before}"
 
         browser.js("document.querySelector('.curricula-master input').click()")
-        browser.wait_for("document.querySelector('.curricula-master .hint').textContent.includes('Saved')")
+        # Wording changed 2026-08-15: a toggle applies live, so it no longer says
+        # "restart Mentar to apply" and no longer reports a bulk count.
+        browser.wait_for(
+            "document.querySelector('.curricula-master .hint').textContent.includes('Off')"
+        )
 
         still_on = browser.js(
             "[...document.querySelectorAll('.curricula-row input')].filter(i => i.checked).length"
@@ -201,6 +205,64 @@ def test_country_master_switch_turns_off_every_row_under_it():
         assert au and not any(c["enabled"] for c in au), "server still reports AU packs enabled"
         others = [c for c in listing["curricula"] if c["country"] not in (None, "AU")]
         assert all(c["enabled"] for c in others), "the master switch reached outside its own country"
+    finally:
+        if browser:
+            browser.close()
+        server.stop()
+
+
+def test_a_toggle_shows_it_is_working_before_it_says_on_or_off():
+    """2026-08-15 (maintainer): "when toggle happens... maybe a spinner next to it
+    before ON or OFF".
+
+    A toggle re-scans every curriculum template server-side (~1.4s). Silent for that
+    long reads as broken, and the natural response to a broken switch is to click it
+    again -- which races a rescan already in flight. So the switch must LOOK busy and
+    must not be clickable while it is.
+
+    Measured in a real browser because the whole bug is about what is on screen
+    during the gap; nothing about the code shows it.
+    """
+    _skip_unless_browser()
+    server, browser = _Server(), None
+    try:
+        browser = _Browser()
+        browser.goto(server.url + "/settings")
+        browser.wait_for("document.querySelectorAll('#curricula-toggle-list .tab-btn').length > 1")
+        browser.js("""
+            [...document.querySelectorAll('.tab-btn')]
+              .find(b => b.textContent.includes('Australia')).click()
+        """)
+        browser.wait_for("document.querySelectorAll('.curricula-row input').length > 5")
+
+        # Click and read the state in the SAME evaluation, before the fetch resolves.
+        during = browser.js("""
+            (() => {
+                const row = document.querySelector('.curricula-row');
+                row.querySelector('input').click();
+                return {
+                    busy: row.querySelector('.hint').classList.contains('toggle-busy'),
+                    text: row.querySelector('.hint').textContent,
+                    locked: row.querySelector('input').disabled,
+                };
+            })()
+        """)
+        assert during["busy"], "no spinner while the toggle was in flight"
+        assert "Saving" in during["text"], during["text"]
+        assert during["locked"], "the switch stayed clickable mid-flight -- a second click races it"
+
+        browser.wait_for(
+            "!document.querySelector('.curricula-row .hint').classList.contains('toggle-busy')"
+        )
+        after = browser.js("""
+            (() => {
+                const row = document.querySelector('.curricula-row');
+                return {text: row.querySelector('.hint').textContent,
+                        locked: row.querySelector('input').disabled};
+            })()
+        """)
+        assert after["text"] in ("On", "Off"), after["text"]
+        assert not after["locked"], "the switch must be usable again once saved"
     finally:
         if browser:
             browser.close()

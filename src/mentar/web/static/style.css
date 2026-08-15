@@ -775,3 +775,24 @@ details.settings-section[open] > summary { margin-bottom: 14px; padding-bottom: 
    curriculum I was promised is missing") but are not interactive. */
 .country-off .subject-grid { opacity: 0.5; }
 .country-off .subject-grid label { cursor: not-allowed; }
+
+/* Settings toggles do real work now (a curriculum toggle re-scans every template,
+   ~1.4s), so the switch has to show it is busy or it reads as broken and gets
+   clicked again — maintainer, 2026-08-15. Same ring as .thinking / .htmx-request,
+   sized for a status line. */
+.toggle-busy::before {
+  content: "";
+  display: inline-block;
+  width: 0.7em;
+  height: 0.7em;
+  margin-right: 0.4em;
+  vertical-align: -0.05em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: mentar-spin 0.7s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) { .toggle-busy::before { animation: none; } }
+/* While a toggle is in flight the switch is not interactive: the server rebuilds
+   the whole curriculum per call, so a rapid second click would race the first. */
+.tabpanel input[type="checkbox"]:disabled { cursor: progress; }
