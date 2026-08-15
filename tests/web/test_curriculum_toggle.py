@@ -243,6 +243,30 @@ def test_country_master_switch_covers_the_country_less_packs_as_general():
     assert all(not x["enabled"] for x in listing if x["country"])
 
 
+def test_levels_are_listed_band_by_band_not_interleaved():
+    """2026-08-15 browser sweep: Singapore's Settings tab rendered 21 grade
+    headings for 31 rows. _grade_sort_key sorted on the NUMBER alone, so a country
+    with two bands interleaved -- Secondary 1, Primary 2, Secondary 2, Primary 3 --
+    and the JS emits a heading every time the grade changes, i.e. on every flip.
+
+    Each band must be contiguous and ascending within itself."""
+    _skip_if_no_flask()
+    _app_mod, c, _state = _client()
+    listing = c.get("/settings/curricula").get_json()["curricula"]
+
+    for country in ("SG", "US", "IN", "AU"):
+        levels = list(dict.fromkeys(
+            x["year_level"] for x in listing if x["country"] == country))
+        bands = ["".join(ch for ch in lvl if not ch.isdigit()).strip() for lvl in levels]
+        for band in set(bands):
+            idx = [i for i, b in enumerate(bands) if b == band]
+            assert idx == list(range(idx[0], idx[-1] + 1)), (
+                f"{country}: {band!r} levels are interleaved with another band: {levels}"
+            )
+            nums = [int("".join(ch for ch in levels[i] if ch.isdigit()) or 0) for i in idx]
+            assert nums == sorted(nums), f"{country} {band}: out of order {levels}"
+
+
 def test_country_master_switch_rejects_unknown_country_and_bad_action():
     _skip_if_no_flask()
     _app_mod, c, _state = _client()

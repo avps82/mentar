@@ -237,6 +237,24 @@ def _display_name(skill_id: str) -> str:
     return _ALL_NODE_LABELS.get(skill_id, skill_id)
 
 
+def _grade_sort_key(year_level: str | None) -> tuple[int, str, int]:
+    """Sort a free-text year_level ("Year 10", "Class 2", "Secondary 3", "pilot").
+
+    BAND first, then the number inside it. Plain string sort put "Year 10/11/12"
+    before "Year 2" (lexicographic: "1" < "2") -- the bug a maintainer screenshot
+    flagged 2026-08-12. Sorting on the number ALONE then interleaved Singapore's
+    two bands -- Secondary 1, Primary 2, Secondary 2, Primary 3... -- which the
+    Settings page rendered as 21 grade headings for 31 rows, one every time the
+    band flipped back (found in a browser sweep 2026-08-15).
+
+    A non-numeric level (only "pilot" today) sorts after every numbered grade.
+    """
+    if not year_level:
+        return (1, "", 0)
+    band = "".join(ch for ch in year_level if not ch.isdigit()).strip()
+    digits = "".join(ch for ch in year_level if ch.isdigit())
+    return (0, band, int(digits)) if digits else (1, band or year_level, 0)
+
 def _subject_groups() -> list[tuple[str, list[str]]]:
     """R3.1: Year > Subject grouping for the picker/progress switcher (R3.2) —
     computed from the scan, not hand-maintained. Real years sort ascending;
@@ -251,11 +269,7 @@ def _subject_groups() -> list[tuple[str, list[str]]]:
         Year 11, Year 12, Year 2..." -- the same lexicographic trap _grade_sort_key
         was written for on the Settings page, in the one place that never got it.
         India's Class 11-12 made it impossible to miss."""
-        if year == "pilot":
-            return (1, "", 0)
-        band = "".join(ch for ch in year if not ch.isdigit()).strip()
-        rank = _grade_sort_key(year)[1]
-        return (0, band, rank if isinstance(rank, int) else 0)
+        return _grade_sort_key(year)
 
     groups = []
     for year in sorted(by_year, key=_sort_key):
@@ -842,20 +856,6 @@ def _is_safe_path_component(name: str) -> bool:
     below (never trust, always verify, even a source we mostly control)."""
     return bool(name) and "/" not in name and "\\" not in name and name not in (".", "..")
 
-
-def _grade_sort_key(year_level: str | None) -> tuple[int, int | str]:
-    """Numeric sort for a free-text year_level ("Year 10", "Class 2", "pilot").
-
-    Plain string sort put "Year 10/11/12" before "Year 2" (lexicographic: "1" <
-    "2") -- the exact bug a maintainer screenshot flagged 2026-08-12 on the
-    Settings page. Extract the trailing number and sort on that; a non-numeric
-    level (only "pilot" today, always under the "General" country group so it
-    never collides with a real grade) sorts after every numbered grade.
-    """
-    if not year_level:
-        return (1, "")
-    digits = "".join(ch for ch in year_level if ch.isdigit())
-    return (0, int(digits)) if digits else (1, year_level)
 
 
 def _all_packs_with_state() -> list[dict]:
