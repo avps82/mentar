@@ -3,7 +3,8 @@
 Subcommands:
   setup             — Detect hardware, pick + download the best-fit vetted model, write config.
   run-session       — Drive a full tutoring session (headless) against the configured backend.
-  serve             — Start the pilot web app (mentar.web.app).
+  serve             — Start the web app on THIS computer; --lan (advanced) also
+                      serves other devices on your home network.
   eval              — Generate (local model) + judge (Sonnet) over the eval dataset.
   validate-template — Validate a curriculum template against the W3.1 schema.
   backup            — Checkpoint + copy the DB file, then verify the copy is intact.
@@ -450,7 +451,106 @@ def _backup(args) -> int:
     return 0
 
 
+
+
+def _force_utf8_console() -> None:
+    """Make stdout/stderr able to carry the characters this CLI actually prints.
+
+    Windows blocker, found 2026-08-15: Python uses the console's locale encoding
+    there (usually cp1252), which has no "✓" and no emoji -- so `mentar setup`
+    ended with UnicodeEncodeError on its own success message, on the very first
+    command a family runs. Nothing to do with the tutor; the output just could not
+    be written.
+
+    errors="replace" rather than strict: an old console that cannot render a glyph
+    should show a placeholder, never crash the run. No-op where stdout is already
+    UTF-8 (Linux, macOS) or is not a reconfigurable stream (a pipe in a test).
+    """
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            if (getattr(stream, "encoding", "") or "").lower().replace("-", "") != "utf8":
+                stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError, OSError):
+            pass          # not reconfigurable (redirected/wrapped) -- leave it alone
+
+
+def _lan_ip() -> str | None:
+    """This machine's address on the local network, or None if it cannot be found.
+
+    Opens a UDP socket toward a public address and reads back which local
+    interface the OS would route through. No packet is ever sent, so this works
+    with no internet connection -- which matters, because the whole product runs
+    offline.
+    """
+    import socket
+
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+            sock.connect(("192.0.2.1", 9))     # RFC 5737 documentation address
+            return sock.getsockname()[0]
+    except OSError:
+        return None
+
+
+def _serve(args) -> int:
+    """Start the web app.
+
+    Two modes, deliberately unequal (maintainer decision 2026-08-15: "we will
+    ensure it can run on a desktop/laptop as default... server host is going to be
+    advanced setup and this needs to be clear"):
+
+    * DEFAULT -- bound to 127.0.0.1. Only this computer can reach it. This is the
+      supported path for a family: one machine, one browser, nothing exposed.
+    * --lan -- ADVANCED. Binds every interface so another device on the same home
+      network (an iPad, say, which cannot host the model itself) can open it. Still
+      entirely local -- nothing leaves your hardware, no cloud, no accounts -- but
+      it is reachable by anything else on that network, INCLUDING the parent view,
+      and there is no password. That is stated at startup rather than buried in a
+      doc, because a parent has to be able to make that choice knowingly.
+    """
+    from mentar.web.app import app
+
+    port = getattr(args, "port", 5000)
+    if not getattr(args, "lan", False):
+        print(f"Mentar — http://127.0.0.1:{port}")
+        print("  Only THIS computer can reach it (the default, and the supported setup).")
+        print("  To use a tablet on your home network:  mentar serve --lan   (advanced)")
+        app.run(host="127.0.0.1", port=port, debug=False)
+        return 0
+
+    try:
+        from waitress import serve as waitress_serve
+    except ImportError:
+        print("--lan needs a real web server, which is not installed.", file=sys.stderr)
+        print('  pip install "mentar[web]"    (adds waitress)', file=sys.stderr)
+        print("  Without it, `mentar serve` still works on this computer.", file=sys.stderr)
+        return 1
+
+    ip = _lan_ip()
+    print("Mentar — ADVANCED: serving to your home network")
+    print(f"  On this computer:  http://127.0.0.1:{port}")
+    if ip:
+        print(f"  On a tablet etc.:  http://{ip}:{port}")
+    else:
+        print("  Could not detect this machine's network address -- find it in your")
+        print(f"  system's network settings and use http://<that address>:{port}")
+    print()
+    print("  Still entirely local: no cloud, no accounts, nothing leaves your network.")
+    print("  BUT anything else on this network can open it, including the PARENT VIEW")
+    print("  (your child's progress and transcripts). There is no password.")
+    print("  Use this on a home network you trust, not on public or shared Wi-Fi.")
+    if sys.platform == "win32":
+        print()
+        print("  Windows will ask whether to allow Python through the firewall.")
+        print("  Allow it for PRIVATE networks only -- never for public ones.")
+    print()
+    print("  Stop it with Ctrl-C.")
+    waitress_serve(app, host="0.0.0.0", port=port, threads=8)  # noqa: S104 -- the point of --lan
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
+    _force_utf8_console()
     parser = argparse.ArgumentParser(prog="mentar")
     sub = parser.add_subparsers(dest="cmd", required=True)
 
@@ -477,7 +577,14 @@ def main(argv: list[str] | None = None) -> int:
     rs.add_argument("--prompt-dir", dest="prompt_dir", help="Prompts dir (default: prompts/).")
     rs.add_argument("--db", help="SQLite path (default: mentar_pilot.db).")
 
-    sub.add_parser("serve", help="Start the pilot web app.")
+    sv = sub.add_parser(
+        "serve",
+        help="Start the web app on THIS computer (default). Add --lan for other devices.",
+    )
+    sv.add_argument("--lan", action="store_true",
+                    help="ADVANCED: also serve to other devices on your home network "
+                         "(e.g. a tablet). Read what it prints before using it.")
+    sv.add_argument("--port", type=int, default=5000, help="Port (default: 5000).")
     ev = sub.add_parser("eval", help="Generate (local model) + judge (Sonnet) over the eval dataset.")
     ev.add_argument("--model", required=True, help="Candidate model id (e.g. gemma4:12b).")
     ev.add_argument("--suite", default=None,
@@ -506,9 +613,7 @@ def main(argv: list[str] | None = None) -> int:
         return _run_session(args)
 
     if args.cmd == "serve":
-        from mentar.web.app import app
-        app.run(host="127.0.0.1", port=5000, debug=False)
-        return 0
+        return _serve(args)
 
     if args.cmd == "validate-template":
         from mentar.tools.validate_template import report, validate

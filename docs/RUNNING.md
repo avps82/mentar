@@ -195,6 +195,34 @@ drop the `./` — plain `mentar`.
 ./mentar serve            # child: / and /progress ; parent: /parent
 ```
 
+### Using it on a tablet (ADVANCED — not the default)
+
+**The default is one computer.** `./mentar serve` binds `127.0.0.1`, so only the
+machine you started it on can open it. That is the supported setup: a desktop or
+laptop, one browser, nothing reachable from anywhere else.
+
+An **iPad or Android tablet cannot host Mentar itself** — the local model needs
+real RAM and a CPU/GPU that a tablet does not give you, and iOS has no usable
+Python. So the tablet is a *screen*, and the computer stays the *brain*:
+
+```bash
+./mentar serve --lan          # ADVANCED: also reachable from your home network
+```
+
+It prints the address to open in the tablet's browser (`http://<your-ip>:5000`)
+and, before serving, exactly what that means:
+
+- **Still entirely local** — no cloud, no accounts, nothing leaves your network.
+- **But anything else on that network can open it, including `/parent`** — your
+  child's progress and transcripts — and **there is no password**. Use it on a
+  home network you trust, never on public or shared Wi-Fi.
+- **Windows** will ask whether to allow Python through the firewall. Allow it for
+  **private** networks only.
+
+`--lan` uses waitress (installed with the `web` extra) rather than Flask's
+development server, which must never be exposed to a network. If waitress is
+missing, `--lan` refuses to start instead of quietly falling back.
+
 **Terminal session** — headless, quick dev/testing (no parent UI):
 ```bash
 ./mentar run-session

@@ -40,6 +40,10 @@ dependencies = [
 [project.optional-dependencies]
 web = [
   "flask>=3.0",
+  # Needed only by `mentar serve --lan` (the advanced, serve-to-a-tablet path).
+  # The default single-computer mode uses Flask's own server, which is fine when
+  # nothing but localhost can reach it; exposing that one to a network is not.
+  "waitress>=3.0",
 ]
 dev = [
   "pytest>=8.0",
