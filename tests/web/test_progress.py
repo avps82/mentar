@@ -113,9 +113,11 @@ def test_picker_groups_subjects_by_year():
 
     _app_mod, c = _client()
     html = c.get("/choose").get_data(as_text=True)
-    assert "Year 3 (AU)" in html and "Year 4 (AU)" in html and "Try-out topics" in html
+    # Full country NAME, not the code -- maintainer 2026-08-15, see _subject_groups.
+    assert "Year 3 (Australia)" in html and "Year 4 (Australia)" in html
+    assert "Try-out topics" in html
     # AU subjects sit under their own year headings, pilot topics under try-out.
-    year3_idx = html.find("Year 3 (AU)")
+    year3_idx = html.find("Year 3 (Australia)")
     tryout_idx = html.find("Try-out topics")
     assert year3_idx < html.find("au_acara_year3_maths") < tryout_idx
     assert tryout_idx < html.find('value="fractions"')

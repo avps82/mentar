@@ -390,7 +390,7 @@ fractions/science and AU Year 3/4 nodes mix into one undifferentiated list.
 
 - **Spec:**
   1. `subjects.html` — render `SUBJECT_GROUPS` as year sections (an `<h3>` per group,
-     e.g. "Year 3 (AU)", "Year 4 (AU)", "Try-out topics"), each containing its subject
+     e.g. "Year 3 (Australia)", "Year 4 (Australia)", "Try-out topics"), each containing its subject
      cards (card contents unchanged).
   2. `/progress` — three levels on one page: (a) a year/subject switcher at the top
      (simple links `?subject=<key>`, current one highlighted; grouped by the same

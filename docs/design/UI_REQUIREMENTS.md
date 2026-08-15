@@ -347,7 +347,7 @@ screenshots.
 
 ### R3 — Year > Subject IA (2026-07-10 ask) — ✅ BOTH DONE 2026-07-11
 
-Picker groups subjects by year ("Year 3 (AU)", "Year 4 (AU)", "Try-out topics" — derived
+Picker groups subjects by year ("Year 3 (Australia)", "Year 4 (Australia)", "Try-out topics" — derived
 server-side from the R3.1 template-catalog scan, not hand-maintained); `/progress` gained
 a year/subject switcher. Fixed a real defect found while speccing: the skill-card list
 used to mix every subject's rows together — now filtered to the selected subject only.
