@@ -52,9 +52,14 @@ Every normal command still works: `./mentar-linux-x86_64 setup`,
 `... serve --lan`, `... run-session`.
 
 **The model is not in the download.** The binary is 26–41 MB (macOS 26, Windows 28,
-Linux 41 — measured on the CI build, not estimated); the language model is 4–20 GB and is
-chosen to fit your machine, so it cannot be shipped as one file for everyone. First run downloads it. So "no install" is true of Mentar itself — the first
-run still needs a good connection and some patience.
+Linux 41 — measured on the CI build). The language model is separate and is downloaded on
+first run; it is a multi-gigabyte file, so the first run needs a reasonable connection and
+some patience. It happens once — the model is kept and reused.
+
+> **Undecided (2026-08-15):** the downloadable build will ship with **one fixed model**
+> rather than the roster auto-selection the source install uses. Which model, and therefore
+> the exact download size and the minimum RAM, is a maintainer decision that has not been
+> made. No figure is quoted here until it is.
 
 **Not included in the binary:** offline ZIM grounding (`libzim` has no reliable wheels
 for every platform) and the offline BKT-fitting tools. Both are optional; Mentar

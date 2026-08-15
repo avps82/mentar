@@ -27,7 +27,7 @@ import os
 import sys
 from pathlib import Path
 
-__all__ = ["bundle_root", "data_dir", "is_frozen"]
+__all__ = ["bundle_root", "config_path", "data_dir", "db_path", "is_frozen", "models_dir"]
 
 
 def is_frozen() -> bool:
@@ -63,3 +63,32 @@ def data_dir() -> Path:
 
     root.mkdir(parents=True, exist_ok=True)
     return root
+
+
+# ── The three writable locations, named once ─────────────────────────────────
+# 2026-08-15: `mentar setup` (CLI) computed `repo/config/inference.yaml` while the
+# web app and backend.py used data_dir(). From a source checkout both resolve to
+# the same file, so nothing ever disagreed; in a packaged build setup would write
+# the config into the throwaway bundle and `serve` would then find no config at
+# all. Two places computing one path IS the bug -- so there is now one place.
+
+
+def config_path() -> Path:
+    """`inference.yaml` — written by setup and the backend switch, read by both."""
+    return data_dir() / "config" / "inference.yaml"
+
+
+def dotenv_path() -> Path:
+    """`config/.env` — the credential file for a remote API backend."""
+    return data_dir() / "config" / ".env"
+
+
+def db_path() -> Path:
+    """The learner database. A child's whole history lives here, so this one must
+    never resolve inside the bundle -- see the module docstring."""
+    return data_dir() / "mentar_pilot.db"
+
+
+def models_dir() -> Path:
+    """Downloaded GGUF models: 4-20 GB, so emphatically not the temp bundle."""
+    return data_dir() / "models"

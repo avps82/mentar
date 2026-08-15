@@ -3,10 +3,12 @@
 
     pyinstaller packaging/mentar.spec          (run from the repo root)
 
-What this produces is Mentar WITHOUT the language model. The model is 4-20 GB
-depending on the machine and is chosen by `mentar setup` to fit the hardware in
-front of it, so it cannot be baked into a download — the binary is 26-41 MB
-depending on platform and fetches the model on first run. "No install" is true of Mentar; it is not true
+What this produces is Mentar WITHOUT the language model: it is multi-gigabyte, so
+the binary (26-41 MB by platform) fetches it on first run.
+
+UNDECIDED (2026-08-15, maintainer): the downloadable build is to ship ONE fixed
+model rather than the source install's roster auto-selection. Which one is not
+chosen, so nothing here hard-codes a model or quotes a size. "No install" is true of Mentar; it is not true
 of the whole first-run experience, and docs/RUNNING.md says so plainly.
 
 The layout below is not arbitrary. `mentar.paths.bundle_root()` returns

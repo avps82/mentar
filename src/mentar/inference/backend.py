@@ -36,7 +36,7 @@ import time
 from collections.abc import Callable
 from pathlib import Path
 
-from mentar.paths import data_dir
+from mentar.paths import config_path
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +72,7 @@ def _expand_env(obj):
 def _default_config_path() -> Path:
     # Written by `mentar setup` and the backend switch, so it follows data_dir():
     # the repo root from a checkout, the user's data directory in a packaged build.
-    return data_dir() / "config" / "inference.yaml"
+    return config_path()
 
 
 def write_inference_config(cfg: dict, path: str | Path | None = None) -> Path:
@@ -96,6 +96,10 @@ def upsert_dotenv_value(env_path: str | Path, key: str, value: str) -> None:
     for anything that touches a credential file, not two independently-
     maintained copies."""
     env_path = Path(env_path)
+    # The directory may not exist yet. From a source checkout `config/` is in the
+    # repo so this never came up; in a packaged build the data directory starts
+    # empty, and /setup crashed with FileNotFoundError on a real Windows machine.
+    env_path.parent.mkdir(parents=True, exist_ok=True)
     lines = env_path.read_text(encoding="utf-8").splitlines() if env_path.exists() else []
     prefix = f"{key}="
     kept = [line for line in lines if not line.strip().startswith(prefix)]

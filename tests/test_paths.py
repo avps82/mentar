@@ -98,5 +98,92 @@ def test_env_overrides_still_win_in_a_packaged_build(frozen, monkeypatch, tmp_pa
         importlib.reload(app_mod)
 
 
+
+# ── Writers into an EMPTY data directory ─────────────────────────────────────
+# 2026-08-15, reported from a real Windows machine running the packaged binary:
+# completing /setup crashed with
+#   FileNotFoundError: ...\AppData\Local\Mentar\config\.env
+# data_dir() creates its ROOT, but nothing created the subdirectories under it.
+# From a source checkout `config/` and `curriculum/` already exist in the repo, so
+# every test passed and the bug could only appear in a frozen build. These tests
+# recreate that condition -- an empty data directory -- rather than trusting that
+# the two known writers are the only ones.
+
+def test_dotenv_write_creates_its_directory(tmp_path):
+    from mentar.inference.backend import upsert_dotenv_value
+
+    target = tmp_path / "empty-data-dir" / "config" / ".env"
+    upsert_dotenv_value(target, "MENTAR_VLLM_API_KEY", "sk-test")
+    assert 'MENTAR_VLLM_API_KEY="sk-test"' in target.read_text(encoding="utf-8")
+
+
+def test_inference_config_write_creates_its_directory(tmp_path):
+    from mentar.inference.backend import write_inference_config
+
+    target = tmp_path / "empty-data-dir" / "config" / "inference.yaml"
+    write_inference_config({"backend": "ollama"}, target)
+    assert target.exists()
+
+
+def test_pack_toggle_creates_its_directory(tmp_path, monkeypatch):
+    """The second instance of the same bug -- never hit, because it needs a
+    curriculum toggle rather than the setup wizard."""
+    import importlib
+
+    target = tmp_path / "empty-data-dir" / "curriculum" / "pack_state.json"
+    monkeypatch.setenv("MENTAR_PACK_STATE", str(target))
+    import mentar.web.app as app_mod
+
+    importlib.reload(app_mod)
+    try:
+        app_mod._save_enabled_packs({"AU_ACARA"})
+        assert "AU_ACARA" in target.read_text(encoding="utf-8")
+    finally:
+        monkeypatch.undo()
+        importlib.reload(app_mod)
+
+
+def test_no_writable_path_resolves_inside_the_disposable_bundle(frozen, monkeypatch):
+    """The class-closing check, rather than one test per known writer.
+
+    Every path Mentar WRITES to must land outside sys._MEIPASS. A new writer that
+    reaches for bundle_root() out of habit fails here instead of on a family's
+    computer, where the symptom is silent data loss on exit.
+    """
+    import importlib
+
+    from mentar import paths as paths_mod
+
+    writable = {
+        "config_path": paths_mod.config_path(),
+        "dotenv_path": paths_mod.dotenv_path(),
+        "db_path": paths_mod.db_path(),
+        "models_dir": paths_mod.models_dir(),
+    }
+
+    import mentar.inference.backend as backend_mod
+    importlib.reload(backend_mod)
+    writable["backend inference.yaml"] = backend_mod._default_config_path()
+
+    import mentar.web.app as app_mod
+    importlib.reload(app_mod)
+    writable["web DB_PATH"] = pathlib.Path(app_mod.DB_PATH)
+    writable["web inference.yaml"] = app_mod._INFERENCE_CONFIG_PATH
+    writable["web pack_state.json"] = app_mod._PACK_STATE_PATH
+
+    try:
+        inside = {
+            name: str(path)
+            for name, path in writable.items()
+            if str(path).startswith(str(frozen))
+        }
+        assert not inside, (
+            "these would be deleted when the app exits: " + repr(inside)
+        )
+    finally:
+        importlib.reload(app_mod)
+        importlib.reload(backend_mod)
+
+
 if __name__ == "__main__":
     raise SystemExit(pytest.main([__file__, "-q"]))

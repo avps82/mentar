@@ -4,8 +4,9 @@
 # build is slow and buys nothing on a docs commit. It runs when the packaging
 # itself changes, on a tag, or on demand.
 #
-# What this cannot do: bundle the language model. It is 4-20 GB and chosen to fit
-# the machine, so the binary fetches it on first run. The download is Mentar only.
+# What this cannot do: bundle the language model -- it is multi-gigabyte, so the binary
+# fetches it on first run. WHICH model the binary uses is undecided: the plan is ONE fixed
+# model for the download (not the source install's roster auto-select), not yet chosen.
 name: Build binaries
 
 on:
@@ -162,8 +163,8 @@ jobs:
             **Experimental single-file builds.** Unsigned — Windows SmartScreen and
             macOS Gatekeeper will warn; see docs/RUNNING.md for what to click.
 
-            These do **not** include a language model. Run the binary, and Mentar's
-            setup will pick and download one that fits your machine (4-20 GB).
+            These do **not** include a language model. Run the binary and setup will
+            download one on first run (a multi-gigabyte download, once).
 
             On macOS and Linux, mark it executable first: `chmod +x mentar-*`.
             Check a download with `./mentar-... --selftest` before handing it to a child.

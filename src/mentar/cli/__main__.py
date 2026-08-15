@@ -21,7 +21,7 @@ import time
 import uuid
 from pathlib import Path
 
-from mentar.paths import bundle_root
+from mentar.paths import bundle_root, config_path, db_path, is_frozen, models_dir
 
 
 def _repo_root() -> Path:
@@ -79,7 +79,7 @@ def _build_controller(args):
     item_bank = build_item_source(cfg.get("item_source", "composite"), bank=bank)
 
     learner_uuid = str(uuid.uuid4())
-    store = LearnerStore(args.db or str(repo / "mentar_pilot.db"))
+    store = LearnerStore(args.db or str(db_path()))
     db_id = store.create_learner(
         name=f"cli-{learner_uuid[:8]}",
         year_level="pilot",
@@ -173,6 +173,21 @@ def _ensure_llama_cpp() -> bool:
         return True
     except ImportError:
         pass
+    if is_frozen():
+        # sys.executable is THIS BINARY, not a Python interpreter, so `-m pip` would
+        # just re-enter the CLI and fail with an argparse error. There is no
+        # interpreter to install a compiled package into, so the in-process GGUF
+        # runtime is genuinely unavailable in a packaged build. Say that, and point
+        # at the two runtimes that need no Python at all.
+        print("\nThis download of Mentar cannot use the built-in GGUF runtime:", file=sys.stderr)
+        print("  it needs llama-cpp-python, a compiled Python package, and this", file=sys.stderr)
+        print("  build has no Python to install it into.", file=sys.stderr)
+        print("\nUse either of these instead — both are ordinary apps, no Python needed:",
+              file=sys.stderr)
+        print("  * Ollama    https://ollama.com/download   (easiest)", file=sys.stderr)
+        print("  * llama.app https://llama.app", file=sys.stderr)
+        print("\nInstall one, then run setup again.", file=sys.stderr)
+        return False
     print("\nInstalling llama-cpp-python (in-process GGUF runtime) — may take a few minutes...")
     rc = subprocess.run(
         [sys.executable, "-m", "pip", "install", "llama-cpp-python"]
@@ -188,6 +203,18 @@ def _ensure_llama_cpp() -> bool:
     print("  Or use Ollama instead (no build):  https://ollama.com/download  then  mentar setup",
           file=sys.stderr)
     return False
+
+
+def _diagnose_hint() -> str:
+    """How to investigate a backend that will not answer.
+
+    A packaged build has no `scripts/` directory and no `python3`, so the advice
+    that is right for a source checkout is useless -- and worse, it reads as
+    "you did something wrong" to someone who has no way to run it.
+    """
+    if is_frozen():
+        return "  Check the model app (Ollama etc.) is running, then run setup again."
+    return "  Diagnose:  python3 scripts/check_backend.py"
 
 
 def _verify_backend(cfg: dict) -> tuple[bool, str]:
@@ -219,7 +246,7 @@ def _setup_remote_api(args, repo: Path) -> int:
         print("ERROR: --runtime vllm requires --base-url and --model", file=sys.stderr)
         return 1
 
-    cfg_path = Path(args.config) if args.config else (repo / "config" / "inference.yaml")
+    cfg_path = Path(args.config) if args.config else config_path()
     cfg: dict = {
         "backend": "vllm",
         "vllm": {"base_url": args.base_url, "model": args.model,
@@ -246,7 +273,7 @@ def _setup_remote_api(args, repo: Path) -> int:
     ok, msg = _verify_backend(cfg)
     if not ok:
         print(f"✗ Backend did not respond: {msg}", file=sys.stderr)
-        print("  Diagnose:  python3 scripts/check_backend.py", file=sys.stderr)
+        print(_diagnose_hint(), file=sys.stderr)
         return 1
     print(f"✓ Backend LIVE — {msg}")
     print("✓ Ready — run:  mentar serve   (web)   or   mentar run-session   (terminal)")
@@ -285,7 +312,7 @@ def _setup(args) -> int:
     if m.get("reasoning"):
         gen["extra_body"] = {"think": False}
 
-    model_path = repo / "models" / (m["hf_file"] or "")
+    model_path = models_dir() / (m["hf_file"] or "")
     if sel.runtime == "ollama":
         cfg = {"backend": "ollama",
                "ollama": {"base_url": "http://localhost:11434", "model": m["ollama_tag"]},
@@ -327,7 +354,7 @@ def _setup(args) -> int:
             },
         }
 
-    cfg_path = Path(args.config) if args.config else (repo / "config" / "inference.yaml")
+    cfg_path = Path(args.config) if args.config else config_path()
 
     if args.dry_run:
         import yaml
@@ -348,7 +375,7 @@ def _setup(args) -> int:
     else:
         if sel.runtime == "gguf" and not _ensure_llama_cpp():
             return 1
-        if not _download_gguf(m["hf_repo"], m["hf_file"], repo / "models"):
+        if not _download_gguf(m["hf_repo"], m["hf_file"], models_dir()):
             return 1
 
     write_inference_config(cfg, cfg_path)
@@ -356,7 +383,7 @@ def _setup(args) -> int:
     if sel.runtime == "llama_app":
         # The server is started manually, so we can't verify it here.
         print(f"✓ Start the model server:  llama serve -m {model_path} --port 8081")
-        print("  then verify:  python3 scripts/check_backend.py   and run:  mentar serve")
+        print("  then run:  mentar serve")
         return 0
     # Verify the backend actually responds — never claim 'Ready' on a config that
     # can't serve (the failure this guards: config written, model unreachable).
@@ -364,7 +391,7 @@ def _setup(args) -> int:
     ok, msg = _verify_backend(cfg)
     if not ok:
         print(f"✗ Backend did not respond: {msg}", file=sys.stderr)
-        print("  Diagnose:  python3 scripts/check_backend.py", file=sys.stderr)
+        print(_diagnose_hint(), file=sys.stderr)
         return 1
     print(f"✓ Backend LIVE — {msg}")
     print("✓ Ready — run:  mentar serve   (web)   or   mentar run-session   (terminal)")
@@ -373,6 +400,17 @@ def _setup(args) -> int:
 
 def _eval(args, repo) -> int:
     """Run the generate→verify pipeline by shelling out to the eval scripts."""
+    if is_frozen():
+        # A maintainer command, not a family one: it shells out to eval/*.py with a
+        # Python interpreter. A packaged build bundles neither (sys.executable is
+        # this binary), so fail with the reason rather than an argparse error from
+        # re-entering ourselves.
+        print("`mentar eval` is a development command and is not available in the",
+              file=sys.stderr)
+        print("downloadable build — it needs the source checkout and a Python",
+              file=sys.stderr)
+        print("interpreter. See docs/RUNNING.md.", file=sys.stderr)
+        return 2
     cmd = [sys.executable, str(repo / "eval" / "run_candidates.py"), "--model", args.model]
     if args.suite:
         cmd += ["--suite", args.suite]
@@ -402,8 +440,7 @@ def _backup(args) -> int:
 
     from mentar.db.store import LearnerStore
 
-    repo = _repo_root()
-    source_path = Path(args.db or str(repo / "mentar_pilot.db"))
+    source_path = Path(args.db or str(db_path()))
 
     if not source_path.exists():
         print(f"ERROR: no database found at {source_path}", file=sys.stderr)
@@ -494,6 +531,29 @@ def _lan_ip() -> str | None:
         return None
 
 
+def _serve_or_explain(run, port: int, host: str) -> int:
+    """Run a blocking server, turning a bind failure into a sentence.
+
+    The likely cause by far is Mentar already running -- someone double-clicked
+    twice, or closed the window without stopping it. waitress raises a bare OSError
+    and prints a traceback, which tells a parent nothing and looks like a crash.
+    """
+    try:
+        run()
+    except OSError as exc:
+        if getattr(exc, "errno", None) in (48, 98, 10048) or "address already in use" in str(exc).lower():
+            print(f"\nMentar is already using port {port} on {host}.", file=sys.stderr)
+            print("  It is probably already running -- try your browser first:", file=sys.stderr)
+            print(f"      http://127.0.0.1:{port}", file=sys.stderr)
+            print(f"  Or start this one on a different port:  mentar serve --port {port + 1}",
+                  file=sys.stderr)
+            return 1
+        raise
+    except KeyboardInterrupt:
+        print("\nStopped.")
+    return 0
+
+
 def _serve(args) -> int:
     """Start the web app.
 
@@ -537,16 +597,19 @@ def _serve(args) -> int:
         try:
             from waitress import serve as waitress_serve
         except ImportError:
-            app.run(host="127.0.0.1", port=port, debug=False)
+            run = lambda: app.run(host="127.0.0.1", port=port, debug=False)  # noqa: E731
         else:
-            waitress_serve(app, host="127.0.0.1", port=port, threads=8)
-        return 0
+            run = lambda: waitress_serve(app, host="127.0.0.1", port=port, threads=8)  # noqa: E731
+        return _serve_or_explain(run, port, "this computer")
 
     try:
         from waitress import serve as waitress_serve
     except ImportError:
         print("--lan needs a real web server, which is not installed.", file=sys.stderr)
-        print('  pip install "mentar[web]"    (adds waitress)', file=sys.stderr)
+        if is_frozen():
+            print("  This build should already include it -- please report this.", file=sys.stderr)
+        else:
+            print('  pip install "mentar[web]"    (adds waitress)', file=sys.stderr)
         print("  Without it, `mentar serve` still works on this computer.", file=sys.stderr)
         return 1
 
@@ -583,8 +646,10 @@ def _serve(args) -> int:
     print("  Stop it with Ctrl-C.")
     sys.stdout.flush()  # see the note in the default branch -- same reason, and here
                         # the text a parent must read to make an informed choice.
-    waitress_serve(app, host="0.0.0.0", port=port, threads=8)  # noqa: S104 -- the point of --lan
-    return 0
+    return _serve_or_explain(
+        lambda: waitress_serve(app, host="0.0.0.0", port=port, threads=8),  # noqa: S104 -- the point of --lan
+        port, "your network",
+    )
 
 
 def main(argv: list[str] | None = None) -> int:

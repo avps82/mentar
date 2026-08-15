@@ -18,6 +18,8 @@ import sys
 import types
 from contextlib import redirect_stdout
 
+import pytest
+
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
@@ -145,3 +147,58 @@ if __name__ == "__main__":
         fn()
         print(f"  ✓ {fn.__name__}")
     print(f"\n{len(fns)}/{len(fns)} serve-mode tests passed.")
+
+
+# ── Bind failures (2026-08-15) ───────────────────────────────────────────────
+# The likeliest real-world cause is Mentar already running: someone double-clicked
+# the binary twice, or closed the window without stopping it. waitress raises a bare
+# OSError and prints a traceback, which reads as a crash to a parent.
+
+def test_port_in_use_explains_instead_of_traceback(capsys):
+    import errno
+
+    import mentar.cli.__main__ as cli
+
+    def boom():
+        raise OSError(errno.EADDRINUSE, "Address already in use")
+
+    code = cli._serve_or_explain(boom, 5000, "this computer")
+    err = capsys.readouterr().err
+    assert code == 1
+    assert "already using port 5000" in err
+    assert "http://127.0.0.1:5000" in err, "tell them where it probably already is"
+    assert "--port 5001" in err, "and give them a way out"
+    assert "Traceback" not in err
+
+
+def test_windows_bind_error_code_is_handled_too():
+    """Windows uses WSAEADDRINUSE (10048), not errno 98 -- and Windows is the
+    platform the binary most targets."""
+    import mentar.cli.__main__ as cli
+
+    def boom():
+        raise OSError(10048, "Only one usage of each socket address is permitted")
+
+    assert cli._serve_or_explain(boom, 5000, "this computer") == 1
+
+
+def test_unexpected_oserror_is_not_swallowed():
+    """A disk or permission error must still surface -- this handler is for ONE
+    diagnosis, not a blanket except."""
+    import mentar.cli.__main__ as cli
+
+    def boom():
+        raise OSError(13, "Permission denied")
+
+    with pytest.raises(OSError):
+        cli._serve_or_explain(boom, 5000, "this computer")
+
+
+def test_ctrl_c_is_a_clean_stop_not_a_crash(capsys):
+    import mentar.cli.__main__ as cli
+
+    def boom():
+        raise KeyboardInterrupt
+
+    assert cli._serve_or_explain(boom, 5000, "this computer") == 0
+    assert "Stopped." in capsys.readouterr().out

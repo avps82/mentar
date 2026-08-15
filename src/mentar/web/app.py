@@ -54,7 +54,7 @@ from mentar.inference import (
     upsert_dotenv_value,
     write_inference_config,
 )
-from mentar.paths import bundle_root, data_dir
+from mentar.paths import bundle_root, config_path, data_dir, db_path
 from mentar.tools.validate_template import validate_or_raise
 from mentar.web.answer_modes import mode_for
 
@@ -71,7 +71,7 @@ _DATA = data_dir()
 LLM_BASE_URL = os.environ.get("MENTAR_LLM_BASE_URL", "http://localhost:11434/v1")
 LLM_CRED     = os.environ.get("MENTAR_LLM_API_KEY") or "no-key"
 LLM_MODEL    = os.environ.get("MENTAR_LLM_MODEL", "gemma2:9b")
-DB_PATH      = os.environ.get("MENTAR_DB_PATH", str(_DATA / "mentar_pilot.db"))
+DB_PATH      = os.environ.get("MENTAR_DB_PATH", str(db_path()))
 PROMPT_DIR   = Path(os.environ.get("MENTAR_PROMPT_DIR", str(_REPO / "prompts")))
 SCAFFOLD_DIR = Path(os.environ.get(
     "MENTAR_SCAFFOLD_DIR", str(_REPO / "curriculum" / "visual_scaffolds"),
@@ -168,6 +168,10 @@ def _pack_is_enabled(state: dict[str, set[str]] | None, key: str, country: str |
 
 def _save_enabled_packs(enabled: set[str]) -> None:
     import json
+    # Same empty-data-directory case as upsert_dotenv_value: `curriculum/` exists in
+    # a checkout but not in a packaged build's data dir, so the first pack toggle
+    # would have raised FileNotFoundError.
+    _PACK_STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
     _PACK_STATE_PATH.write_text(
         json.dumps({"enabled": sorted(enabled)}, indent=2) + "\n", encoding="utf-8"
     )
@@ -290,7 +294,7 @@ _learner_subject: dict[str, str] = {}   # learner_uuid -> active subject key
 # Inference backend: prefer config/inference.yaml (the canonical, backend-agnostic
 # source — llamacpp/vllm/ollama). Fall back to the legacy MENTAR_LLM_* env vars so an
 # existing env-only setup keeps working (treated as an OpenAI-compatible endpoint).
-_INFERENCE_CONFIG_PATH = _DATA / "config" / "inference.yaml"
+_INFERENCE_CONFIG_PATH = config_path()   # shared with the CLI — see paths.py
 _INFERENCE_CFG: dict = {}
 _GROUNDING_CFG: dict = {}  # ZIM reader config (W7)
 # The endpoint the app will ACTUALLY call (yaml or env fallback, local or remote) --

@@ -74,6 +74,13 @@ class LearnerStore:
         schema.sql is applied and user_version is set to 1.
         """
         self._path = Path(db_path)
+        # sqlite will not create missing directories, and reports it as the opaque
+        # "unable to open database file" -- which says nothing about the real cause.
+        # Reachable whenever MENTAR_DB_PATH points somewhere that does not exist yet
+        # (a NAS path, a chosen folder), and in a packaged build where the data
+        # directory starts empty. Cheap to prevent, confusing to diagnose.
+        if self._path.parent and not self._path.parent.exists():
+            self._path.parent.mkdir(parents=True, exist_ok=True)
         self._local = threading.local()  # per-thread connection store
         # Open this thread's connection and apply the schema if the DB is new.
         self._apply_schema_if_needed()
