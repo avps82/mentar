@@ -51,9 +51,9 @@ chmod +x mentar-linux-x86_64
 Every normal command still works: `./mentar-linux-x86_64 setup`,
 `... serve --lan`, `... run-session`.
 
-**The model is not in the download.** The binary is around 100 MB; the language model
-is 4–20 GB and is chosen to fit your machine, so it cannot be shipped as one file for
-everyone. First run downloads it. So "no install" is true of Mentar itself — the first
+**The model is not in the download.** The binary is 26–41 MB (macOS 26, Windows 28,
+Linux 41 — measured on the CI build, not estimated); the language model is 4–20 GB and is
+chosen to fit your machine, so it cannot be shipped as one file for everyone. First run downloads it. So "no install" is true of Mentar itself — the first
 run still needs a good connection and some patience.
 
 **Not included in the binary:** offline ZIM grounding (`libzim` has no reliable wheels

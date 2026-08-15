@@ -5,8 +5,8 @@
 
 What this produces is Mentar WITHOUT the language model. The model is 4-20 GB
 depending on the machine and is chosen by `mentar setup` to fit the hardware in
-front of it, so it cannot be baked into a download — the binary is ~100 MB and
-fetches the model on first run. "No install" is true of Mentar; it is not true
+front of it, so it cannot be baked into a download — the binary is 26-41 MB
+depending on platform and fetches the model on first run. "No install" is true of Mentar; it is not true
 of the whole first-run experience, and docs/RUNNING.md says so plainly.
 
 The layout below is not arbitrary. `mentar.paths.bundle_root()` returns
