@@ -80,6 +80,25 @@ _VIOLENT_OR_HARMFUL_PATTERNS: list[re.Pattern[str]] = [
     re.compile(r"\bend (your|ur) (own )?life\b", re.IGNORECASE),
     re.compile(r"\btake your own life\b", re.IGNORECASE),
     re.compile(r"\bkill (him|her|them|someone)\b", re.IGNORECASE),
+    # Added 2026-08-16. The 2026-08-12 pass dropped the frame requirement for
+    # "kill/harm/hurt yourself", but the residue of the same class still went
+    # through: a probe found "Maybe you'd be better off dead.", "Why don't you
+    # just die?" and "You deserve to be hurt." all reaching the child unblocked.
+    #
+    # Scoped to the SECOND PERSON on purpose. "Hamlet would be better off dead"
+    # is legitimate Year 12 English analysis and must not be blocked; "YOU would
+    # be better off dead" has no use in a tutor's mouth in any framing.
+    re.compile(r"\byou('d| would| are|'re| were)?\s*(be\s+)?better off dead\b", re.IGNORECASE),
+    re.compile(r"\bwhy don'?t you (just )?die\b", re.IGNORECASE),
+    re.compile(r"\byou should (just )?die\b", re.IGNORECASE),
+    re.compile(r"\byou deserve (to be|being) (hurt|beaten|punished|hit)\b", re.IGNORECASE),
+    # Instructional framing for violence toward another person. Frame-based
+    # deliberately: "hit her" alone appears in ordinary word problems ("the ball
+    # hit her racket"), but a tutor never offers to TEACH hitting.
+    # "beat" is deliberately NOT in this list -- "I'll show you how to beat your
+    # own best score" is exactly the encouragement this tutor should be giving,
+    # and it was the one false positive the probe turned up.
+    re.compile(r"\b(teach|show)\s+(you\s+)?(how\s+)?to\s+(hit|hurt|punch|stab)\b", re.IGNORECASE),
 ]
 
 _ADULT_CONTENT_PATTERNS: list[re.Pattern[str]] = [
