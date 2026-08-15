@@ -4,7 +4,7 @@ title: Elements and Compounds
 description: Visual scaffold hints for classifying a substance as an element or a compound.
 tags: [science, element, elements, compound, compounds, visual-scaffold]
 subject: science
-topic_keywords: [element, elements, compound, compounds, atom, atoms]
+topic_keywords: [element, elements, compound, compounds, atoms]
 timestamp: "2026-08-11T00:00:00Z"
 ---
 

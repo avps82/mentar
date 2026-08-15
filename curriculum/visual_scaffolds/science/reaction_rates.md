@@ -4,8 +4,7 @@ title: Rates of Reaction
 description: Visual scaffold hints for what speeds a reaction up or slows it down, and why.
 tags: [science, chemistry, rates, visual-scaffold]
 subject: science
-topic_keywords: [rate of reaction, rate of a reaction, rates, rate, reaction, changes the rate,
-  speeds up, slows down, catalyst, surface area, concentration, temperature, collision theory]
+topic_keywords: [rate of reaction, rate of a reaction, rates, rate, reaction, changes the rate, speeds up, slows down, surface area, collision theory]
 timestamp: "2026-08-15T00:00:00Z"
 ---
 

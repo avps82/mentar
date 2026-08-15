@@ -4,7 +4,7 @@ title: Plant and Animal Cell Structures
 description: Visual scaffold hints for identifying cell parts unique to plant cells vs. parts common to both plant and animal cells.
 tags: [science, cell, cells, biology, visual-scaffold]
 subject: science
-topic_keywords: [cell, cells, cell wall, chloroplast, vacuole, nucleus, mitochondria, cell membrane, plant cell, animal cell]
+topic_keywords: [cell, cells, cell wall, chloroplast, vacuole, mitochondria, cell membrane, plant cell, animal cell]
 timestamp: "2026-08-11T00:00:00Z"
 ---
 

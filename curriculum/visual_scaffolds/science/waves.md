@@ -4,7 +4,7 @@ title: Waves — transverse and longitudinal
 description: Visual scaffold hints for the two ways a wave can move relative to its direction of travel.
 tags: [science, wave, transverse, longitudinal, visual-scaffold]
 subject: science
-topic_keywords: [wave, waves, transverse, longitudinal, wavelength, amplitude, sound wave, light wave, vibration direction]
+topic_keywords: [wave, waves, transverse, longitudinal, amplitude, sound wave, light wave, vibration direction]
 timestamp: "2026-08-14T00:00:00Z"
 ---
 

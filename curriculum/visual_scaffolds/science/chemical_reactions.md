@@ -4,7 +4,7 @@ title: Types of Chemical Reaction
 description: Visual scaffold hints for combustion, neutralisation and precipitation.
 tags: [science, reaction, combustion, neutralisation, precipitation, visual-scaffold]
 subject: science
-topic_keywords: [chemical reaction, reaction, reactions, combustion, burning, neutralisation, neutralise, acid, base, precipitation, precipitate, reactant, product]
+topic_keywords: [chemical reaction, reactions, combustion, burning, neutralisation, neutralise, precipitation, precipitate]
 timestamp: "2026-08-14T00:00:00Z"
 ---
 

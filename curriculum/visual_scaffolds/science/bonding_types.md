@@ -4,7 +4,7 @@ title: Ionic, Covalent and Metallic Bonding
 description: Visual scaffold hints for the three bonding types and their evidence.
 tags: [science, chemistry, bonding, visual-scaffold]
 subject: science
-topic_keywords: [bonding, bond, ionic, covalent, metallic, compound, electrons transferred, electrons shared, delocalised]
+topic_keywords: [bonding, bond, ionic, covalent, metallic, electrons transferred, electrons shared, delocalised]
 timestamp: "2026-08-15T00:00:00Z"
 ---
 

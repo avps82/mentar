@@ -4,7 +4,7 @@ title: Magnetism — Materials Attracted to a Magnet
 description: Visual scaffold hints for identifying which materials a magnet attracts.
 tags: [science, magnet, magnetism, force, visual-scaffold]
 subject: science
-topic_keywords: [magnet, magnetic, magnetism, attract, attracted]
+topic_keywords: [magnet, magnetic, attract, attracted]
 timestamp: "2026-08-11T00:00:00Z"
 ---
 
