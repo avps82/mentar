@@ -22,6 +22,15 @@
   <button class="tts-btn" type="button" aria-label="Read this aloud" title="Read aloud">🔊</button>
   {# class deliberately NOT "feedback-*": tests split fragments on '<div class="feedback'. #}
   <div class="msg-text">{{ message_html | safe }}</div>
+  {# The worked example belongs INSIDE this bubble (maintainer 2026-08-15: "the
+     explain more should be inside the top card box and have an audio in it").
+     It used to render as a separate box BELOW, so two consecutive Explain-more
+     presses produced two unrelated-looking panels for the same explanation, and
+     the card had no read-aloud button at all -- the one thing on screen a child
+     who struggles to read most needs spoken. The bubble's 🔊 above now covers
+     both, because tts.js reads .msg-text and .steps-pre inside .feedback.
+     Still bypasses _render_markdown_lite: it is computed, never model output. #}
+  {% if steps_lines %}{% include "_arithmetic_steps.html" %}{% endif %}
   {% if can_elaborate %}
   {# R12.5: unpack the same explanation further — posts the deterministic
      ELABORATE word the FSM understands; capped server-side (ELABORATE_CAP).
@@ -37,7 +46,9 @@
   </form>
   {% endif %}
 </div>{% endif %}
-{% if steps_lines %}{% include "_arithmetic_steps.html" %}{% endif %}
+{# A card with no accompanying message (rare, but a 4-tuple generator path can
+   do it) still has to render somewhere -- outside the bubble that isn't there. #}
+{% if steps_lines and not message_html %}{% include "_arithmetic_steps.html" %}{% endif %}
 <div class="question{% if is_first_turn and not message_html %} first-turn{% endif %}">
   <button class="tts-btn" type="button" aria-label="Read the question aloud" title="Read aloud">🔊</button>
   <div class="question-text">{{ question_html | safe }}</div>

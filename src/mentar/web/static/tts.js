@@ -142,6 +142,17 @@
       if (feedbackBlock) {
         var f = feedbackBlock.querySelector(".msg-text");
         if (f) parts.push(f.textContent.trim());
+        // The worked example now sits inside this bubble (2026-08-15). Read it too:
+        // it is the part that actually explains the method, and a child who needs
+        // read-aloud needs it most. Annotation lines are asides on the diagram, so
+        // they are read after, not interleaved mid-sentence.
+        var card = feedbackBlock.querySelector(".steps-pre");
+        if (card) {
+          card.querySelectorAll(".steps-pre-line").forEach(function (line) {
+            var t = line.textContent.trim();
+            if (t) parts.push(t);
+          });
+        }
       } else {
         var q = document.querySelector(".question-text");
         if (q) parts.push(q.textContent.trim());

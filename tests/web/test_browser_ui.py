@@ -466,3 +466,67 @@ if __name__ == "__main__":
     print("  ✓ test_pressing_show_me_how_shows_that_something_is_happening")
     test_every_page_is_laid_out_sanely()
     print("  ✓ test_every_page_is_laid_out_sanely")
+
+
+def test_the_worked_example_sits_inside_the_bubble_and_matches_its_text_size():
+    """2026-08-15 (maintainer, two screenshots): consecutive Explain-more presses
+    "look completely different... font size is definitely different", and the card
+    had no read-aloud button -- "the explain more should be inside the top card box
+    and have an audio in it".
+
+    Two causes, both only visible on screen:
+      * the card rendered as a SEPARATE box after the bubble, so it read as an
+        unrelated panel rather than more of the same explanation;
+      * .steps-pre-line is 1.4rem -- right for long-division digit columns, but
+        applied to prose sitting under a ~1rem bubble it looked like another feature.
+
+    Measured, not asserted from CSS: computed font sizes from the live page.
+    """
+    _skip_unless_browser()
+    server, browser = _Server(), None
+    try:
+        browser = _Browser()
+        browser.goto(server.url + "/")
+        browser.js("""
+            [...document.querySelectorAll('.subject-card, a')]
+              .find(a => /fraction/i.test(a.textContent))?.click()
+        """)
+        browser.wait_for("!!document.querySelector('.question-text')")
+        # Ask for help, then unpack it -- the two presses from the report.
+        browser.js("""
+            [...document.querySelectorAll('button, a')]
+              .find(b => /show me how/i.test(b.textContent))?.click()
+        """)
+        browser.wait_for("!!document.querySelector('.feedback')")
+        browser.js("""
+            const f = document.querySelector('.elaborate-form button');
+            if (f) f.click();
+        """)
+        browser.wait_for("!!document.querySelector('.feedback .steps-pre')", timeout=20)
+
+        shape = browser.js("""
+            (() => {
+                const fb = document.querySelector('.feedback');
+                const card = fb.querySelector('.steps-pre');
+                const line = card.querySelector('.steps-pre-line');
+                const prose = fb.querySelector('.msg-text');
+                return {
+                    nested: !!card,
+                    hasSpeaker: !!fb.querySelector('.tts-btn'),
+                    cardPx: line ? parseFloat(getComputedStyle(line).fontSize) : null,
+                    prosePx: parseFloat(getComputedStyle(prose).fontSize),
+                    wrap: card.classList.contains('steps-pre-wrap'),
+                };
+            })()
+        """)
+        assert shape["nested"], "the card must render INSIDE .feedback, not as a separate box"
+        assert shape["hasSpeaker"], "the bubble holding the card must offer read-aloud"
+        if shape["wrap"]:   # a method card; a step GRID keeps its large digits
+            assert shape["cardPx"] == shape["prosePx"], (
+                f"card {shape['cardPx']}px vs prose {shape['prosePx']}px -- "
+                "the size mismatch the maintainer screenshotted"
+            )
+    finally:
+        if browser:
+            browser.close()
+        server.stop()
