@@ -3,8 +3,10 @@
 Every authored pack ships in the repo and is toggled locally (no download).
 Toggling writes a gitignored pack_state.json (an ALLOW-list of enabled keys since
 2026-08-14; a legacy deny-list file is still honoured); the picker applies the change
-on the next restart (discovery is scan-once-at-startup). Default = General packs only. Each test patches
-_PACK_STATE_PATH to a scratch file so the repo's own state is never touched.
+LIVE, in the same process, because _apply_pack_change() re-scans the curriculum
+(R9). This used to say "on the next restart", which was true when R10 landed and
+stopped being true when live reload shipped. Default = General packs only. Each test
+patches _PACK_STATE_PATH to a scratch file so the repo's own state is never touched.
 
     python3 tests/web/test_curriculum_toggle.py
 """
@@ -137,6 +139,32 @@ def test_disabled_pack_excluded_from_subjects_after_restart():
     assert "in_generic_class3_maths" not in app_mod.SUBJECTS
     assert "science" not in app_mod.SUBJECTS
     assert "fractions" in app_mod.SUBJECTS  # unaffected
+
+
+def test_toggle_updates_the_picker_live_without_a_restart():
+    """The shipped behaviour, which nothing pinned: a toggle re-scans the
+    curriculum in the SAME process, so /choose reflects it on the very next
+    request. Only the after-a-restart case was covered, which would still pass
+    if live reload regressed -- and a parent on a packaged build cannot restart
+    the app, which is exactly why R9 made this live.
+    """
+    _skip_if_no_flask()
+    app_mod, c, _state = _client()          # General-only default: the AU pack is OFF
+    key = "au_acara_year3_maths"
+
+    def in_picker():
+        return f'value="{key}"' in c.get("/choose").get_data(as_text=True)
+
+    assert key not in app_mod.SUBJECTS and not in_picker(), "precondition: starts off"
+
+    body = c.post(f"/settings/curricula/{key}/enable").get_json()
+    assert body["restart_required"] is False
+    assert key in app_mod.SUBJECTS
+    assert in_picker(), "enabled pack did not reach the picker without a restart"
+
+    c.post(f"/settings/curricula/{key}/disable")
+    assert key not in app_mod.SUBJECTS
+    assert not in_picker(), "disabled pack still in the picker without a restart"
 
 
 def test_toggle_rejects_unknown_key_and_bad_action():

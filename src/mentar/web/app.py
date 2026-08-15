@@ -1078,9 +1078,16 @@ def _apply_pack_change() -> tuple[bool, str]:
 @app.route("/settings/curricula/<key>/<action>", methods=["POST"])
 def curricula_toggle(key, action):
     """R10: enable/disable one in-repo pack. Updates the gitignored
-    pack_state.json AND the in-memory _ENABLED_PACKS so the listing reflects
-    it at once; the picker itself updates on the next restart (discovery is
-    scan-once-at-startup -- same restart note R8 uses)."""
+    pack_state.json AND the in-memory _ENABLED_PACKS so the listing reflects it
+    at once.
+
+    The picker updates LIVE too -- no restart. This said "the picker itself
+    updates on the next restart (discovery is scan-once-at-startup)", which was
+    true when R10 landed but stopped being true when R9's live reload went in:
+    _apply_pack_change() below calls _reload_curricula(), and this handler has
+    been returning restart_required=False the whole time. Verified 2026-08-16 by
+    toggling a pack and re-reading /choose in the same process: the subject
+    disappears and reappears immediately."""
     if action not in ("enable", "disable"):
         return jsonify({"ok": False, "error": "unknown action"}), 404
     known = {p["key"] for p in _all_packs_with_state()}
