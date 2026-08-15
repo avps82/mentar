@@ -499,11 +499,18 @@ input[type=text], input[type=number] {
 /* Method cards are SENTENCES, not digit columns (2026-08-15, maintainer: two
    consecutive Explain-more presses "look completely different... font size is
    definitely different"). 1.4rem exists so a child can read aligned columns in a
-   long-division grid; applied to prose sitting under a ~1rem bubble it looked like
+   long-division grid; applied to prose sitting under the bubble it looked like
    a different feature. Monospace stays -- a card can carry an ASCII diagram whose
    columns must line up -- but at the bubble's own size, so consecutive presses read
-   as one explanation. .steps-pre-wrap is exactly the card case; grids never set it. */
-.steps-pre-wrap .steps-pre-line { font-size: 1rem; }
+   as one explanation. .steps-pre-wrap is exactly the card case; grids never set it.
+
+   2026-08-16: this said `1rem`, and the comment above said "~1rem bubble" -- but
+   .feedback is 1.05rem, so the card came out 16px against 16.8px prose and the
+   mismatch the maintainer screenshotted was still there, just smaller. Only draws
+   that yield a method card show it (a step GRID keeps its large digits), which is
+   why it survived. `inherit` IS "the bubble's own size", literally, and stays
+   correct if .feedback's size ever changes. */
+.steps-pre-wrap .steps-pre-line { font-size: inherit; }
 .steps-pre-wrap { line-height: 1.5; }
 /* Inside the feedback bubble the card is a nested panel, not a peer of it.
    --surface (not an invented token: the theme contract is exactly 17). */
