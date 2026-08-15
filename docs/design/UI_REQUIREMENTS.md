@@ -30,7 +30,9 @@ tech envelope = §5 recommendation.
 ## 1. Purpose & success criteria
 
 - **U-1** The UI must communicate, on every screen, without reading docs: *local & private*
-  ("runs 100% on this device — no cloud, no accounts"), *safe by design* (parent in control),
+  ("runs 100% locally — no cloud, no accounts"; local means nothing leaves the
+  family's own hardware, NOT that the browser must be on the same machine —
+  serving a tablet on the home network is inside the promise), *safe by design* (parent in control),
   and *substantial* (a real mastery model, not a chat wrapper).
 - **U-2** Three screens must be screenshot-worthy for the README/repo page: the lesson
   screen, the progress/mastery map, and the parent dashboard. "Screenshot-worthy" = a

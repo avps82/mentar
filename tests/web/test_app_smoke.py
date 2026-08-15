@@ -52,8 +52,14 @@ def test_trust_strip_on_child_and_parent_screens():
     c.post("/choose", data={"subject": "fractions"})
     learner_html = c.get("/learn").get_data(as_text=True)
     parent_html = c.get("/parent").get_data(as_text=True)
-    assert "Runs entirely on this device" in learner_html
-    assert "Runs entirely on this device" in parent_html
+    # 2026-08-15 (maintainer): the aim was "runs entirely LOCALLY" -- nothing
+    # leaves the family's own hardware -- not literally "this one device".
+    # Serving the same local install to a tablet on the home network is
+    # inside that promise; the old wording made it read as a violation.
+    assert "Runs entirely locally" in learner_html
+    assert "Runs entirely locally" in parent_html
+    for html in (learner_html, parent_html):
+        assert "no cloud" in html and "no accounts" in html
 
 
 def test_web_learner_flow():
