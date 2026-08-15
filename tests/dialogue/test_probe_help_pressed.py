@@ -122,8 +122,12 @@ def test_help_on_one_node_does_not_leak_to_another():
 
     ctrl.step("2")            # unhelped node answered correctly, unaided -> probe fires (mastery 0.9)
     assert ctrl.state == FSMState.PROBE_AWAIT_ANSWER.value
-    ctrl.step("999")  # readable-but-wrong (E2.4: unreadable input now re-prompts)        # probe wrong, help NEVER pressed on this node ->
-                              # false_confidence immediately (no retry, since help_pressed=False)
+    ctrl.step("999")           # first probe wrong. Since 2026-08-16 EVERY first
+                               # failure gets the retry (SPEC §14), whatever the
+                               # provisional class -- this used to classify
+                               # false_confidence on one wrong answer.
+    assert ctrl.state == FSMState.PROBE_AWAIT_ANSWER.value, "first failure must be retried"
+    ctrl.step("999")           # retry wrong too -> slip ruled out -> false_confidence
 
     classes = dict(store.probe_events)
     assert classes.get(helped) == "slip_suspect", (
@@ -153,14 +157,71 @@ def test_auto_help_alone_still_classifies_false_confidence():
     ctx.mastery[node] = 0.9
     ctrl.step("2")            # correct hinted recheck -> BRANCH_DECISION -> probe fires
     assert ctrl.state == FSMState.PROBE_AWAIT_ANSWER.value
-    ctrl.step("999")  # readable-but-wrong (E2.4: unreadable input now re-prompts)        # failed probe, help_pressed=False (auto-help doesn't count) ->
-                              # false_confidence immediately
+    ctrl.step("999")           # first probe wrong -> retry granted (SPEC §14: exactly
+                               # one retry on a first failure, whatever the class)
+    assert ctrl.state == FSMState.PROBE_AWAIT_ANSWER.value, "first failure must be retried"
+    ctrl.step("999")           # retry wrong too, help_pressed=False (auto-help does
+                               # not count) -> false_confidence
 
     classes = dict(store.probe_events)
     assert classes.get(node) == "false_confidence", (
         f"auto-help-only node at threshold must still classify false_confidence: "
         f"{store.probe_events}"
     )
+
+
+# ── SPEC §14: exactly one retry on a FIRST probe failure ────────────────────
+# Lives here because this module already builds a two-node controller over the
+# real FSM. Until 2026-08-16 the retry was granted only when the provisional
+# class was slip_suspect, so the two SERIOUS classes skipped it -- the inverse
+# of the spec, which asserts them "only when slip is ruled out (both variants
+# failed)". The false_confidence half is covered by the two tests above; this
+# covers forgetting_suspect, which nothing exercised.
+
+def test_stale_mastery_first_failure_is_retried_before_forgetting_is_asserted():
+    store = _ColdStartStore()
+    ctrl = _ctrl(store)
+    ctx = ctrl._ctx
+
+    ctrl.step(None)
+    node = ctx.current_node_id
+    ctx.mastery[node] = 0.9
+    ctrl.step("2")                       # correct -> probe fires
+    assert ctrl.state == FSMState.PROBE_AWAIT_ANSWER.value
+    # Set the stale clock AFTER the answer: the BKT update refreshes
+    # mastery_updated_at (R11's in-session staleness reset), so setting it
+    # earlier is silently undone before the probe is classified.
+    ctx.mastery_updated_at[node] = "2020-01-01T00:00:00Z"   # far outside the window
+
+    before = ctx.mastery[node]
+    ctrl.step("999")                     # FIRST probe failure
+    assert ctrl.state == FSMState.PROBE_AWAIT_ANSWER.value, (
+        "a stale-mastery first failure must still get its retry, not be classified"
+    )
+    assert store.probe_events == [], "no probe_event may be written before the retry"
+    assert ctx.mastery[node] == before, "mastery must not be demoted on one failure"
+
+    ctrl.step("999")                     # retry also fails -> slip ruled out
+    assert dict(store.probe_events).get(node) == "forgetting_suspect", store.probe_events
+    assert ctx.mastery[node] < before, "both variants failed -> demote"
+
+
+def test_recovering_on_the_retry_is_a_slip_not_a_forgetting_signal():
+    """The retry has to be able to change the verdict, or granting it is theatre."""
+    store = _ColdStartStore()
+    ctrl = _ctrl(store)
+    ctx = ctrl._ctx
+
+    ctrl.step(None)
+    node = ctx.current_node_id
+    ctx.mastery[node] = 0.9
+    ctrl.step("2")
+    ctx.mastery_updated_at[node] = "2020-01-01T00:00:00Z"   # see note above
+    ctrl.step("999")                     # first probe wrong
+    assert ctrl.state == FSMState.PROBE_AWAIT_ANSWER.value
+    ctrl.step("2")                       # recovered on the retry
+
+    assert dict(store.probe_events).get(node) == "slip_suspect", store.probe_events
 
 
 if __name__ == "__main__":

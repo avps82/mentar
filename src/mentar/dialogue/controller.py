@@ -1539,8 +1539,24 @@ class SessionController:
             self._log_probe_event(ctx.current_node_id, probe_class)
             ctx.state = FSMState.NODE_SELECT
             return (self._rng.choice(PRAISE_VARIANTS), True)
-        if probe_class is ProbeClass.SLIP_SUSPECT and ctx.probe_variant == 0:
-            # One retry allowed before classifying (event written after the retry)
+        if ctx.probe_variant == 0:
+            # SPEC §14: "The FSM runs EXACTLY ONE retry variant on a first
+            # failure", and both false_confidence and forgetting_suspect are
+            # asserted "only when slip is ruled out (BOTH variants failed)".
+            # CLEAN_PASS returned above, so reaching here on variant 0 means the
+            # first probe failed -- which is precisely when the retry is owed.
+            #
+            # This used to also require the provisional class to be SLIP_SUSPECT,
+            # which inverted the intent (2026-08-16): the retry was given only
+            # when the verdict was already benign, and SKIPPED for the two
+            # serious ones. A child with mastery 0.95 and no Help who slipped
+            # once was demoted 0.95 -> 0.60 and logged false_confidence on a
+            # single wrong answer -- the exact "a single wrong answer can be a
+            # slip" case the retry exists to disambiguate, and most likely in
+            # high-mastery learners. It also corrupted the pilot's
+            # false-confidence baseline (SPEC pilot goals).
+            #
+            # The probe_event is still written after the retry, as before.
             ctx.probe_variant = 1
             ctx.state = FSMState.PROBE_PRESENT
             return ("", True)
