@@ -66,4 +66,24 @@ else
   echo "NOTE: ruff not found (.venv/bin/ruff or on PATH) -- skipping the ruff gate this commit." >&2
 fi
 
+# 4) Doc-path gate (2026-08-15). CI ran RED on every push for a day while the
+# local suite was green every time: check_doc_paths resolved references against
+# the WORKING TREE, so docs naming gitignored-but-locally-present files
+# (tools/llm.sh, config/inference.yaml) passed here and failed on a fresh clone.
+# The checker now resolves against `git ls-files`, which makes local and CI agree
+# -- and running it here means a broken reference costs a commit, not a red main.
+# Cheap (~1s, no imports beyond stdlib). Skipped quietly if the file is absent.
+if [ -f "src/mentar/tools/check_doc_paths.py" ]; then
+  PY=""
+  if [ -x ".venv/bin/python" ]; then PY=".venv/bin/python"
+  elif command -v python3 >/dev/null 2>&1; then PY="python3"
+  fi
+  if [ -n "$PY" ] && ! "$PY" src/mentar/tools/check_doc_paths.py; then
+    echo "Commit blocked: a doc references a path that is not in the repo (see above)." >&2
+    echo "  Fix the reference, or list it in _RUNTIME_ARTIFACTS/_KNOWN_ABSENT/_LOCAL_ONLY_TOOLING." >&2
+    echo "  Genuine false positive: git commit --no-verify" >&2
+    exit 1
+  fi
+fi
+
 exit 0

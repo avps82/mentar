@@ -78,6 +78,28 @@ _RUNTIME_ARTIFACTS = {
     "curriculum/pack_state.json",   # written on first Settings toggle (R10)
     "config/.env",                  # operator-created, never committed
     "eval/dataset_v1.jsonl",        # git-ignored eval data
+    "config/inference.yaml",        # operator-written; config/inference.example.yaml is tracked
+    # graphify output (docs/design/R16_release_plan.md §graphify): generated into
+    # graphify-out/ by a tool run, deliberately untracked.
+    "graph.json", "graph.html", "manifest.json",
+    # Per-machine agent settings: gitignored, holds the eval-host endpoint/token.
+    ".claude/settings.local.json",
+    # Eval run outputs, written under a run directory by eval/run_candidates.py.
+    "result.json", "T2.3/result.json", "T2.5/result.json",
+}
+
+# Local-only developer tooling: gitignored ON PURPOSE, because these wrap the
+# maintainer's own LAN model gateway and carry its endpoint -- the same reason the
+# secret hook blocks config/inference.yaml. The docs are right to describe them
+# (CLAUDE.md tells an agent to use them); they are simply not this repo's files.
+#
+# Before 2026-08-15 this list was unnecessary, because the checker walked the working
+# tree and saw the maintainer's local copies. That is precisely what made the check
+# useless: it passed here and failed for anyone with a clean clone.
+_LOCAL_ONLY_TOOLING = {
+    "tools/llm.sh",
+    "tools/ask-local.sh",
+    "llm.sh",
 }
 
 # Files a doc names as explicitly NOT existing (planned/abandoned), where the doc
@@ -155,16 +177,57 @@ def _prose_docs() -> list[Path]:
 
 
 def _repo_index() -> tuple[set[str], set[str]]:
-    """(every repo-relative file path, every basename)."""
+    """(every repo-relative file path, every basename) — as GIT sees it.
+
+    Tracked files only, deliberately. This used to walk the working tree, which
+    made the check unable to catch the very class it exists for: a doc naming a
+    gitignored-but-locally-present file passed here and failed for anyone with a
+    fresh clone. On 2026-08-15 that ran CI red on every push for a day -- docs
+    referencing `tools/llm.sh`, `tools/ask-local.sh` and `config/inference.yaml`,
+    all present on the maintainer's disk, none of them in the repo -- while the
+    same test passed locally every time. Local and CI must see the same tree or
+    the local run is worthless.
+
+    Falls back to the working tree when git is unavailable (a source tarball, a
+    vendored copy), because a wrong answer there is better than a crash.
+    """
+    import subprocess
+
     rels: set[str] = set()
-    names: set[str] = set()
-    for p in REPO.rglob("*"):
-        if any(part in _INDEX_SKIP for part in p.parts):
-            continue
-        if p.is_file():
-            rels.add(str(p.relative_to(REPO)))
-            names.add(p.name)
+    try:
+        out = subprocess.run(
+            ["git", "-C", str(REPO), "ls-files"],
+            capture_output=True, text=True, timeout=30, check=True,
+        ).stdout
+        rels = {line for line in out.splitlines() if line}
+    except Exception:
+        rels = set()
+
+    if not rels:  # not a git checkout -- degrade to the old behaviour
+        for p in REPO.rglob("*"):
+            if any(part in _INDEX_SKIP for part in p.parts):
+                continue
+            if p.is_file():
+                rels.add(str(p.relative_to(REPO)))
+
+    names = {r.rsplit("/", 1)[-1] for r in rels}
     return rels, names
+
+
+def _normalise(doc: Path, ref: str) -> str | None:
+    """Resolve a doc-relative reference to a repo-relative path, or None if it
+    escapes the repo (which is an environment reference, not a repo claim)."""
+    import os
+
+    base = doc.parent.relative_to(REPO)
+    out = os.path.normpath(os.path.join(str(base), ref))
+    return None if out.startswith("..") else out.replace(os.sep, "/")
+
+
+def _is_tracked_dir(ref: str, rels: set[str]) -> bool:
+    """A directory reference resolves if git tracks anything inside it."""
+    prefix = ref.rstrip("/") + "/"
+    return any(r.startswith(prefix) for r in rels)
 
 
 def _looks_like_path(s: str) -> bool:
@@ -222,7 +285,7 @@ def find_broken(verbose: bool = False) -> list[tuple[str, int, str]]:
                 # match allowlists on the full ref OR its basename -- docs freely
                 # write `pack_state.json` for `curriculum/pack_state.json`
                 _base = ref.rsplit("/", 1)[-1]
-                _allow = _RUNTIME_ARTIFACTS | _KNOWN_ABSENT
+                _allow = _RUNTIME_ARTIFACTS | _KNOWN_ABSENT | _LOCAL_ONLY_TOOLING
                 if ref in _allow or _base in {a.rsplit("/", 1)[-1] for a in _allow}:
                     continue
                 if ref.startswith(_RUNTIME_PREFIXES) or ref.startswith(_EXTERNAL_PREFIXES):
@@ -238,7 +301,12 @@ def find_broken(verbose: bool = False) -> list[tuple[str, int, str]]:
                 if doc.name == "TESTS.md" and ref.startswith("tests/"):
                     if ref.rsplit("/", 1)[-1] in names:
                         continue
-                if ref in rels or (REPO / ref).exists() or (doc.parent / ref).exists():
+                # NB: resolved against TRACKED paths only -- the on-disk fallback that
+                # used to be here is exactly what let untracked local files pass.
+                # A doc-relative link ("../README.md") is normalised to a repo-relative
+                # path first, then looked up the same way.
+                rel_here = _normalise(doc, ref)
+                if any(r in rels or _is_tracked_dir(r, rels) for r in (ref, rel_here) if r):
                     continue
                 # a bare filename is prose shorthand ("the `bkt.py` module") -- fine
                 # as long as SOMETHING in the tree has that basename
