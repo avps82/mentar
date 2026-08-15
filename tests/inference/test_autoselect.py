@@ -111,3 +111,47 @@ if __name__ == "__main__":
         fn()
         print(f"  ✓ {fn.__name__}")
     print(f"\n{len(fns)}/{len(fns)} autoselect tests passed.")
+
+
+# ── Eval status must be stated, not implied (2026-08-15) ─────────────────────
+# Auto-selection ranks by capability and filters by RAM. Neither is EVIDENCE. An
+# 8 GB machine silently got phi4-mini (15/31 maths) or an ungraded model, with
+# nothing on screen to distinguish that from the fully-graded pilot model.
+
+def test_ungraded_model_says_so_loudly():
+    from mentar.inference.autoselect import load_roster, select
+
+    sel = select(load_roster(), prefer="ollama", ram_gb=4)
+    assert sel.model.get("eval") == "ungraded", sel.model["id"]
+    blob = " ".join(sel.warnings).lower()
+    assert "never been through" in blob and "unmeasured" in blob, sel.warnings
+    assert "not evaluated" in sel.reason.lower()
+
+
+def test_maths_only_model_admits_safety_is_not_graded():
+    from mentar.inference.autoselect import load_roster, select
+
+    sel = select(load_roster(), prefer="ollama", ram_gb=8)
+    assert sel.model.get("eval") == "maths", sel.model["id"]
+    assert any("SAFETY behaviour has not been graded" in w for w in sel.warnings), sel.warnings
+
+
+def test_fully_graded_model_carries_no_eval_warning():
+    """The warning must MEAN something -- if it fired for everything it would be
+    noise and get ignored, which is how real warnings stop working."""
+    from mentar.inference.autoselect import load_roster, select
+
+    sel = select(load_roster(), prefer="ollama", ram_gb=32)
+    assert sel.model.get("eval") == "full", sel.model["id"]
+    blob = " ".join(sel.warnings).lower()
+    assert "never been through" not in blob and "not been graded" not in blob
+
+
+def test_every_roster_entry_declares_its_eval_status():
+    """A new model added without a status must fail here rather than default to
+    looking trustworthy."""
+    from mentar.inference.autoselect import load_roster
+
+    missing = [m["id"] for m in load_roster()
+               if m.get("eval") not in ("full", "maths", "ungraded")]
+    assert not missing, f"roster entries with no honest eval status: {missing}"

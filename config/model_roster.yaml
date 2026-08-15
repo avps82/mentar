@@ -17,6 +17,17 @@
 #   tier        low-end | mid | capable-gpu  (see docs/hardware-requirements.md)
 #   min_ram_gb  heuristic floor (params_b*0.6 + overhead) used only when gguf-parser
 #               is unavailable; gguf-parser supersedes this when present.
+#   eval        HOW WELL IT IS PROVEN, from docs/MODEL.md / docs/EVAL_RESULTS.md:
+#                 full     — maths correctness AND safety/sycophancy graded
+#                 maths    — maths correctness graded only; safety NOT graded
+#                 ungraded — never run through the eval suite at all
+#   eval_note   the actual measured number, so nobody has to trust the label
+#
+# 2026-08-15: added because auto-selection was RAM-only. On an 8 GB machine it
+# silently handed a child phi4-mini, which gets 15 of 31 maths items right, or an
+# ungraded model -- with nothing on screen to say so. Ranking by capability is not
+# the same as ranking by EVIDENCE, and only the evidence belongs in front of a
+# parent. Setup now states the status of whatever it picks.
 #
 # Ranking is PROVISIONAL until W1.3 finalises the pick; edit freely (data, no code change).
 
@@ -28,6 +39,8 @@ models:
     tier: capable-gpu
     rank: 1
     min_ram_gb: 9
+    eval: full
+    eval_note: "correctness 100%, safety 1.00, sycophancy 1.00"
     note: "Eval: correctness 100%, safety 1.00, sycophancy 1.00; reasoning model (think:false); full-GPU."
 
   - id: qwen3-14b
@@ -37,6 +50,8 @@ models:
     tier: capable-gpu
     rank: 2
     min_ram_gb: 10
+    eval: maths
+    eval_note: "maths 20/31; safety NOT graded; slow (31s)"
 
   - id: gemma2-9b
     ollama_tag: "gemma2:9b"
@@ -47,6 +62,8 @@ models:
     tier: mid
     rank: 3
     min_ram_gb: 7
+    eval: full
+    eval_note: "maths 31/31, safety 1.00 — the pilot reference model"
     note: "Strong vetted mid-tier default; good fit for 16 GB (incl. MacBook Pro M1 16 GB)."
 
   - id: qwen3.5-9b
@@ -56,6 +73,8 @@ models:
     tier: mid
     rank: 4
     min_ram_gb: 7
+    eval: maths
+    eval_note: "maths 19/31; safety NOT graded"
 
   - id: llama3.1-8b
     ollama_tag: "llama3.1:8b"
@@ -66,6 +85,8 @@ models:
     tier: mid
     rank: 5
     min_ram_gb: 6
+    eval: maths
+    eval_note: "maths 18/31; safety NOT graded"
 
   - id: phi4-mini
     ollama_tag: "phi4-mini"
@@ -74,6 +95,8 @@ models:
     tier: low-end
     rank: 6
     min_ram_gb: 4
+    eval: maths
+    eval_note: "maths 15/31 — gets about half of it wrong; safety NOT graded"
 
   - id: qwen2.5-3b
     ollama_tag: "qwen2.5:3b"
@@ -84,6 +107,8 @@ models:
     tier: low-end
     rank: 7
     min_ram_gb: 3.5
+    eval: ungraded
+    eval_note: "never run through the eval suite"
 
   - id: qwen2.5-0.5b
     ollama_tag: "qwen2.5:0.5b"
@@ -94,4 +119,6 @@ models:
     tier: low-end
     rank: 8
     min_ram_gb: 1.8
+    eval: ungraded
+    eval_note: "never run through the eval suite"
     note: "Smallest fallback; runs on very low-end / pre-AVX2 CPUs (~7 tok/s on a 2-core AMD A10)."

@@ -135,10 +135,31 @@ def select(roster: list[dict], prefer: str = "auto", n_ctx: int = 4096,
             )
 
     sizer = "gguf-parser" if used_parser else "heuristic"
+    graded = {"full": "fully evaluated", "maths": "maths-only evaluation",
+              "ungraded": "NOT EVALUATED"}.get(chosen.get("eval", "ungraded"), "unknown")
     reason = (
         f"{chosen['id']} via {runtime}: needs ~{est} GB ({sizer}), "
-        f"RAM {total or '?'} GB, ctx {n_ctx}."
+        f"RAM {total or '?'} GB, ctx {n_ctx} — {graded}."
     )
+
+    # How well the chosen model is actually PROVEN, said out loud (2026-08-15).
+    # Selection is ranked by capability and filtered by RAM; neither is evidence.
+    # Before this, an 8 GB machine quietly got phi4-mini (15/31 maths) or a model
+    # that had never been evaluated, and nothing on screen distinguished that from
+    # the fully-graded pilot model. A parent cannot judge what they are not told.
+    status = chosen.get("eval", "ungraded")
+    detail = chosen.get("eval_note", "")
+    if status == "ungraded":
+        warnings.append(
+            f"{chosen['id']} has NEVER been through Mentar's evaluation suite — its "
+            "teaching quality and safety behaviour are unmeasured. It is offered because "
+            "it fits this machine, not because it is known to work."
+        )
+    elif status == "maths":
+        warnings.append(
+            f"{chosen['id']}: {detail}. Its SAFETY behaviour has not been graded — only "
+            "gemma2-9b and gemma4-12b have full grades (docs/EVAL_RESULTS.md)."
+        )
 
     if chosen.get("reasoning"):
         warnings.append(f"{chosen['id']} is a reasoning model — think:false will be set.")
