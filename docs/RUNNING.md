@@ -213,9 +213,15 @@ It prints the address to open in the tablet's browser (`http://<your-ip>:5000`)
 and, before serving, exactly what that means:
 
 - **Still entirely local** — no cloud, no accounts, nothing leaves your network.
-- **But anything else on that network can open it, including `/parent`** — your
-  child's progress and transcripts — and **there is no password**. Use it on a
-  home network you trust, never on public or shared Wi-Fi.
+- **Lessons go to the network; the grown-up pages do not.** The parent view,
+  settings and setup stay on the computer running Mentar, so nothing else on the
+  Wi-Fi can read your child's progress or change the app. Open those on the
+  computer itself. There is no password anywhere — this is a boundary, not a
+  login, so there is nothing to guess, share or forget.
+- `--expose-admin` lifts that if you decide your home network *is* your boundary.
+  It prints a blunter warning, because then anything on the Wi-Fi can read the
+  transcripts and change the settings.
+- Use it on a home network you trust, never on public or shared Wi-Fi.
 - **Windows** will ask whether to allow Python through the firewall. Allow it for
   **private** networks only.
 

@@ -431,6 +431,44 @@ def _turn_lock(learner_uuid: str) -> threading.Lock:
         return _learner_locks.setdefault(learner_uuid, threading.Lock())
 
 
+# ── LAN mode: which pages leave this computer ────────────────────────────────
+# `mentar serve --lan` exists so a child can use Mentar on a tablet, which cannot
+# host the model itself. That is squarely inside "runs entirely locally" -- nothing
+# leaves the family's hardware. But the LAN is not the same trust boundary as the
+# keyboard: anything else on that network could otherwise open the PARENT VIEW
+# (a child's transcripts and mastery), SETTINGS (turn curricula off, change the
+# model) or SETUP (repoint the backend), with no password.
+#
+# So --lan serves the CHILD surfaces to the network and keeps the grown-up ones on
+# the machine running Mentar. That is a real boundary rather than auth theatre: no
+# password to guess, share, or forget. `--expose-admin` opts out for anyone who
+# decides their home network IS the boundary; it says so loudly at startup.
+#
+# /progress is deliberately NOT restricted -- it is the child's own progress view,
+# linked from their lesson page.
+_LAN_MODE = False
+_LAN_EXPOSE_ADMIN = False
+_GROWN_UP_PREFIXES = ("/parent", "/settings", "/setup")
+_LOOPBACK = ("127.0.0.1", "::1", "localhost")
+
+
+def set_lan_mode(enabled: bool, expose_admin: bool = False) -> None:
+    """Called by `mentar serve --lan` before the server starts."""
+    global _LAN_MODE, _LAN_EXPOSE_ADMIN
+    _LAN_MODE, _LAN_EXPOSE_ADMIN = enabled, expose_admin
+
+
+@app.before_request
+def _keep_grown_up_pages_on_this_computer():
+    if not _LAN_MODE or _LAN_EXPOSE_ADMIN:
+        return None
+    if not request.path.startswith(_GROWN_UP_PREFIXES):
+        return None
+    if (request.remote_addr or "") in _LOOPBACK:
+        return None
+    return render_template("not_here.html"), 403
+
+
 # Per-learner controller instances and turn logs.
 _controllers: dict[str, SessionController] = {}
 _turn_logs: dict[str, list[dict]] = {}      # learner_id -> [{role, text}]

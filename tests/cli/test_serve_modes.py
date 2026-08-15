@@ -23,9 +23,10 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 
 
 class _Args:
-    def __init__(self, lan=False, port=5000):
+    def __init__(self, lan=False, port=5000, expose_admin=False):
         self.lan = lan
         self.port = port
+        self.expose_admin = expose_admin
 
 
 def _run(args, with_waitress=True):
@@ -36,6 +37,11 @@ def _run(args, with_waitress=True):
     fake_app = types.SimpleNamespace(run=lambda **kw: calls.append(("flask", kw)))
     fake_web = types.ModuleType("mentar.web.app")
     fake_web.app = fake_app
+    # --lan tells the app which pages may leave this computer; capture that too,
+    # so the test proves the CLI actually arms the guard rather than only printing
+    # a reassuring line about it.
+    fake_web.set_lan_mode = lambda enabled, expose_admin=False: calls.append(
+        ("set_lan_mode", {"enabled": enabled, "expose_admin": expose_admin}))
     saved_web = sys.modules.get("mentar.web.app")
     saved_waitress = sys.modules.get("waitress")
     sys.modules["mentar.web.app"] = fake_web
@@ -72,12 +78,27 @@ def test_default_serves_only_this_computer():
 def test_lan_mode_states_what_it_exposes_before_serving():
     code, out, calls = _run(_Args(lan=True))
     assert code == 0
-    assert calls and calls[0][0] == "waitress", calls
-    assert calls[0][1]["host"] == "0.0.0.0", calls
-    # The three things a parent has to know, in the output, not in a doc.
-    assert "PARENT VIEW" in out, out
-    assert "no password" in out.lower(), out
+    armed = [c for c in calls if c[0] == "set_lan_mode"]
+    assert armed == [("set_lan_mode", {"enabled": True, "expose_admin": False})], calls
+    served = [c for c in calls if c[0] == "waitress"]
+    assert served and served[0][1]["host"] == "0.0.0.0", calls
+    # What a parent has to know, in the output rather than in a doc: it is still
+    # local, and the grown-up pages did NOT go to the network (2026-08-15 — the
+    # guard means the honest message changed from "beware" to "these stay here").
     assert "entirely local" in out.lower(), out
+    assert "PARENT VIEW" in out and "stay on" in out, out
+    assert "--expose-admin" in out, "the opt-out must be discoverable"
+
+
+def test_expose_admin_says_plainly_what_it_gives_away():
+    """Opting out of the boundary has to be blunter than opting in, not quieter."""
+    code, out, calls = _run(_Args(lan=True, expose_admin=True))
+    assert code == 0
+    assert ("set_lan_mode", {"enabled": True, "expose_admin": True}) in calls, calls
+    low = out.lower()
+    assert "no password" in low, out
+    assert "transcripts" in low, out
+    assert "parent view" in low, out
 
 
 def test_lan_mode_fails_clearly_without_a_real_server():

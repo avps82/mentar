@@ -526,6 +526,11 @@ def _serve(args) -> int:
         print("  Without it, `mentar serve` still works on this computer.", file=sys.stderr)
         return 1
 
+    from mentar.web.app import set_lan_mode
+
+    expose_admin = getattr(args, "expose_admin", False)
+    set_lan_mode(True, expose_admin=expose_admin)
+
     ip = _lan_ip()
     print("Mentar — ADVANCED: serving to your home network")
     print(f"  On this computer:  http://127.0.0.1:{port}")
@@ -536,8 +541,15 @@ def _serve(args) -> int:
         print(f"  system's network settings and use http://<that address>:{port}")
     print()
     print("  Still entirely local: no cloud, no accounts, nothing leaves your network.")
-    print("  BUT anything else on this network can open it, including the PARENT VIEW")
-    print("  (your child's progress and transcripts). There is no password.")
+    if expose_admin:
+        print("  --expose-admin: the PARENT VIEW, SETTINGS and SETUP are on the network too.")
+        print("  Anything else on this Wi-Fi can read your child's progress and transcripts,")
+        print("  and change the app's settings. There is no password. Only do this on a")
+        print("  home network you trust completely.")
+    else:
+        print("  Lessons are on the network; the PARENT VIEW, SETTINGS and SETUP stay on")
+        print("  THIS computer, so nothing else on the Wi-Fi can read your child's progress")
+        print("  or change the app. Open those here. (`--expose-admin` lifts that.)")
     print("  Use this on a home network you trust, not on public or shared Wi-Fi.")
     if sys.platform == "win32":
         print()
@@ -585,6 +597,9 @@ def main(argv: list[str] | None = None) -> int:
                     help="ADVANCED: also serve to other devices on your home network "
                          "(e.g. a tablet). Read what it prints before using it.")
     sv.add_argument("--port", type=int, default=5000, help="Port (default: 5000).")
+    sv.add_argument("--expose-admin", action="store_true",
+                    help="With --lan: also serve the parent view, settings and setup to the "
+                         "network. Off by default -- those stay on this computer.")
     ev = sub.add_parser("eval", help="Generate (local model) + judge (Sonnet) over the eval dataset.")
     ev.add_argument("--model", required=True, help="Candidate model id (e.g. gemma4:12b).")
     ev.add_argument("--suite", default=None,
