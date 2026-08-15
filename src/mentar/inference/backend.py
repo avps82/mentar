@@ -36,6 +36,8 @@ import time
 from collections.abc import Callable
 from pathlib import Path
 
+from mentar.paths import data_dir
+
 logger = logging.getLogger(__name__)
 
 LLMCall = Callable[[list[dict]], str]
@@ -68,8 +70,9 @@ def _expand_env(obj):
 
 
 def _default_config_path() -> Path:
-    # src/mentar/inference/backend.py -> src -> repo root -> config/inference.yaml
-    return Path(__file__).resolve().parents[3] / "config" / "inference.yaml"
+    # Written by `mentar setup` and the backend switch, so it follows data_dir():
+    # the repo root from a checkout, the user's data directory in a packaged build.
+    return data_dir() / "config" / "inference.yaml"
 
 
 def write_inference_config(cfg: dict, path: str | Path | None = None) -> Path:

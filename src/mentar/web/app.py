@@ -54,6 +54,7 @@ from mentar.inference import (
     upsert_dotenv_value,
     write_inference_config,
 )
+from mentar.paths import bundle_root, data_dir
 from mentar.tools.validate_template import validate_or_raise
 from mentar.web.answer_modes import mode_for
 
@@ -62,12 +63,15 @@ app.secret_key = os.environ.get("SECRET_KEY", "mentar-dev-insecure-change-in-pro
 
 # ── Config ────────────────────────────────────────────────────────────────────
 
-_REPO = Path(__file__).resolve().parents[3]  # src/mentar/web/app.py -> src -> repo root
+# Read-only shipped assets vs writable family state — the same directory from a
+# source checkout, deliberately different inside a packaged binary (paths.py).
+_REPO = bundle_root()
+_DATA = data_dir()
 
 LLM_BASE_URL = os.environ.get("MENTAR_LLM_BASE_URL", "http://localhost:11434/v1")
 LLM_CRED     = os.environ.get("MENTAR_LLM_API_KEY") or "no-key"
 LLM_MODEL    = os.environ.get("MENTAR_LLM_MODEL", "gemma2:9b")
-DB_PATH      = os.environ.get("MENTAR_DB_PATH", str(_REPO / "mentar_pilot.db"))
+DB_PATH      = os.environ.get("MENTAR_DB_PATH", str(_DATA / "mentar_pilot.db"))
 PROMPT_DIR   = Path(os.environ.get("MENTAR_PROMPT_DIR", str(_REPO / "prompts")))
 SCAFFOLD_DIR = Path(os.environ.get(
     "MENTAR_SCAFFOLD_DIR", str(_REPO / "curriculum" / "visual_scaffolds"),
@@ -112,7 +116,7 @@ _PACKS_MANIFEST_PATH = _REPO / "curriculum" / "packs.json"
 # Env-overridable (like MENTAR_DB_PATH) so a deployment can relocate it and tests
 # can point it at a scratch file BEFORE discovery reads it.
 _PACK_STATE_PATH = Path(
-    os.environ.get("MENTAR_PACK_STATE", str(_REPO / "curriculum" / "pack_state.json"))
+    os.environ.get("MENTAR_PACK_STATE", str(_DATA / "curriculum" / "pack_state.json"))
 )
 
 
@@ -286,7 +290,7 @@ _learner_subject: dict[str, str] = {}   # learner_uuid -> active subject key
 # Inference backend: prefer config/inference.yaml (the canonical, backend-agnostic
 # source — llamacpp/vllm/ollama). Fall back to the legacy MENTAR_LLM_* env vars so an
 # existing env-only setup keeps working (treated as an OpenAI-compatible endpoint).
-_INFERENCE_CONFIG_PATH = _REPO / "config" / "inference.yaml"
+_INFERENCE_CONFIG_PATH = _DATA / "config" / "inference.yaml"
 _INFERENCE_CFG: dict = {}
 _GROUNDING_CFG: dict = {}  # ZIM reader config (W7)
 # The endpoint the app will ACTUALLY call (yaml or env fallback, local or remote) --

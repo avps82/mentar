@@ -21,10 +21,12 @@ import time
 import uuid
 from pathlib import Path
 
+from mentar.paths import bundle_root
+
 
 def _repo_root() -> Path:
-    # src/mentar/cli/__main__.py -> cli -> mentar -> src -> repo root
-    return Path(__file__).resolve().parents[3]
+    # Shipped assets (curriculum, prompts). Writable state goes to data_dir().
+    return bundle_root()
 
 
 def _build_controller(args):

@@ -18,6 +18,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from mentar.inference import ggufparser
+from mentar.paths import bundle_root
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +27,7 @@ _OVERHEAD_GB = 1.5     # heuristic runtime overhead when gguf-parser is unavaila
 
 
 def _default_roster_path() -> Path:
-    return Path(__file__).resolve().parents[3] / "config" / "model_roster.yaml"
+    return bundle_root() / "config" / "model_roster.yaml"  # shipped, read-only
 
 
 def load_roster(path: str | Path | None = None) -> list[dict]:

@@ -21,6 +21,60 @@ local LLM (no cloud, no API key needed) and talk to the tutor in the terminal or
 
 ---
 
+## Download and run — no install (EXPERIMENTAL)
+
+There is a single-file build for Windows, macOS and Linux. Download one file, run it,
+and Mentar opens in your browser. No Python, no `git clone`, no virtual environment.
+
+> **Read this before you rely on it.** These builds are experimental and they are
+> **unsigned**, because code-signing certificates cost money Mentar does not have.
+> What that means in practice:
+>
+> - **Windows** shows a blue "Windows protected your PC" box. *More info* →
+>   *Run anyway*. Your antivirus may also quarantine it — single-file Python builds
+>   are a shape malware also uses, and scanners judge the shape.
+> - **macOS** refuses to open it on a double-click. Right-click → *Open* → *Open*, or
+>   `xattr -d com.apple.quarantine ./mentar-macos-arm64`. macOS is the roughest of
+>   the three; if you are comfortable with a terminal, the source install below is
+>   genuinely easier on a Mac.
+> - **macOS / Linux:** make it executable first — `chmod +x mentar-*`.
+>
+> Being asked to click past a security warning is a real cost, and you should weigh
+> it. The source install below asks nothing of you that Python does not already ask.
+
+```bash
+chmod +x mentar-linux-x86_64
+./mentar-linux-x86_64 --selftest    # confirms the download is complete and undamaged
+./mentar-linux-x86_64               # starts Mentar and opens your browser
+```
+
+Every normal command still works: `./mentar-linux-x86_64 setup`,
+`... serve --lan`, `... run-session`.
+
+**The model is not in the download.** The binary is around 100 MB; the language model
+is 4–20 GB and is chosen to fit your machine, so it cannot be shipped as one file for
+everyone. First run downloads it. So "no install" is true of Mentar itself — the first
+run still needs a good connection and some patience.
+
+**Not included in the binary:** offline ZIM grounding (`libzim` has no reliable wheels
+for every platform) and the offline BKT-fitting tools. Both are optional; Mentar
+degrades gracefully without them. If you want grounding, install from source.
+
+Where your family's data goes when running the binary — **not** next to the executable,
+so it survives replacing the binary with a newer one:
+
+| OS | Location |
+|---|---|
+| Windows | `%LOCALAPPDATA%\Mentar\` |
+| macOS | `~/Library/Application Support/Mentar/` |
+| Linux | `~/.local/share/mentar/` (or `$XDG_DATA_HOME/mentar`) |
+
+Builds come from `.github/workflows/build-binary.yml` (GitHub-hosted runners, from a
+tagged commit). Mentar is AGPL-3.0-only: if you were given a binary, you are entitled
+to the source it was built from.
+
+---
+
 ## Fastest path: `./mentar setup`
 
 After installing the package (steps 1–3 below), one command detects your hardware, picks the

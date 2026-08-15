@@ -1,0 +1,155 @@
+# Single-file builds. EXPERIMENTAL — see docs/RUNNING.md "Download and run".
+#
+# Deliberately NOT run on every push: three OS runners doing a full PyInstaller
+# build is slow and buys nothing on a docs commit. It runs when the packaging
+# itself changes, on a tag, or on demand.
+#
+# What this cannot do: bundle the language model. It is 4-20 GB and chosen to fit
+# the machine, so the binary fetches it on first run. The download is Mentar only.
+name: Build binaries
+
+on:
+  workflow_dispatch:
+  push:
+    # Tags only, and deliberately WITHOUT a paths filter: GitHub ANDs paths with
+    # the ref filter, so a release tag on a commit that happened not to touch
+    # packaging/ would silently skip its own release build.
+    tags:
+      - "v*"
+  pull_request:
+    paths:
+      - "packaging/**"
+      - ".github/workflows/build-binary.yml"
+      - "src/mentar/paths.py"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ matrix.label }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false   # one OS failing must not hide whether the others work
+      matrix:
+        include:
+          - os: ubuntu-22.04    # oldest supported runner => widest glibc compatibility
+            label: linux-x86_64
+            artifact: mentar-linux-x86_64
+            binary: dist/mentar
+          - os: windows-latest
+            label: windows-x86_64
+            artifact: mentar-windows-x86_64.exe
+            binary: dist/mentar.exe
+          - os: macos-latest    # Apple Silicon
+            label: macos-arm64
+            artifact: mentar-macos-arm64
+            binary: dist/mentar
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Mentar and the build tool
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[web,setup]"
+          python -m pip install pyinstaller
+
+      - name: Build
+        run: pyinstaller --clean --noconfirm packaging/mentar.spec
+
+      - name: Selftest the built binary
+        shell: bash
+        run: |
+          "${{ matrix.binary }}" --selftest
+        # Fails the build if any bundled asset is missing. A binary that starts and
+        # then 404s a child's lesson is worse than one that never shipped.
+
+      - name: Start it and check it actually serves
+        shell: python
+        run: |
+          import subprocess, sys, time, urllib.request, urllib.error
+
+          proc = subprocess.Popen(
+              [r"${{ matrix.binary }}", "serve", "--port", "5099", "--no-browser"],
+              stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+          )
+          try:
+              status = None
+              deadline = time.monotonic() + 90
+              while time.monotonic() < deadline:
+                  if proc.poll() is not None:
+                      print(proc.stdout.read())
+                      sys.exit(f"server exited early with code {proc.returncode}")
+                  try:
+                      with urllib.request.urlopen("http://127.0.0.1:5099/", timeout=2) as r:
+                          status = r.status
+                          break
+                  except urllib.error.HTTPError as e:
+                      status = e.code      # a 4xx/5xx still proves it is serving
+                      break
+                  except Exception:
+                      time.sleep(1)
+              if status is None:
+                  sys.exit("server never answered on port 5099")
+              # 302 is the expected first-run answer: the setup gate redirects.
+              print(f"served HTTP {status}")
+              if status >= 500:
+                  sys.exit(f"server answered {status}")
+          finally:
+              proc.terminate()
+              try:
+                  proc.wait(timeout=15)
+              except subprocess.TimeoutExpired:
+                  proc.kill()
+
+      - name: Report size
+        shell: bash
+        run: ls -lh "${{ matrix.binary }}"
+
+      - name: Rename for release
+        shell: bash
+        run: cp "${{ matrix.binary }}" "${{ matrix.artifact }}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.artifact }}
+          if-no-files-found: error
+
+  release:
+    # Tag builds only. Attaches the three binaries to the GitHub Release.
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Attach binaries to the release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*
+          # AGPL-3.0-only: anyone receiving a binary must be able to get the source
+          # it was built from. The release body states it and the tag pins it.
+          body: |
+            **Experimental single-file builds.** Unsigned — Windows SmartScreen and
+            macOS Gatekeeper will warn; see docs/RUNNING.md for what to click.
+
+            These do **not** include a language model. Run the binary, and Mentar's
+            setup will pick and download one that fits your machine (4-20 GB).
+
+            On macOS and Linux, mark it executable first: `chmod +x mentar-*`.
+            Check a download with `./mentar-... --selftest` before handing it to a child.
+
+            Source for this build: the `${{ github.ref_name }}` tag of this
+            repository, under AGPL-3.0-only.
+          fail_on_unmatched_files: true
