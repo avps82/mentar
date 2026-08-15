@@ -378,6 +378,81 @@ _EXPECTED = {
     "curriculum/templates/SG_GENERIC/s4_physics.md": {
         "key": "sg_generic_s4_physics", "label": "Physics — Secondary 4 🇸🇬", "item_source": "sg_s4_physics",
     },
+    "curriculum/templates/US_GENERIC/g10_chemistry.md": {
+        "key": "us_generic_g10_chemistry", "label": "Chemistry — Grade 10 🇺🇸", "item_source": "us_g10_chemistry",
+    },
+    "curriculum/templates/US_GENERIC/g11_physics.md": {
+        "key": "us_generic_g11_physics", "label": "Physics — Grade 11 🇺🇸", "item_source": "us_g11_physics",
+    },
+    "curriculum/templates/US_GENERIC/g9_biology.md": {
+        "key": "us_generic_g9_biology", "label": "Biology — Grade 9 🇺🇸", "item_source": "us_g9_biology",
+    },
+    "curriculum/templates/IN_GENERIC/c10_english.md": {
+        "key": "in_generic_c10_english", "label": "English — Class 10 🇮🇳 (general)", "item_source": "in_c10_english",
+    },
+    "curriculum/templates/IN_GENERIC/c10_maths.md": {
+        "key": "in_generic_c10_maths", "label": "Maths — Class 10 🇮🇳 (general)", "item_source": "in_c10_maths",
+    },
+    "curriculum/templates/IN_GENERIC/c11_english.md": {
+        "key": "in_generic_c11_english", "label": "English — Class 11 🇮🇳 (general)", "item_source": "in_c11_english",
+    },
+    "curriculum/templates/IN_GENERIC/c11_maths.md": {
+        "key": "in_generic_c11_maths", "label": "Maths — Class 11 🇮🇳 (general)", "item_source": "in_c11_maths",
+    },
+    "curriculum/templates/IN_GENERIC/c12_english.md": {
+        "key": "in_generic_c12_english", "label": "English — Class 12 🇮🇳 (general)", "item_source": "in_c12_english",
+    },
+    "curriculum/templates/IN_GENERIC/c12_maths.md": {
+        "key": "in_generic_c12_maths", "label": "Maths — Class 12 🇮🇳 (general)", "item_source": "in_c12_maths",
+    },
+    "curriculum/templates/IN_GENERIC/c9_english.md": {
+        "key": "in_generic_c9_english", "label": "English — Class 9 🇮🇳 (general)", "item_source": "in_c9_english",
+    },
+    "curriculum/templates/IN_GENERIC/c9_maths.md": {
+        "key": "in_generic_c9_maths", "label": "Maths — Class 9 🇮🇳 (general)", "item_source": "in_c9_maths",
+    },
+    "curriculum/templates/SG_GENERIC/s3_english.md": {
+        "key": "sg_generic_s3_english", "label": "English — Secondary 3 🇸🇬 (general)", "item_source": "sg_s3_english",
+    },
+    "curriculum/templates/SG_GENERIC/s3_maths.md": {
+        "key": "sg_generic_s3_maths", "label": "Maths — Secondary 3 🇸🇬 (general)", "item_source": "sg_s3_maths",
+    },
+    "curriculum/templates/SG_GENERIC/s4_english.md": {
+        "key": "sg_generic_s4_english", "label": "English — Secondary 4 🇸🇬 (general)", "item_source": "sg_s4_english",
+    },
+    "curriculum/templates/SG_GENERIC/s4_maths.md": {
+        "key": "sg_generic_s4_maths", "label": "Maths — Secondary 4 🇸🇬 (general)", "item_source": "sg_s4_maths",
+    },
+    "curriculum/templates/US_GENERIC/g10_english.md": {
+        "key": "us_generic_g10_english", "label": "English — Grade 10 🇺🇸 (general)", "item_source": "us_g10_english",
+    },
+    "curriculum/templates/US_GENERIC/g10_maths.md": {
+        "key": "us_generic_g10_maths", "label": "Maths — Grade 10 🇺🇸 (general)", "item_source": "us_g10_maths",
+    },
+    "curriculum/templates/US_GENERIC/g11_english.md": {
+        "key": "us_generic_g11_english", "label": "English — Grade 11 🇺🇸 (general)", "item_source": "us_g11_english",
+    },
+    "curriculum/templates/US_GENERIC/g11_maths.md": {
+        "key": "us_generic_g11_maths", "label": "Maths — Grade 11 🇺🇸 (general)", "item_source": "us_g11_maths",
+    },
+    "curriculum/templates/US_GENERIC/g12_english.md": {
+        "key": "us_generic_g12_english", "label": "English — Grade 12 🇺🇸 (general)", "item_source": "us_g12_english",
+    },
+    "curriculum/templates/US_GENERIC/g12_maths.md": {
+        "key": "us_generic_g12_maths", "label": "Maths — Grade 12 🇺🇸 (general)", "item_source": "us_g12_maths",
+    },
+    "curriculum/templates/US_GENERIC/g9_english.md": {
+        "key": "us_generic_g9_english", "label": "English — Grade 9 🇺🇸 (general)", "item_source": "us_g9_english",
+    },
+    "curriculum/templates/US_GENERIC/g9_maths.md": {
+        "key": "us_generic_g9_maths", "label": "Maths — Grade 9 🇺🇸 (general)", "item_source": "us_g9_maths",
+    },
+    "curriculum/templates/IN_GENERIC/c10_science.md": {
+        "key": "in_generic_c10_science", "label": "Science — Class 10 🇮🇳 (general)", "item_source": "in_c10_science",
+    },
+    "curriculum/templates/IN_GENERIC/c9_science.md": {
+        "key": "in_generic_c9_science", "label": "Science — Class 9 🇮🇳 (general)", "item_source": "in_c9_science",
+    },
 }
 
 

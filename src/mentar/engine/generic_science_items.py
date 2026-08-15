@@ -37,7 +37,14 @@ from mentar.engine.science_items import (
     AU_SCIENCE_YEAR6_GENERATORS,
     AU_SCIENCE_YEAR7_GENERATORS,
     AU_SCIENCE_YEAR8_GENERATORS,
+    AU_SCIENCE_YEAR9_GENERATORS,
+    AU_SCIENCE_YEAR10_GENERATORS,
     SCIENCE_GENERATORS,
+)
+from mentar.engine.senior_science_items import (
+    NO_SCIENCE_LEVELS,
+    SENIOR_LEVELS,
+    US_SEQUENCE,
 )
 
 _AU_PREFIX = re.compile(r"^au\d+_science_")
@@ -65,6 +72,13 @@ STAGE_CONCEPTS: dict[int, dict[str, GenFn]] = {
     6: _slugs(AU_SCIENCE_YEAR6_GENERATORS),
     7: _slugs(AU_SCIENCE_YEAR7_GENERATORS),
     8: _slugs(AU_SCIENCE_YEAR8_GENERATORS),
+    # Stages 9-10 exist because science does NOT split everywhere at the same
+    # point: India keeps ONE combined Science subject through Class 10 and only
+    # splits at Class 11, while Singapore splits at Secondary 3 and the US
+    # sequences from Grade 9. So the combined progression has to reach these
+    # stages for the countries that still teach it that way.
+    9: _slugs(AU_SCIENCE_YEAR9_GENERATORS),
+    10: _slugs(AU_SCIENCE_YEAR10_GENERATORS),
 }
 
 
@@ -76,9 +90,26 @@ def build_generators(prefix: str, stage: int) -> dict[str, GenFn]:
     return {f"{prefix}_{slug}": fn for slug, fn in STAGE_CONCEPTS[stage].items()}
 
 
-# item_source name -> generators, for every generic pack level.
+# Levels where science is taught as SEPARATE subjects, so no combined pack is
+# built for them: the parallel Physics/Chemistry/Biology levels, plus the US
+# grades that take one science per year in sequence.
+_SPLIT_PREFIXES = (
+    {prefix for levels in SENIOR_LEVELS.values() for prefix, _n, _s in levels}
+    | {prefix for prefix, _n, _s in US_SEQUENCE}
+    | NO_SCIENCE_LEVELS
+)
+
+# item_source name -> generators, for every level that still teaches ONE science.
+#
+# Deliberately NOT "stage < 9": the split does not happen at the same point
+# everywhere. India keeps a combined Science through Class 10 (stage 10) and
+# splits at Class 11; Singapore splits at Secondary 3 (stage 9); the US sequences
+# from Grade 9. Keying off the split itself is what gets all three right --
+# a stage cutoff shipped India Class 9-10 with no science at all, which the
+# coverage matrix caught.
 GENERIC_SCIENCE_ITEM_SOURCES: dict[str, dict[str, GenFn]] = {
     f"{prefix}_science": build_generators(prefix, stage)
     for levels in PACK_LEVELS.values()
     for prefix, _level_name, stage in levels
+    if prefix not in _SPLIT_PREFIXES and stage in STAGE_CONCEPTS
 }

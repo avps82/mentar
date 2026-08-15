@@ -23,7 +23,13 @@ tests/engine/test_template_catalog.py::test_no_skill_id_collides_across_any_ship
 
 from __future__ import annotations
 
+import re
+
 from mentar.engine.au_english_items import (
+    AU_ENGLISH_YEAR9_GENERATORS,
+    AU_ENGLISH_YEAR10_GENERATORS,
+    AU_ENGLISH_YEAR11_GENERATORS,
+    AU_ENGLISH_YEAR12_GENERATORS,
     gen_active_passive_y7,
     gen_adjectives_comparative_y3,
     gen_adverbial_phrases_y8,
@@ -102,6 +108,22 @@ STAGE_CONCEPTS: dict[int, dict[str, GenFn]] = {
         "onomatopoeia": gen_onomatopoeia_y8,
     },
 }
+
+
+# Senior stages 9-12 (2026-08-15), derived from AU English's own Year 9-12 dicts
+# for the same reason the maths table derives its senior stages: one progression,
+# no second copy to drift. AU English node ids are prefixed "aue<n>_".
+_AUE_YEAR_PREFIX = re.compile(r"^aue\d+_")
+
+STAGE_CONCEPTS.update({
+    stage: {_AUE_YEAR_PREFIX.sub("", k): v for k, v in gens.items()}
+    for stage, gens in (
+        (9, AU_ENGLISH_YEAR9_GENERATORS),
+        (10, AU_ENGLISH_YEAR10_GENERATORS),
+        (11, AU_ENGLISH_YEAR11_GENERATORS),
+        (12, AU_ENGLISH_YEAR12_GENERATORS),
+    )
+})
 
 
 def build_generators(prefix: str, stage: int) -> dict[str, GenFn]:

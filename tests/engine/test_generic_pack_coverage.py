@@ -42,6 +42,22 @@ _BANK = REPO_ROOT / "curriculum" / "itembank" / "pilot_fractions.jsonl"
 # which predates the shared stage table -- see PACK_LEVELS' own comment.
 _LEGACY_MATHS = {("IN", "Class 3")}
 
+# Levels where science is taught as SEPARATE subjects. NOT a stage cutoff: the
+# split happens at a different point in each country -- India keeps a combined
+# Science through Class 10, Singapore splits at Secondary 3, the US sequences from
+# Grade 9. A stage cutoff shipped India Class 9-10 with no science at all, which
+# the coverage matrix caught, so this keys off the split itself.
+def _split_prefixes():
+    """Prefixes with no COMBINED science pack: the split levels, plus the levels
+    that ship no science at all (US Grade 12 is electives)."""
+    from mentar.engine.senior_science_items import (
+        NO_SCIENCE_LEVELS,
+        SENIOR_LEVELS,
+        US_SEQUENCE,
+    )
+    return ({p for levels in SENIOR_LEVELS.values() for p, _n, _s in levels}
+            | {p for p, _n, _s in US_SEQUENCE} | NO_SCIENCE_LEVELS)
+
 
 def _shipped() -> list[tuple[dict, pathlib.Path]]:
     out = []
@@ -95,15 +111,48 @@ def test_every_generic_level_ships_every_subject_it_has_a_stage_table_for():
         for meta, _path in _shipped()
     }
     missing = []
+    wrong_science = []
     for authority, levels in PACK_LEVELS.items():
         country = authority.split("_")[0]
         for _prefix, level_name, _stage in levels:
+            senior = _prefix in _split_prefixes()
             for subject in ("mathematics", "english", "science"):
                 if subject == "mathematics" and (country, level_name) in _LEGACY_MATHS:
+                    continue
+                if subject == "science" and senior:
+                    # A combined science pack here would contradict the split.
+                    if (country, level_name, subject) in shipped:
+                        wrong_science.append(f"{country} {level_name}")
                     continue
                 if (country, level_name, subject) not in shipped:
                     missing.append(f"{country} {level_name} {subject}")
     assert not missing, "generic packs missing a subject at a shipped level: " + ", ".join(missing)
+    assert not wrong_science, (
+        "senior levels must ship split science (physics/chemistry/biology), not a "
+        "combined 'science' pack: " + ", ".join(wrong_science)
+    )
+
+
+def test_every_senior_level_ships_its_split_science():
+    """The other half: a senior level exists because a student studies the three
+    sciences separately there, so each of AU/IN/SG's senior levels must carry all
+    three, and each US high-school grade its one sequenced subject."""
+    from mentar.engine.senior_science_items import SENIOR_LEVELS, US_SEQUENCE
+
+    shipped = {
+        (meta["country"], meta["year_level"], meta["subject"]) for meta, _p in _shipped()
+    }
+    missing = []
+    for authority, levels in SENIOR_LEVELS.items():
+        country = authority.split("_")[0]
+        for _prefix, level_name, _stage in levels:
+            for subject in ("physics", "chemistry", "biology"):
+                if (country, level_name, subject) not in shipped:
+                    missing.append(f"{country} {level_name} {subject}")
+    for _prefix, level_name, subject in US_SEQUENCE:
+        if ("US", level_name, subject) not in shipped:
+            missing.append(f"US {level_name} {subject}")
+    assert not missing, "senior science missing: " + ", ".join(missing)
 
 
 def test_every_generic_template_concept_id_resolves_to_a_generator():
@@ -156,7 +205,9 @@ def test_generic_science_matches_the_au_template_of_the_same_stage():
     from mentar.engine.generic_science_items import STAGE_CONCEPTS
 
     au_labels = {}
-    for year in range(2, 9):
+    # 2-10: AU ships combined Science to Year 10, and India's combined Science
+    # now runs to Class 10 (stage 10) against those same year templates.
+    for year in range(2, 11):
         path = _TPL / "AU_ACARA" / f"year{year}_science.md"
         au_labels[year] = _labels(path)
 
@@ -164,6 +215,8 @@ def test_generic_science_matches_the_au_template_of_the_same_stage():
     for authority, levels in PACK_LEVELS.items():
         country = authority.split("_")[0]
         for prefix, level_name, stage in levels:
+            if prefix in _split_prefixes():
+                continue  # science is split here, so there is no combined template
             path = next(
                 p for meta, p in _shipped()
                 if meta["country"] == country and meta["year_level"] == level_name
@@ -177,7 +230,10 @@ def test_generic_science_matches_the_au_template_of_the_same_stage():
                 f"{path.relative_to(REPO_ROOT)}: stage {stage} labels drifted from AU Year {stage}"
             )
             seen += 1
-    assert seen == 21, f"expected 21 generic science levels, saw {seen}"
+    from mentar.engine.generic_science_items import GENERIC_SCIENCE_ITEM_SOURCES
+    assert seen == len(GENERIC_SCIENCE_ITEM_SOURCES), (
+        f"expected {len(GENERIC_SCIENCE_ITEM_SOURCES)} combined-science levels, saw {seen}"
+    )
 
 
 def test_generic_science_nodes_serve_their_own_concept():
@@ -206,7 +262,9 @@ def test_generic_science_nodes_serve_their_own_concept():
                 f"  seed:  {seed!r}\n  drew:  {sorted(stems)!r}"
             )
             checked += 1
-    assert checked == 63, f"expected 21 levels x 3 nodes, checked {checked}"
+    from mentar.engine.generic_science_items import GENERIC_SCIENCE_ITEM_SOURCES
+    expected = sum(len(g) for g in GENERIC_SCIENCE_ITEM_SOURCES.values())
+    assert checked == expected, f"expected {expected} combined-science nodes, checked {checked}"
 
 
 if __name__ == "__main__":

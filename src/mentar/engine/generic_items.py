@@ -27,7 +27,13 @@ tests/engine/test_template_catalog.py::test_no_skill_id_collides_across_any_ship
 
 from __future__ import annotations
 
+import re
+
 from mentar.engine.au_items import (
+    AU_YEAR9_GENERATORS,
+    AU_YEAR10_GENERATORS,
+    AU_YEAR11_GENERATORS,
+    AU_YEAR12_GENERATORS,
     gen_add_sub_decimals,
     gen_add_within_100,
     gen_add_within_1000,
@@ -131,6 +137,24 @@ STAGE_CONCEPTS: dict[int, dict[str, GenFn]] = {
     },
 }
 
+# Senior stages 9-12 (2026-08-15). The generic packs stopped at stage 8 while AU
+# maths ran to Year 12, so India, Singapore and the US had no senior maths at
+# all. AU's own Year 9-12 dicts ARE the progression, so they are DERIVED here
+# (slug = the id with AU's year prefix stripped) rather than re-listed, exactly
+# as generic_science_items.py does for science: a generic senior level cannot
+# drift from its AU counterpart.
+_AU_YEAR_PREFIX = re.compile(r"^au\d+_")
+
+STAGE_CONCEPTS.update({
+    stage: {_AU_YEAR_PREFIX.sub("", k): v for k, v in gens.items()}
+    for stage, gens in (
+        (9, AU_YEAR9_GENERATORS),
+        (10, AU_YEAR10_GENERATORS),
+        (11, AU_YEAR11_GENERATORS),
+        (12, AU_YEAR12_GENERATORS),
+    )
+})
+
 # pack key -> [(node-id prefix, level display name, stage), ...].
 #
 # Level->stage mapping is deliberately CONSERVATIVE and approximate: these packs
@@ -150,6 +174,10 @@ PACK_LEVELS: dict[str, list[tuple[str, str, int]]] = {
         ("sg_p6", "Primary 6", 6),
         ("sg_s1", "Secondary 1", 7),
         ("sg_s2", "Secondary 2", 8),
+        # Upper secondary (2026-08-15). Science at Sec 3-4 is split into Pure
+        # Physics/Chemistry/Biology, so these carry maths and English only.
+        ("sg_s3", "Secondary 3", 9),
+        ("sg_s4", "Secondary 4", 10),
     ],
     "US_GENERIC": [
         ("us_g2", "Grade 2", 2),
@@ -159,6 +187,13 @@ PACK_LEVELS: dict[str, list[tuple[str, str, int]]] = {
         ("us_g6", "Grade 6", 6),
         ("us_g7", "Grade 7", 7),
         ("us_g8", "Grade 8", 8),
+        # High school (2026-08-15). Science at these grades is a SEQUENCED single
+        # subject (senior_science_items.US_SEQUENCE), so these levels carry maths
+        # and English only -- tests/engine/test_generic_pack_coverage.py knows.
+        ("us_g9", "Grade 9", 9),
+        ("us_g10", "Grade 10", 10),
+        ("us_g11", "Grade 11", 11),
+        ("us_g12", "Grade 12", 12),
     ],
     "IN_GENERIC": [
         ("in_c2", "Class 2", 2),
@@ -174,6 +209,13 @@ PACK_LEVELS: dict[str, list[tuple[str, str, int]]] = {
         ("in_c6", "Class 6", 6),
         ("in_c7", "Class 7", 7),
         ("in_c8", "Class 8", 8),
+        # Secondary + senior secondary (2026-08-15). Science at Class 11-12 is
+        # split into Physics/Chemistry/Biology (senior_science_items.SENIOR_LEVELS),
+        # so those two levels carry maths and English only.
+        ("in_c9", "Class 9", 9),
+        ("in_c10", "Class 10", 10),
+        ("in_c11", "Class 11", 11),
+        ("in_c12", "Class 12", 12),
     ],
 }
 
