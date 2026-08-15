@@ -25,9 +25,15 @@ sys.path.insert(0, str(REPO / "src"))
 
 from mentar.engine.au_items import (  # noqa: E402
     gen_area_perimeter,
+    gen_binomial_product_area,
     gen_combine_expressions,
+    gen_combine_quadratic_linear,
     gen_combine_three_expressions,
+    gen_combine_two_quadratics,
+    gen_combined_rectangles_perimeter,
+    gen_compound_shape_area,
     gen_decimal_place_value,
+    gen_difference_of_expressions,
     gen_distributive_word_to_expression,
     gen_fraction_decimal_equiv,
     gen_halves_quarters,
@@ -45,9 +51,12 @@ from mentar.engine.au_items import (  # noqa: E402
     gen_place_value_4digit,
     gen_rectangle_area_expression,
     gen_rectangle_perimeter_expression,
+    gen_revenue_expression,
+    gen_square_expression,
     gen_two_step_equations,
     gen_unlike_denom_fractions,
     gen_word_to_expression,
+    gen_word_to_quadratic_expression,
 )
 from mentar.engine.itemgen import ItemGenerator  # noqa: E402
 from mentar.eval.verify_numeric import CheckResult, check  # noqa: E402
@@ -59,6 +68,18 @@ _MIGRATED_EXPRESSION_GENERATORS = (
     gen_rectangle_area_expression,
     gen_distributive_word_to_expression,
     gen_combine_three_expressions,
+    # The quadratic-heavy Y10-12 family, deferred on 2026-08-13 as "higher
+    # error-risk, held for a session with room to verify each one" and migrated
+    # 2026-08-15. These were the last 66 prose-only nodes in the corpus.
+    gen_square_expression,
+    gen_combined_rectangles_perimeter,
+    gen_binomial_product_area,
+    gen_word_to_quadratic_expression,
+    gen_combine_quadratic_linear,
+    gen_difference_of_expressions,
+    gen_revenue_expression,
+    gen_combine_two_quadratics,
+    gen_compound_shape_area,
 )
 
 # Every Type 2 (maths method card) generator migrated so far -- Phase 1,
@@ -207,3 +228,39 @@ if __name__ == "__main__":
         if name.startswith("test_") and callable(fn):
             fn()
             print(f"  ✓ {name}")
+
+
+def test_alternative_forms_a_card_offers_are_genuinely_equivalent():
+    """Several quadratic cards tell a child "expanding to ... is also correct".
+    That is a promise about what the app will accept, so each alternative is
+    cross-checked against the item's own ground truth with the real sympy
+    verifier. A card that offered a wrong "also correct" form would teach an
+    answer the verifier then marks wrong -- worse than offering nothing.
+
+    (Implicit multiplication is deliberate in these lines: "y**2 + 16y + 64" is
+    how a child writes it, and the verifier accepts it -- checked here, not
+    assumed.)"""
+    import re
+
+    rng = random.Random(4242)
+    expr_only = re.compile(r"[0-9xy*+\-/()\s]{4,}")
+    checked = 0
+    for gen in _MIGRATED_EXPRESSION_GENERATORS:
+        for _ in range(40):
+            result = gen(rng)
+            answer, card = result[3], (result[5] if len(result) > 5 else None)
+            if not card:
+                continue
+            for line in card:
+                for phrase in ("Expanding to", "Expanded that is", "giving"):
+                    if phrase not in line:
+                        continue
+                    frag = re.split(r"\s+(?:is|—|--)\s|\.\s|$",
+                                    line.split(phrase, 1)[1])[0].strip().rstrip(".")
+                    if not frag or not expr_only.fullmatch(frag):
+                        continue
+                    checked += 1
+                    outcome = check(answer_type="expression", checker="expression_equiv",
+                                    llm_output=frag, ground_truth=answer)
+                    assert outcome.result is CheckResult.PASS, (gen.__name__, frag, answer)
+    assert checked >= 50, f"expected the alternative-form lines to be exercised, saw {checked}"

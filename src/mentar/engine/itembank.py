@@ -118,5 +118,12 @@ def load_item_bank(path: str | Path, rng: random.Random | None = None) -> ItemBa
             checker=d.get("checker", "none"),
             choices=tuple(d["choices"]) if d.get("choices") else None,
             stem=d.get("stem"),
+            # 2026-08-15: Item has carried method_steps since explain-mode
+            # shipped, but the loader dropped it, so an AUTHORED item could
+            # never show a card however the jsonl was written. The conceptual
+            # nodes that exist precisely because a generator cannot parametrise
+            # them (equal-vs-unequal parts) are exactly the ones a child is most
+            # likely to need explained.
+            method_steps=tuple(d["method_steps"]) if d.get("method_steps") else None,
         ))
     return ItemBank(items, rng=rng)

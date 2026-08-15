@@ -622,7 +622,16 @@ def gen_two_step_equations(rng: random.Random):
 def gen_squares(rng: random.Random):
     """AC9M8N01-aligned: squaring a small integer."""
     n = rng.randint(2, 15)
-    return ("int", "int_exact", f"What is {n} squared ({n}²)?", str(n * n))
+    problem = f"What is {n} squared ({n}²)?"
+    card = (
+        "SQUARING A NUMBER",
+        f"{problem} → {n * n}",
+        "  1. \"Squared\" means multiply the number by ITSELF, not by 2.",
+        f"  2. {n}² = {n} × {n} = {n * n}.",
+        f"  ({n} × 2 = {n * 2} is doubling — a different thing.)",
+        f"  Answer: {n * n}",
+    )
+    return ("int", "int_exact", problem, str(n * n), None, card)
 
 
 def _negative_multiplication_card(a: int, b: int, answer: int) -> tuple[str, ...]:
@@ -937,9 +946,18 @@ def gen_square_expression(rng: random.Random):
     passes) -- sets up Year 11's binomial-product content."""
     var = rng.choice("xy")
     n = rng.randint(1, 8)
-    return ("expression", "expression_equiv",
-            f"A square has side length ({var} + {n}). Write an expression for its area.",
-            f"({var} + {n})**2")
+    problem = f"A square has side length ({var} + {n}). Write an expression for its area."
+    answer = f"({var} + {n})**2"
+    card = (
+        "AREA OF A SQUARE WITH AN ALGEBRAIC SIDE",
+        f"{problem} → {answer}",
+        "  1. Area of a square = side × side.",
+        f"  2. Both sides are the same here: ({var} + {n}) × ({var} + {n}).",
+        f"  3. Written as a square: ({var} + {n})**2.",
+        f"  Expanding to {var}**2 + {2 * n}{var} + {n * n} is also correct — same value, either form.",
+        f"  Answer: {answer}",
+    )
+    return ("expression", "expression_equiv", problem, answer, None, card)
 
 
 def gen_combined_rectangles_perimeter(rng: random.Random):
@@ -949,10 +967,19 @@ def gen_combined_rectangles_perimeter(rng: random.Random):
     var = rng.choice("xy")
     n = rng.randint(1, 9)
     # single perimeter = 2*(var + (var+n)) = 4*var + 2n; combined = double that
-    return ("expression", "expression_equiv",
-            f"Two identical rectangles each have width {var} and length ({var} + {n}). "
-            "Write a simplified expression for their COMBINED perimeter (both rectangles together).",
-            f"{8}*{var} + {4*n}")
+    problem = (f"Two identical rectangles each have width {var} and length ({var} + {n}). "
+               "Write a simplified expression for their COMBINED perimeter (both rectangles together).")
+    answer = f"{8}*{var} + {4 * n}"
+    card = (
+        "COMBINED PERIMETER",
+        f"{problem} → {answer}",
+        f"  1. One rectangle's perimeter = 2 × (width + length) = 2 × ({var} + {var} + {n}).",
+        f"  2. That is 2 × (2{var} + {n}) = 4{var} + {2 * n}.",
+        f"  3. TWO identical rectangles, so double it: 2 × (4{var} + {2 * n}) = {answer}.",
+        "  The word COMBINED is the whole question — one rectangle's perimeter is only half.",
+        f"  Answer: {answer}",
+    )
+    return ("expression", "expression_equiv", problem, answer, None, card)
 
 
 AU_YEAR10_GENERATORS = {
@@ -972,10 +999,20 @@ def gen_binomial_product_area(rng: random.Random):
     var = rng.choice("xy")
     a = rng.randint(1, 7)
     b = rng.randint(1, 7)
-    return ("expression", "expression_equiv",
-            f"A rectangle has width ({var} + {a}) and length ({var} + {b}). "
-            "Write an expression for its area.",
-            f"({var} + {a})*({var} + {b})")
+    problem = (f"A rectangle has width ({var} + {a}) and length ({var} + {b}). "
+               "Write an expression for its area.")
+    answer = f"({var} + {a})*({var} + {b})"
+    card = (
+        "AREA WITH TWO BINOMIAL SIDES",
+        f"{problem} → {answer}",
+        "  1. Area of a rectangle = width × length.",
+        f"  2. Multiply the two brackets: ({var} + {a}) × ({var} + {b}).",
+        "  3. Expanded, each part of the first bracket meets each part of the second:",
+        f"     {var}×{var} = {var}**2 · {var}×{b} = {b}{var} · {a}×{var} = {a}{var} · {a}×{b} = {a * b}",
+        f"     giving {var}**2 + {a + b}{var} + {a * b}. Either form is correct.",
+        f"  Answer: {answer}",
+    )
+    return ("expression", "expression_equiv", problem, answer, None, card)
 
 
 def gen_word_to_quadratic_expression(rng: random.Random):
@@ -985,10 +1022,20 @@ def gen_word_to_quadratic_expression(rng: random.Random):
     var = rng.choice("xy")
     k = rng.randint(2, 9)
     n = rng.randint(1, 9)
-    return ("expression", "expression_equiv",
-            f"Write an algebraic expression for: the square of a number {var}, "
-            f"plus {k} times the number, minus {n}.",
-            f"{var}**2 + {k}*{var} - {n}")
+    problem = (f"Write an algebraic expression for: the square of a number {var}, "
+               f"plus {k} times the number, minus {n}.")
+    answer = f"{var}**2 + {k}*{var} - {n}"
+    card = (
+        "WORDS INTO A QUADRATIC EXPRESSION",
+        f"{problem} → {answer}",
+        "  Take the phrase one piece at a time:",
+        f"    \"the square of a number {var}\"  →  {var}**2",
+        f"    \"plus {k} times the number\"     →  + {k}{var}",
+        f"    \"minus {n}\"                     →  - {n}",
+        f"  Join them in the order given: {answer}",
+        f"  Answer: {answer}",
+    )
+    return ("expression", "expression_equiv", problem, answer, None, card)
 
 
 def gen_combine_quadratic_linear(rng: random.Random):
@@ -997,10 +1044,19 @@ def gen_combine_quadratic_linear(rng: random.Random):
     var = rng.choice("xy")
     a2, a1 = rng.randint(2, 4), rng.randint(2, 9)  # both >=2: avoid "1x"/"1x**2" printing
     b1, b0 = rng.randint(2, 9), rng.randint(1, 9)  # b1>=2: avoid "1x" printing
-    return ("expression", "expression_equiv",
-            f"If a = {a2}{var}**2 + {a1}{var} and b = {b1}{var} + {b0}, what is a + b? "
-            "Give your answer as a simplified expression.",
-            f"{a2}*{var}**2 + {a1+b1}*{var} + {b0}")
+    problem = (f"If a = {a2}{var}**2 + {a1}{var} and b = {b1}{var} + {b0}, what is a + b? "
+               "Give your answer as a simplified expression.")
+    answer = f"{a2}*{var}**2 + {a1 + b1}*{var} + {b0}"
+    card = (
+        "COMBINING TERMS OF DIFFERENT DEGREE",
+        f"{problem} → {answer}",
+        f"  1. Only LIKE terms combine. {var}**2 and {var} are not like terms.",
+        f"  2. {var}**2 terms: only a has one → {a2}{var}**2 stays as it is.",
+        f"  3. {var} terms: {a1}{var} + {b1}{var} = {a1 + b1}{var}.",
+        f"  4. Number terms: only b has one → {b0}.",
+        f"  Answer: {answer}",
+    )
+    return ("expression", "expression_equiv", problem, answer, None, card)
 
 
 def gen_difference_of_expressions(rng: random.Random):
@@ -1010,10 +1066,20 @@ def gen_difference_of_expressions(rng: random.Random):
     var = rng.choice("xy")
     k = rng.randint(2, 6)
     n = rng.randint(1, 9)
-    return ("expression", "expression_equiv",
-            f"A number is {var}. A second number is {k} times {var}, minus {n}. "
-            "Write an expression for the SECOND number minus the FIRST number.",
-            _linear_expr(k - 1, -n, var))
+    problem = (f"A number is {var}. A second number is {k} times {var}, minus {n}. "
+               "Write an expression for the SECOND number minus the FIRST number.")
+    answer = _linear_expr(k - 1, -n, var)
+    card = (
+        "SECOND NUMBER MINUS THE FIRST",
+        f"{problem} → {answer}",
+        f"  1. Write both numbers down: first is {var}, second is {k}{var} - {n}.",
+        f"  2. The question asks SECOND - FIRST: ({k}{var} - {n}) - {var}.",
+        f"  3. Combine the {var} terms: {k}{var} - {var} = {k - 1}{var}.",
+        f"  4. The -{n} is unchanged, so the result is {answer}.",
+        "  Order matters here: first minus second would give the opposite sign.",
+        f"  Answer: {answer}",
+    )
+    return ("expression", "expression_equiv", problem, answer, None, card)
 
 
 AU_YEAR11_GENERATORS = {
@@ -1032,10 +1098,19 @@ def gen_revenue_expression(rng: random.Random):
     var = rng.choice("xy")
     k = rng.randint(2, 4)  # >=2 so the quantity term always prints a visible coefficient
     n = rng.randint(1, 9)
-    return ("expression", "expression_equiv",
-            f"A shop sells items for ${var} each. On a day they sell ({k}{var} + {n}) items. "
-            "Write an expression for the total revenue (price times number sold).",
-            f"{var}*({k}*{var} + {n})")
+    problem = (f"A shop sells items for ${var} each. On a day they sell ({k}{var} + {n}) items. "
+               "Write an expression for the total revenue (price times number sold).")
+    answer = f"{var}*({k}*{var} + {n})"
+    card = (
+        "REVENUE AS AN EXPRESSION",
+        f"{problem} → {answer}",
+        "  1. Revenue = price × number sold. That is the model.",
+        f"  2. Price is {var}; number sold is ({k}{var} + {n}).",
+        f"  3. Multiply them: {var} × ({k}{var} + {n}).",
+        f"     Expanded that is {k}{var}**2 + {n}{var} — either form is correct.",
+        f"  Answer: {answer}",
+    )
+    return ("expression", "expression_equiv", problem, answer, None, card)
 
 
 def gen_combine_two_quadratics(rng: random.Random):
@@ -1044,10 +1119,19 @@ def gen_combine_two_quadratics(rng: random.Random):
     var = rng.choice("xy")
     a2, a1, a0 = rng.randint(2, 5), rng.randint(2, 9), rng.randint(1, 9)  # a2,a1>=2: avoid "1x"/"1x**2"
     b2, b1, b0 = rng.randint(2, 5), rng.randint(2, 9), rng.randint(1, 9)  # b2,b1>=2: same reason
-    return ("expression", "expression_equiv",
-            f"If a = {a2}{var}**2 + {a1}{var} + {a0} and b = {b2}{var}**2 + {b1}{var} + {b0}, "
-            "what is a + b? Give your answer as a simplified expression.",
-            f"{a2+b2}*{var}**2 + {a1+b1}*{var} + {a0+b0}")
+    problem = (f"If a = {a2}{var}**2 + {a1}{var} + {a0} and b = {b2}{var}**2 + {b1}{var} + {b0}, "
+               "what is a + b? Give your answer as a simplified expression.")
+    answer = f"{a2 + b2}*{var}**2 + {a1 + b1}*{var} + {a0 + b0}"
+    card = (
+        "ADDING TWO QUADRATICS",
+        f"{problem} → {answer}",
+        "  Add each kind of term separately — like with like:",
+        f"    {var}**2 terms:  {a2}{var}**2 + {b2}{var}**2 = {a2 + b2}{var}**2",
+        f"    {var} terms:     {a1}{var} + {b1}{var} = {a1 + b1}{var}",
+        f"    number terms:  {a0} + {b0} = {a0 + b0}",
+        f"  Answer: {answer}",
+    )
+    return ("expression", "expression_equiv", problem, answer, None, card)
 
 
 def gen_compound_shape_area(rng: random.Random):
@@ -1057,11 +1141,20 @@ def gen_compound_shape_area(rng: random.Random):
     var = rng.choice("xy")
     n = rng.randint(2, 9)
     s = rng.randint(1, 4)
-    return ("expression", "expression_equiv",
-            f"A garden is rectangular with width {var} and length ({var} + {n}), but a square "
-            f"section of side {s} is removed from one corner for a path. Write an expression "
-            "for the remaining garden area.",
-            f"{var}*({var} + {n}) - {s*s}")
+    problem = (f"A garden is rectangular with width {var} and length ({var} + {n}), but a square "
+               f"section of side {s} is removed from one corner for a path. Write an expression "
+               "for the remaining garden area.")
+    answer = f"{var}*({var} + {n}) - {s * s}"
+    card = (
+        "COMPOUND SHAPE: WHOLE MINUS THE PIECE REMOVED",
+        f"{problem} → {answer}",
+        f"  1. Whole rectangle first: width × length = {var} × ({var} + {n}).",
+        f"  2. The removed square: side × side = {s} × {s} = {s * s}.",
+        f"  3. Remaining = whole - removed = {answer}.",
+        "  Take the whole shape first, then subtract — never try to measure the odd shape directly.",
+        f"  Answer: {answer}",
+    )
+    return ("expression", "expression_equiv", problem, answer, None, card)
 
 
 AU_YEAR12_GENERATORS = {

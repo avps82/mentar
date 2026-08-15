@@ -22,16 +22,41 @@ def _gen_skip_counting(rng: random.Random) -> tuple[str, str, str, str]:
     terms = [start + step * i for i in range(4)]
     answer_val = start + step * 4
     problem = f"What number comes next: {', '.join(map(str, terms))}, __?"
-    return ("int", "int_exact", problem, str(answer_val))
+    card = (
+        "SKIP COUNTING",
+        f"{problem} → {answer_val}",
+        f"  1. Find the jump between terms: {terms[1]} - {terms[0]} = {step}.",
+        f"  2. Check it holds: {terms[2]} - {terms[1]} = {step}, {terms[3]} - {terms[2]} = {step}.",
+        f"  3. Add one more jump: {terms[3]} + {step} = {answer_val}.",
+        f"  Answer: {answer_val}",
+    )
+    return ("int", "int_exact", problem, str(answer_val), None, card)
 
 
 def _gen_doubles_halves(rng: random.Random) -> tuple[str, str, str, str]:
     op = rng.choice(["double", "half"])
     if op == "double":
         n = rng.randint(1, 50)
-        return ("int", "int_exact", f"What is double {n}?", str(n * 2))
+        problem = f"What is double {n}?"
+        card = (
+            "DOUBLING",
+            f"{problem} → {n * 2}",
+            f"  1. Double means two of them: {n} + {n}.",
+            f"  2. {n} + {n} = {n * 2}  (same as {n} × 2).",
+            f"  Answer: {n * 2}",
+        )
+        return ("int", "int_exact", problem, str(n * 2), None, card)
     n = rng.randint(1, 50) * 2
-    return ("int", "int_exact", f"What is half of {n}?", str(n // 2))
+    problem = f"What is half of {n}?"
+    card = (
+        "HALVING",
+        f"{problem} → {n // 2}",
+        f"  1. Half means split into two equal parts: {n} ÷ 2.",
+        f"  2. {n // 2} + {n // 2} = {n}, so half of {n} is {n // 2}.",
+        "  Halving undoes doubling — they are opposites.",
+        f"  Answer: {n // 2}",
+    )
+    return ("int", "int_exact", problem, str(n // 2), None, card)
 
 
 MATHS_PRACTICE_GENERATORS: dict[str, GenFn] = {

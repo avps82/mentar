@@ -201,11 +201,25 @@ def test_fallback_hint_shows_a_card_in_the_card_box_not_pasted_into_prose():
 
 
 def test_a_node_with_neither_grid_nor_card_falls_through_unchanged():
+    """The fall-through path, exercised with a SYNTHETIC cardless generator.
+
+    2026-08-15: this used the pilot's unit-fractions node, which now carries a
+    card -- as does every other node in the corpus (0 prose-only, measured by
+    tools/audit_explain_paths.py). The path still has to work, because a
+    4-tuple generator remains legal and any new one starts that way, so the test
+    now builds the condition instead of borrowing a node that happens to have it.
+    """
+    def cardless(rng):
+        # Deliberately NOT arithmetic: "What is 2 + 2?" is step-grid eligible, so
+        # it would exercise the grid path instead of the fall-through (caught by
+        # this very assertion when first written that way).
+        return ("int", "int_exact", "How many legs does a spider have?", "8")
+
     llm = _PromptCapturingLlm()
     ctrl = SessionController(
         llm_call=llm, prompt_dir=PROMPTS, grounding_cfg={},
         curriculum=_FRACTION_CURRICULUM, db_store=_FakeStore(), learner_id="L",
-        item_bank=_fraction_bank(), rng_seed=7,
+        item_bank=ItemGenerator(generators={"unit_fractions": cardless}), rng_seed=7,
     )
     ctrl.step(None)
     ctrl.step("?")

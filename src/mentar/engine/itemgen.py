@@ -127,64 +127,110 @@ def _gen_whole_number_division(rng: random.Random):
     q = rng.randint(2, 9)          # each gets
     a = b * q                      # total (divisible -> clean int answer)
     thing, who = rng.choice(_THINGS), rng.choice(_GROUPS)
-    return ("int", "int_exact",
-            f"Share {a} {_thing_with_icon(thing)} equally among {b} {who}. "
-            f"How many {thing} does each get?",
-            str(q))
+    problem = (f"Share {a} {_thing_with_icon(thing)} equally among {b} {who}. "
+               f"How many {thing} does each get?")
+    card = (
+        "SHARING EQUALLY (DIVISION)",
+        f"{problem} → {q}",
+        f"  1. Sharing equally means dividing: {a} ÷ {b}.",
+        f"  2. Think \"how many {b}s make {a}?\" — {b} × {q} = {a}.",
+        f"  3. So each of the {b} {who} gets {q}.",
+        f"  Answer: {q}",
+    )
+    return ("int", "int_exact", problem, str(q), None, card)
 
 
 def _gen_unit_fractions(rng: random.Random):
     d = rng.randint(2, 10)
     whole = rng.choice(_WHOLES)
-    return ("fraction", "fraction_equiv",
-            f"{_whole_with_icon(whole)} is split into {d} equal parts. What fraction is ONE part?",
-            f"1/{d}")
+    problem = f"{_whole_with_icon(whole)} is split into {d} equal parts. What fraction is ONE part?"
+    card = (
+        "UNIT FRACTIONS",
+        f"{problem} → 1/{d}",
+        f"  1. The whole is cut into {d} equal parts, so {d} is the DENOMINATOR (the bottom).",
+        "  2. You are asked about ONE part, so 1 is the numerator (the top).",
+        f"  Answer: 1/{d}",
+    )
+    return ("fraction", "fraction_equiv", problem, f"1/{d}", None, card)
 
 
 def _gen_fraction_as_part_of_whole(rng: random.Random):
     d = rng.randint(3, 10)
     n = rng.randint(1, d - 1)
     whole = rng.choice(_WHOLES)
-    return ("fraction", "fraction_equiv",
-            f"{_whole_with_icon(whole)} is cut into {d} equal slices and you take {n}. "
-            f"What fraction did you take?",
-            f"{n}/{d}")
+    problem = (f"{_whole_with_icon(whole)} is cut into {d} equal slices and you take {n}. "
+               f"What fraction did you take?")
+    card = (
+        "A FRACTION OF A WHOLE",
+        f"{problem} → {n}/{d}",
+        f"  1. Bottom number = how many equal parts the whole was cut into: {d}.",
+        f"  2. Top number = how many of those parts you have: {n}.",
+        f"  Answer: {n}/{d}",
+    )
+    return ("fraction", "fraction_equiv", problem, f"{n}/{d}", None, card)
 
 
 def _gen_equivalent_fractions(rng: random.Random):
     d = rng.randint(2, 6)
     n = rng.randint(1, d - 1)
     k = rng.randint(2, 4)
-    return ("fraction", "fraction_equiv",
-            f"Write a fraction equal to {n}/{d} but with denominator {d * k}.",
-            f"{n * k}/{d * k}")
+    problem = f"Write a fraction equal to {n}/{d} but with denominator {d * k}."
+    card = (
+        "EQUIVALENT FRACTIONS",
+        f"{problem} → {n * k}/{d * k}",
+        f"  1. What times {d} gives {d * k}?  {d} × {k} = {d * k}.",
+        f"  2. Whatever you do to the bottom, do to the top: {n} × {k} = {n * k}.",
+        f"  3. {n}/{d} and {n * k}/{d * k} are the same amount, written differently.",
+        f"  Answer: {n * k}/{d * k}",
+    )
+    return ("fraction", "fraction_equiv", problem, f"{n * k}/{d * k}", None, card)
 
 
 def _gen_adding_equal_denom(rng: random.Random):
     d = rng.randint(3, 10)
     a = rng.randint(1, d - 1)
     b = rng.randint(1, d - a)      # a + b <= d  -> proper (<= 1 whole)
-    return ("fraction", "fraction_equiv",
-            f"What is {a}/{d} + {b}/{d}?",
-            f"{a + b}/{d}")
+    problem = f"What is {a}/{d} + {b}/{d}?"
+    card = (
+        "ADDING FRACTIONS WITH THE SAME DENOMINATOR",
+        f"{problem} → {a + b}/{d}",
+        f"  1. The parts are the same size ({d}ths), so they can be added directly.",
+        f"  2. Add the TOP numbers only: {a} + {b} = {a + b}.",
+        f"  3. The bottom stays {d} — the size of each part has not changed.",
+        f"  Answer: {a + b}/{d}",
+    )
+    return ("fraction", "fraction_equiv", problem, f"{a + b}/{d}", None, card)
 
 
 def _gen_subtracting_equal_denom(rng: random.Random):
     d = rng.randint(3, 10)
     a = rng.randint(2, d - 1)
     b = rng.randint(1, a - 1)      # a > b -> positive result
-    return ("fraction", "fraction_equiv",
-            f"What is {a}/{d} - {b}/{d}?",
-            f"{a - b}/{d}")
+    problem = f"What is {a}/{d} - {b}/{d}?"
+    card = (
+        "SUBTRACTING FRACTIONS WITH THE SAME DENOMINATOR",
+        f"{problem} → {a - b}/{d}",
+        f"  1. Same-size parts ({d}ths), so subtract directly.",
+        f"  2. Subtract the TOP numbers only: {a} - {b} = {a - b}.",
+        f"  3. The bottom stays {d}.",
+        f"  Answer: {a - b}/{d}",
+    )
+    return ("fraction", "fraction_equiv", problem, f"{a - b}/{d}", None, card)
 
 
 def _gen_comparing_equal_denom(rng: random.Random):
     d = rng.randint(3, 10)
     a, b = rng.sample(range(1, d), 2)   # distinct numerators
     hi = max(a, b)
-    return ("fraction", "fraction_equiv",
-            f"Which is bigger: {a}/{d} or {b}/{d}? Give the bigger fraction.",
-            f"{hi}/{d}")
+    problem = f"Which is bigger: {a}/{d} or {b}/{d}? Give the bigger fraction."
+    card = (
+        "COMPARING FRACTIONS WITH THE SAME DENOMINATOR",
+        f"{problem} → {hi}/{d}",
+        f"  1. Both are {d}ths, so every part is the same size.",
+        f"  2. With equal-sized parts, more parts means more: {max(a, b)} > {min(a, b)}.",
+        f"  Answer: {hi}/{d}",
+    )
+    return ("fraction", "fraction_equiv", problem, f"{hi}/{d}", None, card)
 
 
 # ── Maths: whole-number arithmetic (subject = mathematics, beyond fractions) ──
