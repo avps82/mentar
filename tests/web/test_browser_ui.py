@@ -247,6 +247,53 @@ def test_idle_nudge_appears_on_a_live_question_then_stops():
         server.stop()
 
 
+def test_pressing_show_me_how_shows_that_something_is_happening():
+    """2026-08-15 (maintainer): "Show me how doesn't show something is happening
+    once clicked. This leads to double click as there is no indicator... kids will
+    do this a lot more times." Both cues are asserted WHILE the request is still
+    in flight, with the model call held open, which is the only moment they exist.
+    """
+    _skip_unless_browser()
+    import threading
+
+    server, browser = _Server(), None
+    release = threading.Event()
+
+    def slow_llm(messages):
+        release.wait(timeout=10)
+        return "explanation"
+
+    server.app_mod._llm_call_cached = slow_llm
+    try:
+        browser = _Browser()
+        browser.goto(server.url + "/choose")
+        browser.js("""(() => {const f=[...document.querySelectorAll('form')]
+            .find(f => f.querySelector('[value=fractions]')); f.querySelector('button').click();})()""")
+        browser.wait_for("document.getElementById('help-btn')")
+
+        assert browser.js("getComputedStyle(document.getElementById('thinking')).display") == "none"
+        assert browser.js("document.getElementById('help-btn').disabled") is False
+
+        browser.js("document.getElementById('help-btn').click()")
+        # In flight: the shared line is visible and the pressed button is out of action.
+        browser.wait_for("getComputedStyle(document.getElementById('thinking')).display !== 'none'")
+        assert browser.js("document.getElementById('help-btn').disabled") is True, (
+            "the button a child just pressed must not accept a second press"
+        )
+        assert browser.js("document.getElementById('help-btn').classList.contains('htmx-request')")
+        assert "thinking" in browser.js("document.getElementById('thinking').textContent").lower()
+
+        release.set()
+        # ...and it all clears once the turn lands.
+        browser.wait_for("getComputedStyle(document.getElementById('thinking')).display === 'none'")
+        assert browser.js("document.getElementById('help-btn').disabled") is False
+    finally:
+        release.set()
+        if browser:
+            browser.close()
+        server.stop()
+
+
 def test_picker_cards_in_a_row_are_the_same_height():
     """2026-08-15 audit, maintainer-reported ("these cards are not even sized,
     looks odd") and then MEASURED: 33 of 40 rows held cards of different heights
@@ -285,3 +332,5 @@ if __name__ == "__main__":
     print("  ✓ test_idle_nudge_appears_on_a_live_question_then_stops")
     test_picker_cards_in_a_row_are_the_same_height()
     print("  ✓ test_picker_cards_in_a_row_are_the_same_height")
+    test_pressing_show_me_how_shows_that_something_is_happening()
+    print("  ✓ test_pressing_show_me_how_shows_that_something_is_happening")

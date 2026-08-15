@@ -31,7 +31,7 @@
      dropped the POST arrived empty and the child just got the "give it a
      try" nudge (the reported "Explain more does nothing" bug). #}
   <form method="POST" action="/answer" class="elaborate-form"
-        hx-post="/answer" hx-target="#turn-area" hx-swap="innerHTML">
+        hx-post="/answer" hx-target="#turn-area" hx-swap="innerHTML" hx-indicator="#thinking, find button" hx-disabled-elt="find button">
     <input type="hidden" name="answer" value="more">
     <button class="btn" type="submit">💡 Explain more</button>
   </form>
@@ -48,7 +48,7 @@
      here. The radio branch still guards on `choices` being present: an mc4
      item without structured choices falls back to the text input. -->
 <form method="POST" action="/answer" class="answer-form"
-      hx-post="/answer" hx-target="#turn-area" hx-swap="innerHTML">
+      hx-post="/answer" hx-target="#turn-area" hx-swap="innerHTML" hx-indicator="#thinking, find button" hx-disabled-elt="find button">
   {% if widget == "radio" and choices %}
   {# mc4 with structured choices: native radio group — works with JS disabled. #}
   <fieldset class="choice-group">

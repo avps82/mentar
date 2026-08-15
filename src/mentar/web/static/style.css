@@ -368,6 +368,53 @@ input[type=text], input[type=number] {
 }
 .btn-quiet:hover { filter: none; border-color: var(--primary); box-shadow: none; }
 
+/* Busy state (2026-08-15). A child who sees nothing happen presses again --
+   the maintainer did it twice on a slow turn, and kids will do it more. Two
+   cues, because one is easy to miss: the pressed button goes quiet and grows a
+   spinner (htmx adds .htmx-request to it via hx-disabled-elt), and a shared
+   "Mentar is thinking…" line appears (hx-indicator="#thinking"). The server
+   ALSO refuses a second concurrent turn per learner, so a double-press can
+   never double-step the FSM even if the UI is bypassed. */
+.thinking {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 0;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+.thinking.htmx-request { display: flex; }
+.thinking::before {
+  content: "";
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--primary);
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: mentar-spin 0.7s linear infinite;
+}
+.btn.htmx-request, button.htmx-request {
+  opacity: 0.6;
+  cursor: progress;
+}
+.btn.htmx-request::after {
+  content: "";
+  display: inline-block;
+  width: 0.75em;
+  height: 0.75em;
+  margin-left: 0.5em;
+  vertical-align: -0.1em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: mentar-spin 0.7s linear infinite;
+}
+@keyframes mentar-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  /* Keep BOTH cues, drop the spin: a static ring still reads as "busy". */
+  .thinking::before, .btn.htmx-request::after { animation: none; }
+}
+
 /* Idle nudge on "💡 Show me how" (nudge.js): a child who has stopped moving on
    a live question gets the button gently drawn to their attention. Colour comes
    from --accent, the same "look here" role the first-turn question border uses,

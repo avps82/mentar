@@ -20,12 +20,18 @@
    button is named for what it DOES and ladders into the existing second tier,
    "💡 Explain more". The typed `?`/`help`/`h` tokens are unchanged
    (controller.py::HELP_WORDS) -- that's an input contract, not copy. #}
+{# 2026-08-15 (maintainer): "Show me how doesn't show something is happening
+   once clicked. This leads to double click as there is no indicator." The LLM
+   turn can take seconds, and a child with no feedback presses again. htmx adds
+   .htmx-request to this element for the life of the request (hx-indicator on
+   every form), and hx-disabled-elt disables the button that was pressed. #}
+<p id="thinking" class="thinking" role="status" aria-live="polite">💭 Mentar is thinking…</p>
 <div class="quick-actions" style="margin-top:8px">
-  <form method="POST" action="/answer" hx-post="/answer" hx-target="#turn-area" hx-swap="innerHTML" style="display:inline-block">
+  <form method="POST" action="/answer" hx-post="/answer" hx-target="#turn-area" hx-swap="innerHTML" hx-indicator="#thinking, find button" hx-disabled-elt="find button" style="display:inline-block">
     <input type="hidden" name="answer" value="help">
     <button id="help-btn" class="btn btn-quiet" type="submit">💡 Show me how</button>
   </form>
-  <form method="POST" action="/answer" hx-post="/answer" hx-target="#turn-area" hx-swap="innerHTML" style="display:inline-block">
+  <form method="POST" action="/answer" hx-post="/answer" hx-target="#turn-area" hx-swap="innerHTML" hx-indicator="#thinking, find button" hx-disabled-elt="find button" style="display:inline-block">
     <input type="hidden" name="answer" value="stop">
     <button class="btn btn-quiet" type="submit">🛑 Stop</button>
   </form>
