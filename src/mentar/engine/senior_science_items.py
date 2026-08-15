@@ -298,10 +298,28 @@ _ENZYMES_GLOSSES = {
     "NOT true of enzymes": "each of these contradicts what a protein catalyst does",
 }
 
+# Every member must be right for EXACTLY ONE category, and here that needs the
+# process named in the member itself: carbon dioxide and water are reactants of
+# photosynthesis AND products of respiration, so bare "carbon dioxide" as a
+# distractor for "a product of aerobic respiration" would be a second correct
+# answer marked wrong (found by a cross-category overlap sweep, 2026-08-15).
+# The qualifiers make each option unambiguous and turn the overlap itself into
+# the thing being taught: the two processes run opposite ways.
 _PHOTO_RESP = {
-    "a REACTANT of photosynthesis": ["carbon dioxide", "water", "light energy"],
-    "a PRODUCT of photosynthesis": ["glucose", "oxygen"],
-    "a PRODUCT of aerobic respiration": ["carbon dioxide and water", "ATP energy"],
+    "a REACTANT of photosynthesis": [
+        "carbon dioxide taken in by the leaf",
+        "water drawn up from the roots",
+        "light energy from the Sun",
+    ],
+    "a PRODUCT of photosynthesis": [
+        "glucose stored as the plant's food",
+        "oxygen released into the air",
+    ],
+    "a PRODUCT of aerobic respiration": [
+        "carbon dioxide breathed out",
+        "water given off as the cell releases energy",
+        "ATP energy the cell can use",
+    ],
 }
 _PHOTO_RESP_GLOSSES = {
     "a REACTANT of photosynthesis": "what goes IN when a plant builds glucose using light",
