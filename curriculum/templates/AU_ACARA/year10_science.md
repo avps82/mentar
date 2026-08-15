@@ -21,7 +21,7 @@ subject: science
 curriculum_standard: "ACARA v9 (AC9S10U, provisional)"
 schema_version: "0.1"
 label: "Science — Year 10 🇦🇺"
-icon: "🔟"
+icon: "🔬"
 description: "DNA and genes, evidence for evolution, and types of chemical reaction (Australian Year 10)."
 item_source: au_science_year10
 

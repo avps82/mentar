@@ -22,7 +22,7 @@ subject: english
 curriculum_standard: null
 schema_version: "0.1"
 label: "English — Year 11 🇦🇺"
-icon: "1️⃣1️⃣"
+icon: "📖"
 description: "Naming techniques in a quotation, argument structure and register (senior English)."
 item_source: au_english_year11
 

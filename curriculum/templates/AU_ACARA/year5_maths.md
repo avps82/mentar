@@ -17,7 +17,7 @@ subject: mathematics
 curriculum_standard: "ACARA v9 (AC9M5 Number)"
 schema_version: "0.1"
 label: "Maths — Year 5 🇦🇺"                          # R3.1: web picker catalog fields
-icon: "5️⃣"
+icon: "🔢"
 description: "Decimal place value, adding and subtracting decimals, multiplying fractions, percentages, negative numbers, and division with a remainder (Australian Year 5)."
 item_source: au_year5
 

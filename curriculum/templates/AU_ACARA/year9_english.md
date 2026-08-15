@@ -21,7 +21,7 @@ subject: english
 curriculum_standard: "ACARA v9 (AC9E9A Language, provisional)"
 schema_version: "0.1"
 label: "English — Year 9 🇦🇺"
-icon: "9️⃣"
+icon: "📖"
 description: "Modality, nominalisation, rhetorical devices and sentence types (Australian Year 9)."
 item_source: au_english_year9
 

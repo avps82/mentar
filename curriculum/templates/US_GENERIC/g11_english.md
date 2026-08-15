@@ -24,7 +24,7 @@ subject: english
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
 label: "English — Grade 11 🇺🇸 (general)"
-icon: "1️⃣1️⃣"
+icon: "📖"
 description: "Naming techniques in a quotation, argument structure and register — general senior english at roughly Grade 11 level."
 item_source: us_g11_english
 

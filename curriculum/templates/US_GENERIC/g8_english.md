@@ -21,7 +21,7 @@ subject: english
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
 label: "English — Grade 8 🇺🇸 (general)"
-icon: "8️⃣"
+icon: "📖"
 description: "Connotation, clauses, adverbial phrases and onomatopoeia — general English at roughly Grade 8 level."
 item_source: us_g8_english
 

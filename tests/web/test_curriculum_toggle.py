@@ -89,7 +89,11 @@ def test_disable_writes_state_file_and_listing_reflects_it():
     r = c.post("/settings/curricula/in_generic_class3_maths/disable")
     assert r.status_code == 200
     body = r.get_json()
-    assert body["ok"] is True and body["enabled"] is False and body["restart_required"] is True
+    # restart_required is False since 2026-08-15: a toggle re-scans the curriculum
+    # live. The maintainer warned when this shipped that "restart to enable" would
+    # bite, and on a packaged build -- which a parent cannot restart from a
+    # terminal -- it did.
+    assert body["ok"] is True and body["enabled"] is False and body["restart_required"] is False
 
     assert state.exists()
     assert "in_generic_class3_maths" not in json.loads(state.read_text())["enabled"]
@@ -212,7 +216,8 @@ def test_country_master_switch_toggles_every_pack_of_that_country_only():
     assert r.status_code == 200
     body = r.get_json()
     assert body["ok"] is True and body["enabled"] is False
-    assert body["count"] == len(before["IN"])
+    assert body["changed"] == len(before["IN"]), "every IN pack should have flipped off"
+    assert body["count"] == 0, "`count` is how many remain ON, which is none"
 
     after = by_country()
     assert not any(after["IN"]), "every IN pack must be off"
@@ -225,8 +230,16 @@ def test_country_master_switch_toggles_every_pack_of_that_country_only():
         x["key"] for x in c.get("/settings/curricula").get_json()["curricula"]
         if x["country"] != "IN"
     }
-    assert c.post("/settings/curricula/country/IN/enable").status_code == 200
-    assert all(all(v) for v in by_country().values())
+    # 2026-08-15: enabling a country deliberately enables NOTHING under it. The old
+    # assertion here (every IN pack on) encoded the behaviour the maintainer asked to
+    # remove: "the parent will turn on what they want" -- bulk-enable made the switch
+    # a chore generator. What must hold is that the country is now ON and available.
+    r = c.post("/settings/curricula/country/IN/enable")
+    assert r.status_code == 200 and r.get_json()["enabled"] is True
+    assert "IN" in c.get("/settings/curricula").get_json()["active_countries"]
+    listing = c.get("/settings/curricula").get_json()["curricula"]
+    assert all(not x["enabled"] for x in listing if x["country"] == "IN"), \
+        "enabling a country must not switch its packs on"
 
 
 def test_country_master_switch_covers_the_country_less_packs_as_general():
@@ -235,7 +248,9 @@ def test_country_master_switch_covers_the_country_less_packs_as_general():
     _skip_if_no_flask()
     _app_mod, c, _state = _client()
     r = c.post("/settings/curricula/country/General/disable")
-    assert r.status_code == 200 and r.get_json()["count"] > 0
+    # `count` is now how many remain ON (0 after a disable); `changed` is how many
+    # actually flipped -- the number this test cares about.
+    assert r.status_code == 200 and r.get_json()["changed"] > 0
     listing = c.get("/settings/curricula").get_json()["curricula"]
     assert all(not x["enabled"] for x in listing if not x["country"])
     # The country packs are off by default -- what matters is that this call left

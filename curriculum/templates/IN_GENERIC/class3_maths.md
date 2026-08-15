@@ -17,7 +17,7 @@ subject: mathematics
 curriculum_standard: null
 schema_version: "0.1"
 label: "Maths — Class 3 🇮🇳 (general)"                # R3.1: web picker catalog fields
-icon: "🧮"
+icon: "🔢"
 description: "Place value, adding, times tables and fractions -- general topics, not tied to any specific board."
 item_source: in_generic_maths
 

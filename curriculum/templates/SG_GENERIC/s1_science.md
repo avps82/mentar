@@ -21,7 +21,7 @@ subject: science
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
 label: "Science — Secondary 1 🇸🇬 (general)"
-icon: "7️⃣"
+icon: "🔬"
 description: "Body systems, contact and non-contact forces, and mixtures — general science at roughly Secondary 1 level."
 item_source: sg_s1_science
 

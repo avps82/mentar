@@ -21,7 +21,7 @@ subject: science
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
 label: "Science — Class 10 🇮🇳 (general)"
-icon: "🔟"
+icon: "🔬"
 description: "DNA and genes, evidence for evolution, and types of chemical reaction — general science at roughly Class 10 level."
 item_source: in_c10_science
 

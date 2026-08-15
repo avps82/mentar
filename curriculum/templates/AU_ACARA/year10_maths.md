@@ -19,7 +19,7 @@ subject: mathematics
 curriculum_standard: "ACARA v9 (AC9M10 Algebra)"
 schema_version: "0.1"
 label: "Maths — Year 10 🇦🇺"                          # R3.1: web picker catalog fields
-icon: "🔟"
+icon: "🔢"
 description: "Distributive-law expressions, combining three expressions, squared expressions, and combined-perimeter expressions (Australian Year 10)."
 item_source: au_year10
 

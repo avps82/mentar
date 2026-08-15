@@ -21,7 +21,7 @@ subject: science
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
 label: "Science — Primary 5 🇸🇬 (general)"
-icon: "5️⃣"
+icon: "🔬"
 description: "Adaptations, dissolving, and transparent or opaque materials — general science at roughly Primary 5 level."
 item_source: sg_p5_science
 

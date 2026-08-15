@@ -21,7 +21,7 @@ subject: science
 curriculum_standard: "ACARA v9 (AC9S7 Science Understanding)"
 schema_version: "0.1"
 label: "Science — Year 7 🇦🇺"                          # R3.1: web picker catalog fields
-icon: "7️⃣"
+icon: "🔬"
 description: "Body systems, contact and non-contact forces, and pure substances vs. mixtures (Australian Year 7 Science)."
 item_source: au_science_year7
 

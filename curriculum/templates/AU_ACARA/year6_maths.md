@@ -17,7 +17,7 @@ subject: mathematics
 curriculum_standard: "ACARA v9 (AC9M6 Number, Measurement)"
 schema_version: "0.1"
 label: "Maths — Year 6 🇦🇺"                          # R3.1: web picker catalog fields
-icon: "6️⃣"
+icon: "🔢"
 description: "Order of operations, multiplying and dividing decimals, rectangle area and perimeter, and fraction-to-decimal conversion (Australian Year 6)."
 item_source: au_year6
 

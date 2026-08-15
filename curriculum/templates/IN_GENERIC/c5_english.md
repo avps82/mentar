@@ -21,7 +21,7 @@ subject: english
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
 label: "English — Class 5 🇮🇳 (general)"
-icon: "5️⃣"
+icon: "📖"
 description: "Richer synonyms/antonyms, adverbs/pronouns and compound words — general English at roughly Class 5 level."
 item_source: in_c5_english
 

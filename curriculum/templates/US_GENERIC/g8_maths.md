@@ -20,7 +20,7 @@ subject: mathematics
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
 label: "Maths — Grade 8 🇺🇸 (general)"
-icon: "8️⃣"
+icon: "🔢"
 description: "Two-step equations, square numbers, multiplying negative numbers and more — general maths at roughly Grade 8 level."
 item_source: us_g8_maths
 

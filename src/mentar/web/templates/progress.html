@@ -75,5 +75,9 @@
 {% endif %}
 {% endblock %}
 {% block footer %}
-<div class="footer-nav"><a href="/learn">Back to lesson</a> &nbsp;·&nbsp; <a href="/settings">⚙️ Settings</a></div>
+{# "Back to lesson" dead-ends when the session has ENDED (/learn bounces to /done),
+   and progress is exactly where a child lands after stopping -- so offer the picker
+   too, which always works. #}
+<div class="footer-nav"><a href="/learn">Back to lesson</a> &nbsp;·&nbsp;
+  <a href="/">Choose a topic</a> &nbsp;·&nbsp; <a href="/settings">⚙️ Settings</a></div>
 {% endblock %}

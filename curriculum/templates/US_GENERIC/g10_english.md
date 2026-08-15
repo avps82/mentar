@@ -24,7 +24,7 @@ subject: english
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
 label: "English — Grade 10 🇺🇸 (general)"
-icon: "🔟"
+icon: "📖"
 description: "Tone, irony and satire, evaluative language and cohesion — general senior english at roughly Grade 10 level."
 item_source: us_g10_english
 

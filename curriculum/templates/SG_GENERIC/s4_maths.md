@@ -24,7 +24,7 @@ subject: mathematics
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
 label: "Maths — Secondary 4 🇸🇬 (general)"
-icon: "🔟"
+icon: "🔢"
 description: "Squared expressions, combined perimeters and distributive-law algebra — general senior maths at roughly Secondary 4 level."
 item_source: sg_s4_maths
 

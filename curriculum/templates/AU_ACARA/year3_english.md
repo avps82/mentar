@@ -18,7 +18,7 @@ subject: english
 curriculum_standard: "ACARA v9 (AC9E3A Language)"
 schema_version: "0.1"
 label: "English — Year 3 🇦🇺"                        # R3.1: web picker catalog fields
-icon: "3️⃣"
+icon: "📖"
 description: "Antonyms, prefixes, homophones and comparative adjectives (Australian Year 3)."
 item_source: au_english_year3
 

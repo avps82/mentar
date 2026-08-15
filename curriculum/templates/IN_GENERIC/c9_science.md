@@ -21,7 +21,7 @@ subject: science
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
 label: "Science — Class 9 🇮🇳 (general)"
-icon: "9️⃣"
+icon: "🔬"
 description: "Inside the atom, wave types, and the landforms plate boundaries make — general science at roughly Class 9 level."
 item_source: in_c9_science
 

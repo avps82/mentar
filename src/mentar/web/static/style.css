@@ -760,3 +760,18 @@ details.settings-section[open] > summary { margin-bottom: 14px; padding-bottom: 
   input[type=text] { width: 100%; margin-bottom: 8px; }
   .btn { margin-left: 0; }
 }
+
+/* Country flags in Settings tabs (2026-08-15). Emoji flags were correct but
+   Windows has no glyphs for regional-indicator pairs, so they rendered as "AU". */
+.flag {
+  width: 1.35em;
+  height: auto;
+  border-radius: 2px;
+  vertical-align: -0.2em;
+  margin-right: 0.4em;
+  box-shadow: 0 0 0 1px rgba(128, 128, 128, 0.35);
+}
+/* A country switched off: its years stay VISIBLE (hiding them reads as "the
+   curriculum I was promised is missing") but are not interactive. */
+.country-off .subject-grid { opacity: 0.5; }
+.country-off .subject-grid label { cursor: not-allowed; }

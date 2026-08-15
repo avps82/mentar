@@ -18,7 +18,7 @@ subject: mathematics
 curriculum_standard: "ACARA v9 (AC9M12 Algebra)"
 schema_version: "0.1"
 label: "Maths — Year 12 🇦🇺"                          # R3.1: web picker catalog fields
-icon: "1️⃣2️⃣"
+icon: "🔢"
 description: "Revenue modelling, combining two quadratic expressions, and compound-shape area with a removed section (Australian Year 12)."
 item_source: au_year12
 

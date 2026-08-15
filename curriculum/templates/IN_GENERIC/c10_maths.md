@@ -24,7 +24,7 @@ subject: mathematics
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
 label: "Maths — Class 10 🇮🇳 (general)"
-icon: "🔟"
+icon: "🔢"
 description: "Squared expressions, combined perimeters and distributive-law algebra — general senior maths at roughly Class 10 level."
 item_source: in_c10_maths
 

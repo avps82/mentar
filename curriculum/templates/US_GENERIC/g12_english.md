@@ -24,7 +24,7 @@ subject: english
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
 label: "English — Grade 12 🇺🇸 (general)"
-icon: "1️⃣2️⃣"
+icon: "📖"
 description: "Bias, allusion, syntax for effect and language change — general senior english at roughly Grade 12 level."
 item_source: us_g12_english
 

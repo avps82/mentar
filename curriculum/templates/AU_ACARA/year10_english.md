@@ -21,7 +21,7 @@ subject: english
 curriculum_standard: "ACARA v9 (AC9E10A Language, provisional)"
 schema_version: "0.1"
 label: "English — Year 10 🇦🇺"
-icon: "🔟"
+icon: "📖"
 description: "Tone, irony and satire, evaluative language and cohesion (Australian Year 10)."
 item_source: au_english_year10
 

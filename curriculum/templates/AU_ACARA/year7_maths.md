@@ -17,7 +17,7 @@ subject: mathematics
 curriculum_standard: "ACARA v9 (AC9M7 Number, Algebra)"
 schema_version: "0.1"
 label: "Maths — Year 7 🇦🇺"                          # R3.1: web picker catalog fields
-icon: "7️⃣"
+icon: "🔢"
 description: "Integers, order of operations, unlike-denominator fractions, one-step equations and multiplying decimals (Australian Year 7)."
 item_source: au_year7
 

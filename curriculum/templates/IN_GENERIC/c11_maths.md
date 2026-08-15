@@ -24,7 +24,7 @@ subject: mathematics
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
 label: "Maths — Class 11 🇮🇳 (general)"
-icon: "1️⃣1️⃣"
+icon: "🔢"
 description: "Binomial products, quadratic expressions and combining terms — general senior maths at roughly Class 11 level."
 item_source: in_c11_maths
 

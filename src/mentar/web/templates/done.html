@@ -15,7 +15,12 @@
   </div>
   {% endif %}
   <br><br>
-  <a href="/learn" class="btn">Start again</a>
+  {# POST, not a link to /learn: the finished session is still cached, so /learn
+     would bounce straight back here. /restart clears it and starts a real new one. #}
+  <form method="post" action="/restart" style="display:inline">
+    <button type="submit" class="btn">Start again</button>
+  </form>
   <a href="/progress" class="btn btn-quiet">See my progress map</a>
+  <a href="/" class="btn btn-quiet">Choose a different topic</a>
 </div>
 {% endblock %}

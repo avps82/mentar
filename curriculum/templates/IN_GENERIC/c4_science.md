@@ -21,7 +21,7 @@ subject: science
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
 label: "Science — Class 4 🇮🇳 (general)"
-icon: "4️⃣"
+icon: "🔬"
 description: "Producers and consumers, magnetic materials, and changes of state — general science at roughly Class 4 level."
 item_source: in_c4_science
 

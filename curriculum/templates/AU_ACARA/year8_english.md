@@ -17,7 +17,7 @@ subject: english
 curriculum_standard: "ACARA v9 (AC9E8A Language)"
 schema_version: "0.1"
 label: "English — Year 8 🇦🇺"                        # R3.1: web picker catalog fields
-icon: "8️⃣"
+icon: "📖"
 description: "Connotation, clauses, adverbial phrases and onomatopoeia (Australian Year 8)."
 item_source: au_english_year8
 

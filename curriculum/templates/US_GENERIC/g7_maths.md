@@ -20,7 +20,7 @@ subject: mathematics
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
 label: "Maths — Grade 7 🇺🇸 (general)"
-icon: "7️⃣"
+icon: "🔢"
 description: "Adding and subtracting integers, order of operations with negatives, adding fractions (different denominators) and more — general maths at roughly Grade 7 level."
 item_source: us_g7_maths
 

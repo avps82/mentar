@@ -143,10 +143,17 @@ def _load_pack_state() -> dict[str, set[str]] | None:
         return None
     try:
         data = json.loads(_PACK_STATE_PATH.read_text(encoding="utf-8"))
+        countries = set(data["countries"]) if isinstance(data.get("countries"), list) else None
         if isinstance(data.get("enabled"), list):
-            return {"enabled": set(data["enabled"])}
+            out = {"enabled": set(data["enabled"])}
+            if countries is not None:
+                out["countries"] = countries
+            return out
         if isinstance(data.get("disabled"), list):
-            return {"disabled": set(data["disabled"])}
+            out = {"disabled": set(data["disabled"])}
+            if countries is not None:
+                out["countries"] = countries
+            return out
     except Exception:
         pass
     return None
@@ -171,9 +178,17 @@ def _save_enabled_packs(enabled: set[str]) -> None:
     # Same empty-data-directory case as upsert_dotenv_value: `curriculum/` exists in
     # a checkout but not in a packaged build's data dir, so the first pack toggle
     # would have raised FileNotFoundError.
+    #
+    # `countries` is stored SEPARATELY from `enabled` because a country can be
+    # switched on with nothing under it chosen yet (2026-08-15) -- that is now the
+    # normal state right after a parent opens a country tab, and deriving it from
+    # "any pack enabled" would silently flip the switch back off in front of them.
     _PACK_STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
     _PACK_STATE_PATH.write_text(
-        json.dumps({"enabled": sorted(enabled)}, indent=2) + "\n", encoding="utf-8"
+        json.dumps(
+            {"enabled": sorted(enabled), "countries": sorted(_ACTIVE_COUNTRIES)}, indent=2
+        ) + "\n",
+        encoding="utf-8",
     )
 
 
@@ -193,52 +208,82 @@ _PACK_STATE = _load_pack_state()
 # template's front matter -- the `country` a fresh install's default keys off).
 # Toggle routes mutate this and persist it via _save_enabled_packs.
 _ENABLED_PACKS: set[str] = set()
+# Countries a parent has switched ON. Distinct from _ENABLED_PACKS: switching a
+# country on reveals its years/subjects but enables NONE of them, so this cannot
+# be derived from the enabled packs (see _save_enabled_packs).
+_ACTIVE_COUNTRIES: set[str] = set((_PACK_STATE or {}).get("countries") or ())
+# Installs written before the countries key existed have no such list. Seeding it
+# from the countries that actually have packs enabled (done after the scan, where
+# the countries are known) keeps their tabs looking the way they left them --
+# otherwise every country would read as OFF while its packs were plainly on.
+_MIGRATE_COUNTRIES = _PACK_STATE is not None and "countries" not in _PACK_STATE
 SUBJECTS: dict[str, dict] = {}
-for _path in _discover_template_paths():
-    _meta = load_template_meta(_path)
-    # derive_subject_key: fully automatic (directory = namespace) — no
-    # per-template authoring step. See its docstring for the rule.
-    _key = derive_subject_key(_path, _meta)
-    if not _pack_is_enabled(_PACK_STATE, _key, _meta["country"]):
-        continue  # R10: not turned on for this install -- skip it entirely.
-    _ENABLED_PACKS.add(_key)
-    # A16: validate BEFORE anything else touches this template — a cyclic/bad-
-    # prereq template silently produces an empty fringe and a false "you've
-    # mastered everything!" completion for the child. Fail loud at startup.
-    validate_or_raise(_path)
-    _source_name = _meta["item_source"]
-    if _source_name not in _ITEM_SOURCE_REGISTRY:
-        raise RuntimeError(
-            f"template {_path} names item_source={_source_name!r}, which is not "
-            f"in the registry ({sorted(_ITEM_SOURCE_REGISTRY)}) — add it to "
-            "engine/item_sources.py or fix the template's item_source: field."
-        )
-    _source = _ITEM_SOURCE_REGISTRY[_source_name]
-    SUBJECTS[_key] = {
-        "label": _meta["label"] or _key,
-        "icon": _meta["icon"] or "",
-        "description": _meta["description"] or "",
-        "year_level": _meta["year_level"],
-        "country": _meta["country"],
-        "curriculum": _path,
-        "itembank": _source["itembank"],
-        "generators": _source["generators"],
-    }
+
+
+def _scan_enabled_templates() -> None:
+    """Populate SUBJECTS/_ENABLED_PACKS from the templates a family has turned on.
+
+    Was a module-level loop, so a curriculum toggle only took effect on the NEXT
+    RESTART -- the maintainer warned at the time that this would bite, and on
+    2026-08-15 it did, on a packaged build a parent cannot restart from a terminal.
+    Now a function, so _reload_curricula() below can re-run the whole scan live.
+
+    Mutates in place rather than rebinding: other modules and live controllers hold
+    references to these dicts, and rebinding would leave them pointing at the old
+    ones -- the sort of half-applied change that looks like it worked.
+    """
+    global _MIGRATE_COUNTRIES
+    _ENABLED_PACKS.clear()
+    SUBJECTS.clear()
+    for _path in _discover_template_paths():
+        _meta = load_template_meta(_path)
+        # derive_subject_key: fully automatic (directory = namespace) — no
+        # per-template authoring step. See its docstring for the rule.
+        _key = derive_subject_key(_path, _meta)
+        if not _pack_is_enabled(_PACK_STATE, _key, _meta["country"]):
+            continue  # R10: not turned on for this install -- skip it entirely.
+        _ENABLED_PACKS.add(_key)
+        # A16: validate BEFORE anything else touches this template — a cyclic/bad-
+        # prereq template silently produces an empty fringe and a false "you've
+        # mastered everything!" completion for the child. Fail loud at startup.
+        validate_or_raise(_path)
+        _source_name = _meta["item_source"]
+        if _source_name not in _ITEM_SOURCE_REGISTRY:
+            raise RuntimeError(
+                f"template {_path} names item_source={_source_name!r}, which is not "
+                f"in the registry ({sorted(_ITEM_SOURCE_REGISTRY)}) — add it to "
+                "engine/item_sources.py or fix the template's item_source: field."
+            )
+        _source = _ITEM_SOURCE_REGISTRY[_source_name]
+        SUBJECTS[_key] = {
+            "label": _meta["label"] or _key,
+            "icon": _meta["icon"] or "",
+            "description": _meta["description"] or "",
+            "year_level": _meta["year_level"],
+            "country": _meta["country"],
+            "curriculum": _path,
+            "itembank": _source["itembank"],
+            "generators": _source["generators"],
+        }
+
+    if _MIGRATE_COUNTRIES:
+        # See the note where _MIGRATE_COUNTRIES is defined: pre-2026-08-15 state
+        # files predate the countries list, so infer it from what is actually on.
+        _ACTIVE_COUNTRIES.update(cfg["country"] for cfg in SUBJECTS.values() if cfg["country"])
+        _MIGRATE_COUNTRIES = False
+
+
 DEFAULT_SUBJECT = "fractions"
-_SUBJECT_CURRICULA = {k: load_curriculum(v["curriculum"]) for k, v in SUBJECTS.items()}
+_SUBJECT_CURRICULA: dict[str, dict] = {}
 # A7: each subject's template `subject:` field, fed into the system prompt so a
 # science session doesn't inherit the (formerly hardcoded) "fractions" text.
-_SUBJECT_NAMES = {k: load_template_subject(v["curriculum"]) for k, v in SUBJECTS.items()}
+_SUBJECT_NAMES: dict[str, str] = {}
 # R6.2: one skill_id -> label lookup across EVERY loaded curriculum (safe to
 # merge: R3.1's directory-namespace prefixing guarantees no id collisions
 # across subjects). skill_id is a machine key, never shown to a human; every
 # human-facing surface renders display_name, computed once via _display_name()
 # below, never re-derived per-template (was 4 inconsistent strategies).
-_ALL_NODE_LABELS = {
-    nid: node.get("label", nid)
-    for curriculum in _SUBJECT_CURRICULA.values()
-    for nid, node in curriculum.items()
-}
+_ALL_NODE_LABELS: dict[str, str] = {}
 
 
 def _display_name(skill_id: str) -> str:
@@ -263,6 +308,27 @@ def _grade_sort_key(year_level: str | None) -> tuple[int, str, int]:
     digits = "".join(ch for ch in year_level if ch.isdigit())
     return (0, band, int(digits)) if digits else (1, band or year_level, 0)
 
+# Country code -> the name a person would say. ONE definition, served to the JS via
+# /settings/curricula rather than duplicated there: 2026-08-15 the settings page and
+# the CLI each kept their own copy of a path and quietly disagreed, which is exactly
+# how the packaged build shipped broken. Not going to repeat it for country names.
+COUNTRY_NAMES: dict[str, str] = {
+    "AU": "Australia",
+    "IN": "India",
+    "SG": "Singapore",
+    "US": "United States",
+    "General": "General",
+}
+
+
+def country_name(code: str | None) -> str:
+    """"AU" -> "Australia". Unknown codes fall back to themselves, so a pack from a
+    country added later is still labelled, just tersely."""
+    if not code:
+        return ""
+    return COUNTRY_NAMES.get(code, code)
+
+
 def _subject_groups() -> list[tuple[str, list[str]]]:
     """R3.1: Year > Subject grouping for the picker/progress switcher (R3.2) —
     computed from the scan, not hand-maintained. Real years sort ascending;
@@ -283,12 +349,48 @@ def _subject_groups() -> list[tuple[str, list[str]]]:
     for year in sorted(by_year, key=_sort_key):
         keys = by_year[year]
         country = next((SUBJECTS[k]["country"] for k in keys if SUBJECTS[k]["country"]), None)
-        label = "Try-out topics" if year == "pilot" else (f"{year} ({country})" if country else year)
+        # Full country name, not the code (maintainer 2026-08-15: "Year 2 (AU) or
+        # Year 2 (IN)... this should be country name as a whole"). A child reading
+        # "Year 2 (AU)" has to decode an abbreviation to find their own year.
+        label = "Try-out topics" if year == "pilot" else (
+            f"{year} ({country_name(country)})" if country else year
+        )
         groups.append((label, keys))
     return groups
 
 
-SUBJECT_GROUPS: list[tuple[str, list[str]]] = _subject_groups()
+SUBJECT_GROUPS: list[tuple[str, list[str]]] = []
+
+
+def _reload_curricula() -> None:
+    """Re-scan the curriculum after a pack toggle, with NO restart.
+
+    Everything derived from SUBJECTS is rebuilt in place. A newly-enabled pack is
+    validated by the scan exactly as it would be at startup, so a broken template
+    still fails loudly -- it just fails into the toggle's response now instead of
+    into a startup crash a parent cannot read.
+    """
+    # Re-read the state file FIRST. _scan_enabled_templates() decides what loads from
+    # _PACK_STATE, which was a once-at-import snapshot: without this, a reload after a
+    # toggle re-applied the OLD state and silently undid the change the parent just
+    # made. Caught by tests/web/test_curriculum_toggle.py the moment reload went live.
+    global _PACK_STATE
+    _PACK_STATE = _load_pack_state()
+    _scan_enabled_templates()
+    _SUBJECT_CURRICULA.clear()
+    _SUBJECT_CURRICULA.update({k: load_curriculum(v["curriculum"]) for k, v in SUBJECTS.items()})
+    _SUBJECT_NAMES.clear()
+    _SUBJECT_NAMES.update({k: load_template_subject(v["curriculum"]) for k, v in SUBJECTS.items()})
+    _ALL_NODE_LABELS.clear()
+    _ALL_NODE_LABELS.update({
+        nid: node.get("label", nid)
+        for curriculum in _SUBJECT_CURRICULA.values()
+        for nid, node in curriculum.items()
+    })
+    SUBJECT_GROUPS[:] = _subject_groups()
+
+
+_reload_curricula()   # first build, at import — the same code path a toggle uses
 _learner_subject: dict[str, str] = {}   # learner_uuid -> active subject key
 
 # Inference backend: prefer config/inference.yaml (the canonical, backend-agnostic
@@ -938,8 +1040,39 @@ def _all_packs_with_state() -> list[dict]:
 @app.route("/settings/curricula")
 def curricula_list():
     """R10: list every in-repo pack with its on/off state, for the Settings
-    toggle UI. Local-disk only, no network."""
-    return jsonify({"curricula": _all_packs_with_state()})
+    toggle UI. Local-disk only, no network.
+
+    `active_countries` is sent separately from the per-pack `enabled` flags: since
+    2026-08-15 a country can be switched on with nothing chosen under it yet, so the
+    UI cannot infer the master switch from "any pack enabled" without flipping itself
+    off in front of the parent who just turned it on.
+    """
+    return jsonify({
+        "curricula": _all_packs_with_state(),
+        "active_countries": sorted(_ACTIVE_COUNTRIES),
+        "country_names": COUNTRY_NAMES,
+    })
+
+
+def _apply_pack_change() -> tuple[bool, str]:
+    """Persist the enabled set and re-scan the curriculum LIVE.
+
+    Returns (ok, error). A newly-enabled pack is validated by the scan, so a broken
+    template is reported into the toggle's own response rather than taking the whole
+    app down -- and the change is rolled back so the family is never left with a
+    curriculum that cannot load.
+    """
+    before = set(_ENABLED_PACKS)
+    _save_enabled_packs(_ENABLED_PACKS)
+    try:
+        _reload_curricula()
+    except Exception as exc:  # noqa: BLE001 -- a bad template must not 500 the page
+        _ENABLED_PACKS.clear()
+        _ENABLED_PACKS.update(before)
+        _save_enabled_packs(_ENABLED_PACKS)
+        _reload_curricula()
+        return False, f"That curriculum could not be loaded, so nothing changed: {exc}"
+    return True, ""
 
 
 @app.route("/settings/curricula/<key>/<action>", methods=["POST"])
@@ -958,8 +1091,10 @@ def curricula_toggle(key, action):
         _ENABLED_PACKS.discard(key)
     else:
         _ENABLED_PACKS.add(key)
-    _save_enabled_packs(_ENABLED_PACKS)
-    return jsonify({"ok": True, "enabled": key in _ENABLED_PACKS, "restart_required": True})
+    ok, err = _apply_pack_change()
+    if not ok:
+        return jsonify({"ok": False, "error": err}), 400
+    return jsonify({"ok": True, "enabled": key in _ENABLED_PACKS, "restart_required": False})
 
 
 @app.route("/settings/curricula/country/<country>/<action>", methods=["POST"])
@@ -977,13 +1112,29 @@ def curricula_toggle_country(country, action):
     if not keys:
         return jsonify({"ok": False, "error": "unknown country"}), 404
 
+    # Turning a country ON deliberately enables NOTHING beneath it (maintainer,
+    # 2026-08-15: "the parent will turn on what they want"). Bulk-enabling all ~25
+    # packs made the switch a chore generator -- a parent then had to hunt through
+    # every year and subject turning off the ones they did not want, which is the
+    # opposite of what a master switch is for. OFF still clears the whole country,
+    # because "none of this" IS a single intent worth one click.
+    changed = 0
     if action == "disable":
+        changed = sum(1 for k in keys if k in _ENABLED_PACKS)
         _ENABLED_PACKS.difference_update(keys)
+        _ACTIVE_COUNTRIES.discard(country)
     else:
-        _ENABLED_PACKS.update(keys)
-    _save_enabled_packs(_ENABLED_PACKS)
+        _ACTIVE_COUNTRIES.add(country)
+    ok, err = _apply_pack_change()
+    if not ok:
+        return jsonify({"ok": False, "error": err}), 400
     return jsonify({
-        "ok": True, "enabled": action == "enable", "count": len(keys), "restart_required": True,
+        "ok": True, "enabled": action == "enable",
+        # `count` is how many of this country's packs are ON AFTER the change (0 right
+        # after enabling, by design); `changed` is how many actually flipped.
+        "count": sum(1 for k in keys if k in _ENABLED_PACKS),
+        "changed": changed,
+        "restart_required": False,
     })
 
 
@@ -1297,6 +1448,44 @@ def _compute_graph_layout(curriculum: dict, node_pct: dict[str, int]) -> dict:
         "label_dy": label_dy,
         "line_h": _GRAPH_LINE_H,
     }
+
+
+@app.route("/restart", methods=["POST"])
+def restart():
+    """Start a genuinely new session after the last one ended.
+
+    2026-08-15 (maintainer): "when stopped... I can see progress but can't start
+    again." The Done page's "Start again" pointed at /learn, but the ENDED controller
+    was still cached, so /learn saw is_terminal and redirected right back to /done --
+    the button was a loop onto its own page. The only escape was picking a DIFFERENT
+    subject, since that is the one case _get_or_create_controller discards the
+    controller; same subject kept the dead one forever. A child cannot be expected to
+    find that.
+
+    Ending a session has to actually be undoable, so drop the per-learner turn state
+    and let /learn build a fresh controller. Nothing durable is touched: mastery,
+    transcripts and escalations live in the DB and are keyed by learner, not session.
+    """
+    learner_uuid = session.get("learner_uuid")
+    if not learner_uuid:
+        return redirect(url_for("index"))
+
+    ctrl = _controllers.get(learner_uuid)
+    if ctrl is not None and ctrl.state == FSMState.ESCALATION_FREEZE.value:
+        # A freeze is NOT the child's to clear -- it needs a parent (SAFETY §3.3).
+        # Restarting out of it would hand them exactly the escape the freeze exists
+        # to prevent.
+        return redirect(url_for("frozen"))
+
+    _controllers.pop(learner_uuid, None)
+    _turn_logs.pop(learner_uuid, None)
+    _done_messages.pop(learner_uuid, None)
+    _last_messages.pop(learner_uuid, None)
+
+    # The subject may have been switched off in Settings while they were finishing.
+    if session.get("subject") not in SUBJECTS:
+        return redirect(url_for("index"))
+    return redirect(url_for("learn"))
 
 
 @app.route("/progress")

@@ -20,7 +20,7 @@ subject: mathematics
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
 label: "Maths — Grade 2 🇺🇸 (general)"
-icon: "2️⃣"
+icon: "🔢"
 description: "Place value, adding numbers, subtracting numbers and more — general maths at roughly Grade 2 level."
 item_source: us_g2_maths
 

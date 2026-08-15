@@ -21,7 +21,7 @@ subject: science
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
 label: "Science — Secondary 2 🇸🇬 (general)"
-icon: "8️⃣"
+icon: "🔬"
 description: "Plant and animal cells, renewable energy, and elements and compounds — general science at roughly Secondary 2 level."
 item_source: sg_s2_science
 

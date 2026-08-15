@@ -18,7 +18,7 @@ subject: english
 curriculum_standard: "ACARA v9 (AC9E4A Language)"
 schema_version: "0.1"
 label: "English — Year 4 🇦🇺"                        # R3.1: web picker catalog fields
-icon: "4️⃣"
+icon: "📖"
 description: "Suffixes, contractions, common/proper nouns and similes (Australian Year 4)."
 item_source: au_english_year4
 

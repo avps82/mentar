@@ -18,7 +18,7 @@ subject: mathematics
 curriculum_standard: "ACARA v9 (AC9M11 Algebra)"
 schema_version: "0.1"
 label: "Maths — Year 11 🇦🇺"                          # R3.1: web picker catalog fields
-icon: "1️⃣1️⃣"
+icon: "🔢"
 description: "Binomial-product areas, quadratic expressions from words, combining quadratic and linear expressions, and difference-of-expressions word problems (Australian Year 11)."
 item_source: au_year11
 

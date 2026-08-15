@@ -24,7 +24,7 @@ subject: english
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
 label: "English — Secondary 3 🇸🇬 (general)"
-icon: "9️⃣"
+icon: "📖"
 description: "Modality, nominalisation, rhetorical devices and sentence types — general senior english at roughly Secondary 3 level."
 item_source: sg_s3_english
 

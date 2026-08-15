@@ -21,7 +21,7 @@ subject: english
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
 label: "English — Primary 3 🇸🇬 (general)"
-icon: "3️⃣"
+icon: "📖"
 description: "Antonyms, prefixes, homophones and comparative adjectives — general English at roughly Primary 3 level."
 item_source: sg_p3_english
 

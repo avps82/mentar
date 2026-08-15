@@ -21,7 +21,7 @@ subject: science
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
 label: "Science — Grade 3 🇺🇸 (general)"
-icon: "3️⃣"
+icon: "🔬"
 description: "Life cycles, sources of heat, and where living things live — general science at roughly Grade 3 level."
 item_source: us_g3_science
 

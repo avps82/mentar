@@ -66,14 +66,68 @@
     // last (same posture as the picker's "Try-out topics"). The backend already
     // sorts each country's packs grade-then-subject, so grouping here only adds
     // the sub-heading -- never re-sort grade strings in JS ("Year 10" < "Year 2").
-    var COUNTRY_NAMES = {
-        AU: "🇦🇺 Australia",
-        IN: "🇮🇳 India",
-        SG: "🇸🇬 Singapore",
-        US: "🇺🇸 United States",
-        General: "🧪 General",
+    // Filled from /settings/curricula -- the server owns this map (app.py
+    // COUNTRY_NAMES) so the picker and this page can never drift apart.
+    var COUNTRY_NAMES = {};
+
+    // Flags as inline SVG, NOT emoji (2026-08-15, maintainer on Windows: "country
+    // has AU Australia??? Why AU?? There should be a Australian flag").
+    //
+    // The emoji were there and correct -- 🇦🇺 is U+1F1E6 U+1F1FA, a pair of regional
+    // indicators. WINDOWS HAS NO FLAG GLYPHS: Segoe UI Emoji ships none, so every
+    // browser on Windows falls back to drawing the two letters. macOS showed a flag,
+    // Windows showed "AU", from identical markup. Nothing in our data was wrong and
+    // no amount of fixing it would have helped -- the glyph does not exist there.
+    //
+    // These are deliberately SIMPLIFIED: recognisable at 18px, no attempt at exact
+    // heraldry (the Union Jack canton in particular is approximated). They are drawn,
+    // not fetched -- U-80 forbids a CDN, and an offline tutor cannot depend on one.
+    var FLAGS = {
+        AU: '<svg viewBox="0 0 60 30" class="flag" aria-hidden="true">' +
+            '<rect width="60" height="30" fill="#00247d"/>' +
+            '<path d="M0 0l30 15M30 0L0 15" stroke="#fff" stroke-width="3"/>' +
+            '<path d="M0 0l30 15M30 0L0 15" stroke="#cf142b" stroke-width="1.6"/>' +
+            '<path d="M15 0v15M0 7.5h30" stroke="#fff" stroke-width="5"/>' +
+            '<path d="M15 0v15M0 7.5h30" stroke="#cf142b" stroke-width="3"/>' +
+            '<g fill="#fff"><circle cx="15" cy="23" r="2.6"/><circle cx="45" cy="7" r="1.5"/>' +
+            '<circle cx="52" cy="14" r="1.5"/><circle cx="45" cy="23" r="1.5"/>' +
+            '<circle cx="38" cy="15" r="1.2"/><circle cx="47" cy="17" r="0.9"/></g></svg>',
+        IN: '<svg viewBox="0 0 60 30" class="flag" aria-hidden="true">' +
+            '<rect width="60" height="10" fill="#ff9933"/>' +
+            '<rect y="10" width="60" height="10" fill="#fff"/>' +
+            '<rect y="20" width="60" height="10" fill="#138808"/>' +
+            '<circle cx="30" cy="15" r="4" fill="none" stroke="#000080" stroke-width="1.2"/>' +
+            '<circle cx="30" cy="15" r="1" fill="#000080"/></svg>',
+        SG: '<svg viewBox="0 0 60 30" class="flag" aria-hidden="true">' +
+            '<rect width="60" height="15" fill="#ed2939"/>' +
+            '<rect y="15" width="60" height="15" fill="#fff"/>' +
+            '<path d="M18 7.5a6 6 0 1 1-6-6 7.2 7.2 0 0 0 0 12 6 6 0 0 1 6-6z" fill="#fff"/>' +
+            '<g fill="#fff"><circle cx="21" cy="4" r="1.1"/><circle cx="25" cy="7" r="1.1"/>' +
+            '<circle cx="23.5" cy="11.5" r="1.1"/><circle cx="18.5" cy="11.5" r="1.1"/>' +
+            '<circle cx="17" cy="7" r="1.1"/></g></svg>',
+        US: '<svg viewBox="0 0 60 30" class="flag" aria-hidden="true">' +
+            '<rect width="60" height="30" fill="#fff"/>' +
+            '<g fill="#b22234"><rect width="60" height="2.3"/><rect y="4.6" width="60" height="2.3"/>' +
+            '<rect y="9.2" width="60" height="2.3"/><rect y="13.8" width="60" height="2.3"/>' +
+            '<rect y="18.4" width="60" height="2.3"/><rect y="23" width="60" height="2.3"/>' +
+            '<rect y="27.6" width="60" height="2.3"/></g>' +
+            '<rect width="24" height="16.1" fill="#3c3b6e"/>' +
+            '<g fill="#fff"><circle cx="4" cy="4" r="1"/><circle cx="12" cy="4" r="1"/>' +
+            '<circle cx="20" cy="4" r="1"/><circle cx="8" cy="8" r="1"/><circle cx="16" cy="8" r="1"/>' +
+            '<circle cx="4" cy="12" r="1"/><circle cx="12" cy="12" r="1"/>' +
+            '<circle cx="20" cy="12" r="1"/></g></svg>',
+        General: '<svg viewBox="0 0 60 30" class="flag" aria-hidden="true">' +
+            '<rect width="60" height="30" fill="#8a8f98" rx="3"/>' +
+            '<circle cx="30" cy="15" r="7" fill="none" stroke="#fff" stroke-width="2"/>' +
+            '<path d="M30 8v14M23 15h14" stroke="#fff" stroke-width="2"/></svg>',
     };
+
+    function countryLabelHtml(code) {
+        var name = COUNTRY_NAMES[code] || code;
+        return (FLAGS[code] || "") + "<span>" + name + "</span>";
+    }
     var activeCountry = null;  // survives a re-render (switching tabs rebuilds the panel)
+    var activeCountries = [];  // countries switched on, from the server (see /settings/curricula)
 
     function switchWidget(checked, ariaLabel) {
         // R12.2: a real switch widget (native checkbox), not a text button.
@@ -113,7 +167,7 @@
                 if (res.ok) {
                     c.enabled = res.enabled;
                     input.checked = res.enabled;
-                    status.textContent = "Saved — restart Mentar to apply.";
+                    status.textContent = res.enabled ? "On" : "Off";
                     onSaved();
                 } else {
                     // Never show a state the server rejected.
@@ -143,13 +197,18 @@
         var master = document.createElement("div");
         master.className = "curricula-master";
         var masterLabel = document.createElement("strong");
-        masterLabel.textContent = "Use the " + COUNTRY_NAMES[country].replace(/^\S+\s/, "") +
-            " curriculum";
+        masterLabel.textContent = "Use the " + (COUNTRY_NAMES[country] || country) + " curriculum";
         var enabledCount = packs.filter(function (c) { return c.enabled; }).length;
-        var masterSw = switchWidget(enabledCount > 0, "Turn the whole " + country + " curriculum on or off");
+        // From the server's OWN record of which countries are on -- not inferred from
+        // "any pack enabled", which would read as off the moment a parent switches a
+        // country on and has not picked a year yet (the normal state now).
+        var countryOn = activeCountries.indexOf(country) !== -1 || enabledCount > 0;
+        var masterSw = switchWidget(countryOn, "Turn the " + country + " curriculum on or off");
         var masterInput = masterSw.querySelector("input");
         // Native tri-state: SOME on shows a dash, not a lie in either direction.
-        masterInput.indeterminate = enabledCount > 0 && enabledCount < packs.length;
+        // No tri-state any more: ON no longer means "all of them", so a dash would be
+        // describing a state that is now simply normal.
+        masterInput.indeterminate = false;
         var masterStatus = document.createElement("span");
         masterStatus.className = "hint";
 
@@ -162,6 +221,17 @@
         // confirmed what it did, so repaint from that instead of asking again.
         var rowSwitches = [];
 
+        // When a country is off, its years are visible but not interactive -- the
+        // parent can see what is on offer without being able to half-enable a
+        // country. Nothing is hidden; hidden options are how a parent concludes the
+        // curriculum they were promised is missing.
+        function setPanelEnabled(on) {
+            rowSwitches.forEach(function (row) {
+                row.input.disabled = !on;
+            });
+            panel.classList.toggle("country-off", !on);
+        }
+
         masterInput.onchange = function () {
             var action = masterInput.checked ? "enable" : "disable";
             var wasOn = enabledCount > 0;
@@ -171,14 +241,24 @@
                 return r.json();
             }).then(function (res) {
                 if (res.ok) {
-                    rowSwitches.forEach(function (row) {
-                        row.pack.enabled = res.enabled;
-                        row.input.checked = res.enabled;
-                    });
-                    enabledCount = res.enabled ? rowSwitches.length : 0;
+                    // ON reveals the years and subjects; it does NOT switch them on
+                    // (maintainer 2026-08-15: "the parent will turn on what they
+                    // want"). Bulk-enabling ~25 packs turned a master switch into a
+                    // chore generator -- turn it on, then hunt through every year
+                    // turning off what you did not ask for. OFF still clears them all,
+                    // because "none of this" is one intent worth one click.
+                    if (!res.enabled) {
+                        rowSwitches.forEach(function (row) {
+                            row.pack.enabled = false;
+                            row.input.checked = false;
+                        });
+                    }
+                    enabledCount = res.count;
                     masterInput.indeterminate = false;
-                    masterStatus.textContent = "Saved (" + res.count +
-                        " turned " + (res.enabled ? "on" : "off") + ") — restart Mentar to apply.";
+                    setPanelEnabled(res.enabled);
+                    masterStatus.textContent = res.enabled
+                        ? "On — now choose the years you want below."
+                        : "Off — everything for this country is turned off.";
                 } else {
                     masterStatus.textContent = "Error: " + res.error;
                     masterInput.checked = wasOn;
@@ -205,16 +285,16 @@
                 lastGrade = grade;
             }
             var built = packRow(c, function () {
-                // A single pack changed -- repaint the master switch's tri-state
-                // without discarding the "Saved" hints already on screen.
-                var on = packs.filter(function (p) { return p.enabled; }).length;
-                enabledCount = on;
-                masterInput.checked = on > 0;
-                masterInput.indeterminate = on > 0 && on < packs.length;
+                // A single pack changed. The master switch is NOT recomputed from the
+                // row states: a country stays on when a parent turns its last year
+                // off, because they chose the country deliberately and un-choosing it
+                // is a separate act. Turning the master off is the way to say "none".
+                enabledCount = packs.filter(function (p) { return p.enabled; }).length;
             });
             rowSwitches.push(built);
             panel.appendChild(built.row);
         });
+        setPanelEnabled(countryOn);   // first paint, not only after a toggle
         return panel;
     }
 
@@ -227,6 +307,8 @@
                 return response.json();
             })
             .then(function (data) {
+                activeCountries = data.active_countries || [];
+                COUNTRY_NAMES = data.country_names || {};
                 container.innerHTML = "";
                 if (!data.curricula || data.curricula.length === 0) {
                     container.textContent = "No curricula found.";
@@ -243,7 +325,7 @@
                 var countries = Object.keys(groups).sort(function (a, b) {
                     if (a === "General") return 1;      // try-out packs last
                     if (b === "General") return -1;
-                    return COUNTRY_NAMES[a].localeCompare(COUNTRY_NAMES[b]);
+                    return (COUNTRY_NAMES[a] || a).localeCompare(COUNTRY_NAMES[b] || b);
                 });
                 if (countries.indexOf(activeCountry) === -1) activeCountry = countries[0];
 
@@ -257,7 +339,7 @@
                     tab.type = "button";
                     tab.className = "tab-btn";
                     tab.id = "curricula-tab-" + country;
-                    tab.textContent = COUNTRY_NAMES[country];
+                    tab.innerHTML = countryLabelHtml(country);
                     tab.setAttribute("role", "tab");
                     tab.setAttribute("aria-controls", "curricula-panel");
                     var selected = country === activeCountry;

@@ -20,7 +20,7 @@ subject: mathematics
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
 label: "Maths — Class 6 🇮🇳 (general)"
-icon: "6️⃣"
+icon: "🔢"
 description: "Order of operations, multiplying decimals, dividing decimals and more — general maths at roughly Class 6 level."
 item_source: in_c6_maths
 

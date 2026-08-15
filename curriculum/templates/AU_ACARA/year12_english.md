@@ -22,7 +22,7 @@ subject: english
 curriculum_standard: null
 schema_version: "0.1"
 label: "English — Year 12 🇦🇺"
-icon: "1️⃣2️⃣"
+icon: "📖"
 description: "Bias, allusion, syntax for effect and language change (senior English)."
 item_source: au_english_year12
 

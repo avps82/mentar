@@ -21,7 +21,7 @@ subject: english
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
 label: "English — Grade 4 🇺🇸 (general)"
-icon: "4️⃣"
+icon: "📖"
 description: "Suffixes, contractions, proper nouns and similes — general English at roughly Grade 4 level."
 item_source: us_g4_english
 

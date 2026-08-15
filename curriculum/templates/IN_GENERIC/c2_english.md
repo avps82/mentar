@@ -21,7 +21,7 @@ subject: english
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
 label: "English — Class 2 🇮🇳 (general)"
-icon: "2️⃣"
+icon: "📖"
 description: "Word classes, synonyms, plurals and rhyming words — general English at roughly Class 2 level."
 item_source: in_c2_english
 

@@ -17,7 +17,7 @@ subject: mathematics
 curriculum_standard: "ACARA v9 (AC9M3 Number)"
 schema_version: "0.1"
 label: "Maths — Year 3 🇦🇺"                          # R3.1: web picker catalog fields
-icon: "3️⃣"
+icon: "🔢"
 description: "Place value, adding, times tables and fractions (Australian Year 3)."
 item_source: au_year3
 

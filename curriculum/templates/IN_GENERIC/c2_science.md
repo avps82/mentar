@@ -21,7 +21,7 @@ subject: science
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
 label: "Science — Class 2 🇮🇳 (general)"
-icon: "2️⃣"
+icon: "🔬"
 description: "Sound and vibration, Earth in the solar system, and changing a material's shape — general science at roughly Class 2 level."
 item_source: in_c2_science
 

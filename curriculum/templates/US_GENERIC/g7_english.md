@@ -21,7 +21,7 @@ subject: english
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
 label: "English — Grade 7 🇺🇸 (general)"
-icon: "7️⃣"
+icon: "📖"
 description: "Idioms, formal/informal register, active/passive voice and personification — general English at roughly Grade 7 level."
 item_source: us_g7_english
 

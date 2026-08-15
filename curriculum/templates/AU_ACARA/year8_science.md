@@ -21,7 +21,7 @@ subject: science
 curriculum_standard: "ACARA v9 (AC9S8 Science Understanding)"
 schema_version: "0.1"
 label: "Science — Year 8 🇦🇺"                          # R3.1: web picker catalog fields
-icon: "8️⃣"
+icon: "🔬"
 description: "Plant/animal cell structures, renewable and non-renewable energy, and elements vs. compounds (Australian Year 8 Science)."
 item_source: au_science_year8
 

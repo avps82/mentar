@@ -7,16 +7,6 @@
    Native <details> for grouping — tabs were one suggestion, not a requirement. #}
 
 <details class="settings-section" open>
-  <summary>📚 Curricula</summary>
-  <p class="hint">Pick your country's tab, switch that curriculum on, then choose the
-    grades you want. Turn off the rest to keep the topic list tidy — turning one off
-    never deletes your child's progress in it. A restart is needed for a change to
-    show up in the lesson picker.</p>
-  <div id="curricula-toggle-list">Loading…</div>
-  <div id="curriculum-packs-list"></div>
-</details>
-
-<details class="settings-section" open>
   <summary>🤖 AI model</summary>
   <p class="hint">Checks whether Mentar can reach the local AI model running on this device.</p>
   <p id="llm-status-line">Checking…</p>
@@ -41,6 +31,21 @@
      theme list lives), so adding a theme never means editing this template. #}
   <div id="theme-picker" class="theme-picker" role="group" aria-label="Colour theme">Loading…</div>
 </details>
+
+{# Moved to the BOTTOM 2026-08-15 (maintainer): it is by far the longest card,
+   and at the top it pushed the model/voice/appearance settings off screen.
+   Left open, not collapsed — a parent looking for it should not have to
+   discover a disclosure triangle after scrolling this far. #}
+<details class="settings-section" open>
+  <summary>📚 Curricula</summary>
+  <p class="hint">Pick your country's tab, switch that curriculum on, then choose the
+    grades you want. Switching a country on doesn't turn anything on by itself — you
+    choose. Changes apply straight away, and turning one off never deletes your
+    child's progress in it.</p>
+  <div id="curricula-toggle-list">Loading…</div>
+  <div id="curriculum-packs-list"></div>
+</details>
+
 
 <script src="/static/settings.js"></script>
 {% endblock %}

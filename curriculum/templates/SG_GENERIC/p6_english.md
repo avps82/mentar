@@ -21,7 +21,7 @@ subject: english
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
 label: "English — Primary 6 🇸🇬 (general)"
-icon: "6️⃣"
+icon: "📖"
 description: "Similes and metaphors, nuanced synonyms/antonyms, conjunctions and prepositions — general English at roughly Primary 6 level."
 item_source: sg_p6_english
 

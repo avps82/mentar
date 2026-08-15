@@ -21,7 +21,7 @@ subject: science
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
 label: "Science — Class 6 🇮🇳 (general)"
-icon: "6️⃣"
+icon: "🔬"
 description: "Vertebrates and invertebrates, circuits, and reversible changes — general science at roughly Class 6 level."
 item_source: in_c6_science
 

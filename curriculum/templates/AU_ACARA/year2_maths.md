@@ -17,7 +17,7 @@ subject: mathematics
 curriculum_standard: "ACARA v9 (AC9M2 Number)"
 schema_version: "0.1"
 label: "Maths — Year 2 🇦🇺"                          # R3.1: web picker catalog fields
-icon: "2️⃣"
+icon: "🔢"
 description: "Place value to 100, adding, subtracting, times tables for 2/5/10, and halves
   and quarters (Australian Year 2)."
 item_source: au_year2

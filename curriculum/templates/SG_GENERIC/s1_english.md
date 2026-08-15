@@ -21,7 +21,7 @@ subject: english
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
 label: "English — Secondary 1 🇸🇬 (general)"
-icon: "7️⃣"
+icon: "📖"
 description: "Idioms, formal/informal register, active/passive voice and personification — general English at roughly Secondary 1 level."
 item_source: sg_s1_english
 
