@@ -497,11 +497,13 @@ def test_the_worked_example_sits_inside_the_bubble_and_matches_its_text_size():
             [...document.querySelectorAll('button, a')]
               .find(b => /show me how/i.test(b.textContent))?.click()
         """)
-        browser.wait_for("!!document.querySelector('.feedback')")
-        browser.js("""
-            const f = document.querySelector('.elaborate-form button');
-            if (f) f.click();
-        """)
+        # Wait for the ELABORATE FORM, not `.feedback`: the first turn already
+        # renders a .feedback bubble (the welcome message), so waiting on that
+        # returned instantly, the querySelector below ran before the help
+        # response landed, and `if (f)` swallowed the null -- the click never
+        # happened and the test timed out 20s later pointing at .steps-pre.
+        browser.wait_for("!!document.querySelector('.elaborate-form button')")
+        browser.js("document.querySelector('.elaborate-form button').click()")
         browser.wait_for("!!document.querySelector('.feedback .steps-pre')", timeout=20)
 
         shape = browser.js("""
