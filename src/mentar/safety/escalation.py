@@ -98,10 +98,21 @@ _HARM_TO_SELF_PATTERNS: list[re.Pattern[str]] = [p for p in (
     re.compile(r"i('m going| am going| want) to (hurt|harm|kill) myself", re.I),
     re.compile(r"i('m| am) going to (hurt|harm|kill) myself", re.I),
     re.compile(r"(hurt|harm|kill) myself", re.I),
+    # 2026-08-16 probe: the line above is INFINITIVE-only, so "thinking about
+    # hurting myself" -- a textbook ideation phrasing -- matched nothing, while
+    # "thinking about ending it" (below) matched. Same verbs, same meaning, one
+    # suffix apart. Contract here is explicit: false negatives are not acceptable.
+    re.compile(r"\b(hurting|harming|killing) myself\b", re.I),
     re.compile(r"want to (end|take) my (life|own life)", re.I),
     re.compile(r"no reason to (live|go on|be alive)", re.I),
-    # "I don't want to be here anymore" — indirect self-harm ideation
-    re.compile(r"(don'?t|do not) want to be here (anymore|any more)", re.I),
+    # "I don't want to be here anymore" — indirect self-harm ideation.
+    # 2026-08-16: "alive" added. "don't want to be HERE anymore" fired but
+    # "don't want to be ALIVE anymore" did not, though it is the less ambiguous
+    # of the two ("here" can mean this room, this lesson).
+    re.compile(r"(don'?t|do not) want to be (here|alive) (anymore|any more)", re.I),
+    # 2026-08-16: "no reason to live" fired, "what's the point of living" did
+    # not -- the same hopelessness in the register a child actually uses.
+    re.compile(r"\bwhat'?s the point (of|in) (living|life|being alive|going on)\b", re.I),
     # standalone "want to die" — word-boundary on "die" avoids "died"/"dies"
     # but we use phrase match since "want to die" is unambiguous
     re.compile(r"want to die", re.I),
@@ -146,8 +157,14 @@ _PHYSICAL_DANGER_PATTERNS: list[re.Pattern[str]] = [p for p in (
     # a disclosure to fit a regex. Bounded gap + tense/voice variants, using the
     # same [^.?!]{0,N} technique the 2026-08-12 patterns below already use.
     # SAFETY §3.2 states the posture explicitly: over-block by design.
+    # 2026-08-16: the actor list held pronouns and the POSSESSIVES "my|our", so
+    # "my dad hits me" fired but the bare "dad hits me" / "mum smacks me really
+    # hard" did not -- and dropping the possessive is exactly how a child writes
+    # about their own household. Bare relatives added.
     re.compile(
         r"\b(someone|somebody|a person|grown.?up|adult|man|woman|he|she|they|"  # t7.3-exempt: regex alternation, not a prompt
+        r"dad|daddy|father|mum|mummy|mom|mother|step-?\s?(dad|mum|mom|father|mother)|"
+        r"uncle|aunt|brother|sister|carer|guardian|teacher|nan|nana|gran|grandad|grandma|"
         r"my|our)\b[^.?!]{0,30}\b(hurts?|hurting|hits?|hitting|beats?|beating|"
         r"punch(es|ed|ing)?|kick(s|ed|ing)?|slaps?|slapped|smacks?|smacked|"
         r"shoves?|shoved|abuses?|abused)\b\s*me\b", re.I),
@@ -191,6 +208,9 @@ _PHYSICAL_DANGER_PATTERNS: list[re.Pattern[str]] = [p for p in (
 _SEVERE_DISTRESS_PATTERNS: list[re.Pattern[str]] = [p for p in (
     re.compile(r"(everything|nothing|life) (is|feels?) (hopeless|pointless|meaningless|worthless|terrible|awful)", re.I),
     re.compile(r"i('?ve| have) been (crying|sobbing) (all|every|for) (day|night|week|hours?)", re.I),
+    # 2026-08-16: present tense was missing. "I've been crying every night" fired,
+    # "I cry every night" did not -- the plainer of the two sentences.
+    re.compile(r"\bi cry (every ?(night|day)|all the time|myself to sleep)\b", re.I),
     re.compile(r"(i feel|i'?m feeling) (completely )?(hopeless|worthless|empty|broken|destroyed|devastated)", re.I),
     re.compile(r"nobody (loves?|cares? about|wants) me", re.I),
     re.compile(r"(i hate|i can'?t stand) (my life|myself|being alive|living)", re.I),

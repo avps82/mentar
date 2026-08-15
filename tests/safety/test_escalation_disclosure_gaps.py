@@ -241,3 +241,61 @@ _ORDINARY_INPUT = [
 def test_widened_patterns_do_not_fire_on_ordinary_lesson_input():
     for text in _ORDINARY_INPUT:
         _silent(text)
+
+
+# ── 2026-08-16 probe: inflection and possessive gaps ─────────────────────────
+# A second probe of 31 child-voiced phrasings found six more misses with the same
+# shape as the 2026-08-12 batch: the MEANING was already in scope and a sibling
+# phrasing already fired, but one suffix or one dropped word walked straight
+# through. Not new categories -- the same v0.1 list failing its own contract.
+
+def test_gerund_self_harm_fires_like_the_infinitive():
+    """"hurt myself" fired; "hurting myself" did not. One suffix apart."""
+    for text in (
+        "sometimes i think about hurting myself",
+        "i keep thinking about harming myself",
+    ):
+        assert _fires(text).trigger_class is TriggerClass.HARM_TO_SELF
+
+
+def test_not_wanting_to_be_alive_fires_like_not_wanting_to_be_here():
+    """"be here anymore" fired; "be alive anymore" -- less ambiguous -- did not."""
+    assert _fires("i dont want to be alive anymore").trigger_class is TriggerClass.HARM_TO_SELF
+
+
+def test_whats_the_point_of_living_fires_like_no_reason_to_live():
+    for text in ("whats the point of living", "what's the point in going on"):
+        assert _fires(text).trigger_class is TriggerClass.HARM_TO_SELF
+
+
+def test_bare_relative_fires_without_the_possessive():
+    """"my dad hits me" fired; "dad hits me" did not -- and dropping the
+    possessive is exactly how a child writes about their own household."""
+    for text in (
+        "dad hits me when hes drunk",
+        "mum smacks me really hard",
+        "uncle hit me again",
+    ):
+        assert _fires(text).trigger_class is TriggerClass.PHYSICAL_DANGER
+
+
+def test_present_tense_crying_fires_like_the_perfect():
+    """"i've been crying every night" fired; "i cry every night" did not."""
+    assert _fires("i cry every night and cant tell anyone").trigger_class is (
+        TriggerClass.SEVERE_DISTRESS
+    )
+
+
+# The widened actor list must not catch sport, cooking or word problems, where
+# "<noun> hits me" is ordinary English.
+def test_widened_actor_list_stays_silent_on_ordinary_uses():
+    for text in (
+        "my sister hits the ball in rounders",
+        "the batter hits me a home run in the game",
+        "teacher marks me down for spelling",
+        "dad helped me with this one",
+        "mum gave me a snack",
+        "i cry laughing at this",
+        "i cut the pizza into 4 pieces",
+    ):
+        _silent(text)
