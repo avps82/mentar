@@ -4,7 +4,7 @@ title: Addition and Subtraction — Number Line and Column Layout
 description: Visual scaffold hints for whole-number addition and subtraction.
 tags: [mathematics, addition, subtraction, visual-scaffold, number-line]
 subject: mathematics
-topic_keywords: [addition, subtraction, adding, subtracting, sum, difference, plus, minus, take away, count on, number bond]
+topic_keywords: [addition, subtraction, adding, subtracting, sum, difference, plus, take away, count on, number bond]
 timestamp: "2026-07-22T00:00:00Z"
 ---
 

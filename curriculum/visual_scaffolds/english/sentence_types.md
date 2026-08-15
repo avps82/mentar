@@ -4,7 +4,8 @@ title: Sentence Types — simple, compound and complex
 description: Visual scaffold hints for classifying sentence structure by its clauses.
 tags: [english, grammar, clause, visual-scaffold]
 subject: english
-topic_keywords: [sentence type, sentence types, simple sentence, compound sentence, complex sentence, simple, compound, complex, sentences, main clause, subordinate clause, clause]
+topic_keywords: [sentence type, sentence types, simple sentence, compound sentence,
+  complex sentence, compound and complex, sentences, main clause, subordinate clause, clause]
 timestamp: "2026-08-14T00:00:00Z"
 ---
 

@@ -4,7 +4,7 @@ title: Parts of Speech — Naming, Doing, Describing Words
 description: Visual scaffold hints for identifying nouns (naming words), verbs (doing words), and adjectives (describing words).
 tags: [english, parts-of-speech, nouns, verbs, adjectives, visual-scaffold, grammar]
 subject: english
-topic_keywords: [naming word, doing word, describing word, noun, verb, adjective, adverb, parts of speech, identify, word class, what kind of word]
+topic_keywords: [naming word, doing word, describing word, parts of speech, identify, word class, what kind of word]
 timestamp: "2026-07-22T00:00:00Z"
 ---
 

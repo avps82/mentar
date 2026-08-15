@@ -4,7 +4,7 @@ title: Word Forms — Plurals, Compound Words, Rhyming Words
 description: Visual scaffold hints for word formation including plurals, compound words, and rhyming pairs.
 tags: [english, word-forms, plurals, compound-words, rhyming, visual-scaffold, spelling]
 subject: english
-topic_keywords: [plural, plurals, compound word, compound, rhyme, rhyming, rhyming words, word ending, -s, -es, -ies, prefix, suffix, word family]
+topic_keywords: [plural, plurals, compound, word ending, -s, -es, -ies, word family]
 timestamp: "2026-07-22T00:00:00Z"
 ---
 
