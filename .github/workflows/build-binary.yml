@@ -72,18 +72,21 @@ jobs:
       - name: Start it and check it actually serves
         shell: python
         run: |
-          import subprocess, sys, time, urllib.request, urllib.error
+          import pathlib, subprocess, sys, time, urllib.request, urllib.error
 
+          log = pathlib.Path("serve.log")
+          handle = log.open("w")
           proc = subprocess.Popen(
               [r"${{ matrix.binary }}", "serve", "--port", "5099", "--no-browser"],
-              stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+              stdout=handle, stderr=subprocess.STDOUT, text=True,
           )
           try:
               status = None
               deadline = time.monotonic() + 90
               while time.monotonic() < deadline:
                   if proc.poll() is not None:
-                      print(proc.stdout.read())
+                      handle.flush()
+                      print(log.read_text())
                       sys.exit(f"server exited early with code {proc.returncode}")
                   try:
                       with urllib.request.urlopen("http://127.0.0.1:5099/", timeout=2) as r:
@@ -106,6 +109,21 @@ jobs:
                   proc.wait(timeout=15)
               except subprocess.TimeoutExpired:
                   proc.kill()
+              handle.close()
+
+          banner = log.read_text()
+          print("--- what a parent sees on startup ---")
+          print(banner)
+          # Found by running the binary as a parent would (2026-08-15): Flask's dev
+          # server prints a bold red "WARNING: This is a development server..."
+          # directly under Mentar's calm banner. A parent cannot act on it and should
+          # not have to read it. waitress is bundled, so the packaged build must never
+          # fall back to the dev server -- assert that, rather than trusting it.
+          if "development server" in banner:
+              sys.exit("the packaged binary fell back to Flask's dev server; "
+                       "waitress is missing from the bundle")
+          if "Only THIS computer" not in banner:
+              sys.exit("the default-mode banner did not print")
 
       - name: Report size
         shell: bash

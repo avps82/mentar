@@ -517,7 +517,23 @@ def _serve(args) -> int:
         print(f"Mentar — http://127.0.0.1:{port}")
         print("  Only THIS computer can reach it (the default, and the supported setup).")
         print("  To use a tablet on your home network:  mentar serve --lan   (advanced)")
-        app.run(host="127.0.0.1", port=port, debug=False)
+        print("  Stop it with Ctrl-C.")
+        # Waitress for the default path too, when it is available -- which is always
+        # for `mentar[web]` and always in the packaged binary. Two reasons, and the
+        # second is why this changed:
+        #   1. One server, not two. The localhost and --lan paths now behave the same.
+        #   2. Flask's dev server prints "WARNING: This is a development server. Do
+        #      not use it in a production deployment." in bold red, immediately under
+        #      our own calm banner. A parent cannot act on that and should not have to
+        #      read it; werkzeug hardcodes it with no way to suppress it. Found by
+        #      running the packaged binary as a parent would, not by reading the code.
+        # Flask's server stays as the fallback so a bare `pip install flask` still runs.
+        try:
+            from waitress import serve as waitress_serve
+        except ImportError:
+            app.run(host="127.0.0.1", port=port, debug=False)
+        else:
+            waitress_serve(app, host="127.0.0.1", port=port, threads=8)
         return 0
 
     try:

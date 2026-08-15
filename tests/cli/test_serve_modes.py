@@ -66,13 +66,43 @@ def _run(args, with_waitress=True):
 
 
 def test_default_serves_only_this_computer():
+    """The invariant is the BIND ADDRESS, not which server implements it.
+
+    This used to pin `("flask", ...)`. That encoded an implementation choice, so
+    it failed when the default moved to waitress even though the thing actually
+    worth protecting -- loopback only -- was still true. Assert the guarantee.
+    """
     code, out, calls = _run(_Args())
     assert code == 0
-    assert calls == [("flask", {"host": "127.0.0.1", "port": 5000, "debug": False})], calls
+    assert len(calls) == 1, calls
+    server, kwargs = calls[0]
+    assert server in ("waitress", "flask"), calls
+    assert kwargs["host"] == "127.0.0.1", "the default must never leave this computer"
+    assert kwargs["port"] == 5000
     assert "127.0.0.1:5000" in out
     assert "Only THIS computer" in out
     # and it points at the advanced path without doing it
     assert "--lan" in out
+
+
+def test_default_prefers_waitress_so_no_dev_server_warning_reaches_a_parent():
+    """2026-08-15, found by running the packaged binary rather than reading code:
+    Flask's server prints "WARNING: This is a development server..." in bold red
+    directly under Mentar's own calm banner. werkzeug hardcodes it -- there is no
+    suppress flag -- so the fix is to use the server we already ship."""
+    code, _out, calls = _run(_Args())
+    assert code == 0
+    assert calls[0][0] == "waitress", calls
+    assert calls[0][1]["host"] == "127.0.0.1", "still loopback -- waitress is not --lan"
+
+
+def test_default_still_runs_when_waitress_is_missing():
+    """A bare `pip install flask` must not lose the ability to run at all. The dev
+    server stays as the fallback; its warning is then at least accurate."""
+    code, out, calls = _run(_Args(), with_waitress=False)
+    assert code == 0, out
+    assert calls == [("flask", {"host": "127.0.0.1", "port": 5000, "debug": False})], calls
+    assert "Only THIS computer" in out
 
 
 def test_lan_mode_states_what_it_exposes_before_serving():
