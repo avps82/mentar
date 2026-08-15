@@ -139,6 +139,24 @@ _PHYSICAL_DANGER_PATTERNS: list[re.Pattern[str]] = [p for p in (
     re.compile(r"(someone|a person|grown.?up|adult|man|woman|he|she|they) (hurts|hits|beats|kicks|punches) me", re.I),
     re.compile(r"(my|our) (dad|mum|mom|stepdad|stepmom|uncle|aunt|teacher|brother|sister|carer|guardian) (hurts|hits|beats|abuses|punches|kicks) me", re.I),
     re.compile(r"being (physically )?abused", re.I),
+    # 2026-08-15 sweep: the two actor->verb patterns above require the verb to sit
+    # IMMEDIATELY after the actor, so real disclosures walked straight through:
+    # "someone at home hits me", "my mum shouts and hits me", "my dad hurt me"
+    # (past tense absent), "i get hit at home" (passive). A child does not phrase
+    # a disclosure to fit a regex. Bounded gap + tense/voice variants, using the
+    # same [^.?!]{0,N} technique the 2026-08-12 patterns below already use.
+    # SAFETY §3.2 states the posture explicitly: over-block by design.
+    re.compile(
+        r"\b(someone|somebody|a person|grown.?up|adult|man|woman|he|she|they|"  # t7.3-exempt: regex alternation, not a prompt
+        r"my|our)\b[^.?!]{0,30}\b(hurts?|hurting|hits?|hitting|beats?|beating|"
+        r"punch(es|ed|ing)?|kick(s|ed|ing)?|slaps?|slapped|smacks?|smacked|"
+        r"shoves?|shoved|abuses?|abused)\b\s*me\b", re.I),
+    re.compile(
+        r"\b(i|we)\b[^.?!]{0,20}\b(get|gets|got|keep getting|keeps getting|am|are|was|were)\b"  # t7.3-exempt: regex alternation, not a prompt
+        r"[^.?!]{0,12}\b(hit|hurt|beaten|beat up|smacked|slapped|punched|kicked|shoved)\b", re.I),
+    re.compile(
+        r"\bscared of\b[^.?!]{0,20}\b(my |our |the )?(dad|daddy|father|mum|mummy|mom|mother|"  # t7.3-exempt: regex alternation, not a prompt
+        r"stepdad|stepmum|stepmom|uncle|aunt|carer|guardian|brother|sister|teacher)\b", re.I),
     # "I'm in danger" / "I'm scared someone will hurt me"
     re.compile(r"(i'?m|i am) in danger", re.I),
     re.compile(r"scared (that )?(someone|he|she|they) will (hurt|hit|kill|harm) me", re.I),

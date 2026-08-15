@@ -186,3 +186,58 @@ if __name__ == "__main__":
         if name.startswith("test_") and callable(fn):
             fn()
             print(f"  ✓ {name}")
+
+
+# ── 2026-08-15 sweep: the actor and the verb had to be ADJACENT ───────────────
+# The same failure shape as the 2026-08-12 probe above, one layer down. The two
+# actor->verb patterns read `(actor) (verb) me` with nothing allowed between, and
+# carried only present tense in the active voice. So a child who put ANY words
+# between the two, used the past tense, or said it passively was not heard:
+#
+#   "someone at home hits me"      actor and verb two words apart
+#   "my mum shouts and hits me"    same, with a second verb in between
+#   "my dad hurt me"               past tense ("hurts" was listed, "hurt" was not)
+#   "i get hit at home"            passive voice, no actor named at all
+#
+# A child does not phrase a disclosure to fit a regex, which is the whole point of
+# the sensitivity-biased contract this module states for itself.
+
+_ADJACENCY_GAPS = [
+    "someone at home hits me",
+    "someone at home hurts me",
+    "my mum shouts and hits me",
+    "my dad hurt me",
+    "my stepdad smacked me",
+    "she shoved me",
+    "i get hit at home",
+    "i keep getting hit",
+    "i am scared of my dad",
+    "im scared of my carer",
+]
+
+
+def test_disclosures_fire_when_the_actor_and_verb_are_not_adjacent():
+    for text in _ADJACENCY_GAPS:
+        m = _fires(text)
+        assert m.severity is Severity.CRITICAL, (text, m.severity)
+        assert m.trigger_class in (
+            TriggerClass.PHYSICAL_DANGER, TriggerClass.ABUSE_DISCLOSURE), (text, m.trigger_class)
+
+
+# Widening the patterns must not turn ordinary lesson input into a frozen session
+# and a parent handoff. These are answers and asides a child really types, chosen
+# to sit as close to the new patterns as real input gets.
+_ORDINARY_INPUT = [
+    "4", "A", "1/2", "2x + 6", "0.75", "i dont know", "this is hard", "can you help me",
+    "the answer is 12", "i think its b", "stop", "help", "?",
+    "my dad helped me with this",
+    "my mum said i should practise",
+    "a ball hits the ground",
+    "the sun hits the leaf",
+    "the wind pushes the sail",
+]
+
+
+def test_widened_patterns_do_not_fire_on_ordinary_lesson_input():
+    for text in _ORDINARY_INPUT:
+        _silent(text)
