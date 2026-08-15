@@ -25,7 +25,15 @@ def gen_word_classes_y2(rng: random.Random):
         "a doing word (verb)": ["run", "jump", "sing", "eat", "sleep", "play", "swim", "read"],
         "a describing word (adjective)": ["happy", "big", "red", "fast", "small", "soft", "loud", "cold"],
     }
-    return mc_which_is(rng, "Which of these is {label}?", table)
+    return mc_which_is(
+        rng, "Which of these is {label}?", table,
+        glosses={
+            'a naming word (noun)': 'a noun names a person, place or thing',
+            'a doing word (verb)': 'a verb is something you can DO',
+            'a describing word (adjective)': 'an adjective tells you what something is LIKE',
+        },
+        concept_name='WORD CLASSES',
+    )
 
 
 def gen_synonyms_y2(rng: random.Random):
@@ -37,7 +45,11 @@ def gen_synonyms_y2(rng: random.Random):
         "small": ["little", "tiny"],
         "cold": ["chilly", "icy"],
     }
-    return mc_which_is(rng, "Which word means the SAME as '{label}'?", table)
+    return mc_which_is(
+        rng, "Which word means the SAME as '{label}'?", table,
+        glosses=dict.fromkeys(table, 'a synonym is a different word with the same meaning'),
+        concept_name='SYNONYMS',
+    )
 
 
 def gen_plurals_y2(rng: random.Random):
@@ -46,7 +58,11 @@ def gen_plurals_y2(rng: random.Random):
         "cat": ["cats"], "dog": ["dogs"], "box": ["boxes"],
         "child": ["children"], "mouse": ["mice"], "book": ["books"],
     }
-    return mc_which_is(rng, "What is the plural of '{label}'?", table)
+    return mc_which_is(
+        rng, "What is the plural of '{label}'?", table,
+        glosses=dict.fromkeys(table, 'most words add -s; words ending x/ch/sh/s add -es; a few change completely'),
+        concept_name='PLURALS',
+    )
 
 
 def gen_rhyming_y2(rng: random.Random):
@@ -57,7 +73,11 @@ def gen_rhyming_y2(rng: random.Random):
         "king": ["sing", "ring", "wing"],
         "boat": ["coat", "goat", "float"],
     }
-    return mc_which_is(rng, "Which word rhymes with '{label}'?", table)
+    return mc_which_is(
+        rng, "Which word rhymes with '{label}'?", table,
+        glosses=dict.fromkeys(table, 'rhyming words share their ENDING SOUND -- the spelling can differ'),
+        concept_name='RHYMING WORDS',
+    )
 
 
 # ── Year 3 ─────────────────────────────────────────────────────────────────
@@ -69,7 +89,11 @@ def gen_antonyms_basic_y3(rng: random.Random):
         "hot": ["cold"], "fast": ["slow"], "empty": ["full"],
         "day": ["night"], "open": ["closed"], "wet": ["dry"],
     }
-    return mc_which_is(rng, "Which word means the OPPOSITE of '{label}'?", table)
+    return mc_which_is(
+        rng, "Which word means the OPPOSITE of '{label}'?", table,
+        glosses=dict.fromkeys(table, 'an antonym is a word with the opposite meaning'),
+        concept_name='ANTONYMS',
+    )
 
 
 def gen_prefixes_y3(rng: random.Random):
@@ -79,7 +103,15 @@ def gen_prefixes_y3(rng: random.Random):
         "re- (again)": ["replay", "rewrite", "return", "rebuild"],
         "dis- (not / opposite)": ["disagree", "dislike", "disappear", "distrust"],
     }
-    return mc_which_is(rng, "Which of these words begins with the prefix {label}?", table)
+    return mc_which_is(
+        rng, "Which of these words begins with the prefix {label}?", table,
+        glosses={
+            'un- (not / opposite)': 'un- on the front flips the meaning to its opposite',
+            're- (again)': 're- on the front means doing it again',
+            'dis- (not / opposite)': 'dis- on the front also means not, or the opposite',
+        },
+        concept_name='PREFIXES',
+    )
 
 
 def gen_homophones_y3(rng: random.Random):
@@ -98,7 +130,11 @@ def gen_homophones_y3(rng: random.Random):
         "means 'in this place'": ["here"],
         "means 'to listen'": ["hear"],
     }
-    return mc_which_is(rng, "Which word {label}?", table)
+    return mc_which_is(
+        rng, "Which word {label}?", table,
+        glosses=dict.fromkeys(table, 'homophones sound the same but are spelled differently and mean different things'),
+        concept_name='HOMOPHONES',
+    )
 
 
 def gen_adjectives_comparative_y3(rng: random.Random):
@@ -107,7 +143,14 @@ def gen_adjectives_comparative_y3(rng: random.Random):
         "a comparative adjective (comparing TWO things)": ["bigger", "faster", "taller", "smaller"],
         "a superlative adjective (comparing THREE OR MORE things)": ["biggest", "fastest", "tallest", "smallest"],
     }
-    return mc_which_is(rng, "Which of these is {label}?", table)
+    return mc_which_is(
+        rng, "Which of these is {label}?", table,
+        glosses={
+            'a comparative adjective (comparing TWO things)': '-er compares exactly two things',
+            'a superlative adjective (comparing THREE OR MORE things)': '-est picks the top one out of three or more',
+        },
+        concept_name='COMPARING ADJECTIVES',
+    )
 
 
 # ── Year 4 ─────────────────────────────────────────────────────────────────
@@ -119,7 +162,15 @@ def gen_suffixes_y4(rng: random.Random):
         "-less (without)": ["careless", "hopeless", "fearless", "harmless"],
         "-ness (a state of being)": ["happiness", "kindness", "sadness", "darkness"],
     }
-    return mc_which_is(rng, "Which of these words ends with the suffix {label}?", table)
+    return mc_which_is(
+        rng, "Which of these words ends with the suffix {label}?", table,
+        glosses={
+            '-ful (full of)': '-ful on the end means full of that thing',
+            '-less (without)': '-less on the end means without it',
+            '-ness (a state of being)': '-ness turns a describing word into the state of being it',
+        },
+        concept_name='SUFFIXES',
+    )
 
 
 def gen_contractions_y4(rng: random.Random):
@@ -128,7 +179,11 @@ def gen_contractions_y4(rng: random.Random):
         "do not": ["don't"], "cannot": ["can't"], "it is": ["it's"],
         "I am": ["I'm"], "they are": ["they're"], "will not": ["won't"],
     }
-    return mc_which_is(rng, "Which is the SHORT form (contraction) of '{label}'?", table)
+    return mc_which_is(
+        rng, "Which is the SHORT form (contraction) of '{label}'?", table,
+        glosses=dict.fromkeys(table, 'a contraction joins two words and the apostrophe marks the missing letters'),
+        concept_name='CONTRACTIONS',
+    )
 
 
 def gen_common_proper_nouns_y4(rng: random.Random):
@@ -137,7 +192,14 @@ def gen_common_proper_nouns_y4(rng: random.Random):
         "a common noun (no capital needed)": ["city", "river", "school", "country"],
         "a proper noun (needs a capital letter)": ["London", "Nile", "Australia", "Monday"],
     }
-    return mc_which_is(rng, "Which of these is {label}?", table)
+    return mc_which_is(
+        rng, "Which of these is {label}?", table,
+        glosses={
+            'a common noun (no capital needed)': 'any one of many -- a city, some river',
+            'a proper noun (needs a capital letter)': 'the NAME of one particular one, so it takes a capital',
+        },
+        concept_name='COMMON AND PROPER NOUNS',
+    )
 
 
 def gen_similes_basic_y4(rng: random.Random):
@@ -151,7 +213,14 @@ def gen_similes_basic_y4(rng: random.Random):
             "the dog ran fast", "she sang a song", "the feather was light", "he was very brave",
         ],
     }
-    return mc_which_is(rng, "Which of these is {label}?", table)
+    return mc_which_is(
+        rng, "Which of these is {label}?", table,
+        glosses={
+            "a simile (uses 'like' or 'as' to compare)": "the words 'like' or 'as' are the giveaway",
+            'a plain sentence (no comparison)': 'it states what happened without comparing it to anything',
+        },
+        concept_name='SIMILES',
+    )
 
 
 # ── Year 7 ─────────────────────────────────────────────────────────────────
@@ -166,7 +235,14 @@ def gen_idioms_y7(rng: random.Random):
             "it's raining heavily outside", "good luck with the show", "I dropped the beans", "I feel sick today",
         ],
     }
-    return mc_which_is(rng, "Which of these is {label}?", table)
+    return mc_which_is(
+        rng, "Which of these is {label}?", table,
+        glosses={
+            "an idiom (doesn't mean what the words literally say)": 'the phrase has a meaning the words alone would never give you',
+            'a literal phrase (means exactly what it says)': 'the words add up to exactly what is meant',
+        },
+        concept_name='IDIOMS',
+    )
 
 
 def gen_formal_informal_y7(rng: random.Random):
@@ -175,7 +251,14 @@ def gen_formal_informal_y7(rng: random.Random):
         "formal language": ["purchase", "commence", "assistance", "residence"],
         "informal language": ["buy", "start", "help", "home"],
     }
-    return mc_which_is(rng, "Which of these is {label}?", table)
+    return mc_which_is(
+        rng, "Which of these is {label}?", table,
+        glosses={
+            'formal language': "the word you would use in writing, or with someone you don't know",
+            'informal language': 'the everyday word you would use with a friend',
+        },
+        concept_name='FORMAL AND INFORMAL WORDS',
+    )
 
 
 def gen_active_passive_y7(rng: random.Random):
@@ -189,7 +272,14 @@ def gen_active_passive_y7(rng: random.Random):
             "the meal was cooked by the chef", "the house was built by them",
         ],
     }
-    return mc_which_is(rng, "Which of these is {label}?", table)
+    return mc_which_is(
+        rng, "Which of these is {label}?", table,
+        glosses={
+            'active voice (the subject DOES the action)': 'the doer comes first: who did what',
+            'passive voice (the subject RECEIVES the action)': 'the thing it happened TO comes first, and the doer moves to the end (or vanishes)',
+        },
+        concept_name='ACTIVE AND PASSIVE VOICE',
+    )
 
 
 def gen_personification_y7(rng: random.Random):
@@ -210,7 +300,14 @@ def gen_personification_y7(rng: random.Random):
             "the old car started slowly", "the thunder rumbled loudly",
         ],
     }
-    return mc_which_is(rng, "Which of these is {label}?", table)
+    return mc_which_is(
+        rng, "Which of these is {label}?", table,
+        glosses={
+            'personification (giving human qualities to something non-human)': 'a thing is doing something only a person can do',
+            'a literal statement (no human qualities given)': 'it describes the same event with no human traits attached',
+        },
+        concept_name='PERSONIFICATION',
+    )
 
 
 # ── Year 8 ─────────────────────────────────────────────────────────────────
@@ -222,7 +319,14 @@ def gen_connotation_y8(rng: random.Random):
         "a word with a POSITIVE connotation": ["slender", "confident", "curious", "frugal"],
         "a word with a NEGATIVE connotation": ["skinny", "arrogant", "nosy", "stingy"],
     }
-    return mc_which_is(rng, "Which of these is {label}?", table)
+    return mc_which_is(
+        rng, "Which of these is {label}?", table,
+        glosses={
+            'a word with a POSITIVE connotation': 'same basic meaning, but it makes the thing sound good',
+            'a word with a NEGATIVE connotation': 'same basic meaning, but it makes the thing sound bad',
+        },
+        concept_name='CONNOTATION',
+    )
 
 
 def gen_clauses_y8(rng: random.Random):
@@ -236,7 +340,14 @@ def gen_clauses_y8(rng: random.Random):
             "because she was hungry", "although the dog barked", "when we finished", "if he plays well",
         ],
     }
-    return mc_which_is(rng, "Which of these is {label}?", table)
+    return mc_which_is(
+        rng, "Which of these is {label}?", table,
+        glosses={
+            'a main clause (can stand alone as a full sentence)': 'read it on its own and it still makes sense',
+            'a subordinate clause (cannot stand alone)': 'it leaves you waiting for the rest of the sentence',
+        },
+        concept_name='MAIN AND SUBORDINATE CLAUSES',
+    )
 
 
 def gen_adverbial_phrases_y8(rng: random.Random):
@@ -249,7 +360,14 @@ def gen_adverbial_phrases_y8(rng: random.Random):
             "the big red car", "my best friend", "a beautiful sunset", "the old oak tree",
         ],
     }
-    return mc_which_is(rng, "Which of these is {label}?", table)
+    return mc_which_is(
+        rng, "Which of these is {label}?", table,
+        glosses={
+            'an adverbial phrase (tells HOW, WHEN or WHERE)': 'it tells you about the action, not about a thing',
+            'a noun phrase (names a person, place or thing)': 'it names a thing, with words describing it',
+        },
+        concept_name='ADVERBIAL AND NOUN PHRASES',
+    )
 
 
 def gen_onomatopoeia_y8(rng: random.Random):
@@ -258,7 +376,14 @@ def gen_onomatopoeia_y8(rng: random.Random):
         "onomatopoeia (a word that sounds like what it means)": ["buzz", "crash", "sizzle", "whoosh"],
         "a regular descriptive word": ["loud", "sudden", "hot", "fast"],
     }
-    return mc_which_is(rng, "Which of these is {label}?", table)
+    return mc_which_is(
+        rng, "Which of these is {label}?", table,
+        glosses={
+            'onomatopoeia (a word that sounds like what it means)': 'say it aloud -- the sound of the word IS the sound it describes',
+            'a regular descriptive word': 'it describes the thing without sounding like it',
+        },
+        concept_name='ONOMATOPOEIA',
+    )
 
 
 # ── Year 5 ─────────────────────────────────────────────────────────────────
@@ -272,7 +397,11 @@ def gen_synonyms_advanced_y5(rng: random.Random):
         "furious": ["angry", "enraged"],
         "peculiar": ["strange", "odd"],
     }
-    return mc_which_is(rng, "Which word means the SAME as '{label}'?", table)
+    return mc_which_is(
+        rng, "Which word means the SAME as '{label}'?", table,
+        glosses=dict.fromkeys(table, 'a synonym is a different word with the same meaning'),
+        concept_name='SYNONYMS',
+    )
 
 
 def gen_antonyms_advanced_y5(rng: random.Random):
@@ -284,7 +413,11 @@ def gen_antonyms_advanced_y5(rng: random.Random):
         "genuine": ["fake"],
         "abundant": ["scarce"],
     }
-    return mc_which_is(rng, "Which word means the OPPOSITE of '{label}'?", table)
+    return mc_which_is(
+        rng, "Which word means the OPPOSITE of '{label}'?", table,
+        glosses=dict.fromkeys(table, 'an antonym is a word with the opposite meaning'),
+        concept_name='ANTONYMS',
+    )
 
 
 def gen_word_classes_advanced_y5(rng: random.Random):
@@ -295,7 +428,15 @@ def gen_word_classes_advanced_y5(rng: random.Random):
         "a pronoun (stands in for a noun)": ["she", "they", "it", "we"],
         "a verb": ["walk", "think", "build", "carry"],
     }
-    return mc_which_is(rng, "Which of these is {label}?", table)
+    return mc_which_is(
+        rng, "Which of these is {label}?", table,
+        glosses={
+            'an adverb (describes HOW something is done)': 'adverbs describe the verb, and often end -ly',
+            'a pronoun (stands in for a noun)': 'it replaces a name you already know',
+            'a verb': 'a verb is the action itself',
+        },
+        concept_name='WORD CLASSES',
+    )
 
 
 def gen_compound_words_y5(rng: random.Random):
@@ -304,7 +445,14 @@ def gen_compound_words_y5(rng: random.Random):
         "a real compound word": ["sunflower", "toothbrush", "basketball", "butterfly", "football"],
         "not a real word": ["moonbrush", "chairwater", "tablesong", "doorsinger"],
     }
-    return mc_which_is(rng, "Which of these IS {label}?", table)
+    return mc_which_is(
+        rng, "Which of these IS {label}?", table,
+        glosses={
+            'a real compound word': 'two real words joined into one word people actually use',
+            'not a real word': 'two real words stuck together, but not a word anyone uses',
+        },
+        concept_name='COMPOUND WORDS',
+    )
 
 
 # ── Year 6 ─────────────────────────────────────────────────────────────────
@@ -315,7 +463,14 @@ def gen_figurative_language_y6(rng: random.Random):
         "a simile (uses 'like' or 'as')": ["as brave as a lion", "ran like the wind", "as quiet as a mouse", "as busy as a bee"],
         "a metaphor (says one thing IS another)": ["time is money", "the classroom was a zoo", "her heart is a stone", "the world is a stage"],
     }
-    return mc_which_is(rng, "Which of these is {label}?", table)
+    return mc_which_is(
+        rng, "Which of these is {label}?", table,
+        glosses={
+            "a simile (uses 'like' or 'as')": 'it says one thing is LIKE another',
+            'a metaphor (says one thing IS another)': "it says one thing IS the other, with no 'like' or 'as'",
+        },
+        concept_name='SIMILE AND METAPHOR',
+    )
 
 
 def gen_synonyms_nuanced_y6(rng: random.Random):
@@ -326,7 +481,11 @@ def gen_synonyms_nuanced_y6(rng: random.Random):
         "candid": ["honest", "frank"],
         "resilient": ["tough", "adaptable"],
     }
-    return mc_which_is(rng, "Which word means the SAME as '{label}'?", table)
+    return mc_which_is(
+        rng, "Which word means the SAME as '{label}'?", table,
+        glosses=dict.fromkeys(table, 'a synonym is a different word with the same meaning -- the shade of meaning can differ'),
+        concept_name='SYNONYMS',
+    )
 
 
 def gen_antonyms_nuanced_y6(rng: random.Random):
@@ -337,7 +496,11 @@ def gen_antonyms_nuanced_y6(rng: random.Random):
         "voluntary": ["compulsory"],
         "flexible": ["rigid"],
     }
-    return mc_which_is(rng, "Which word means the OPPOSITE of '{label}'?", table)
+    return mc_which_is(
+        rng, "Which word means the OPPOSITE of '{label}'?", table,
+        glosses=dict.fromkeys(table, 'an antonym is a word with the opposite meaning'),
+        concept_name='ANTONYMS',
+    )
 
 
 def gen_word_classes_conj_prep_y6(rng: random.Random):
@@ -346,7 +509,14 @@ def gen_word_classes_conj_prep_y6(rng: random.Random):
         "a conjunction (joins two ideas)": ["and", "but", "because", "although"],
         "a preposition (shows position or time)": ["under", "before", "between", "during"],
     }
-    return mc_which_is(rng, "Which of these is {label}?", table)
+    return mc_which_is(
+        rng, "Which of these is {label}?", table,
+        glosses={
+            "a conjunction (joins two ideas)": "it sits BETWEEN two ideas and links them",
+            "a preposition (shows position or time)": "it tells you where or when something is, in relation to something else",
+        },
+        concept_name="CONJUNCTIONS AND PREPOSITIONS",
+    )
 
 
 # ── Registries (node_id -> generator) ─────────────────────────────────────────

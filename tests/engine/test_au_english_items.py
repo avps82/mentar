@@ -87,3 +87,38 @@ if __name__ == "__main__":
     print("  ✓ test_year6_english_generators_self_validate")
     test_senior_english_generators_self_validate_and_carry_method_cards()
     print("  ✓ test_year6_english_generators_self_validate")
+
+
+def test_every_english_generator_carries_an_explain_card():
+    """2026-08-15: English was the largest explain-mode gap -- 116 of the 158
+    nodes with no deterministic explanation at all were English, because these
+    generators never passed glosses/concept_name. Every one does now, so a new
+    English generator that forgets is a failure here rather than a silent
+    fallback to LLM prose for a child who asked how it works.
+
+    Covers the practice pack too: its odd-one-out generator has a custom shape
+    (not mc_which_is) and needed its card written by hand."""
+    import mentar.engine.au_english_items as english
+    from mentar.engine.practice_items import ENGLISH_PRACTICE_GENERATORS
+
+    generators = {
+        name: getattr(english, name)
+        for name in dir(english)
+        if name.startswith("gen_") and callable(getattr(english, name))
+    }
+    generators.update(ENGLISH_PRACTICE_GENERATORS)
+    assert len(generators) >= 32, f"expected the whole English set, found {len(generators)}"
+
+    without = []
+    for name, fn in sorted(generators.items()):
+        g = ItemGenerator(generators={name: fn}, rng=random.Random(13))
+        for _ in range(30):
+            item = g.sample(name)
+            if not item.method_steps:
+                without.append(name)
+                break
+            # A card must NAME the concept and show the answer, not just restate
+            # the options: first line is the concept, second holds the answer.
+            assert item.method_steps[0].isupper(), (name, item.method_steps[0])
+            assert len(item.method_steps) >= 3, (name, item.method_steps)
+    assert not without, f"English generators with no explain card: {without}"

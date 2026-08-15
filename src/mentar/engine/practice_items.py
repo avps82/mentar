@@ -93,16 +93,36 @@ _ODD_ONE_OUT_CLASSES = {
 
 def _gen_synonyms_antonyms(rng: random.Random):
     if rng.choice([True, False]):
-        return mc_which_is(rng, "Which word means the SAME as '{label}'?", _SYNONYM_GROUPS)
-    return mc_which_is(rng, "Which word means the OPPOSITE of '{label}'?", _ANTONYM_PAIRS)
+        return mc_which_is(
+            rng, "Which word means the SAME as '{label}'?", _SYNONYM_GROUPS,
+            glosses=dict.fromkeys(
+                _SYNONYM_GROUPS, "a synonym is a different word with the same meaning"),
+            concept_name="SYNONYMS",
+        )
+    return mc_which_is(
+        rng, "Which word means the OPPOSITE of '{label}'?", _ANTONYM_PAIRS,
+        glosses=dict.fromkeys(_ANTONYM_PAIRS, "an antonym is a word with the opposite meaning"),
+        concept_name="ANTONYMS",
+    )
 
 
 def _gen_rhyming_words(rng: random.Random):
-    return mc_which_is(rng, "Which word rhymes with '{label}'?", _RHYME_GROUPS)
+    return mc_which_is(
+        rng, "Which word rhymes with '{label}'?", _RHYME_GROUPS,
+        glosses=dict.fromkeys(
+            _RHYME_GROUPS, "rhyming words share their ENDING SOUND -- the spelling can differ"),
+        concept_name="RHYMING WORDS",
+    )
 
 
 def _gen_plural_forms(rng: random.Random):
-    return mc_which_is(rng, "What is the plural of '{label}'?", _PLURAL_PAIRS)
+    return mc_which_is(
+        rng, "What is the plural of '{label}'?", _PLURAL_PAIRS,
+        glosses=dict.fromkeys(
+            _PLURAL_PAIRS,
+            "most words add -s; words ending x/ch/sh/s add -es; a few change completely"),
+        concept_name="PLURALS",
+    )
 
 
 def _gen_odd_one_out(rng: random.Random):
@@ -118,7 +138,17 @@ def _gen_odd_one_out(rng: random.Random):
     rng.shuffle(options)
     letter = "ABCD"[options.index(minority_item)]
     stem = "Which one does NOT belong with the others?"
-    return ("mc4", "mc_choice", stem, letter, options)
+    # The card NAMES the category the question deliberately withholds. That is
+    # safe and is the whole teaching point: explain-mode only runs after the
+    # child has answered or asked for help, so nothing is given away early.
+    card = (
+        "ODD ONE OUT",
+        f"{stem} -> {minority_item}",
+        f"  {', '.join(majority_items)} are all in one group: {majority_label}.",
+        f"  {minority_item} is a {minority_label}, so it is the odd one out.",
+        "  Look for what MOST of them share -- the odd one is the one left over.",
+    )
+    return ("mc4", "mc_choice", stem, letter, options, card)
 
 
 ENGLISH_PRACTICE_GENERATORS: dict[str, GenFn] = {
