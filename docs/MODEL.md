@@ -108,8 +108,8 @@ final pick into the Decision section** below.
 | `qwen2.5:0.5b` | Qwen 2.5 | ~0.5B | <2 GB | low-end | **candidate** (in roster rank 8) | minimum-RAM fallback; not yet formally eval'd through T1 suite |
 | `nanbeige:3b` (tag unconfirmed) | Nanbeige | ~3B | <4 GB | low-end | **candidate** *(queued, added 2026-07-26)* | Not yet on the eval-host proxy — checked `tools/llm.sh --models` 2026-07-26, absent. Maintainer to pull/expose on the eval host; re-run `--models` to confirm before any eval. |
 | `bonzai:27b` (name/tag unconfirmed) | — | ~27B | ~16+ GB | capable-GPU | **candidate** *(queued, added 2026-07-26)* | Name given verbatim by the maintainer, not independently verified — no open-weight model called "Bonzai" is recognized at this size from prior sessions' research. Not yet on the eval-host proxy. Confirm the exact family/tag once pulled before treating this row as more than a placeholder. |
-| `gemma-4-E2B-it-qat` | Gemma 4 QAT | ~2B eff. | 3 GB RAM | low-end / broad-HW | **candidate** *(queued, added 2026-07-22)* | llama.cpp only, no Ollama tag — `unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q4_K_XL`; host setup pending |
-| `gemma-4-E4B-it-qat` | Gemma 4 QAT | ~4B eff. | 5 GB RAM | low-end / broad-HW | **candidate** *(queued, added 2026-07-22)* | llama.cpp only, no Ollama tag — `unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q4_K_XL`; host setup pending |
+| `gemma-4-E2B-it-qat` | Gemma 4 QAT | **2.3B effective / 5.1B with embeddings** | ~4 GB RAM (see sizing note) | low-end / broad-HW | **candidate** *(queued, added 2026-07-22; params corrected 2026-08-15)* | llama.cpp only, no Ollama tag — `unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q4_K_XL`; host setup pending. 35 layers, 128K ctx, text/image/audio. **Not in `config/model_roster.yaml`** — ungraded, see §Small-model eval queue |
+| `gemma-4-E4B-it-qat` | Gemma 4 QAT | **4.5B effective / 8B with embeddings** | ~6 GB RAM (see sizing note) | low-end / broad-HW | **candidate** *(queued, added 2026-07-22; params corrected 2026-08-15)* | llama.cpp only, no Ollama tag — `unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q4_K_XL`; host setup pending. 42 layers, 128K ctx, text/image/audio. **Not in `config/model_roster.yaml`** — ungraded, see §Small-model eval queue |
 | `mistral-small3.1` | Mistral | ~24B (15GB) | ~16 GB (CPU-offload) | — | **CEILING, not candidate** | quality upper-bound; too big/slow for the pilot envelope — do **not** pick as the tutor |
 | `claude-sonnet-4-6` | Anthropic (cloud) | — | n/a | n/a | **judge / oracle** | grades candidate outputs; Phase-2 LLM-as-judge |
 | `claude-haiku-4-5` | Anthropic (cloud) | — | n/a | n/a | **dev / cheap judge** | not a tutor candidate |
@@ -412,6 +412,75 @@ false-confidence failure Mentar exists to prevent. The 14.6s pipeline latency re
 > ⚠️ **Harness note (2026-06-18):** `run_candidates.py` used `open("w")` — each suite run overwrote
 > the output file. Fixed to `open("a")` in the same session. Run the full pipeline without `--suite`
 > splitting to avoid stale partial files.
+
+## Small-model eval queue (2026-08-15) — the gap under 8 GB
+
+**Maintainer, 2026-08-15:** *"none of the small models have been tested yet. It is to
+do list. I am happy to keep any models as long as it works."* This section records
+what "works" would have to mean, so the to-do is executable rather than a note.
+
+### What is actually proven today
+
+| Model | Maths (31 items) | Safety graded | In roster |
+|---|---|---|---|
+| `gemma2:9b` | **31/31** | ✅ | ✅ rank 3 |
+| `gemma4:12b` | 100% | ✅ | ✅ rank 1 |
+| `qwen3:14b` | 20/31 | ❌ | ✅ rank 2 |
+| `qwen3.5:9b` | 19/31 | ❌ | ✅ rank 4 |
+| `llama3.1:8b` | 18/31 | ❌ | ✅ rank 5 |
+| `phi4-mini` | **15/31** | ❌ | ✅ rank 6 |
+| `qwen2.5:3b` | never run | ❌ | ✅ rank 7 |
+| `qwen2.5:0.5b` | never run | ❌ | ✅ rank 8 |
+| `gemma-4-E2B-it-qat` | never run | ❌ | ❌ **not in roster** |
+| `gemma-4-E4B-it-qat` | never run | ❌ | ❌ **not in roster** |
+
+**The gap is everything below 8 GB.** Both fully-graded models need ~7–9 GB, so a
+machine under that gets a model that is either measured-poor (phi4-mini gets about
+half its maths wrong) or never measured at all. `mentar setup` now states this at
+install time (`config/model_roster.yaml`'s `eval:` field), but saying it is not the
+same as fixing it.
+
+### Why the Gemma 4 E-models are the right thing to test first
+
+They are the same family as `gemma4:12b`, the one model that scored 100% correctness
+with safety 1.00 — so they are the best *prior* for a small model that actually
+teaches, rather than a different family chosen only because it is small.
+
+**Two things to get right before they go in the roster:**
+
+1. **Sizing — the effective/embeddings trap.** E2B is **2.3B effective but 5.1B with
+   embeddings**; E4B is **4.5B / 8B**. Our heuristic fallback is
+   `params_b * 0.6 + overhead`, so an entry carrying the *effective* count would
+   under-report RAM by roughly 40% — on exactly the low-end machines with no headroom
+   to absorb the error. Use the **with-embeddings** figure for `params_b`, and prefer
+   gguf-parser (which reads the real GGUF) over the heuristic.
+2. **Runtime reachability.** Both are llama.cpp-only (no Ollama tag), so they need
+   llama.app or the in-process GGUF runtime. **The packaged binary cannot use the
+   in-process GGUF runtime at all** — that needs `llama-cpp-python`, a compiled
+   package, and a frozen build has no Python to install it into (2026-08-15). So for
+   the downloadable build these are usable only via llama.app. A model with an Ollama
+   tag is materially easier to ship.
+
+### Definition of "works" — the bar to clear
+
+Same suites the graded models went through, so results are comparable:
+
+1. **Maths correctness**, 31-item suite. gemma2:9b sets the bar at 31/31; phi4-mini's
+   15/31 is the demonstrated floor of unacceptable.
+2. **Safety through the full pipeline** — `eval/score_safety.py`, adversarial suite.
+   Bare-model numbers are meaningless (EVAL_RESULTS §3.2: the wrapper turns a 25%-safe
+   raw model into an 80%+-safe tutor), so it must be the wrapped pipeline.
+3. **Sycophancy / not-getting-fooled** (EVAL_RESULTS §3.4) — a small model agreeing
+   with a wrong answer is the specific failure that hurts a child most.
+4. **Latency** on the target low-end machine, not on the eval host.
+
+Then, and only then, add to `config/model_roster.yaml` with an honest `eval:` status.
+
+**Not runnable in the sandbox** — needs the eval host (`MENTAR_VLLM_BASE_URL`) and the
+models pulled onto it. This is maintainer-gated work, which is why it is written down
+here rather than attempted.
+
+---
 
 ## Decision (W1.3) — provisional, NOT final
 
