@@ -555,6 +555,14 @@ input[type=text], input[type=number] {
   padding-top: 12px;
   font-size: 0.85rem;
 }
+/* WCAG 2.5.8 (AA): every interactive target is at least 24x24 CSS px. Measured
+   across every page in a headless browser 2026-08-15 and several were not --
+   footer links were 15px tall and the unclassed Settings/Setup buttons 21px.
+   This is a child on a tablet: a 15px-tall link is a miss-tap. The mc4 radios
+   are 17px but sit inside a 720x50 <label>, which IS the target, so they pass. */
+button, select, input[type=submit] { min-height: 28px; }
+select { min-width: 120px; }   /* an empty voice list must not collapse to 22px */
+.footer-nav a, .hint a { display: inline-block; padding: 5px 2px; }
 .footer-nav a { color: var(--text-muted); margin-right: 4px; }
 
 .alert { background: var(--danger-bg); border: 2px solid var(--danger); border-radius: var(--radius); padding: 20px; margin-bottom: 20px; }

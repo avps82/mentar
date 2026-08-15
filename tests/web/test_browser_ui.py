@@ -325,6 +325,74 @@ def test_picker_cards_in_a_row_are_the_same_height():
         server.stop()
 
 
+_PAGES = ("/choose", "/learn", "/progress", "/parent", "/settings", "/setup")
+
+_PAGE_PROBE = """(() => {
+  const out = {overflowX: document.documentElement.scrollWidth > window.innerWidth + 1,
+               offenders: [], tiny: [], dupHeads: []};
+  document.querySelectorAll('body *').forEach(el => {
+    const r = el.getBoundingClientRect();
+    if (!r.width && !r.height) return;
+    if (r.right > window.innerWidth + 1 || r.left < -1)
+      out.offenders.push(el.tagName.toLowerCase() + '.' + (el.className || '').toString().split(' ')[0]);
+  });
+  // WCAG 2.5.8: 24x24 minimum. A control inside a <label> is targeted BY that
+  // label (the mc4 radios are 17px inside a 720x50 label), so measure the label.
+  document.querySelectorAll('a, button, select, input:not([type=hidden])').forEach(el => {
+    const r = el.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    const label = el.closest('label');
+    const box = label ? label.getBoundingClientRect() : r;
+    if (box.height < 24 || box.width < 24)
+      out.tiny.push(((el.textContent || el.getAttribute('aria-label') || el.tagName).trim().slice(0, 30))
+                    + ' ' + Math.round(box.width) + 'x' + Math.round(box.height));
+  });
+  const heads = [...document.querySelectorAll('h1,h2,h3,h4')].map(h => h.textContent.trim());
+  heads.forEach((h, i) => { if (i && h === heads[i-1]) out.dupHeads.push(h); });
+  out.offenders = [...new Set(out.offenders)];
+  return out;})()"""
+
+
+def test_every_page_is_laid_out_sanely():
+    """One measured sweep of every screen, for the failure classes this project
+    has actually shipped: content escaping the viewport, a heading repeating
+    because rows were mis-sorted (Singapore rendered 21 headings for 31 rows),
+    and interactive targets under WCAG 2.5.8's 24x24 minimum (footer links were
+    15px tall, Settings buttons 21px -- on a tablet, for a child).
+
+    No route test can see any of it: the server sent correct HTML every time."""
+    _skip_unless_browser()
+    server, browser = _Server(), None
+    try:
+        browser = _Browser()
+        # start a session so /learn and /progress have real content to measure
+        browser.goto(server.url + "/choose")
+        browser.js("""(() => {const f = [...document.querySelectorAll('form')]
+            .find(f => f.querySelector('[value=au_acara_year11_chemistry]'));
+            f.querySelector('button').click();})()""")
+        browser.wait_for("document.getElementById('help-btn')")
+
+        problems = []
+        for path in _PAGES:
+            browser.goto(server.url + path)
+            if path == "/settings":
+                browser.wait_for("document.querySelectorAll('.tab-btn').length > 1")
+            r = browser.js(_PAGE_PROBE)
+            if r["overflowX"]:
+                problems.append(f"{path}: the page scrolls horizontally")
+            if r["offenders"]:
+                problems.append(f"{path}: elements outside the viewport: {r['offenders'][:4]}")
+            if r["dupHeads"]:
+                problems.append(f"{path}: a heading repeats back-to-back: {r['dupHeads'][:3]}")
+            if r["tiny"]:
+                problems.append(f"{path}: targets under 24x24: {r['tiny'][:5]}")
+        assert not problems, "\n".join(problems)
+    finally:
+        if browser:
+            browser.close()
+        server.stop()
+
+
 if __name__ == "__main__":
     test_country_master_switch_turns_off_every_row_under_it()
     print("  ✓ test_country_master_switch_turns_off_every_row_under_it")
@@ -334,3 +402,5 @@ if __name__ == "__main__":
     print("  ✓ test_picker_cards_in_a_row_are_the_same_height")
     test_pressing_show_me_how_shows_that_something_is_happening()
     print("  ✓ test_pressing_show_me_how_shows_that_something_is_happening")
+    test_every_page_is_laid_out_sanely()
+    print("  ✓ test_every_page_is_laid_out_sanely")
