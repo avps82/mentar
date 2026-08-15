@@ -424,9 +424,8 @@ STAGE_CONCEPTS: dict[str, dict[int, dict[str, GenFn]]] = {
 # Authority -> [(node-id prefix, level display name, senior stage)]. AU's au11/
 # au12 prefixes are already used by its maths pack; the subject slugs differ, so
 # ids stay unique (test_no_skill_id_collides_across_any_shipped_template).
-# US is deliberately absent: US high-school science is SEQUENCED by grade
-# (biology, then chemistry, then physics), not taken in parallel, so it needs its
-# own mapping decision rather than this three-subjects-per-level shape.
+# US lives in US_SEQUENCE below, not here: its high-school science is SEQUENCED
+# by grade rather than taken in parallel.
 SENIOR_LEVELS: dict[str, list[tuple[str, str, int]]] = {
     "AU_ACARA": [("au11", "Year 11", 1), ("au12", "Year 12", 2)],
     "IN_GENERIC": [("in_c11", "Class 11", 1), ("in_c12", "Class 12", 2)],
@@ -435,6 +434,12 @@ SENIOR_LEVELS: dict[str, list[tuple[str, str, int]]] = {
 
 SUBJECTS = ("physics", "chemistry", "biology")
 
+# Levels that ship NO science at all, and why. US Grade 12 science is electives
+# (AP, anatomy, environmental science, or none), which has no single shape to
+# model -- so it is absent BY DECISION, recorded here rather than left as a hole
+# for the coverage guard to report every run.
+NO_SCIENCE_LEVELS = {"us_g12"}
+
 
 def build_generators(prefix: str, subject: str, stage: int) -> dict[str, GenFn]:
     """One pack's node_id -> generator map, e.g. build_generators("sg_s3",
@@ -442,10 +447,41 @@ def build_generators(prefix: str, subject: str, stage: int) -> dict[str, GenFn]:
     return {f"{prefix}_{slug}": fn for slug, fn in STAGE_CONCEPTS[subject][stage].items()}
 
 
-# item_source name -> generators, e.g. "au11_physics", "in_c12_biology".
+# The US takes the same three subjects but ONE PER YEAR, in a sequence, rather
+# than three in parallel: the common pattern is Biology in Grade 9, Chemistry in
+# Grade 10, Physics in Grade 11. A whole year on one subject covers both senior
+# stages of it, so each US pack is stage 1 AND stage 2 of its subject -- six
+# nodes, where a parallel-country pack has three.
+#
+# Grade 12 is deliberately absent: it is electives (AP, anatomy, environmental
+# science, or none at all), which varies by state and school. Inventing a
+# "Grade 12 Science" would be a claim about a curriculum that has no single shape.
+US_SEQUENCE: list[tuple[str, str, str]] = [
+    ("us_g9", "Grade 9", "biology"),
+    ("us_g10", "Grade 10", "chemistry"),
+    ("us_g11", "Grade 11", "physics"),
+]
+
+
+def build_full_subject(prefix: str, subject: str) -> dict[str, GenFn]:
+    """Both senior stages of one subject, for a year spent entirely on it."""
+    out: dict[str, GenFn] = {}
+    for stage in sorted(STAGE_CONCEPTS[subject]):
+        out.update(build_generators(prefix, subject, stage))
+    return out
+
+
+# item_source name -> generators, e.g. "au11_physics", "in_c12_biology",
+# "us_g9_biology".
 SENIOR_SCIENCE_ITEM_SOURCES: dict[str, dict[str, GenFn]] = {
-    f"{prefix}_{subject}": build_generators(prefix, subject, stage)
-    for levels in SENIOR_LEVELS.values()
-    for prefix, _level_name, stage in levels
-    for subject in SUBJECTS
+    **{
+        f"{prefix}_{subject}": build_generators(prefix, subject, stage)
+        for levels in SENIOR_LEVELS.values()
+        for prefix, _level_name, stage in levels
+        for subject in SUBJECTS
+    },
+    **{
+        f"{prefix}_{subject}": build_full_subject(prefix, subject)
+        for prefix, _level_name, subject in US_SEQUENCE
+    },
 }
