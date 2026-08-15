@@ -31,13 +31,19 @@ jobs:
       - name: gitleaks scan (full history)
         run: |
           curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz | tar -xz gitleaks
-          # -v prints WHICH finding (rule, file, commit, line); --redact keeps the
-          # matched value out of a public log. Without -v the job says only
-          # "leaks found: 2" and there is nothing to act on -- which is how this sat
-          # red from 2026-08-14 with nobody able to see the cause (2026-08-15).
-          # The JSON report is uploaded even on failure, so a finding can be
-          # triaged without re-running.
+          # --redact keeps the matched value out of a public log.
+          # NOTE: -v was added on 2026-08-15 to print WHICH finding, and it does
+          # NOT do that here -- run 31889978126 logged only "WRN leaks found: 2"
+          # with -v set. The report file is the reliable channel, so the next step
+          # prints it rather than relying on the flag. Left in place; harmless.
           ./gitleaks git . --no-banner --redact -v --report-path gitleaks-report.json
+
+      # Print WHICH secret, in the log, without re-running or downloading an
+      # artifact. Values are already redacted by --redact above.
+      - name: Show gitleaks findings
+        if: failure()
+        run: |
+          python3 -c "import json;[print(f\"{f['RuleID']}  {f['File']}:{f['StartLine']}  commit {f['Commit'][:8]}\") for f in json.load(open('gitleaks-report.json'))]"
 
       - name: Upload gitleaks report
         if: always()

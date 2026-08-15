@@ -1,0 +1,22 @@
+# gitleaks config — picked up automatically by `gitleaks git .` from the repo root.
+#
+# Keep the full default rule set; this file only carves out a known false positive.
+[extend]
+useDefault = true
+
+# tests/engine/test_template_catalog.py is the expected-catalog table for the
+# curriculum template scan: ~100 entries of the shape
+#
+#     "key": "au_acara_year12_chemistry", "label": "Chemistry — Year 12 🇦🇺", ...
+#
+# The default `generic-api-key` rule keys off `"key": "<high-entropy string>"`,
+# so those pack identifiers scan as credentials. Two of them (year12_chemistry,
+# year12_physics) crossed the entropy threshold in 0655f41 and held CI red from
+# 2026-08-14. They are identifiers, not secrets, and the file contains no
+# credentials by construction — every value in it is a curriculum path or key.
+#
+# Scoped to this one path deliberately: a repo-wide regex exemption for
+# `"key": "..."` would blind the scanner everywhere real config lives.
+[[allowlists]]
+description = "curriculum pack identifiers in the template-catalog fixture, not credentials"
+paths = ['''tests/engine/test_template_catalog\.py''']
