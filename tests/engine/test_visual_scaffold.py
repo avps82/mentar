@@ -18,8 +18,17 @@ def test_matches_real_fractions_scaffold_by_keyword():
 
 
 def test_matches_real_vocabulary_scaffold_by_keyword():
-    body = load_visual_scaffold(_ROOT, "english", "Vocabulary — synonym pairs")
-    assert "Frayer model" in body
+    """2026-08-15: this asserted that a SYNONYM label reached the generic Frayer
+    word-box, which was true only because vocabulary.md also claimed the keyword
+    "synonym". Keyword ownership is unique now (test_scaffold_hygiene.py), and a
+    synonym question gets the synonyms/antonyms diagram -- which is the better
+    answer, not a regression. The general vocabulary box is still reachable for
+    the labels it actually owns."""
+    synonyms = load_visual_scaffold(_ROOT, "english", "Vocabulary — synonym pairs")
+    assert "SYNONYMS (same)" in synonyms, synonyms[:120]
+
+    general = load_visual_scaffold(_ROOT, "english", "Vocabulary — word meaning and definition")
+    assert "Frayer model" in general, general[:120]
 
 
 def test_no_keyword_match_returns_empty_string():
