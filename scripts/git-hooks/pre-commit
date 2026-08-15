@@ -21,16 +21,36 @@ while IFS= read -r f; do
 done <<< "$staged"
 
 # 2) Scan ADDED lines for secret-looking CONTENT.
-pat='(-----BEGIN [A-Z ]*PRIVATE KEY-----|AIza[0-9A-Za-z_-]{20,}|sk-[A-Za-z0-9]{20,}|xox[baprs]-[A-Za-z0-9-]{10,}|(api[_-]?key|secret|token|password|passwd|bearer)["'"'"' ]*[:=][ "'"'"']*[A-Za-z0-9_./+-]{12,})'
+#
+# 2026-08-16: gh*_/AKIA/hf_/JWT/64-hex added, so this gate covers the same
+# credential SHAPES as safety/credential_guard.py. It deliberately does NOT
+# reuse that module: credential_guard screens model PROSE, where a bare
+# `api_key=` is always suspect, and running it over source flagged 27 of 572
+# tracked files (app.py, backend.py, cli/__main__.py) because `api_key=cfg[...]`
+# and the env-var NAME MENTAR_VLLM_API_KEY are ordinary code. The keyword branch
+# here requires a 12+ char VALUE for that reason -- keep it that way.
+# Every pattern below was verified to produce zero hits across all tracked
+# files before being added.
+pat='(-----BEGIN [A-Z ]*PRIVATE KEY-----|AIza[0-9A-Za-z_-]{20,}|sk-[A-Za-z0-9]{20,}|xox[baprs]-[A-Za-z0-9-]{10,}|gh[pousr]_[A-Za-z0-9]{16,}|AKIA[0-9A-Z]{16}|hf_[A-Za-z0-9]{20,}|eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.|[0-9a-f]{64}|(api[_-]?key|secret|token|password|passwd|bearer)["'"'"' ]*[:=][ "'"'"']*[A-Za-z0-9_./+-]{12,})'
 while IFS= read -r f; do
   [ -z "$f" ] && continue
   case "$f" in
-    *.example.*|scripts/git-hooks/*|*.md) continue ;;  # templates/hook/docs exempt
+    # *.sha256 is exempt because the 64-hex rule above is exactly a checksum's
+    # shape (eval/dataset_v1.sha256). The rule still guards every other file --
+    # Mentar's own gateway key is a bare 64-hex string with no prefix to key off.
+    *.example.*|scripts/git-hooks/*|*.md|*.sha256) continue ;;  # templates/hook/docs/checksums exempt
   esac
   added=$(git diff --cached -U0 -- "$f" | grep -E '^\+' | grep -vE '^\+\+\+' || true)
-  if printf '%s\n' "$added" | grep -Eiq "$pat"; then
+  # A line that READS a credential is not a line that LEAKS one. The keyword
+  # branch of $pat needs a 12+ char value, and `api_key = os.environ.get(...)`
+  # supplies one ("os.environ.get") -- so editing that real line in backend.py
+  # blocked the commit (found 2026-08-16). ERE has no negative lookahead, so the
+  # code-reference idioms are filtered out here instead. A literal secret has
+  # none of them.
+  susp=$(printf '%s\n' "$added" | grep -Ei "$pat" | grep -Eiv '(os\.environ|getenv|\.get\(|\$\{)' || true)
+  if [ -n "$susp" ]; then
     echo "BLOCKED (content) in: $f"
-    printf '%s\n' "$added" | grep -Ein "$pat" | head -3 | sed 's/^/   /'
+    printf '%s\n' "$susp" | head -3 | sed 's/^/   /'
     fail=1
   fi
 done <<< "$staged"
@@ -83,6 +103,41 @@ if [ -f "src/mentar/tools/check_doc_paths.py" ]; then
     echo "  Fix the reference, or list it in _RUNTIME_ARTIFACTS/_KNOWN_ABSENT/_LOCAL_ONLY_TOOLING." >&2
     echo "  Genuine false positive: git commit --no-verify" >&2
     exit 1
+  fi
+fi
+
+# 5) CI feedback (2026-08-16, maintainer: "how else will you know that CI is
+# broken? There is no feedback mechanism").
+#
+# The gitleaks job sat RED from 2026-08-14 and nobody noticed for a day, because
+# nothing reports a push's outcome anywhere the maintainer looks. Rather than a
+# daemon or a notification stack, this reuses the one thing that already runs on
+# every commit: it reports the last CI conclusion for this branch.
+#
+# Deliberately NON-BLOCKING and SILENT WHEN GREEN -- a red run from an earlier
+# push must not stop you committing the fix, and a passing run must not add
+# noise to every commit. Skipped quietly without gh, offline, or unauthenticated;
+# `timeout` keeps a hung network from ever holding up a commit.
+if command -v gh >/dev/null 2>&1 && command -v timeout >/dev/null 2>&1; then
+  branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
+  ci=$(timeout 6 gh run list --workflow=ci.yml --branch "$branch" --limit 1 \
+         --json status,conclusion,headSha,url \
+         -q '.[]|"\(.status)\t\(.conclusion)\t\(.headSha[0:7])\t\(.url)"' 2>/dev/null || true)
+  if [ -n "$ci" ]; then
+    ci_status=$(printf '%s' "$ci" | cut -f1)
+    ci_concl=$(printf '%s' "$ci" | cut -f2)
+    ci_sha=$(printf '%s' "$ci" | cut -f3)
+    ci_url=$(printf '%s' "$ci" | cut -f4)
+    if [ "$ci_status" = "completed" ] && [ "$ci_concl" != "success" ] && [ "$ci_concl" != "skipped" ]; then
+      cat >&2 <<MSG
+
+  ────────────────────────────────────────────────────────────────
+   CI is $ci_concl on $branch (last run, commit $ci_sha)
+   $ci_url
+   Committing anyway is fine -- this is a heads-up, not a gate.
+  ────────────────────────────────────────────────────────────────
+MSG
+    fi
   fi
 fi
 

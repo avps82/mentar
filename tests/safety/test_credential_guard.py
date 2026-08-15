@@ -97,9 +97,13 @@ if __name__ == "__main__":
 # prefixes or shapes, so the false-positive risk in tutor output is nil.
 
 def test_github_aws_and_uri_credentials_are_redacted():
+    # Built at runtime, per this module's header rule. These two were literals
+    # until 2026-08-16, which broke that rule and blocked the pre-commit hook
+    # from adopting the matching gh*_/AKIA patterns -- this file was the only
+    # false positive across all 572 tracked files.
     for text in (
-        "The token is ghp_1234567890abcdefghijklmnopqrstuvwx",
-        "AKIAIOSFODNN7EXAMPLE",
+        "The token is " + "gh" + "p_1234567890abcdefghijklmnopqrstuvwx",
+        "AKIA" + "IOSFODNN7EXAMPLE",
         "postgres://user:secret@localhost:5432/db",
     ):
         assert redact_credentials(text) != text, f"not redacted: {text!r}"
