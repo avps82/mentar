@@ -210,6 +210,26 @@ CREATE INDEX IF NOT EXISTS idx_transcript_session ON transcript(learner_id, sess
 -- ─── Immutability triggers ────────────────────────────────────────────────────
 -- These ensure the transcript is an immutable audit log (SPEC §6.2, SAFETY.md §4.3).
 -- RAISE(ABORT, …) rolls back the offending statement and raises OperationalError in sqlite3.
+--
+-- NOTE (verified empirically 2026-08-16): these triggers make transcript's own
+-- `ON DELETE CASCADE` declarations UNREACHABLE. With PRAGMA foreign_keys=ON, a
+-- cascading delete fires trg_transcript_no_delete, which aborts the WHOLE
+-- statement -- so `DELETE FROM session` and `DELETE FROM learner_profile` both
+-- fail with "transcript rows are immutable" while any transcript row exists.
+-- The two declarations disagree on purpose-of-record: the FK says "delete me with
+-- my parent", the trigger says "never".
+--
+-- The trigger wins, and that is the INTENDED behaviour -- an audit log you can
+-- erase by deleting its parent row is not an audit log. The pilot's documented
+-- erasure path is deleting the whole .db file (SAFETY.md §4.6, "Learner profile
+-- deletion: N/A"), which triggers cannot block.
+--
+-- Recorded because it is a trap for whoever builds per-learner deletion when
+-- multi-learner namespacing lands (W3.6): the CASCADE reads like it works. It
+-- does not. Such a feature must delete transcript rows through a deliberate,
+-- audited path (e.g. DROP the triggers inside one transaction, or move rows to a
+-- tombstone table) -- not by relying on the FK.
+-- Pinned by tests/db/test_datamodel.py::test_cascade_delete_of_parents_is_blocked_too.
 
 CREATE TRIGGER IF NOT EXISTS trg_transcript_no_update
 AFTER UPDATE ON transcript

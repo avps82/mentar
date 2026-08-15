@@ -587,6 +587,36 @@ class TestTranscriptImmutability:
             )
         store.close()
 
+    def test_cascade_delete_of_parents_is_blocked_too(self, tmp_path):
+        """The triggers make transcript's own ON DELETE CASCADE unreachable.
+
+        Verified 2026-08-16: with foreign_keys=ON a cascading delete fires
+        trg_transcript_no_delete and aborts the WHOLE statement, so neither the
+        session nor the learner can be deleted while a transcript row exists.
+        The FK says "delete me with my parent", the trigger says "never", and
+        the trigger wins -- which is the intended reading (an audit log you can
+        erase via its parent row is not an audit log). The pilot's documented
+        erasure path is deleting the .db file (SAFETY.md §4.6).
+
+        Pinned because the CASCADE reads like it works, and whoever builds
+        per-learner deletion for W3.6 multi-learner will otherwise trust it.
+        """
+        store, learner_id, sid, tid = self._setup(tmp_path)
+        store._conn.execute("PRAGMA foreign_keys = ON;")
+        for sql, args in (
+            ("DELETE FROM session WHERE id = ?;", (sid,)),
+            ("DELETE FROM learner_profile WHERE id = ?;", (learner_id,)),
+        ):
+            with pytest.raises(
+                (sqlite3.OperationalError, sqlite3.IntegrityError),
+                match="immutable",
+            ):
+                store._conn.execute(sql, args)
+            store._conn.rollback()
+        # the row, its session and its learner all survive the attempt
+        assert len(store.transcript_for_session(learner_id, sid)) == 1
+        store.close()
+
     def test_delete_transcript_is_rejected(self, tmp_path):
         """Attempting DELETE on transcript must raise sqlite3.OperationalError
         with 'immutable' in the message."""
