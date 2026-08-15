@@ -192,7 +192,7 @@ def validate(path: str) -> ValidationResult:
                 )
             elif prid not in id_set:
                 errors.append(
-                    f"concept '{cid!r}' references unknown prereq id {prid!r}"
+                    f"concept '{cid}' references unknown prereq id {prid!r}"
                 )
 
     if errors:
