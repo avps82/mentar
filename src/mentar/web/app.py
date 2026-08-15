@@ -26,6 +26,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import threading
 import time
 import uuid
 from pathlib import Path
@@ -35,7 +36,7 @@ from markupsafe import escape
 
 from mentar.db.adapter import _DbStoreAdapter
 from mentar.db.store import LearnerStore
-from mentar.dialogue.controller import FSMState, SessionController
+from mentar.dialogue.controller import STOP_WORDS, FSMState, SessionController
 from mentar.engine.arithmetic_steps import render_steps_grid_lines
 from mentar.engine.curriculum import (
     derive_subject_key,
@@ -396,6 +397,26 @@ def _setup_is_complete() -> bool:
     return ok
 
 
+# 2026-08-15: ONE turn at a time PER LEARNER. A double-press (the reported UX
+# bug -- no busy indicator, so the maintainer pressed twice and a child will
+# press more) would otherwise run ctrl.step() twice concurrently on the SAME
+# controller, and the FSM holds mutable state that assumes one caller.
+#
+# Deliberately per-learner, NOT a global lock: several children can use one
+# install at once, and serialising them all behind a single mutex would make one
+# child's slow LLM turn block everyone else's. The second concurrent press for
+# the same learner is DROPPED (their current turn is re-rendered) rather than
+# queued, because a request that arrives mid-turn is a race the child cannot
+# have intended.
+_learner_locks: dict[str, threading.Lock] = {}
+_learner_locks_guard = threading.Lock()
+
+
+def _turn_lock(learner_uuid: str) -> threading.Lock:
+    with _learner_locks_guard:
+        return _learner_locks.setdefault(learner_uuid, threading.Lock())
+
+
 # Per-learner controller instances and turn logs.
 _controllers: dict[str, SessionController] = {}
 _turn_logs: dict[str, list[dict]] = {}      # learner_id -> [{role, text}]
@@ -650,16 +671,34 @@ def answer():
         return redirect(url_for("index"))
 
     ctrl = _controllers[learner_uuid]
-    # R2.3: the answer-mode registry owns how the posted form composes into the
-    # ONE string ctrl.step() accepts (e.g. fraction's num/den -> "n/d") — one
-    # owned place instead of a type-specific if/elif here.
-    answer_text = mode_for(ctrl.current_answer_type).compose(request.form)
-    _log_turn(learner_uuid, "Child", answer_text)
 
-    result = ctrl.step(answer_text)
-    if result.text:
-        _log_turn(learner_uuid, "Mentar", result.text)
-    _last_messages[learner_uuid] = result.message
+    lock = _turn_lock(learner_uuid)
+    # "You can stop anytime" (U-11) has to survive this guard. A stop pressed
+    # while a slow turn is in flight WAITS for that turn instead of being
+    # dropped -- dropping a child's stop silently is not a trade we make for
+    # tidiness. Everything else is a double-press and gets dropped.
+    wants_stop = request.form.get("answer", "").strip().lower() in STOP_WORDS
+    acquired = lock.acquire(timeout=20) if wants_stop else lock.acquire(blocking=False)
+    if not acquired:
+        # This learner already has a turn in flight (double-press). Do NOT step
+        # the FSM again -- hand back the turn they are already looking at.
+        app.logger.info("dropped a concurrent turn: this learner is already mid-turn")
+        if hx:
+            return _render_turn_fragment(learner_uuid, ctrl)
+        return redirect(url_for("learn"))
+    try:
+        # R2.3: the answer-mode registry owns how the posted form composes into
+        # the ONE string ctrl.step() accepts (e.g. fraction's num/den -> "n/d")
+        # — one owned place instead of a type-specific if/elif here.
+        answer_text = mode_for(ctrl.current_answer_type).compose(request.form)
+        _log_turn(learner_uuid, "Child", answer_text)
+
+        result = ctrl.step(answer_text)
+        if result.text:
+            _log_turn(learner_uuid, "Mentar", result.text)
+        _last_messages[learner_uuid] = result.message
+    finally:
+        lock.release()
 
     if result.escalated:
         if hx:

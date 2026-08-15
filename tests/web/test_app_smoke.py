@@ -16,6 +16,7 @@ import os
 import pathlib
 import sys
 import tempfile
+import time
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "src"))
@@ -1365,6 +1366,156 @@ def test_curriculum_pack_uninstall_rejects_not_installed():
         assert "not installed" in r.get_json()["error"]
 
 
+def test_a_double_press_cannot_step_the_fsm_twice():
+    """2026-08-15 (maintainer): "there is no indicator... I have done this twice,
+    so kids will do this a lot more times". The UI now shows a busy state, but the
+    server must not depend on the UI: two concurrent turns for the SAME learner
+    would run ctrl.step() twice on one controller, whose FSM assumes a single
+    caller. The second is dropped and the learner's current turn re-rendered."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+    import threading
+
+    app_mod, c = _client()
+    c.post("/choose", data={"subject": "fractions"})
+    c.get("/learn")
+
+    calls = []
+    slow = threading.Event()
+
+    def slow_llm(messages):
+        calls.append(1)
+        slow.wait(timeout=5)      # hold the turn open while the second press lands
+        return "explanation"
+
+    app_mod._llm_call_cached = slow_llm
+    results = {}
+
+    def press(i):
+        results[i] = c.post("/answer", data={"answer": "help"},
+                            headers={"HX-Request": "true"}).status_code
+
+    first = threading.Thread(target=press, args=(1,))
+    first.start()
+    while not calls:              # the first press is now inside the LLM call
+        time.sleep(0.01)
+    press(2)                      # the double-press, while the first is in flight
+    slow.set()
+    first.join(timeout=10)
+
+    assert results == {1: 200, 2: 200}, results
+    assert len(calls) == 1, f"the second press stepped the FSM too ({len(calls)} LLM calls)"
+
+
+def test_one_learners_slow_turn_does_not_block_another_learner():
+    """The lock is PER LEARNER, deliberately. Several children can share one
+    install, so a global mutex would make one child's slow LLM turn freeze
+    everyone else -- which is why this is not simply one lock."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+    import threading
+
+    app_mod, c1 = _client()
+    c2 = app_mod.app.test_client()
+    for c in (c1, c2):
+        c.post("/choose", data={"subject": "fractions"})
+        c.get("/learn")
+
+    in_llm = threading.Event()
+    release = threading.Event()
+
+    def slow_llm(messages):
+        # ONLY the first call blocks. Learner 2's answer can itself reach the LLM
+        # (a wrong answer auto-helps), and if that call blocked too this would be
+        # measuring the stub instead of the lock.
+        if in_llm.is_set():
+            return "fast explanation"
+        in_llm.set()
+        release.wait(timeout=5)
+        return "explanation"
+
+    app_mod._llm_call_cached = slow_llm
+    t = threading.Thread(target=lambda: c1.post(
+        "/answer", data={"answer": "help"}, headers={"HX-Request": "true"}))
+    t.start()
+    assert in_llm.wait(timeout=5), "learner 1's turn never reached the LLM"
+
+    # Learner 2 answers while learner 1 is stuck in the model call.
+    uuids = list(app_mod._turn_logs)
+    before = {u: len(app_mod._turn_logs[u]) for u in uuids}
+    started = time.monotonic()
+    r2 = c2.post("/answer", data={"answer": "4"}, headers={"HX-Request": "true"})
+    elapsed = time.monotonic() - started
+    release.set()
+    t.join(timeout=10)
+
+    assert r2.status_code == 200
+    assert elapsed < 2.0, f"learner 2 waited {elapsed:.1f}s behind learner 1's turn"
+    # ...and their turn was actually PROCESSED. A single global lock would not
+    # make learner 2 wait -- the drop is non-blocking -- it would silently throw
+    # their answer away, which is worse. Verified by mutation: keying the lock
+    # globally fails here, not on the timing assertion above.
+    grew = [u for u in uuids if len(app_mod._turn_logs[u]) > before[u]]
+    assert len(grew) == 2, (
+        "learner 2's answer was dropped while another learner held the lock "
+        f"(turn logs that grew: {len(grew)} of 2)"
+    )
+
+
+def test_stop_is_never_dropped_by_the_single_flight_guard():
+    """"You can stop anytime" (U-11) has to survive the double-press guard. A
+    stop pressed WHILE a slow turn is in flight waits for that turn instead of
+    being dropped -- everything else is a double-press and is dropped."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+    import threading
+
+    app_mod, c = _client()
+    c.post("/choose", data={"subject": "fractions"})
+    c.get("/learn")
+
+    in_llm = threading.Event()
+    release = threading.Event()
+
+    def slow_llm(messages):
+        in_llm.set()
+        release.wait(timeout=5)
+        return "explanation"
+
+    app_mod._llm_call_cached = slow_llm
+    t = threading.Thread(target=lambda: c.post(
+        "/answer", data={"answer": "help"}, headers={"HX-Request": "true"}))
+    t.start()
+    assert in_llm.wait(timeout=5), "the help turn never reached the LLM"
+
+    got = {}
+
+    def stop_press():
+        got["r"] = c.post("/answer", data={"answer": "stop"}, headers={"HX-Request": "true"})
+
+    s_thread = threading.Thread(target=stop_press)
+    s_thread.start()
+    time.sleep(0.3)                 # the stop is now WAITING, not dropped
+    release.set()
+    t.join(timeout=10)
+    s_thread.join(timeout=10)
+
+    assert got["r"].status_code == 200
+    # It really ended the session rather than being swallowed.
+    assert app_mod._controllers[list(app_mod._controllers)[0]].is_terminal, (
+        "a stop pressed during a turn was dropped instead of honoured"
+    )
+
+
 def test_help_button_is_named_for_what_it_does_and_can_be_nudged():
     """2026-08-14 (maintainer): "🆘 Help" framed asking for help as a distress
     signal — as failing — when bkt.py deliberately scores a hinted win AS a win.
@@ -1390,8 +1541,10 @@ def test_help_button_is_named_for_what_it_does_and_can_be_nudged():
     css = (pathlib.Path(app_mod.__file__).parent / "static" / "style.css").read_text()
     assert ".btn.is-nudging" in css
     # The pulse must not be the ONLY cue: reduced-motion keeps a static one.
-    reduced = css.split("@media (prefers-reduced-motion: reduce)")[1].split("}\n}")[0]
-    assert "is-nudging" in reduced and "animation: none" in reduced
+    # Scan EVERY reduced-motion block, not the first: a second one was added for
+    # the busy spinner and silently stole this assertion's target.
+    reduced = [b.split("}\n}")[0] for b in css.split("@media (prefers-reduced-motion: reduce)")[1:]]
+    assert any("is-nudging" in b and "animation: none" in b for b in reduced), reduced
 
     # And the loop it points at still works when pressed.
     frag = c.post("/answer", data={"answer": "help"},
