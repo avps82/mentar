@@ -117,6 +117,11 @@ _INT_RE = re.compile(_INT_PAT)
 # Decimal detection — reject these explicitly
 _DECIMAL_RE = re.compile(r"\b\d+\.\d+\b")
 
+# A comma sitting BETWEEN two digits is a digit-group separator ("2,500",
+# "1,00,000"), never a list separator -- a list is written with a space after
+# the comma. See extract_answer for why this must run before extraction.
+_DIGIT_GROUP_SEP_RE = re.compile(r"(?<=\d),(?=\d)")
+
 
 # ---------------------------------------------------------------------------
 # normalise_fraction
@@ -218,6 +223,24 @@ def extract_answer(text: str, answer_type: str) -> str | None:
 
     # Expand unicode fractions first
     text_expanded = _expand_unicode_fractions(text)
+
+    # Then remove digit-GROUP separators, before any extraction runs.
+    #
+    # 2026-08-16: "2,500" was split on the comma and the last-integer rule kept
+    # "500" -- so a child who answered 2,500 when the truth was 500 was marked
+    # CORRECT. Same for "1,000" -> "000" -> 0 (truth 0 passed) and "12,345" ->
+    # "345". A FALSE ACCEPT is the one direction this module exists to prevent:
+    # it credits a wrong answer and feeds a wrong win into BKT mastery.
+    #
+    # The web UI's int widget is type="number", which blocks commas in a
+    # browser -- but that is defence-in-depth, not the boundary. The CLI takes
+    # free text and this same function verifies LLM output.
+    #
+    # Comma-between-digits only, so "1/2, 3/4" (comma + SPACE) is untouched and
+    # the ambiguity rule still sees two candidates. Handles Indian lakh grouping
+    # ("1,00,000") as well as thousands. Assumes a period decimal point, which
+    # holds for every country Mentar ships (AU/IN/US/SG).
+    text_expanded = _DIGIT_GROUP_SEP_RE.sub("", text_expanded)
 
     if answer_type == "mc4":
         return _extract_mc(text_expanded)
