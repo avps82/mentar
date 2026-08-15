@@ -19,7 +19,7 @@ some of the math template rounds (which mostly needed a visual for EXISTING
 content), this entire domain needs curriculum content designed and built
 FIRST, before any visual template is relevant.
 
-10 templates across 4 sections, all using a distinctive "home appliance /
+This document sketches 10 candidate templates across 4 sections, all using a distinctive "home appliance /
 household object" framing (kettle, fridge, microwave, compost bin, potted
 plant, door handle, consumer unit) rather than abstract diagrams — worth
 noting as a deliberate pedagogical style choice if this ever gets picked up

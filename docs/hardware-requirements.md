@@ -38,7 +38,7 @@ fits comfortably on 16 GB.
 | Model | Where | Result |
 |---|---|---|
 | Qwen2.5-0.5B Q4 (in-process llama.cpp) | 2-core AMD A10-7800 (2014), 4 GB RAM, CPU-only | runs at **~7 tok/s**; loads in ~3 s |
-| `gemma4:12b` (reasoning) | eval-host GPU via LiteLLM | ~14.6 s/item, full-GPU; **hangs on CPU-offload**; cannot run on 4 GB |
+| `gemma4:12b` (reasoning; now named `gemma4-12b-q4` — see docs/MODEL.md) | eval-host GPU via LiteLLM | ~14.6 s/item, full-GPU; **hangs on CPU-offload**; cannot run on 4 GB |
 
 ---
 

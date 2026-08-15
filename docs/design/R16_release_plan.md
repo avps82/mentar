@@ -206,7 +206,7 @@ ratified "cap English/Science at Y8, only maths goes to Y12" as a decision the w
 were ratified. Worth a one-line confirmation from the maintainer, not a blocker.
 
 **Per-year acceptance gate** (already the house pattern from R14a/R15, do not skip):
-`mentar validate` on the template → **500-draw self-validate** on the generators → **live
+`mentar validate-template` on the template → **500-draw self-validate** on the generators → **live
 FSM round-trip** through a real serve process. A year is not done until all three pass.
 
 **Ordering inside B:** B3 (science) first. It is the only entirely missing subject, its
@@ -461,7 +461,7 @@ already-fact-checked table is advisory — delegated.
   once A ships.
 
 **Verification, all four layers, not just "tests passed":**
-1. `mentar validate` on the template — pass, 1 concept, correctly identified as root+leaf.
+1. `mentar validate-template` on the template — pass, 1 concept, correctly identified as root+leaf.
 2. 500-draw self-validate on the generator — zero crashes; every draw's marked-correct
    option independently re-derived and confirmed a member of the target category AND
    confirmed absent from the other category (disjointness holds every time, not just in
@@ -598,7 +598,7 @@ Reclassifying two items from the original routing pass under this lens:
      `--must-call` for every named deliverable, `--must-preserve` for every frozen symbol,
      `--json > verdict.json` — catches fabricated identifiers, silent omission, and
      out-of-scope edits generically, regardless of content domain.
-  2. Mentar's own domain gate, unchanged from the original plan: `mentar validate` → 500-draw
+  2. Mentar's own domain gate, unchanged from the original plan: `mentar validate-template` → 500-draw
      self-validate → live FSM round-trip. The harness above doesn't know what a curriculum
      node or a BKT prior is; this is what catches a schema-valid-but-pedagogically-wrong
      template.

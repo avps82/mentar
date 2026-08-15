@@ -10,6 +10,13 @@ refs: "SPEC §20 (local LLM), §20.3 (eval host), §15 (RAG/quality), docs/desig
 
 # Model Selection & Eval Plan
 
+> **Naming note (2026-08-15).** Every `gemma4:12b` / `gemma2:9b` in this document is the
+> Ollama-style name the model carried when it was evaluated. The local gateway now uses
+> hyphenated names with a quant suffix — `gemma4:12b` is `gemma4-12b-q4` — see CLAUDE.md's
+> "Local LLM delegation" section for the current roster. The old names are left in place
+> deliberately: rewriting them would misstate which build produced these measurements. Read
+> them as records, and take the current name from the roster.
+
 ## W1.3 — Decision (2026-06-27): pilot model = `gemma2:9b`
 
 Clean full-suite run (all 5 suites, Sonnet-judged) of the two front-runners:
