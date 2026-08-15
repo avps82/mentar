@@ -118,3 +118,47 @@ def test_ordinary_tutoring_text_is_untouched_by_the_new_patterns():
     ):
         assert redact_credentials(text) == text, f"false positive on {text!r}"
         assert not detect_credential_leak(text), f"false positive on {text!r}"
+
+
+# ── 2026-08-16 probe: standard formats still passing untouched ───────────────
+# Same shape as the 2026-08-12 batch (GitHub / AWS / user:pass URI). This
+# module's contract is "any credential-looking substring"; a probe of ten common
+# formats found six reaching the child and the transcript unredacted.
+# Secrets are BUILT AT RUNTIME so no secret-shaped literal enters the repo.
+
+def _fake(prefix: str, body_char: str, n: int) -> str:
+    return prefix + body_char * n
+
+
+def test_newly_covered_credential_formats_are_detected_and_redacted():
+    cases = {
+        "huggingface": _fake("hf" + "_", "a", 34),
+        "google":      _fake("AIza", "B", 35),
+        "slack":       "xoxb" + "-" + "1" * 12 + "-" + "2" * 12,
+        "jwt":         "ey" + "J" + "a" * 18 + "." + "b" * 30 + "." + "c" * 20,
+        "pem":         "-----BEGIN RSA PRIVATE " + "KEY-----",
+        # Mentar's own gateway key shape: a bare 64-char hex string, no prefix.
+        "mentar_hex":  "f" * 64,
+    }
+    for name, secret in cases.items():
+        assert detect_credential_leak(secret), f"{name} not detected"
+        out = redact_credentials(secret)
+        assert secret not in out, f"{name} value survived redaction"
+        assert REDACTION in out
+
+
+def test_khan_academy_grounding_anchors_are_not_redacted():
+    """The 64-hex rule is pinned to EXACTLY 64 on purpose: curriculum templates
+    carry 32-hex Khan Academy anchors (fractions.md `anchor:`) which are real
+    lesson content a model may echo. A looser {32,} would redact them."""
+    anchor = "7c5a60e1c0b05ecc9ac404061f654f4d"      # 32 hex, from the pilot template
+    assert len(anchor) == 32
+    assert not detect_credential_leak(anchor)
+    assert redact_credentials(f"anchor: {anchor}  # KA video") == f"anchor: {anchor}  # KA video"
+
+
+def test_ordinary_lesson_output_is_untouched():
+    for text in ("The answer is 3/4", "Half of 8 is 4", "Oxidation is loss of electrons",
+                 "The mole is 6.022 x 10^23", "Year 4 (Australia)"):
+        assert not detect_credential_leak(text)
+        assert redact_credentials(text) == text

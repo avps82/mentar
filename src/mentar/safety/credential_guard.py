@@ -29,6 +29,24 @@ _SENSITIVE_PATTERNS: list[re.Pattern[str]] = [
     re.compile(r"\bgh[pousr]_[A-Za-z0-9]{16,}\b"),              # GitHub tokens
     re.compile(r"\bAKIA[0-9A-Z]{16}\b"),                        # AWS access key id
     re.compile(r"\b[a-z][a-z0-9+.\-]*://[^\s:@/]+:[^\s:@/]+@"),  # user:pass@ in a URI
+    # Added 2026-08-16, same reasoning as the 2026-08-12 batch: a probe found
+    # these standard formats passing untouched, and all have fixed unambiguous
+    # prefixes, so the false-positive risk in a maths tutor's output is nil.
+    # hf_ matters most in practice -- `mentar setup` downloads GGUF models from
+    # HuggingFace, so an HF token is the credential most likely to be present.
+    re.compile(r"\bhf_[A-Za-z0-9]{20,}\b"),                     # HuggingFace tokens
+    re.compile(r"\bAIza[0-9A-Za-z_\-]{35}\b"),                  # Google API keys
+    re.compile(r"\bxox[baprs]-[A-Za-z0-9-]{10,}\b"),            # Slack tokens
+    re.compile(r"\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]*"),  # JWTs
+    re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----"),          # PEM private keys
+    # Mentar's OWN key shape. The gateway/LiteLLM key in config/.env is a bare
+    # 64-char hex string with no prefix to key off, and this module exists
+    # precisely to stop THAT value surfacing -- yet it was the one format not
+    # covered. Pinned to exactly 64: the curriculum carries 32-hex Khan Academy
+    # grounding anchors (e.g. fractions.md `anchor:`), which are real content a
+    # model may legitimately echo, so a looser {32,} would redact lesson text.
+    # Zero 64-hex runs exist anywhere in curriculum/ or prompts/ (checked).
+    re.compile(r"\b[0-9a-f]{64}\b", re.IGNORECASE),
 ]
 
 
