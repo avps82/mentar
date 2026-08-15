@@ -1,10 +1,10 @@
 ---
 type: Mentar Visual Scaffold
-title: Writing an Algebraic Expression from Words
-description: Visual scaffold hints for translating a worded description into an expression.
+title: Combining Algebraic Expressions
+description: Visual scaffold hints for adding or subtracting expressions by matching like terms.
 tags: [mathematics, algebra, expressions, visual-scaffold]
 subject: mathematics
-topic_keywords: [writing algebraic, expressions from words, from words, word to expression, distributive-law expressions, revenue]
+topic_keywords: [combining, combine, like terms, add expressions, difference of two, difference of two related, related expressions, three algebraic expressions, two quadratic expressions, quadratic and a linear]
 timestamp: "2026-08-15T00:00:00Z"
 ---
 
@@ -12,13 +12,12 @@ When writing or explaining this question, use this visual structure. There is NO
 equation to solve here and NO "=" balance — the task is building or combining an
 expression, not isolating a variable (that is algebra_equations.md).
 
-**Word-to-expression table** — map each phrase piece to a symbol:
+**Combining two expressions** — line them up and add matching terms:
 ```
-"3 more than"     ->   + 3
-"twice a number"  ->   2 × (number)
-"a number n"      ->   n
-------------------------------------
-"3 more than twice a number n"  ->  2n + 3
+  a  =  3x + 2
+  b  =  5x + 1
+------------------
+a + b = 8x + 3        (add the x-terms: 3x+5x=8x; add the numbers: 2+1=3)
 ```
 
 **Guidelines for the question text:**

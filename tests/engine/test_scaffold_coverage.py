@@ -126,6 +126,26 @@ def test_no_mc4_question_leaks_its_own_answer():
 # table, a cohesion question showing claim/evidence, syntax-for-effect showing
 # word origins...). Pinning the marker is what makes that regression loud.
 _SENIOR_ROUTING = {
+    # Senior maths algebra (2026-08-15 audit): all 13 of these labels shared ONE
+    # first diagram -- the word-to-expression table -- because algebraic_expressions.md
+    # held three diagrams and first_diagram() only ever serves the first. The file was
+    # split three ways; a child asked for the area of a binomial rectangle now sees the
+    # labelled shape, not a phrase-translation table.
+    ("mathematics", "Writing algebraic expressions from words"): '"3 more than"',
+    ("mathematics", "Distributive-law expressions from words"): '"3 more than"',
+    ("mathematics", "Writing quadratic expressions from words"): '"3 more than"',
+    ("mathematics", "Revenue as a quadratic expression"): '"3 more than"',
+    ("mathematics", "Combining algebraic expressions"): "a  =  3x + 2",
+    ("mathematics", "Combining three algebraic expressions"): "a  =  3x + 2",
+    ("mathematics", "Combining a quadratic and a linear expression"): "a  =  3x + 2",
+    ("mathematics", "Combining two quadratic expressions"): "a  =  3x + 2",
+    ("mathematics", "Difference of two related expressions"): "a  =  3x + 2",
+    ("mathematics", "Area as an algebraic expression"): "width  = x",
+    ("mathematics", "Area as an algebraic expression (binomial sides)"): "width  = x",
+    ("mathematics", "Perimeter as an algebraic expression"): "width  = x",
+    ("mathematics", "Combined perimeter as an algebraic expression"): "width  = x",
+    ("mathematics", "Compound-shape area as an algebraic expression"): "width  = x",
+    ("mathematics", "Squared expressions (area of a square)"): "width  = x",
     # Senior science (2026-08-15): Physics / Chemistry / Biology.
     ('biology', 'Diffusion, osmosis and active transport'): 'DIFFUSION         high -> low conc',
     ('biology', 'Enzymes'): 'a PROTEIN catalyst',
