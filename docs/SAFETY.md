@@ -379,7 +379,8 @@ Supporting display text (also fixed, displayed below the primary message):
 > **Implementation contract:** the escalation module API, trigger→`trigger_class` map,
 > flow, and T2.1 fixture taxonomy are pinned in
 > [`docs/design/W2.2_escalation.md`](design/W2.2_escalation.md). Two of the items below
-> received an **interim pilot decision** there (marked ⟐); the rest remain open.
+> received an **interim pilot decision** there (marked ⟐); the rest remain open — including
+> the age-invariant handoff item added 2026-08-15, which has **no** interim decision.
 
 The following are unresolved in v0.1-interim and will be addressed when Bucket D research closes:
 
@@ -388,6 +389,9 @@ The following are unresolved in v0.1-interim and will be addressed when Bucket D
 - **Gradated response levels:** v0.1 uses a binary trigger/freeze model. Bucket D may recommend gradated responses (e.g., a softer check-in for lower-severity signals before full freeze). *(v0.1 records a `severity` per trigger but does not branch flow on it — data only, for Bucket D.)*
 - ⟐ **Emergency services signposting:** **Interim decision (W2.2 design §6.1):** the pilot displays **no** crisis/emergency numbers to the child; Category-A triggers route to the **physically-present parent** via the §3.4 handoff. Rationale and the explicit residual hole (*"route to present parent" fails when the parent is the source of harm — `physical_danger`/`abuse_disclosure` cases*) are documented in the design doc. **This remains a known risk. Signposting with safeguarding input is required before unsupervised/independent mode; for the supervised pilot the present adult IS the routing target the child is directed to (§3.5.1). Sought pro-bono; absent a volunteer, an explicit maintainer risk decision substitutes (§3.5.1).**
 - **Multi-turn escalation patterns:** the current trigger list is single-turn. Multi-turn patterns (escalating distress over several turns) are not yet handled.
+- **Age-invariant handoff (raised 2026-08-15, NO interim decision — deliberately not marked ⟐).** The §3.4 wording, the "talk to your grown-up" framing, and the route-to-present-parent behaviour were designed for the ~8–10 pilot and are applied **unchanged** to every learner. Shipped content now spans roughly **ages 6–18** (the largest share is 16–18), so the same message written for an 8-year-old is what a 17-year-old sees. Nothing in the system varies by age.
+  This widening happened as a **content** decision across the Aug-11→15 curriculum waves; it was never taken as a **safety** decision, and no interim call has been made here — which is why this item carries no ⟐. It is now **Item C** of `docs/design/SAFEGUARDING_REVIEW_PACKET.md`.
+  **Maintainer decision required:** whether Item C joins the §3.5 rollout guard alongside the two ⟐ items. Engineering recommendation is that it should — "your grown-up" is plausibly counterproductive to a 17-year-old's disclosure, and unlike Items A and B this gap was introduced by us recently rather than inherited from the original design. Recorded as a recommendation, not applied: adding a rollout gate changes project scope and is the maintainer's call. No age-varying design has been guessed at, on purpose (inventing developmental thresholds is exactly the unqualified judgement this review exists to replace).
 - **Teacher/institution routing (hosted tier):** the hosted tier will need an escalation path that routes to teachers or institutions, not only parents. Out of scope for OSS local edition.
 
 ### 3.5.1 The professional review, and the funding reality (2026-08-12)
