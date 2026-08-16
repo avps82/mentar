@@ -11,7 +11,7 @@ timestamp: "2026-07-22T00:00:00Z"
 When writing or explaining this question, use ONE of these visual structures:
 
 **Vertical thermometer number line** — most natural for temperature contexts:
-```
+```key
     10°C
      |
      5°C

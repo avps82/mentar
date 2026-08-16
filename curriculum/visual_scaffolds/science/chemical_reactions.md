@@ -11,7 +11,7 @@ timestamp: "2026-08-14T00:00:00Z"
 When explaining this question, use ONE of these visual structures:
 
 **Three reaction types by what goes in and what comes out**:
-```
+```key
 COMBUSTION       fuel + oxygen        ->  oxides + energy released
                  methane + O2         ->  CO2 + H2O + heat
 

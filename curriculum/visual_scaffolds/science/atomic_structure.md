@@ -11,7 +11,7 @@ timestamp: "2026-08-14T00:00:00Z"
 When explaining this question, use ONE of these visual structures:
 
 **Where each particle sits**:
-```
+```key
             ELECTRONS  (negative, tiny, orbit in shells)
                  ·           ·
             ·   ┌───────────┐   ·

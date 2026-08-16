@@ -17,6 +17,28 @@ import yaml
 # science visuals): the FIRST fenced ``` block in a scaffold body, verbatim.
 _FIRST_FENCE_RE = re.compile(r"```[^\n]*\n(.*?)\n```", re.S)
 
+# The fence's INFO STRING, so a scaffold can declare what kind of diagram it is.
+# ```key  -> a generic reference key/scale/legend: safe to show a child beside any
+#            question, because it illustrates the concept rather than answering a
+#            different instance of it.
+# (blank) -> unmarked. Treated as a worked EXAMPLE, which must not be folded into
+#            a computed card when it carries numbers -- those are a different
+#            question's numbers (maintainer, 2026-08-16: "WHERE did 352 come
+#            from??" on a place-value table reading 3|5|2 under a question about
+#            463). Declared per file rather than guessed: a first cut inferred it
+#            from "does the diagram contain a digit", which was about half wrong
+#            -- it suppressed the BODMAS step list, the probability 0-1 scale and
+#            every chemistry key, whose digits are step numbers, axis labels and
+#            chemical formulas.
+_FIRST_FENCE_INFO_RE = re.compile(r"```([^\n]*)\n.*?\n```", re.S)
+
+
+def first_diagram_is_reference_key(scaffold_body: str) -> bool:
+    """True when the first fenced block declares itself a generic reference key
+    (```key), i.e. safe to show alongside any question on the concept."""
+    m = _FIRST_FENCE_INFO_RE.search(scaffold_body or "")
+    return bool(m) and m.group(1).strip().lower() == "key"
+
 # Template `subject:` front-matter values -> visual_scaffolds/ subdirectory name.
 # Subjects with no scaffold directory yet (e.g. "science") simply find no files
 # and _load_visual_scaffold falls back to "".

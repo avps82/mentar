@@ -104,3 +104,58 @@ if __name__ == "__main__":
         fn()
         print(f"  ✓ {fn.__name__}")
     print(f"\n{len(fns)}/{len(fns)} scaffold-hygiene tests passed.")
+
+
+# ── which diagrams may be folded into a COMPUTED card (2026-08-16) ───────────
+# Phase 3a folded a scaffold's first fenced block into the explain-mode card. It
+# was spot-checked on SCIENCE, where diagrams are generic, then applied to every
+# subject -- so a child asked "In the number 463, what is the value of the digit
+# 6?" was shown a place-value table reading 3|5|2, the placeholder numbers from
+# curriculum/visual_scaffolds/maths/place_value.md ("WHERE did 352 come from??").
+#
+# A scaffold is an authoring instruction for the LLM ("use ONE of these visual
+# structures"), so its numbers can never match the drawn item. The rule: a
+# diagram may be shown beside a computed card only if it is a generic reference
+# KEY (declared ```key) or carries no numbers at all.
+
+import re  # noqa: E402
+
+from mentar.engine.visual_scaffold import (  # noqa: E402
+    first_diagram,
+    first_diagram_is_reference_key,
+)
+
+
+def _may_be_shown(body: str) -> bool:
+    d = first_diagram(body)
+    return bool(d) and (first_diagram_is_reference_key(body) or not re.search(r"[0-9]", d))
+
+
+def test_a_worked_example_with_foreign_numbers_is_never_shown():
+    """place_value.md's table has 3|5|2 baked in -- a different number from
+    whatever the item drew. The card now computes its own table instead
+    (au_items._place_value_table)."""
+    body = (SCAFFOLDS / "maths" / "place_value.md").read_text(encoding="utf-8")
+    assert "Hundreds | Tens | Ones" in first_diagram(body), "precondition: still the table"
+    assert not _may_be_shown(body), "a foreign worked example reached a child's card"
+
+
+def test_a_declared_reference_key_is_shown_even_though_it_has_digits():
+    """The first cut inferred this from "does it contain a digit", which was
+    about half wrong: it suppressed the BODMAS step list, the probability 0-1
+    scale and the chemistry keys, whose digits are step numbers, axis labels and
+    chemical formulas. Declared per file instead of guessed."""
+    for rel in ("maths/order_of_operations.md", "maths/probability.md",
+                "science/bonding_types.md", "english/homophones.md"):
+        body = (SCAFFOLDS / rel).read_text(encoding="utf-8")
+        assert first_diagram_is_reference_key(body), f"{rel} lost its ```key marker"
+        assert _may_be_shown(body), f"{rel} is a reference key and must still be shown"
+
+
+def test_every_key_marked_scaffold_really_has_a_first_fence():
+    """A ```key marker on a file whose first fence moved would silently promote
+    the wrong block."""
+    for f in sorted(SCAFFOLDS.rglob("*.md")):
+        body = f.read_text(encoding="utf-8", errors="replace")
+        if first_diagram_is_reference_key(body):
+            assert first_diagram(body), f"{f.name}: ```key but no extractable diagram"

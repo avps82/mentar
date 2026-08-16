@@ -11,7 +11,7 @@ timestamp: "2026-08-14T00:00:00Z"
 When explaining this question, use ONE of these visual structures:
 
 **Tone — the writer's attitude, read off the word choices**:
-```
+```key
 CRITICAL    "careless", "ignored the evidence", "shallow"   -> finds fault
 OPTIMISTIC  "could thrive", "every reason", "encouraging"   -> expects good
 NEUTRAL     "met on Tuesday", "12 mm below average"         -> just reports

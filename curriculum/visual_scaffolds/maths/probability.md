@@ -11,7 +11,7 @@ timestamp: "2026-07-22T00:00:00Z"
 When writing or explaining this question, use ONE of these visual structures:
 
 **Probability scale** — horizontal line 0 to 1 with labelled landmarks:
-```
+```key
 0         1/4        1/2        3/4         1
 |----------|----------|----------|----------|
 impossible  unlikely    even     likely    certain

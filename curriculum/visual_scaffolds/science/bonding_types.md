@@ -11,7 +11,7 @@ timestamp: "2026-08-15T00:00:00Z"
 When explaining this question, use ONE of these visual structures:
 
 **What the atoms do with their electrons**:
-```
+```key
 IONIC       metal + non-metal      electrons TRANSFERRED    NaCl, MgO
             Na -> Na+ ... Cl-      opposite charges attract
 

@@ -13,7 +13,7 @@ equation to solve here and NO "=" balance — the task is building or combining 
 expression, not isolating a variable (that is algebra_equations.md).
 
 **Word-to-expression table** — map each phrase piece to a symbol:
-```
+```key
 "3 more than"     ->   + 3
 "twice a number"  ->   2 × (number)
 "a number n"      ->   n

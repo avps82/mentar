@@ -11,7 +11,7 @@ timestamp: "2026-08-14T00:00:00Z"
 When explaining this question, use ONE of these visual structures:
 
 **The three moves of an argument**:
-```
+```key
 CLAIM      what you are arguing        "Peak-hour transport should be free."
 EVIDENCE   a fact or example for it    "Ridership rose 14% when fares were cut."
 REBUTTAL   answering the other side    "Critics say it costs too much, but

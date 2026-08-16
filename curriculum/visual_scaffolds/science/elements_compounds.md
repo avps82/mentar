@@ -11,7 +11,7 @@ timestamp: "2026-08-11T00:00:00Z"
 When writing or explaining this question, use ONE of these visual structures:
 
 **Element vs. compound** — side-by-side comparison:
-```
+```key
 ELEMENT (only one type of atom)   COMPOUND (two+ elements chemically joined)
   oxygen, iron, gold, carbon        water (H2O), carbon dioxide (CO2)
   (cannot be broken down into       table salt (NaCl), sugar (glucose)

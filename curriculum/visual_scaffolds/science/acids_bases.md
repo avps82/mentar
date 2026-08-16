@@ -11,7 +11,7 @@ timestamp: "2026-08-15T00:00:00Z"
 When explaining this question, use ONE of these visual structures:
 
 **Strong vs. weak is about how much IONISES, not how much is there**:
-```
+```key
 STRONG acid   nearly every molecule releases H+     HCl, H2SO4, HNO3
               HCl  ->  H+  +  Cl-        (goes to completion)
 

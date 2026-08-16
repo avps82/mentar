@@ -11,7 +11,7 @@ timestamp: "2026-08-15T00:00:00Z"
 When explaining this question, use ONE of these visual structures:
 
 **What is the little word doing?**
-```
+```key
 CONJUNCTION -- joins two ideas          PREPOSITION -- shows position or time
 and    but    because    although       under   before   between   during
 

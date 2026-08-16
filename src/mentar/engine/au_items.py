@@ -45,6 +45,38 @@ def _mc(problem_stem: str, options: list[str], correct_index: int,
     return ("mc4", "mc_choice", problem_stem, _LETTERS[correct_index], options, method_steps)
 
 
+_PLACE_NAMES = ("Ones", "Tens", "Hundreds", "Thousands", "Ten thousands")
+
+
+def _place_value_table(number) -> tuple[str, ...]:
+    """The place-value column table for THIS number.
+
+    `curriculum/visual_scaffolds/maths/place_value.md` carries one of these with
+    the digits 3|5|2 baked in. That file is an authoring instruction for the LLM
+    ("use ONE of these visual structures"), so its numbers are placeholders --
+    and folding it verbatim into a computed card showed a child asked about 463 a
+    table reading 3|5|2 (maintainer, 2026-08-16: "WHERE did 352 come from??").
+    The template was always meant to be filled with the question's own numbers;
+    that step was never built.
+
+    Built here, by the generator that HOLDS the number, for the same reason step
+    grids are: the card is computed, so its picture must be computed too.
+    Columns are width-matched because the card renders in a monospace <pre>.
+    """
+    digits = str(int(number))
+    n = len(digits)
+    if n > len(_PLACE_NAMES):
+        return ()
+    names = [_PLACE_NAMES[n - 1 - i] for i in range(n)]
+    values = [f"({int(d) * 10 ** (n - 1 - i)})" for i, d in enumerate(digits)]
+    widths = [max(len(names[i]), len(digits[i]), len(values[i])) for i in range(n)]
+
+    def _row(cells: list[str]) -> str:
+        return " | ".join(c.center(w) for c, w in zip(cells, widths, strict=True))
+
+    return (_row(names), _row(list(digits)), _row(values))
+
+
 def _place_value_card(number, digit: int, place_name: str, multiplier: int, correct: int) -> tuple[str, ...]:
     """Explain-mode (2026-08-13, Phase 1 — docs/design/explain_mode_design.md
     §3 Type 2, place-value family). Generic over any place (tens/hundreds/
@@ -56,6 +88,10 @@ def _place_value_card(number, digit: int, place_name: str, multiplier: int, corr
         f"  1. In {number}, the digit {digit} sits in the {place_name} place.",
         f"  2. The {place_name} place is worth ×{multiplier}, so {digit} × {multiplier} = {correct}.",
         f"  Answer: {correct}",
+        # Blank line then the table for THIS number -- the picture the scaffold
+        # was always meant to supply, with the question's own digits in it.
+        "",
+        *_place_value_table(number),
     )
 
 

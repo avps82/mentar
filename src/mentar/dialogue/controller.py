@@ -47,7 +47,11 @@ from mentar.engine.bkt import P_L0, bkt_update, params_for
 from mentar.engine.explain_check import has_verified_failure, realign_algebra_blocks
 from mentar.engine.fringe import DEFAULT_MASTERY_THRESHOLD, is_mastered, select_next
 from mentar.engine.probe_classify import ProbeClass, classify_probe
-from mentar.engine.visual_scaffold import first_diagram, load_visual_scaffold
+from mentar.engine.visual_scaffold import (
+    first_diagram,
+    first_diagram_is_reference_key,
+    load_visual_scaffold,
+)
 from mentar.eval.verify_numeric import CheckResult, check
 from mentar.grounding import resolve_grounding
 from mentar.safety.credential_guard import redact_credentials
@@ -1274,7 +1278,10 @@ class SessionController:
                     # cell, a circuit, a story mountain -- and that is the case this
                     # tier was built for (explain_mode_design.md §3 Type 4, "science's
                     # whole reason"). 35 of science's 45 and 32 of english's 36 stay.
-                    if diagram and not _DIAGRAM_HAS_NUMBER_RE.search(diagram):
+                    if diagram and (
+                        first_diagram_is_reference_key(scaffold)
+                        or not _DIAGRAM_HAS_NUMBER_RE.search(diagram)
+                    ):
                         ctx.elaborate_method_card = (
                             *ctx.elaborate_method_card, "", *diagram.splitlines()
                         )

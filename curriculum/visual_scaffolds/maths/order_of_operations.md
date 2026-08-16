@@ -11,7 +11,7 @@ timestamp: "2026-07-22T00:00:00Z"
 When writing or explaining this question, use ONE of these visual structures:
 
 **Staircase / priority ladder** — work top-down:
-```
+```key
 Step 1  B — Brackets          ( )  first
 Step 2  O — Orders/Indices    x²   second
 Step 3  D — Division          ÷    left-to-right
