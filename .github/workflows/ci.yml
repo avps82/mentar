@@ -22,6 +22,55 @@ jobs:
       - run: python -m pytest tests/ -q
       - run: ruff check .
 
+  # The 7 headless-browser checks (tests/web/test_browser_ui.py).
+  #
+  # Why a SEPARATE job on ONE interpreter, not part of the matrix above: a
+  # headless browser is the flakiest thing in this repo, and when it wobbles it
+  # must show up as "browser checks" rather than dragging all three Pythons red.
+  #
+  # Why it exists at all: until 2026-08-16 CI ran `pytest tests/` and reported
+  # "1001 passed, 7 skipped -- websocket not installed" on EVERY run. Those 7
+  # checks had never once executed in CI. That is exactly how a real rendering
+  # bug shipped on 2026-08-15 (an explain-more card 16px against 16.8px prose):
+  # the test for it was correct and simply never ran.
+  #
+  # The skip-guard in the last step is the whole point. If the browser or the
+  # client goes missing again this FAILS, instead of quietly reporting skips and
+  # a green tick -- which is the failure mode it was built to end.
+  browser:
+    name: browser checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: pip install -c constraints.txt -e ".[dev,web,grounding]"
+
+      - name: Provide a `chromium` binary
+        # test_browser_ui.py discovers the browser with shutil.which("chromium").
+        # Runners ship google-chrome-stable, so alias whatever is present rather
+        # than installing a second browser.
+        run: |
+          set -euo pipefail
+          bin=$(command -v chromium || command -v chromium-browser || command -v google-chrome || true)
+          if [ -z "$bin" ]; then
+            echo "::error::no chromium/chrome on this runner image"; exit 1
+          fi
+          sudo ln -sf "$bin" /usr/local/bin/chromium
+          chromium --version
+
+      - name: Browser checks (must actually run)
+        run: |
+          set -uo pipefail
+          out=$(python -m pytest tests/web/test_browser_ui.py -q -rs 2>&1); rc=$?
+          printf '%s\n' "$out"
+          if printf '%s' "$out" | grep -qE '[0-9]+ skipped'; then
+            echo "::error::browser checks SKIPPED -- this job exists to stop exactly that"
+            exit 1
+          fi
+          exit $rc
+
   secrets:
     runs-on: ubuntu-latest
     steps:

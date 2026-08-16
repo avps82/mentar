@@ -50,6 +50,10 @@ dev = [
   "pytest-cov>=4.1",
   "hypothesis>=6.100",
   "ruff>=0.5",
+  # tests/web/test_browser_ui.py drives headless chromium over CDP. Without it
+  # those 7 checks skip silently -- which is how a real rendering bug survived
+  # (2026-08-16). A `chromium` binary is still needed; absent one they skip.
+  "websocket-client>=1.7",
 ]
 inference-ollama = [
   "ollama>=0.3",
