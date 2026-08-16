@@ -1618,6 +1618,40 @@ def _store_and_id(learner_uuid: str) -> tuple[LearnerStore | None, int | None]:
     return _stores.get(learner_uuid), _db_learner_ids.get(learner_uuid)
 
 
+# A coefficient is written implicitly in algebra, and these cards already do it:
+# one real line reads "If a = 5y + 1 ... what is a + b - c? -> 5*y + 1", using
+# BOTH notations six words apart. "5 × y" would have been a third one. Scoped to
+# DIGIT-then-letter on purpose: collapsing a letter*letter (x*y -> xy) would read
+# as a multi-letter name, which verify_numeric rejects outright. No generator
+# emits var*var today (checked across every generator); this keeps it that way if
+# one ever does.
+_DISPLAY_IMPLICIT_MUL_RE = re.compile(r"(?<=[0-9])\s*\*\s*(?=[a-zA-Z])")
+_DISPLAY_MUL_RE = re.compile(r"(?<=[0-9A-Za-z\)])\s*\*\s*(?=[0-9A-Za-z\(])")
+
+
+def _display_mul(line: dict) -> dict:
+    """Render `*` the way the card's own prose already writes multiplication:
+    `5*y` -> `5y` (implicit coefficient), `6*(x + 7)` -> `6 × (x + 7)`.
+
+    `*` is the EXPRESSION_EQUIV machine format -- what the verifier parses -- and
+    au_items.py already notes it is "for the expression_equiv answer string, not
+    human reading". 49 generators leaked it into the human-facing card anyway, so
+    one card could read "the whole group is multiplied: 6 × (x + 7)" and then
+    "Answer: 6*(x + 7)" on the very next line (maintainer, 2026-08-16: "it's
+    multiply when saying it").
+
+    Done HERE, at the one render chokepoint every card and grid passes through,
+    rather than in 49 generators -- their answer strings must stay `*`.
+
+    Only an asterisk BETWEEN operands is converted, so a bullet or footnote
+    marker is untouched. Safe to show because verify_numeric normalises × (and ·)
+    back to * before parsing, so a child copying the card's answer verbatim is
+    marked correct -- it was SAFE_REJECTed until that landed alongside this.
+    """
+    text = _DISPLAY_IMPLICIT_MUL_RE.sub("", line["text"])   # 5*y -> 5y, first
+    return {**line, "text": _DISPLAY_MUL_RE.sub(" × ", text)}
+
+
 def _elaborate_display_lines(ctrl: SessionController) -> list[dict] | None:
     """"Show human working" (step grids) + explain-mode (method cards, 2026-08-12)
     render through the SAME `_arithmetic_steps.html` partial -- both are
@@ -1628,9 +1662,12 @@ def _elaborate_display_lines(ctrl: SessionController) -> list[dict] | None:
     showed a percentage card's question line clipped mid-word by the step
     grid's overflow-x:hidden."""
     if ctrl.elaborate_steps_grid is not None:
-        return render_steps_grid_lines(ctrl.elaborate_steps_grid)
+        return [_display_mul(x) for x in render_steps_grid_lines(ctrl.elaborate_steps_grid)]
     if ctrl.elaborate_method_card is not None:
-        return [{"text": line, "is_annotation": False} for line in ctrl.elaborate_method_card]
+        return [
+            _display_mul({"text": line, "is_annotation": False})
+            for line in ctrl.elaborate_method_card
+        ]
     return None
 
 

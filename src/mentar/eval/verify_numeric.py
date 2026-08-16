@@ -759,6 +759,17 @@ def _check_decimal_exact(llm_output: str, ground_truth: str) -> CheckOutcome:
 _EXPR_ALLOWED_RE = re.compile(r"^[0-9a-zA-Z+\-*/^() \t.]{1,100}$")
 _EXPR_MULTILETTER_RE = re.compile(r"[a-zA-Z]{2,}")
 
+# Multiplication signs a child can SEE and therefore type. Method cards render
+# multiplication as × (2026-08-16); before that a card could show "6 × (x + 7)"
+# on one line and "6*(x + 7)" on the next, and a child copying the × form got
+# SAFE_REJECT because × is not in the allowlist above.
+#
+# Normalised to "*" BEFORE that allowlist rather than added to it: the gate stays
+# exactly as strict about every other non-ASCII character, which is the property
+# it exists for. Same reasoning as the unicode-DIGIT handling -- accept what a
+# correct answer can legitimately look like, without widening what may reach sympy.
+_EXPR_MUL_SIGNS = str.maketrans({"×": "*", "·": "*", "⋅": "*"})
+
 
 def _parse_expression(s: str):
     """Gate + parse one expression string -> sympy expr, or None (SAFE_REJECT).
@@ -768,7 +779,7 @@ def _parse_expression(s: str):
     """
     if not s or not s.strip():
         return None
-    s = s.strip()
+    s = s.strip().translate(_EXPR_MUL_SIGNS)
     if not _EXPR_ALLOWED_RE.fullmatch(s):
         return None
     if _EXPR_MULTILETTER_RE.search(s):

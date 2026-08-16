@@ -18,6 +18,7 @@ from __future__ import annotations
 import json
 import logging
 import random
+import re
 import uuid
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -62,6 +63,10 @@ logger = logging.getLogger(__name__)
 HELP_MODALITIES = ["visual", "concrete", "analogy", "story", "formal"]
 STOP_WORDS = {"stop", "quit", "bye", "exit"}  # learner-initiated session end
 HELP_WORDS = {"?", "help", "h"}               # learner-initiated help request
+# A scaffold diagram carrying any digit is a DIFFERENT example from the card it
+# would be appended to -- see the comment at the append site in _do_help_present.
+_DIAGRAM_HAS_NUMBER_RE = re.compile(r"[0-9]")
+
 STALE_MASTERY_DAYS = 14  # mastery older than this counts as "stale" for forgetting detection
 # W5.6 continuous-assent: shown ONCE at the start so the child knows they can withdraw anytime.
 # (A learner 'stop' = self-withdrawal; a parent 'end' via /parent/ack = parent-withdrawal —
@@ -1245,7 +1250,24 @@ class SessionController:
                         self._scaffold_dir, self._subject, node_for_scaffold.get("label", "")
                     )
                     diagram = first_diagram(scaffold) if scaffold else None
-                    if diagram:
+                    # Only a diagram with NO NUMBERS in it (2026-08-16, maintainer:
+                    # "WHERE did 352 come from??").
+                    #
+                    # The card above is THIS item's worked example. A scaffold is a
+                    # generic authoring instruction for the model -- its file says
+                    # "When writing or explaining this question, use ONE of these
+                    # visual structures" -- so its numbers are placeholders that can
+                    # never match the drawn item. Stapling one to the card showed a
+                    # child asked about 463 a place-value table reading 3|5|2, with
+                    # no hint it was a different example. Every one of the 17 maths
+                    # scaffolds carrying a diagram carries fixed numbers, so this was
+                    # not an edge case: it was every maths node that had a scaffold.
+                    #
+                    # A digit-free diagram cannot contradict the card -- a labelled
+                    # cell, a circuit, a story mountain -- and that is the case this
+                    # tier was built for (explain_mode_design.md §3 Type 4, "science's
+                    # whole reason"). 35 of science's 45 and 32 of english's 36 stay.
+                    if diagram and not _DIAGRAM_HAS_NUMBER_RE.search(diagram):
                         ctx.elaborate_method_card = (
                             *ctx.elaborate_method_card, "", *diagram.splitlines()
                         )
