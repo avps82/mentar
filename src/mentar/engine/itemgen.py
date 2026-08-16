@@ -88,6 +88,15 @@ def mc_which_is(
             f"{stem} → {correct}",
             f"  {correct} → {target}{why}",
             f"  The others: {others}",
+            # Every explain card ends by naming the answer (maintainer,
+            # 2026-08-16). The numeric families already did; this "fact in
+            # category" shape carried the answer only on the stem line, after a
+            # → and ahead of two more lines. That is hardest to read exactly
+            # where the options are whole sentences -- English, which is where
+            # it was reported: "Which of these is a complex sentence? → She
+            # writes poetry because it calms her." then two further lines each
+            # containing other sentences and arrows.
+            f"  Answer: {correct}",
         )
 
     # 3rd element is the STEM (no inline "A) ..." options — R2.1: the web view

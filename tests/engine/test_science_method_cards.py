@@ -39,7 +39,10 @@ def test_every_science_generator_produces_a_method_card_every_draw():
             item = ig.sample(node_id)
             assert item is not None
             assert item.method_steps is not None, node_id
-            assert len(item.method_steps) == 4, (node_id, item.method_steps)
+            # 5 since 2026-08-16: every card now closes with an explicit
+            # "Answer: ..." line (maintainer -- it was unclear which of
+            # several sentence-shaped options was the answer).
+            assert len(item.method_steps) == 5, (node_id, item.method_steps)
 
 
 def test_card_names_the_concept_and_states_the_real_answer():
@@ -47,13 +50,15 @@ def test_card_names_the_concept_and_states_the_real_answer():
     for node_id in SCIENCE_GENERATORS:
         for _ in range(30):
             item = ig.sample(node_id)
-            concept, question_line, answer_line, others_line = item.method_steps
+            concept, question_line, answer_line, others_line, final = item.method_steps
             # rule: name the concept -- an all-caps textbook term, non-empty,
             # never just repeating the generic word "science".
             assert concept == concept.upper() and len(concept) > 3, (node_id, concept)
             correct_text = item.choices[_LETTERS.index(item.answer)]
             assert correct_text in question_line, (node_id, correct_text, question_line)
             assert correct_text in answer_line, (node_id, correct_text, answer_line)
+            # ...and the card ends by naming it outright.
+            assert final.strip() == f"Answer: {correct_text}", (node_id, final)
 
 
 def test_every_distractor_appears_in_the_others_line_exactly_once():

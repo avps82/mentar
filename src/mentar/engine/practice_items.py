@@ -172,6 +172,10 @@ def _gen_odd_one_out(rng: random.Random):
         f"  {', '.join(majority_items)} are all in one group: {majority_label}.",
         f"  {minority_item} is a {minority_label}, so it is the odd one out.",
         "  Look for what MOST of them share -- the odd one is the one left over.",
+        # Every explain card ends by naming the answer (maintainer, 2026-08-16).
+        # The last line here is a strategy hint, so without this the card closed
+        # on advice rather than on the answer.
+        f"  Answer: {minority_item}",
     )
     return ("mc4", "mc_choice", stem, letter, options, card)
 
