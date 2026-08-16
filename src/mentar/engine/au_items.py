@@ -491,6 +491,28 @@ def gen_div_decimals(rng: random.Random):
     return ("decimal", "decimal_exact", f"What is {dividend} ÷ {divisor}?", str(quotient))
 
 
+def _rectangle_diagram(length: int, width: int, unit: str = "cm") -> tuple[str, ...]:
+    """A rectangle drawn to THIS item's dimensions, labelled on two sides.
+
+    maths/area_perimeter.md carries this shape with a fixed 4cm side. Scaled 2
+    characters per unit of length and one line per unit of width, so the picture
+    is proportional to the numbers the child is working with -- a 12x2 rectangle
+    should look long and thin, not square. Capped for the generator's ranges
+    (length 3-12, width 2-10), which stays inside a phone's monospace width.
+    """
+    if not (1 <= length <= 14 and 1 <= width <= 12):
+        return ()
+    inner = length * 2
+    top = "┌" + "─" * inner + "┐"
+    bottom = "└" + "─" * inner + "┘"
+    rows = []
+    for i in range(width):
+        label = f"  {width} {unit}" if i == width // 2 else ""
+        rows.append("│" + " " * inner + "│" + label)
+    base = f"{length} {unit}".center(inner + 2)
+    return (top, *rows, bottom, base)
+
+
 def gen_area_perimeter(rng: random.Random):
     """AC9M6M01-aligned: area or perimeter of a rectangle, chosen at random."""
     length = rng.randint(3, 12)
@@ -503,6 +525,8 @@ def gen_area_perimeter(rng: random.Random):
             "  1. Area of a rectangle = length × width.",
             f"  2. {length} × {width} = {area}.",
             f"  Answer: {area}",
+            "",
+            *_rectangle_diagram(length, width),
         )
         return (
             "int", "int_exact",
@@ -517,6 +541,8 @@ def gen_area_perimeter(rng: random.Random):
         "  1. Perimeter of a rectangle = 2 × (length + width).",
         f"  2. 2 × ({length} + {width}) = 2 × {total} = {perimeter}.",
         f"  Answer: {perimeter}",
+        "",
+        *_rectangle_diagram(length, width),
     )
     return (
         "int", "int_exact",
@@ -699,6 +725,19 @@ def gen_two_step_equations(rng: random.Random):
     return ("int", "int_exact", f"If {coef}x + {a} = {b}, what is x?", str(x_true), None, card)
 
 
+def _square_array(n: int) -> tuple[str, ...]:
+    """An n x n array of cells -- what "squared" actually means, drawn for THIS n.
+
+    maths/squares_roots.md carries this with 4 baked in. The picture is the whole
+    argument the card makes in words ("multiply by ITSELF, not by 2"): a child
+    who sees 6 rows of 6 cannot read 6² as 12. Skipped above 12 so the block
+    stays inside a phone's screen; the generator draws up to 15.
+    """
+    if not 1 <= n <= 12:
+        return ()
+    return (*("□" * n for _ in range(n)), f"{n} rows of {n} = {n * n}")
+
+
 def gen_squares(rng: random.Random):
     """AC9M8N01-aligned: squaring a small integer."""
     n = rng.randint(2, 15)
@@ -710,6 +749,8 @@ def gen_squares(rng: random.Random):
         f"  2. {n}² = {n} × {n} = {n * n}.",
         f"  ({n} × 2 = {n * 2} is doubling — a different thing.)",
         f"  Answer: {n * n}",
+        "",
+        *_square_array(n),
     )
     return ("int", "int_exact", problem, str(n * n), None, card)
 
@@ -915,6 +956,26 @@ def gen_combine_expressions(rng: random.Random):
             answer, None, card)
 
 
+def _labelled_rectangle(width_label: str, length_label: str) -> tuple[str, ...]:
+    """A rectangle labelled with EXPRESSIONS rather than measurements.
+
+    maths/algebraic_area_perimeter.md carries "width = x / length = x + 4" as a
+    text pair with 4 baked in. These questions describe a shape in WORDS only --
+    the child never sees one -- so the picture is doing real work here: it is
+    what turns "width x, length (x + n)" into something you can count sides on.
+    Fixed proportions, because x has no size.
+    """
+    inner = max(len(length_label) + 4, 14)
+    return (
+        "┌" + "─" * inner + "┐",
+        "│" + " " * inner + "│",
+        "│" + " " * inner + "│  " + width_label,
+        "│" + " " * inner + "│",
+        "└" + "─" * inner + "┘",
+        length_label.center(inner + 2),
+    )
+
+
 def gen_rectangle_perimeter_expression(rng: random.Random):
     """Width x, length x+n -> simplified perimeter expression. The setup is a
     WORD description of a shape, not an expression the child could just echo."""
@@ -929,6 +990,8 @@ def gen_rectangle_perimeter_expression(rng: random.Random):
         f"  2. Add width and length first: x + (x + {n}) = 2x + {n}.",
         f"  3. Multiply by 2: 2 × (2x + {n}) = {answer}.",
         f"  Answer: {answer}",
+        "",
+        *_labelled_rectangle("x", f"x + {n}"),
     )
     return ("expression", "expression_equiv",
             f"A rectangle has width x and length (x + {n}). Write a simplified "

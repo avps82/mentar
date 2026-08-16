@@ -707,6 +707,14 @@ def main(argv: list[str] | None = None) -> int:
     bk.add_argument("--db", help="SQLite path (default: mentar_pilot.db).")
     bk.add_argument("--dest", help="Backup destination (default: <db>.backup-<UTC timestamp>).")
 
+    rm = sub.add_parser(
+        "recompute-mastery",
+        help="Replay each learner's answer history to rebuild stored mastery (dry run by default).",
+    )
+    rm.add_argument("--db", help="SQLite path (default: mentar_pilot.db).")
+    rm.add_argument("--apply", action="store_true",
+                    help="Write the recomputed values. Without this, only prints what would change.")
+
     args = parser.parse_args(argv)
 
     if args.cmd == "setup":
@@ -728,6 +736,18 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.cmd == "backup":
         return _backup(args)
+
+    if args.cmd == "recompute-mastery":
+        from mentar.paths import db_path
+        from mentar.tools.recompute_mastery import recompute_mastery, report
+
+        target = args.db or str(db_path())
+        try:
+            changes = recompute_mastery(target, apply=args.apply)
+        except FileNotFoundError:
+            print(f"recompute-mastery: no database at {target} — nothing to do.")
+            return 0
+        return report(changes, applied=args.apply)
 
     # stubs
     print(f"mentar: '{args.cmd}' not implemented yet (stub).", file=sys.stderr)
