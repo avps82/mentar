@@ -121,8 +121,29 @@ class _Browser:
                     + self._read_stderr()
                 )
             port = int(port_file.read_text().splitlines()[0])
-            targets = json.load(urllib.request.urlopen(f"http://127.0.0.1:{port}/json"))
-            page = next(t for t in targets if t["type"] == "page")
+            # DevToolsActivePort appears BEFORE the about:blank page target is
+            # registered, so /json can answer with an empty list or with only
+            # non-page targets for a moment. Taking the first response raised a
+            # bare StopIteration out of the `next()` -- flaky by machine speed,
+            # and it failed exactly once in seven on a CI runner (2026-08-16).
+            # Poll for the page instead of assuming it is already there.
+            page, targets = None, []
+            deadline = time.monotonic() + 15
+            while time.monotonic() < deadline:
+                try:
+                    with urllib.request.urlopen(f"http://127.0.0.1:{port}/json") as r:
+                        targets = json.load(r)
+                except Exception:
+                    targets = []
+                page = next((t for t in targets if t.get("type") == "page"), None)
+                if page:
+                    break
+                time.sleep(0.1)
+            if page is None:
+                raise RuntimeError(
+                    "chromium reported a debugging port but never a page target in 15s. "
+                    f"Last /json response: {targets!r}. Its stderr:\n" + self._read_stderr()
+                )
             self.ws = websocket.create_connection(page["webSocketDebuggerUrl"], timeout=30)
         except Exception:
             # Clean up, but NEVER let a cleanup failure replace the real error.
