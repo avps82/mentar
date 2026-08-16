@@ -19,7 +19,11 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - run: pip install -c constraints.txt -e ".[dev,web,grounding]"
-      - run: python -m pytest tests/ -q
+      # The browser checks belong to the `browser` job below, on one
+      # interpreter. Running them here too would put the flakiest thing in
+      # the repo on all three legs -- which is what happened the first time
+      # websocket-client reached this job (2026-08-16).
+      - run: python -m pytest tests/ -q --ignore=tests/web/test_browser_ui.py
       - run: ruff check .
 
   # The 7 headless-browser checks (tests/web/test_browser_ui.py).
@@ -62,6 +66,11 @@ jobs:
 
       - name: Browser checks (must actually run)
         run: |
+          # `set +e` is load-bearing: the default shell is `bash -e`, so a
+          # failing command substitution kills the step at the assignment and
+          # the printf below never runs -- the first version of this job hid
+          # its own pytest output that way.
+          set +e
           set -uo pipefail
           out=$(python -m pytest tests/web/test_browser_ui.py -q -rs 2>&1); rc=$?
           printf '%s\n' "$out"

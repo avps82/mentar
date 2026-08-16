@@ -91,11 +91,18 @@ class _Browser:
         import websocket
 
         self.profile = tempfile.mkdtemp()
+        # stderr is captured rather than discarded: when chromium fails to come
+        # up, its own message is the only thing that says why (a snap-confined
+        # binary refusing --user-data-dir, a missing shared library, ...). It
+        # used to go to DEVNULL, so CI showed a bare timeout and no cause.
+        self._stderr = tempfile.NamedTemporaryFile(  # noqa: SIM115 -- lives as long as the browser
+            prefix="chromium-stderr-", suffix=".log", delete=False, mode="w+",
+        )
         self.proc = subprocess.Popen(
             ["chromium", "--headless", "--disable-gpu", "--no-sandbox",
              f"--user-data-dir={self.profile}", "--remote-debugging-port=0",
              "--remote-allow-origins=*", "about:blank"],
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL, stderr=self._stderr,
         )
         # Everything after the spawn must clean the process up on failure. A
         # chromium left running per failed connect is a leak CI would accumulate
@@ -109,16 +116,35 @@ class _Browser:
                     break
                 time.sleep(0.1)
             else:
-                raise RuntimeError("chromium never reported a debugging port")
+                raise RuntimeError(
+                    "chromium never reported a debugging port in 15s. Its stderr:\n"
+                    + self._read_stderr()
+                )
             port = int(port_file.read_text().splitlines()[0])
             targets = json.load(urllib.request.urlopen(f"http://127.0.0.1:{port}/json"))
             page = next(t for t in targets if t["type"] == "page")
             self.ws = websocket.create_connection(page["webSocketDebuggerUrl"], timeout=30)
         except Exception:
-            self.proc.terminate()
-            self.proc.wait(timeout=10)
+            # Clean up, but NEVER let a cleanup failure replace the real error.
+            # It did: headless chromium can ignore SIGTERM, so proc.wait(timeout=10)
+            # raised TimeoutExpired and CI reported *that* instead of the startup
+            # failure underneath it -- an unreadable red with the cause discarded
+            # (2026-08-16). kill() rather than terminate(), and swallow whatever
+            # cleanup throws so the original exception propagates.
+            try:
+                self.proc.kill()
+                self.proc.wait(timeout=10)
+            except Exception:
+                pass
             raise
         self._id = 0
+
+    def _read_stderr(self) -> str:
+        try:
+            self._stderr.flush()
+            return pathlib.Path(self._stderr.name).read_text(errors="replace")[-2000:] or "(empty)"
+        except Exception as exc:  # pragma: no cover -- diagnostics must never mask the real error
+            return f"(could not read chromium stderr: {exc!r})"
 
     def send(self, method, **params):
         self._id += 1
@@ -162,6 +188,13 @@ class _Browser:
             self.proc.kill()
             self.proc.wait(timeout=10)
         shutil.rmtree(self.profile, ignore_errors=True)
+        # The captured-stderr file is delete=False (it must outlive the process
+        # so a startup failure can be read back), so close it here.
+        try:
+            self._stderr.close()
+            pathlib.Path(self._stderr.name).unlink(missing_ok=True)
+        except Exception:
+            pass
 
 
 def test_country_master_switch_turns_off_every_row_under_it():
