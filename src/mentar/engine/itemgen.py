@@ -131,6 +131,25 @@ def _whole_with_icon(whole: str) -> str:
     return f"{whole.capitalize()} {icon}".strip()
 
 
+def _equal_groups_diagram(groups: int, each: int, label: str) -> tuple[str, ...]:
+    """`groups` boxes of `each` dots -- the picture for a sharing/division word
+    problem, built from THIS item's numbers.
+
+    maths/division_word_problems.md carries this shape with "12 apples shared
+    between 3 children" baked in, which is a different question from whatever
+    the item drew (see the 2026-08-16 place-value note in au_items). Word
+    problems get no step grid either -- build_steps_grid only fires on
+    "What is a x b?" forms -- so without this they have no picture at all.
+
+    Capped: the generator draws at most 6 groups of 9, so the widest line is
+    well inside a phone's monospace width.
+    """
+    if groups < 1 or each < 1 or groups > 8 or each > 10:
+        return ()
+    boxes = " ".join("[" + "●" * each + "]" for _ in range(groups))
+    return (boxes, f"{groups} {label} · {each} each")
+
+
 def _gen_whole_number_division(rng: random.Random):
     b = rng.randint(2, 6)          # groups
     q = rng.randint(2, 9)          # each gets
@@ -145,8 +164,24 @@ def _gen_whole_number_division(rng: random.Random):
         f"  2. Think \"how many {b}s make {a}?\" — {b} × {q} = {a}.",
         f"  3. So each of the {b} {who} gets {q}.",
         f"  Answer: {q}",
+        "",
+        *_equal_groups_diagram(b, q, who),
     )
     return ("int", "int_exact", problem, str(q), None, card)
+
+
+def _fraction_bar(numerator: int, denominator: int) -> tuple[str, ...]:
+    """A bar of `denominator` cells with `numerator` shaded -- the picture for
+    THIS fraction.
+
+    maths/fractions.md carries this shape with 1/2 and 2/4 baked in, a different
+    fraction from whatever the item drew. Denominators here run to 10, which
+    stays inside a phone's monospace width at 5 characters a cell.
+    """
+    if denominator < 1 or denominator > 12 or not 0 <= numerator <= denominator:
+        return ()
+    cells = "|" + "|".join("████" if i < numerator else "    " for i in range(denominator)) + "|"
+    return (cells, f"{numerator} of {denominator} equal parts shaded = {numerator}/{denominator}")
 
 
 def _gen_unit_fractions(rng: random.Random):
@@ -159,6 +194,8 @@ def _gen_unit_fractions(rng: random.Random):
         f"  1. The whole is cut into {d} equal parts, so {d} is the DENOMINATOR (the bottom).",
         "  2. You are asked about ONE part, so 1 is the numerator (the top).",
         f"  Answer: 1/{d}",
+        "",
+        *_fraction_bar(1, d),
     )
     return ("fraction", "fraction_equiv", problem, f"1/{d}", None, card)
 
@@ -175,6 +212,8 @@ def _gen_fraction_as_part_of_whole(rng: random.Random):
         f"  1. Bottom number = how many equal parts the whole was cut into: {d}.",
         f"  2. Top number = how many of those parts you have: {n}.",
         f"  Answer: {n}/{d}",
+        "",
+        *_fraction_bar(n, d),
     )
     return ("fraction", "fraction_equiv", problem, f"{n}/{d}", None, card)
 

@@ -11,7 +11,7 @@ timestamp: "2026-08-15T00:00:00Z"
 When explaining this question, use ONE of these visual structures:
 
 **Same number, different meaning**:
-```
+```key
 SCALAR   size only                 "60 km/h"
 VECTOR   size AND direction        "60 km/h due north"
 

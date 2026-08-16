@@ -11,7 +11,7 @@ timestamp: "2026-08-15T00:00:00Z"
 When explaining this question, use ONE of these visual structures:
 
 **OIL RIG**:
-```
+```key
 Oxidation Is Loss    of electrons     Mg -> Mg(2+) + 2e-     oxidation number RISES
 Reduction Is Gain    of electrons     Cu(2+) + 2e- -> Cu     oxidation number FALLS
 ```

@@ -11,7 +11,7 @@ timestamp: "2026-08-15T00:00:00Z"
 When explaining this question, use ONE of these visual structures:
 
 **A group is a column, and the column is the outer-electron count**:
-```
+```key
 GROUP 1   alkali metals   1 outer electron    lithium, sodium, potassium
           -> lose it easily, very reactive
 

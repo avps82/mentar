@@ -77,6 +77,28 @@ def _place_value_table(number) -> tuple[str, ...]:
     return (_row(names), _row(list(digits)), _row(values))
 
 
+def _decimal_place_value_table(number: str) -> tuple[str, ...]:
+    """The place-value table for a decimal, built from THIS number.
+
+    Same reason as _place_value_table: maths/decimals.md carries one of these
+    with 3.42 baked in, which is a different number from whatever the item drew.
+    """
+    if "." not in str(number):
+        return ()
+    whole, frac = str(number).split(".", 1)
+    names = [*(_PLACE_NAMES[len(whole) - 1 - i] for i in range(len(whole))), ".",
+             *("Tenths", "Hundredths", "Thousandths")[: len(frac)]]
+    cells = [*whole, ".", *frac]
+    if len(names) != len(cells):
+        return ()
+    widths = [max(len(n), len(c)) for n, c in zip(names, cells, strict=True)]
+
+    def _row(vals: list[str]) -> str:
+        return "| " + " | ".join(v.center(w) for v, w in zip(vals, widths, strict=True)) + " |"
+
+    return (_row(names), _row(cells), f"= {number}".rjust(len(_row(cells))))
+
+
 def _place_value_card(number, digit: int, place_name: str, multiplier: int, correct: int) -> tuple[str, ...]:
     """Explain-mode (2026-08-13, Phase 1 — docs/design/explain_mode_design.md
     §3 Type 2, place-value family). Generic over any place (tens/hundreds/
@@ -271,6 +293,9 @@ def gen_decimal_place_value(rng: random.Random):
         "  1. Straight after the decimal point is the TENTHS place.",
         f"  2. The digit {tenths} sits right after the point, so it represents {correct}.",
         f"  Answer: {correct}",
+        # The table for THIS number -- see _decimal_place_value_table.
+        "",
+        *_decimal_place_value_table(number),
     )
     return _mc(f"In {number}, what does the {tenths} represent?", options, options.index(correct), card)
 
@@ -322,7 +347,26 @@ def _percentage_of_quantity_card(pct: int, quantity: int, answer: int) -> tuple[
         f"  2. So {pct}% of {quantity} = {quantity} × {pct} ÷ 100.",
         f"  3. {quantity} × {pct} = {product}, and {product} ÷ 100 = {answer}.",
         f"  Answer: {answer}",
+        "",
+        *_percent_grid(pct),
     )
+
+
+def _percent_grid(pct: int) -> tuple[str, ...]:
+    """A 10x10 hundred-grid with `pct` cells shaded -- the picture for THIS
+    percentage.
+
+    maths/percentages.md carries this shape with 20% baked in. A hundred-grid is
+    the whole point of the concept ("per cent" = per hundred), so the shaded
+    count must be the item's own.
+    """
+    if not 0 <= pct <= 100:
+        return ()
+    rows = []
+    for r in range(10):
+        row = "".join("█" if r * 10 + c < pct else "□" for c in range(10))
+        rows.append(row)
+    return (*rows, f"{pct} of 100 squares shaded = {pct}%")
 
 
 def gen_percentage_of_quantity(rng: random.Random):

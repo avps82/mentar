@@ -11,7 +11,7 @@ timestamp: "2026-08-15T00:00:00Z"
 When explaining this question, use ONE of these visual structures:
 
 **Three different questions about the same sample**:
-```
+```key
 HOW MANY particles?    amount of substance   moles      (6.02 x 10^23 per mole)
 HOW HEAVY?             mass                  grams
 HOW CONCENTRATED?      concentration         mol/L

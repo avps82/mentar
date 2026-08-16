@@ -100,7 +100,10 @@ def test_elaborate_on_percentage_node_produces_a_real_method_card():
     card = ctrl.elaborate_method_card
     assert card is not None
     assert card[0] == "PERCENTAGE OF A QUANTITY"
-    assert card[-1].strip().startswith("Answer:")
+    # The hundred-grid is appended AFTER the answer (2026-08-16) -- a picture
+    # of it, built from the item's own percentage -- so check the answer LINE.
+    answer_lines = [x for x in card if x.strip().lower().startswith("answer:")]
+    assert len(answer_lines) == 1, card
     assert ctrl.state == FSMState.HELP_RECHECK_AWAIT.value
 
 

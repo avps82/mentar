@@ -11,7 +11,7 @@ timestamp: "2026-07-22T00:00:00Z"
 When writing or explaining this question, use ONE of these visual structures:
 
 **MRS GREN — 7 life processes** (tick if the thing does ALL of these):
-```
+```key
 M — Movement
 R — Respiration (releasing energy from food)
 S — Sensitivity (responding to the environment)

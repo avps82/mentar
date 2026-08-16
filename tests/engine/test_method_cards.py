@@ -113,6 +113,19 @@ _MIGRATED_MC4_GENERATORS = (
 _LETTERS = "ABCD"
 
 
+def _answer_line(card) -> str:
+    """The card's "Answer: ..." line.
+
+    These checks used card[-1] until 2026-08-16, when computed diagrams began
+    being appended AFTER the answer -- the place-value column table, the fraction
+    bar, the percentage hundred-grid. Those are a picture OF the answer built
+    from the item's own numbers, so they belong after it; the answer line itself
+    is what these tests are actually about.
+    """
+    lines = [x for x in card if x.strip().lower().startswith("answer:")]
+    assert len(lines) == 1, f"expected exactly one Answer: line, got {lines!r}"
+    return lines[0]
+
 def test_percentage_of_quantity_card_matches_the_maintainers_own_example():
     """The exact reported failure, reproduced as a positive test: What is 50% of 64?
     Calls the card builder directly with the maintainer's own numbers rather than
@@ -121,7 +134,7 @@ def test_percentage_of_quantity_card_matches_the_maintainers_own_example():
     card = _percentage_of_quantity_card(pct=50, quantity=64, answer=32)
     assert card[0] == "PERCENTAGE OF A QUANTITY"  # rule: name the concept
     assert "What is 50% of 64?" in card[1]
-    assert card[-1].strip() == "Answer: 32"
+    assert _answer_line(card).strip() == "Answer: 32"
     # every intermediate arithmetic claim is independently checkable
     assert "64 × 50 = 3200" in card[4]
     assert "3200 ÷ 100 = 32" in card[4]
@@ -137,8 +150,8 @@ def test_every_migrated_int_generator_self_validates_over_many_draws():
             result = gen(rng)
             answer, method_steps = result[3], result[5]
             assert method_steps is not None, gen.__name__
-            assert answer in method_steps[-1], (gen.__name__, answer, method_steps[-1])
-            assert method_steps[-1].strip().startswith("Answer:"), (gen.__name__, method_steps[-1])
+            assert answer in _answer_line(method_steps), (gen.__name__, answer, method_steps)
+            assert _answer_line(method_steps).strip().startswith("Answer:"), gen.__name__
             assert result[2] in method_steps[1], (gen.__name__, "problem text not echoed in card")
 
 
@@ -154,7 +167,7 @@ def test_every_migrated_mc4_generator_card_states_the_real_correct_choice():
             assert method_steps is not None, gen.__name__
             correct_text = choices[_LETTERS.index(letter)]
             assert correct_text in method_steps[1], (gen.__name__, correct_text, method_steps[1])
-            assert correct_text in method_steps[-1], (gen.__name__, correct_text, method_steps[-1])
+            assert correct_text in _answer_line(method_steps), (gen.__name__, correct_text, method_steps)
 
 
 def test_every_migrated_expression_generator_self_validates_over_many_draws():
@@ -171,7 +184,7 @@ def test_every_migrated_expression_generator_self_validates_over_many_draws():
             result = gen(rng)
             problem, answer, method_steps = result[2], result[3], result[5]
             assert method_steps is not None, gen.__name__
-            assert answer in method_steps[-1], (gen.__name__, answer, method_steps[-1])
+            assert answer in _answer_line(method_steps), (gen.__name__, answer, method_steps)
             # Some cards drop the UI instruction suffix for brevity -- the
             # QUESTION itself must still be echoed either way.
             core_problem = problem.removesuffix(trailing_instruction)
@@ -209,8 +222,8 @@ def test_method_steps_flows_through_item_generator_onto_the_item():
             item = ig.sample(node_id)
             assert item is not None
             assert item.method_steps is not None, (node_id, item)
-            assert item.method_steps[-1].strip().startswith("Answer:")
-            assert item.answer in item.method_steps[-1]
+            assert _answer_line(item.method_steps).strip().startswith("Answer:")
+            assert item.answer in _answer_line(item.method_steps)
 
 
 def test_unmigrated_generators_are_unaffected():

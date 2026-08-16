@@ -58,19 +58,25 @@ def test_every_explain_card_names_its_answer():
     )
 
 
-def test_the_answer_line_is_the_last_thing_on_the_card():
-    """It closes the card. A card that ends on a strategy hint or a diagram
+def test_the_answer_line_closes_the_explanation():
+    """It closes the WORKING. A card that ends its reasoning on a strategy hint
     leaves the child hunting for the answer again -- practice_odd_one_out ended
-    on "Look for what MOST of them share" until this landed.
+    on "Look for what MOST of them share" until 2026-08-16.
 
-    Place-value cards are the deliberate exception: their computed table is
-    appended AFTER the answer, as a picture of it.
+    A computed diagram may follow, after a blank-line separator: place value's
+    column table, the fraction bar, the hundred-grid. Those are a PICTURE of the
+    answer, drawn from the item's own numbers, so they belong after it -- which
+    is why this checks the last line before the separator, not the last line.
     """
     late = []
     for name, card in _cards():
-        body = [line for line in card if line.strip()]
-        if not body or "place_value" in name:
+        head = []
+        for line in card:
+            if not line.strip():
+                break            # blank line = start of the appended diagram
+            head.append(line)
+        if not head:
             continue
-        if not body[-1].strip().lower().startswith("answer:"):
-            late.append((name, body[-1][:60]))
-    assert not late, f"card does not END on its answer: {late[:6]}"
+        if not head[-1].strip().lower().startswith("answer:"):
+            late.append((name, head[-1][:60]))
+    assert not late, f"the explanation does not end on its answer: {late[:6]}"
