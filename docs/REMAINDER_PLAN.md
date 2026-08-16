@@ -87,10 +87,15 @@ WebSearch/Context7 at execution time, not from training-data memory (maintainer 
   (verified: 10%→21%→22%, plateaus, never false-masters — but counterintuitive for a
   parent-facing %). REVIEW/PHASE0_STATUS 2026-06-29 note recommends Option B.
 - **Spec:** in `src/mentar/engine/bkt.py`, apply the learning transition
-  `P(L') = P(L|obs) + (1−P(L|obs))·learns` only when the observation is NOT a bare-wrong
-  (unaided incorrect) attempt; a wrong unaided answer only runs the conditioning step (posterior
-  drops via slip/guess), no `learns` term added. Hinted-win / correct / probe observations still
-  get the `learns` credit as before. Add a literature reference in
+  `P(L') = P(L|obs) + (1−P(L|obs))·learns` only when the observation is NOT a wrong
+  attempt; a wrong answer only runs the conditioning step (posterior drops via slip/guess), no
+  `learns` term added. Correct observations — hinted or not — and probes still get the `learns`
+  credit as before.
+  **(Amended 2026-08-16.** This said "NOT a bare-wrong (unaided incorrect) attempt" and listed
+  "Hinted-win" as still earning credit, which contradicted this task's own Accept line below.
+  The implementation followed the narrower wording, so the ~22% plateau the task exists to remove
+  survived on the hinted path — the path the Help loop actually drives. Body now matches the
+  title and the Accept criterion.) Add a literature reference in
   `docs/design/W3.3_bkt.md` for the "no-learning-on-incorrect" BKT variant (research the term
   before writing — don't assert a citation from memory). Update SPEC §11 to reflect the deviation
   from classic BKT.

@@ -97,15 +97,30 @@ def bkt_update(
         guess_eff = params.guess + (1.0 - params.guess) * HINT_DISCOUNT
 
     p_cond = _posterior_given_obs(p, correct, guess_eff, params.slip)
-    if not correct and not hinted:
-        # A20 (BKT Option B, ratified 2026-07-05): a bare-wrong (unaided incorrect)
-        # attempt only conditions the posterior — no learns credit. Without this,
-        # mastery could rise on a wrong-answer streak from cold start (a symptom of
-        # the well-documented "model degeneracy" critique of vanilla BKT: Baker,
-        # R.S.J.d., Corbett, A.T., & Aleven, V. (2008), "More Accurate Student
-        # Modeling through Contextual Estimation of Slip and Guess Probabilities
-        # in Bayesian Knowledge Tracing," ITS 2008, doi:10.1007/978-3-540-69132-7_44).
-        # Hinted-win / correct observations are unaffected.
+    if not correct:
+        # A20 (BKT Option B, ratified 2026-07-05): a WRONG attempt only conditions
+        # the posterior — no learns credit. Without this, mastery could rise on a
+        # wrong-answer streak from cold start (a symptom of the well-documented
+        # "model degeneracy" critique of vanilla BKT: Baker, R.S.J.d., Corbett,
+        # A.T., & Aleven, V. (2008), "More Accurate Student Modeling through
+        # Contextual Estimation of Slip and Guess Probabilities in Bayesian
+        # Knowledge Tracing," ITS 2008, doi:10.1007/978-3-540-69132-7_44).
+        # Correct observations, hinted or not, are unaffected.
+        #
+        # 2026-08-16: this was `not correct and not hinted`, which implemented
+        # A20's spec BODY ("bare-wrong (unaided incorrect)") while violating
+        # A20's own ACCEPTANCE CRITERION ("a wrong-answer streak from cold start
+        # never raises mastery above the prior -- was: rises then plateaus
+        # ~22%"). Measured through the real request path: a child answering
+        # wrong every turn AND pressing Help every turn drove mastery
+        # 0.10 -> 0.2231 without ever answering correctly -- the exact 22% the
+        # task was written to eliminate, surviving on the hinted path.
+        #
+        # That path is not the rare one. FLOW.md's HELP_RECHECK_SCORE ->
+        # BKT_UPDATE(hinted) means a struggling child's wrong answers are
+        # USUALLY hinted, so the old gate protected the uncommon case and missed
+        # the common one. Maintainer resolved the contradiction in favour of the
+        # acceptance criterion; SPEC §11 and REMAINDER_PLAN A20 updated to match.
         return p_cond
     # learning transition (within-session; forgets unused in v0)
     return p_cond + (1.0 - p_cond) * params.learns
