@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# Mentar commit-message trailer rules.
+# Activate with:  git config core.hooksPath scripts/git-hooks
+# Override:       git commit --no-verify
+#
+# ONE hard rule (maintainer, 2026-06-24): keep Co-Authored-By, but never let a
+# `Claude-Session:` URL trailer into a commit. The repo is going public and a
+# session URL in the permanent history is a hygiene problem you cannot take
+# back — unlike a bad message, which can be amended before push.
+#
+# Co-Authored-By is checked but only WARNS. Requiring it would block the
+# maintainer's own unassisted commits, which is not the rule.
+set -uo pipefail
+
+msg_file="$1"
+[ -f "$msg_file" ] || exit 0
+
+# Ignore comment lines — git strips them, and a commented-out example must not
+# trip the gate.
+body=$(grep -v '^#' "$msg_file" || true)
+
+# Nothing to check on an empty message (git aborts the commit itself).
+printf '%s' "$body" | grep -q '[^[:space:]]' || exit 0
+
+if printf '%s\n' "$body" | grep -qiE '^[[:space:]]*Claude-Session[[:space:]]*:'; then
+  cat >&2 <<'MSG'
+
+Commit blocked: the message carries a `Claude-Session:` trailer.
+
+That URL must not enter the permanent history of a repo that is going public
+(maintainer rule, 2026-06-24). Keep `Co-Authored-By:`; drop the session line.
+
+  git commit --amend        # then delete the Claude-Session line
+  git commit --no-verify    # genuine false positive
+MSG
+  exit 1
+fi
+
+# Advisory only — see the header for why this does not block.
+if ! printf '%s\n' "$body" | grep -qiE '^[[:space:]]*Co-Authored-By[[:space:]]*:'; then
+  echo "NOTE: no Co-Authored-By trailer. Fine for your own commits; add one if this was assisted." >&2
+fi
+
+exit 0

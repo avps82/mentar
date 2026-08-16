@@ -44,6 +44,18 @@ reminder; it doesn't run the eval itself.
   trailer** (public-repo hygiene).
 - **Never commit secrets** (endpoints, tokens) or third-party grounding content. A pre-commit hook
   guards secret filenames/inline secrets — activate it via `core.hooksPath` (see `config/README.md`).
+- **Turn the hooks on once** — `git config core.hooksPath scripts/git-hooks` — and you get all four.
+  Every one is skippable with `--no-verify`; each says so when it blocks.
+
+  | Hook | Does | Cost |
+  |---|---|---|
+  | `pre-commit` | secret filenames + content, `ruff check .`, doc-path check, and a heads-up if the branch's last CI run went red | ~2s |
+  | `pre-push` | the full test suite, plus gitleaks over full history when your build matches CI's v8.30.1 | ~8min |
+  | `commit-msg` | blocks a `Claude-Session:` trailer (see above) | instant |
+  | `post-merge` | tells you when a pull moved `pyproject.toml`/`constraints.txt` so you reinstall | instant |
+
+  `pre-push` is the one that keeps `main` green: `pre-commit` is deliberately too fast to run tests,
+  so a test failure is invisible until CI — which is exactly how the suite sat red for a day.
 - Don't weaken a protected path (see `AGENTS.md` → RULES) without explicit maintainer sign-off.
 
 ## Licensing of contributions (CLA)

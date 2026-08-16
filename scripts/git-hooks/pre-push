@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+# Mentar pre-push gate — the checks CI runs that pre-commit is too slow to.
+# Activate with:  git config core.hooksPath scripts/git-hooks
+# Override for a confirmed false positive / an emergency:  git push --no-verify
+#
+# Why this exists (2026-08-16, maintainer: "how else will you know that CI is
+# broken? There is no feedback mechanism"). pre-commit runs ruff + doc-paths +
+# a secret scan on staged lines — fast enough for every commit, but it cannot
+# catch the two things that actually turned main red:
+#
+#   * a test failure (CI runs 1008 tests on 3.11/3.12/3.13; the 2026-08-15 red
+#     was tests/web/test_progress.py asserting stale picker labels)
+#   * a gitleaks finding over FULL HISTORY (pre-commit only sees the staged
+#     diff, so a secret already in an earlier commit is invisible to it)
+#
+# Pushes are far rarer than commits, so paying for these here is affordable in
+# a way that paying on every commit is not.
+set -uo pipefail
+
+# Nothing to check on a branch deletion (local sha is all zeros).
+only_deletes=1
+while read -r _local_ref local_sha _remote_ref _remote_sha; do
+  case "$local_sha" in
+    ''|*[!0]*) only_deletes=0 ;;
+  esac
+done
+[ "$only_deletes" -eq 1 ] && exit 0
+
+PY=""
+if [ -x ".venv/bin/python" ]; then PY=".venv/bin/python"
+elif command -v python3 >/dev/null 2>&1; then PY="python3"
+fi
+
+# ── 1) Test suite ────────────────────────────────────────────────────────────
+# Whole suite, matching AGENTS.md's stated gate. ~8 minutes. If that is too slow
+# for a given push, `git push --no-verify` is the documented escape hatch —
+# better an explicit skip than a gate nobody runs.
+if [ -n "$PY" ]; then
+  echo "pre-push: running the test suite (git push --no-verify to skip)..." >&2
+  if ! "$PY" -m pytest tests/ -q; then
+    echo "" >&2
+    echo "Push blocked: tests are failing (see above). This is what CI would" >&2
+    echo "have told you 8 minutes after the push instead." >&2
+    echo "  Fix them, or: git push --no-verify" >&2
+    exit 1
+  fi
+else
+  echo "NOTE: no python found -- skipping the test gate this push." >&2
+fi
+
+# ── 2) gitleaks, full history ────────────────────────────────────────────────
+# Mirrors the CI `secrets` job (same --redact, same repo-wide git scan), so a
+# finding costs a push rather than a red main. .gitleaks.toml is picked up
+# automatically from the repo root, so the allowlist matches CI exactly.
+# Not installed by this hook on purpose: fetching a binary is the operator's
+# call, not a git hook's.
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "NOTE: gitleaks not installed -- CI will still run it. To gate locally:" >&2
+  echo "      https://github.com/gitleaks/gitleaks/releases (v8.30.1 matches CI)" >&2
+elif ! gitleaks --help 2>&1 | grep -qE '^[[:space:]]+git[[:space:]]'; then
+  # A build without the `git` subcommand predates v8.19 and does NOT agree with
+  # CI: measured 2026-08-16, /usr/bin/gitleaks here reports 3 findings that
+  # v8.30.1 clears -- the two allowlisted pack keys (it ignores .gitleaks.toml
+  # unless passed -c) plus AKIAIOSFODNN7EXAMPLE, which is AWS's own docs example
+  # and newer rulesets allowlist. Blocking pushes on findings CI does not have
+  # would train you to reach for --no-verify, which is worse than no gate.
+  echo "NOTE: local gitleaks is older than CI's v8.30.1 (no 'git' subcommand) and" >&2
+  echo "      disagrees with it -- skipping. Upgrade to gate locally:" >&2
+  echo "      https://github.com/gitleaks/gitleaks/releases" >&2
+elif ! gitleaks git . --no-banner --redact -v; then
+  echo "" >&2
+  echo "Push blocked: gitleaks found something (see above)." >&2
+  echo "  A false positive belongs in .gitleaks.toml, next to the existing" >&2
+  echo "  allowlist entry. Genuine emergency: git push --no-verify" >&2
+  exit 1
+fi
+
+exit 0

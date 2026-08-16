@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# Mentar post-merge dependency-drift notice.
+# Activate with:  git config core.hooksPath scripts/git-hooks
+#
+# Runs after `git pull` / `git merge`. If the dependency surface moved, say so
+# once, here — otherwise the next failure is an import error or a version-skew
+# bug that reads like a code problem and gets debugged as one.
+#
+# Advisory only. It never installs anything and never blocks: which interpreter
+# and which extras a machine wants is the operator's call, and this hook has no
+# business guessing (CI installs dev,web,grounding — see .github/workflows/ci.yml).
+set -uo pipefail
+
+# HEAD@{1} is where HEAD was before the merge. Absent on a fresh clone's first
+# merge, in which case there is nothing to compare and nothing to say.
+prev=$(git rev-parse --quiet --verify 'HEAD@{1}' 2>/dev/null || true)
+[ -n "$prev" ] || exit 0
+
+changed=$(git diff --name-only "$prev" HEAD 2>/dev/null || true)
+[ -n "$changed" ] || exit 0
+
+watched=$(printf '%s\n' "$changed" | grep -E '^(pyproject\.toml|constraints\.txt)$' || true)
+[ -n "$watched" ] || exit 0
+
+cat >&2 <<MSG
+
+  ────────────────────────────────────────────────────────────────
+   Dependencies moved in that pull:
+$(printf '%s\n' "$watched" | sed 's/^/     - /')
+
+   Your installed packages are now older than the repo expects.
+     pip install -c constraints.txt -e ".[dev,web,grounding]"
+
+   (grounding is not optional for the suite — without it the
+    libzim-dependent tests fail. Same extras CI installs.)
+  ────────────────────────────────────────────────────────────────
+MSG
+
+exit 0
