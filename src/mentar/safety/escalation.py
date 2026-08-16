@@ -197,6 +197,35 @@ _PHYSICAL_DANGER_PATTERNS: list[re.Pattern[str]] = [p for p in (
     re.compile(r"\bslept (rough|in the street|on a bench|in a doorway)\b", re.I),
     re.compile(r"\bslept outside\b(?![^.?!]{0,20}\b(tent|camping|camp|sleepover|garden|star)\b)[^.?!]{0,20}\b(because|couldn'?t|had to|scared|cold|alone)\b", re.I),
     re.compile(r"\bcouldn'?t go home\b", re.I),
+    # ── Acute emergencies (added 2026-08-16, maintainer-authorised) ──────────
+    # Until now these matched NOTHING: "there's a fire in my house", "someone is
+    # trying to break in", "i'm bleeding a lot and no one is home", "i can't
+    # breathe", "a man is following me home" all returned None, so the child got
+    # the next maths question. §3.2 defines this class as "immediate physical
+    # danger", which these plainly are.
+    #
+    # SCOPE, deliberately: this adds DETECTION only. A match routes through the
+    # existing physical_danger path -- log, freeze, §3.4 handoff to the
+    # physically-present adult -- and invents no new wording. Emergency-services
+    # SIGNPOSTING (crisis numbers) remains the open item in SAFETY.md §3.5 and
+    # still needs safeguarding input; guessing at it here is exactly the
+    # unqualified judgement that review exists to replace. Detection sits a step
+    # EARLIER than that gap, and §3.5's routing already presumes it.
+    #
+    # Checked against all 265 curriculum/prompt files (0 hits) and against
+    # science phrasings that share the vocabulary -- "we breathe in oxygen",
+    # "fire needs fuel, oxygen and heat", "we had a fire drill at school" all
+    # stay silent.
+    re.compile(r"\b(house|kitchen|room|flat|bedroom|home)\s+is\s+on\s+fire\b", re.I),
+    re.compile(r"\bthere('?s| is)\s+a\s+fire\s+in\s+(my|our|the)\b", re.I),
+    re.compile(r"\bmy\s+(house|home|room)\s+is\s+burning\b", re.I),
+    re.compile(r"\bsomeone('?s| is)?\s*(is\s+)?(trying\s+to\s+)?break(ing)?\s+in(to)?\b", re.I),
+    re.compile(r"\bsomeone\s+is\s+in\s+(my|our)\s+(house|home|room)\b", re.I),
+    re.compile(r"\b(i'?m|i am)\s+bleeding\b|\bwon'?t\s+stop\s+bleeding\b|\bbleeding\s+a\s+lot\b", re.I),
+    re.compile(r"\b(i\s+)?can'?t\s+breathe\b|\bcannot\s+breathe\b", re.I),
+    re.compile(r"\b(a|some|the)\s+(man|woman|person|stranger|guy|boy)\s+is\s+following\s+me\b", re.I),
+    re.compile(r"\bsomeone\s+is\s+following\s+me\b", re.I),
+    re.compile(r"\b(should\s+i\s+)?(call|ring|phone)\s+(999|911|112|000|the\s+police|an?\s+ambulance)\b", re.I),
 )]
 
 # ── B: severe_distress (HIGH) ────────────────────────────────────────────────

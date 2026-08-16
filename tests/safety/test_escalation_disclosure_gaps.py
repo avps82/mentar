@@ -299,3 +299,47 @@ def test_widened_actor_list_stays_silent_on_ordinary_uses():
         "i cut the pizza into 4 pieces",
     ):
         _silent(text)
+
+
+# ── acute emergencies (2026-08-16) ───────────────────────────────────────────
+# These matched NOTHING until now: a child typing "there's a fire in my house"
+# got the next maths question. SAFETY §3.2 defines physical_danger as "immediate
+# physical danger", which these plainly are.
+#
+# DETECTION only. A match routes through the existing physical_danger path --
+# log, freeze, §3.4 handoff to the present adult. Emergency-services SIGNPOSTING
+# (crisis numbers) is still the open §3.5 item and still needs safeguarding
+# input; nothing here invents any.
+
+def test_acute_emergencies_fire_intruder_injury_are_detected():
+    for text in (
+        "theres a fire in my house",
+        "the house is on fire",
+        "someone is trying to break in",
+        "someone is breaking into our house",
+        "im bleeding a lot and no one is home",
+        "my cut wont stop bleeding",
+        "i cant breathe properly",
+        "a man is following me home",
+        "someone is following me",
+        "should i call 999",
+    ):
+        assert _fires(text).trigger_class is TriggerClass.PHYSICAL_DANGER, text
+
+
+def test_science_lessons_about_fire_and_breathing_stay_silent():
+    """The vocabulary overlaps real curriculum: AU/IN/SG science teach the fire
+    triangle and respiration. Checked against all 265 curriculum/prompt files
+    (0 hits); these pin the phrasings that come closest."""
+    for text in (
+        "We breathe in oxygen and breathe out carbon dioxide.",
+        "Respiration releases energy in every cell.",
+        "Fire needs fuel, oxygen and heat -- the fire triangle.",
+        "Combustion is a reaction with oxygen.",
+        "The fire brigade uses water to cool the fuel.",
+        "Plants do not breathe the way animals do.",
+        "we had a fire drill at school",
+        "i was following the steps you gave me",
+        "i broke my pencil",
+    ):
+        _silent(text)

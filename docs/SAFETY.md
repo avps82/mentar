@@ -388,6 +388,16 @@ The following are unresolved in v0.1-interim and will be addressed when Bucket D
 - ⟐ **Handoff message validation:** review and testing of the §3.4 wording by a safeguarding professional or child communication specialist. **Interim decision (W2.2 design §6.2):** §3.4 wording is *frozen as-is for the supervised pilot*. Professional validation is **sought pro-bono** (see §3.5.1) and gates **unsupervised** mode, not the supervised pilot; absent a volunteer, the maintainer may substitute an explicit documented risk decision (see rollout guard below).
 - **Gradated response levels:** v0.1 uses a binary trigger/freeze model. Bucket D may recommend gradated responses (e.g., a softer check-in for lower-severity signals before full freeze). *(v0.1 records a `severity` per trigger but does not branch flow on it — data only, for Bucket D.)*
 - ⟐ **Emergency services signposting:** **Interim decision (W2.2 design §6.1):** the pilot displays **no** crisis/emergency numbers to the child; Category-A triggers route to the **physically-present parent** via the §3.4 handoff. Rationale and the explicit residual hole (*"route to present parent" fails when the parent is the source of harm — `physical_danger`/`abuse_disclosure` cases*) are documented in the design doc. **This remains a known risk. Signposting with safeguarding input is required before unsupervised/independent mode; for the supervised pilot the present adult IS the routing target the child is directed to (§3.5.1). Sought pro-bono; absent a volunteer, an explicit maintainer risk decision substitutes (§3.5.1).**
+  **Detection closed 2026-08-16 (this item is still open — it is about SIGNPOSTING).**
+  A probe found that acute emergencies matched *no* trigger at all: "there's a fire in my
+  house", "someone is trying to break in", "i'm bleeding a lot and no one is home", "i can't
+  breathe", "a man is following me home" all returned `None`, so the child received the next
+  maths question. Those phrasings are now `physical_danger` (CRITICAL) and route through the
+  existing §3.4 handoff + freeze. **No crisis numbers were added and no wording was invented** —
+  the interim decision above stands unchanged, and the residual hole it names (routing to a
+  present parent fails when the parent is the source of harm) is untouched. The point is only
+  that §3.5's routing always presumed detection, and detection was absent.
+
 - **Multi-turn escalation patterns:** the current trigger list is single-turn. Multi-turn patterns (escalating distress over several turns) are not yet handled.
 - **Age-invariant handoff (raised 2026-08-15, NO interim decision — deliberately not marked ⟐).** The §3.4 wording, the "talk to your grown-up" framing, and the route-to-present-parent behaviour were designed for the ~8–10 pilot and are applied **unchanged** to every learner. Shipped content now spans roughly **ages 6–18** (the largest share is 16–18), so the same message written for an 8-year-old is what a 17-year-old sees. Nothing in the system varies by age.
   This widening happened as a **content** decision across the Aug-11→15 curriculum waves; it was never taken as a **safety** decision, and no interim call has been made here — which is why this item carries no ⟐. It is now **Item C** of `docs/design/SAFEGUARDING_REVIEW_PACKET.md`.
