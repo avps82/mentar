@@ -100,6 +100,11 @@ class _Browser:
         )
         self.proc = subprocess.Popen(
             ["chromium", "--headless", "--disable-gpu", "--no-sandbox",
+             # /dev/shm is small in a container; without this chromium can stall
+             # or die on startup rather than fall back to disk. Classic CI flag.
+             "--disable-dev-shm-usage",
+             # Skip first-run work that is pure latency for a throwaway profile.
+             "--no-first-run", "--no-default-browser-check",
              f"--user-data-dir={self.profile}", "--remote-debugging-port=0",
              "--remote-allow-origins=*", "about:blank"],
             stdout=subprocess.DEVNULL, stderr=self._stderr,
@@ -111,13 +116,18 @@ class _Browser:
         # minutes later.
         try:
             port_file = pathlib.Path(self.profile) / "DevToolsActivePort"
-            for _ in range(150):
+            # 40s, not 15: a cold CI runner starting its first chromium exceeded
+            # 15s and failed 1-of-8 (run 31950304893) -- and each test launches
+            # its own browser, so adding a check adds a chance to hit it. This
+            # returns the instant the file appears, so a fast machine pays
+            # nothing for the larger ceiling.
+            for _ in range(400):
                 if port_file.exists() and "\n" in port_file.read_text():
                     break
                 time.sleep(0.1)
             else:
                 raise RuntimeError(
-                    "chromium never reported a debugging port in 15s. Its stderr:\n"
+                    "chromium never reported a debugging port in 40s. Its stderr:\n"
                     + self._read_stderr()
                 )
             port = int(port_file.read_text().splitlines()[0])
