@@ -586,3 +586,59 @@ def test_the_worked_example_sits_inside_the_bubble_and_matches_its_text_size():
         if browser:
             browser.close()
         server.stop()
+
+
+def test_the_card_sits_between_the_lead_in_and_the_call_to_action():
+    """2026-08-16 (maintainer): the worked-example card must render BETWEEN
+    "Let's see how it's solved! 👇" and "Now you try it! ✏️", not after both --
+    the card IS how it's solved, so the call to action has to follow it.
+
+    Geometry, not DOM order, because the risk here is CSS: .feedback is a flex
+    row and .msg-text carries `flex: 1`, so a second one without flex-basis:100%
+    would sit BESIDE the first rather than below the card.
+    """
+    _skip_unless_browser()
+    server, browser = _Server(), None
+    try:
+        browser = _Browser()
+        browser.goto(server.url + "/")
+        browser.js("""
+            [...document.querySelectorAll('.subject-card, a')]
+              .find(a => /fraction/i.test(a.textContent))?.click()
+        """)
+        browser.wait_for("!!document.querySelector('.question-text')")
+        browser.js("""
+            [...document.querySelectorAll('button, a')]
+              .find(b => /show me how/i.test(b.textContent))?.click()
+        """)
+        browser.wait_for("!!document.querySelector('.elaborate-form button')")
+        browser.js("document.querySelector('.elaborate-form button').click()")
+        browser.wait_for("!!document.querySelector('.feedback .steps-pre')", timeout=20)
+
+        box = browser.js("""
+            (() => {
+                const fb = document.querySelector('.feedback');
+                const g = el => { const r = el.getBoundingClientRect();
+                                  return {top: r.top, left: r.left, h: r.height}; };
+                const lead = fb.querySelector('.msg-text:not(.msg-tail)');
+                const card = fb.querySelector('.steps-pre');
+                const tail = fb.querySelector('.msg-tail');
+                return {lead: lead && g(lead), card: card && g(card),
+                        tail: tail && g(tail), tailText: tail && tail.textContent.trim()};
+            })()
+        """)
+        assert box["lead"] and box["card"] and box["tail"], f"a piece is missing: {box}"
+        assert "Now you try it" in box["tailText"], box["tailText"]
+        assert box["card"]["top"] >= box["lead"]["top"] + box["lead"]["h"] - 2, (
+            f"card is not below the lead-in: {box}"
+        )
+        assert box["tail"]["top"] >= box["card"]["top"] + box["card"]["h"] - 2, (
+            f'"Now you try it" is not below the card: {box}'
+        )
+        assert abs(box["tail"]["left"] - box["card"]["left"]) < 40, (
+            f"tail is squeezed beside the card instead of on its own row: {box}"
+        )
+    finally:
+        if browser:
+            browser.close()
+        server.stop()

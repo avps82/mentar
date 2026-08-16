@@ -36,7 +36,12 @@ from markupsafe import escape
 
 from mentar.db.adapter import _DbStoreAdapter
 from mentar.db.store import LearnerStore
-from mentar.dialogue.controller import STOP_WORDS, FSMState, SessionController
+from mentar.dialogue.controller import (
+    RECHECK_PROMPT,
+    STOP_WORDS,
+    FSMState,
+    SessionController,
+)
 from mentar.engine.arithmetic_steps import render_steps_grid_lines
 from mentar.engine.curriculum import (
     derive_subject_key,
@@ -1652,6 +1657,26 @@ def _display_mul(line: dict) -> dict:
     return {**line, "text": _DISPLAY_MUL_RE.sub(" × ", text)}
 
 
+def _split_message_around_card(message: str) -> dict:
+    """Split a turn's prose into the part before the worked-example card and the
+    part after it, so the template can render lead -> card -> tail.
+
+    Only RECHECK_PROMPT moves below the card. Everything else stays in the lead,
+    including turns with no card at all, so this is a no-op for every path except
+    the Help turn it was added for.
+    """
+    if not message:
+        return {"message_html": "", "message_tail_html": ""}
+    lead, sep, tail = message.rpartition(RECHECK_PROMPT)
+    if not sep or tail.strip():
+        # RECHECK_PROMPT absent, or not the final line -- leave the prose alone.
+        return {"message_html": _render_markdown_lite(message), "message_tail_html": ""}
+    return {
+        "message_html": _render_markdown_lite(lead.strip()) if lead.strip() else "",
+        "message_tail_html": _render_markdown_lite(RECHECK_PROMPT),
+    }
+
+
 def _elaborate_display_lines(ctrl: SessionController) -> list[dict] | None:
     """"Show human working" (step grids) + explain-mode (method cards, 2026-08-12)
     render through the SAME `_arithmetic_steps.html` partial -- both are
@@ -1686,7 +1711,15 @@ def _turn_context(learner_uuid: str, ctrl: SessionController, is_first_turn: boo
     show_stem = choices and stem and not mode.show_format_hint
     question = (stem if show_stem else ctrl.question_display) or "Ready when you are!"
     return {
-        "message_html": _render_markdown_lite(message) if message else "",
+        # A Help turn's message is two ticks joined with "\n\n": the lead-in
+        # ("Let's see how it's solved! 👇") and the call to action (RECHECK_PROMPT).
+        # The worked-example card belongs BETWEEN them (maintainer, 2026-08-16) --
+        # the card IS how it's solved, and "now you try it" should follow it, not
+        # precede it. Split on the shared constant rather than on the last "\n\n":
+        # a positional split would silently reorder if either line were reworded.
+        # When the tail is absent (every non-Help turn) message_tail_html is "" and
+        # the bubble renders exactly as before.
+        **_split_message_around_card(message),
         "question_html": _render_markdown_lite(question),
         "is_first_turn": is_first_turn,
         "answer_type": ctrl.current_answer_type,

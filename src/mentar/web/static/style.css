@@ -451,6 +451,12 @@ input[type=text], input[type=number] {
   align-items: flex-start;
 }
 .feedback .msg-text { flex: 1; white-space: pre-wrap; }
+/* The worked-example card and the closing "Now you try it! ✏️" each take a whole
+   row of the flex bubble, so they STACK under the lead-in. Without this the tail
+   is a second .msg-text with `flex: 1` and would sit BESIDE the first, side by
+   side, instead of below the card (2026-08-16). Must come after the rule above. */
+.feedback .steps-pre, .feedback .msg-tail { flex-basis: 100%; }
+.feedback .msg-tail { margin-top: 2px; }
 .feedback.first-turn { border-left-color: var(--accent); }
 /* The "Explain more" button, when present, sits below the text -- full width
    of the flex item, not squeezed beside the 🔊 button. */

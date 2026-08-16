@@ -67,6 +67,13 @@ HELP_WORDS = {"?", "help", "h"}               # learner-initiated help request
 # would be appended to -- see the comment at the append site in _do_help_present.
 _DIAGRAM_HAS_NUMBER_RE = re.compile(r"[0-9]")
 
+# The call-to-action that closes a Help turn. A module constant because the web
+# view SPLITS the turn's message on it, to place the worked-example card between
+# "Let's see how it's solved!" and this line rather than after both (maintainer,
+# 2026-08-16). Anchoring on a shared constant, not on the last "\n\n", so the
+# layout cannot silently drift if either line is reworded.
+RECHECK_PROMPT = "Now you try it! ✏️"
+
 STALE_MASTERY_DAYS = 14  # mastery older than this counts as "stale" for forgetting detection
 # W5.6 continuous-assent: shown ONCE at the start so the child knows they can withdraw anytime.
 # (A learner 'stop' = self-withdrawal; a parent 'end' via /parent/ack = parent-withdrawal —
@@ -1338,7 +1345,7 @@ class SessionController:
         if ctx.current_item is not None or ctx.current_question:
             ctx.state = FSMState.HELP_RECHECK_AWAIT
             ctx.question_display = f"{ctx.current_question} {hint}".rstrip()
-            return ("Now you try it! ✏️", False)
+            return (RECHECK_PROMPT, False)
         ctx.current_item = None
         node = self._curriculum[ctx.current_node_id]
         passage = resolve_grounding(node.get("grounding", {}), self._grounding_cfg)
@@ -1354,7 +1361,7 @@ class SessionController:
         ctx.current_question = recheck_q
         ctx.state = FSMState.HELP_RECHECK_AWAIT
         ctx.question_display = f"{recheck_q} {hint}".rstrip()
-        return ("Now you try it! ✏️", False)
+        return (RECHECK_PROMPT, False)
 
     def _do_help_recheck_await(self, inp: str | None) -> tuple[str, bool]:
         ctx = self._ctx

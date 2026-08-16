@@ -17,11 +17,11 @@
   {% if session_progress %}<span class="session-progress">· Question {{ session_progress.n }} of {{ session_progress.total }}</span>{% endif %}
 </div>
 {% endif %}
-{% if message_html %}<div class="feedback{% if is_first_turn %} first-turn{% endif %}">
+{% if message_html or message_tail_html %}<div class="feedback{% if is_first_turn %} first-turn{% endif %}">
   {# R12.1: explanations must be read-aloud-able too, not just the question. #}
   <button class="tts-btn" type="button" aria-label="Read this aloud" title="Read aloud">🔊</button>
   {# class deliberately NOT "feedback-*": tests split fragments on '<div class="feedback'. #}
-  <div class="msg-text">{{ message_html | safe }}</div>
+  {% if message_html %}<div class="msg-text">{{ message_html | safe }}</div>{% endif %}
   {# The worked example belongs INSIDE this bubble (maintainer 2026-08-15: "the
      explain more should be inside the top card box and have an audio in it").
      It used to render as a separate box BELOW, so two consecutive Explain-more
@@ -31,6 +31,12 @@
      both, because tts.js reads .msg-text and .steps-pre inside .feedback.
      Still bypasses _render_markdown_lite: it is computed, never model output. #}
   {% if steps_lines %}{% include "_arithmetic_steps.html" %}{% endif %}
+  {# The closing "Now you try it! ✏️" sits BELOW the card (maintainer 2026-08-16):
+     the card is how it's solved, so the call to action has to follow it, not come
+     before it. Split in _split_message_around_card on the RECHECK_PROMPT constant,
+     so a reword cannot silently reorder this. Same .msg-text styling; .msg-tail
+     only forces its own row in the flex bubble. #}
+  {% if message_tail_html %}<div class="msg-text msg-tail">{{ message_tail_html | safe }}</div>{% endif %}
   {% if can_elaborate %}
   {# R12.5: unpack the same explanation further — posts the deterministic
      ELABORATE word the FSM understands; capped server-side (ELABORATE_CAP).
