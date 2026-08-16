@@ -107,6 +107,9 @@ as a reminder — it does not run the eval itself (eval is run-only/off-CI, per 
 - **`.vendor/`** — vendored upstream (PyYAML). Don't edit; it ships its own LICENSE.
 - **Content:** never commit third-party grounding content; Khan Academy is CC BY-NC-SA (NC). See
   `docs/LICENSE_AUDIT.md`.
+- **UI work:** read `DESIGN.md` first — the token contract, contrast floors, the
+  computed-vs-model-prose rendering split, and the guardrails that each shipped as
+  a bug. Its token table is CI-checked against `style.css`, so it cannot go stale.
 - **Secrets:** never commit endpoints/tokens (a pre-commit hook guards this). Commit messages use a
   `Co-Authored-By` trailer but **no `Claude-Session` URL trailer**.
 

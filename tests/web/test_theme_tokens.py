@@ -179,3 +179,26 @@ if __name__ == "__main__":
         if fn_name.startswith("test_") and callable(fn):
             fn()
             print(f"  ✓ {fn_name}")
+
+
+# ── DESIGN.md must not drift from the CSS (2026-08-16) ───────────────────────
+# DESIGN.md documents this contract for an AI agent to follow. A design doc that
+# silently goes stale is worse than none -- it is confidently wrong. So the token
+# table is checked against the same source of truth this file already gates,
+# rather than being trusted to be updated by hand. (The "exactly 17" comment that
+# style.css carried until today is precisely this failure.)
+
+def test_design_md_lists_exactly_the_thematic_tokens():
+    design = (REPO / "DESIGN.md").read_text(encoding="utf-8")
+    listed = set(re.findall(r"^\| `(--[a-z0-9-]+)` \|", design, re.M))
+    assert listed == THEMATIC_TOKENS, (
+        "DESIGN.md's token table is out of sync with style.css.\n"
+        f"  only in DESIGN.md: {sorted(listed - THEMATIC_TOKENS)}\n"
+        f"  missing from DESIGN.md: {sorted(THEMATIC_TOKENS - listed)}"
+    )
+
+
+def test_design_md_states_the_real_structural_tokens():
+    design = (REPO / "DESIGN.md").read_text(encoding="utf-8")
+    for tok in STRUCTURAL_TOKENS:
+        assert f"`{tok}`" in design, f"DESIGN.md never mentions structural token {tok}"

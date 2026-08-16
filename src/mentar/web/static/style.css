@@ -519,7 +519,9 @@ input[type=text], input[type=number] {
 .steps-pre-wrap .steps-pre-line { font-size: inherit; }
 .steps-pre-wrap { line-height: 1.5; }
 /* Inside the feedback bubble the card is a nested panel, not a peer of it.
-   --surface (not an invented token: the theme contract is exactly 17). */
+   --surface (not an invented token: the theme contract is exactly the 20
+     thematic tokens in tests/web/test_theme_tokens.py -- this said 17, which was
+     stale). */
 .feedback .steps-pre {
   margin-top: 10px;
   margin-bottom: 0;
