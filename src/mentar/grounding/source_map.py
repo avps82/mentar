@@ -57,6 +57,13 @@ def get_zim_path(source: str, cfg: dict) -> str | None:
     """
     from mentar.grounding.sources import join_location, resolve_filename
 
+    # `grounding:` written with no value in config/inference.yaml parses to YAML
+    # null, and cfg.get("grounding", {}) then returns None rather than {} -- the
+    # default never fires because the KEY exists. Without this, every grounded
+    # node raised AttributeError inside resolve_grounding, which caught it and
+    # logged a full traceback before returning an empty passage: fail-safe, but
+    # a wall of tracebacks pointing at the wrong thing (found 2026-08-17).
+    cfg = cfg or {}
     zim_dir = cfg.get("zim_dir", "") or "."
     spec = (cfg.get("sources") or {}).get(source)
     if not spec:

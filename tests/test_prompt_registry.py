@@ -128,3 +128,30 @@ def _smoke():
 
 if __name__ == "__main__":
     _smoke()
+
+
+def test_every_help_modality_has_a_prompt_file():
+    """HELP_MODALITY_SELECT builds the template name as f"help_{modality}", so a
+    modality added to HELP_MODALITIES without its prompt file fails at RUNTIME,
+    mid-Help, for a child who has just asked for help.
+
+    The dynamic name is also invisible to a grep, which is how this was missed:
+    a registry sweep on 2026-08-17 reported the five help_* files as "never
+    referenced".
+    """
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+    from mentar.dialogue.controller import HELP_MODALITIES
+
+    prompts = Path(__file__).resolve().parents[1] / "prompts"
+    missing = [m for m in HELP_MODALITIES if not (prompts / f"help_{m}.md").exists()]
+    assert not missing, f"HELP_MODALITIES entries with no prompt file: {missing}"
+
+    # And the reverse: a help_*.md that no modality names is dead weight the
+    # registry hashes but nothing can ever render (help_elaborate is the one
+    # deliberate exception -- R12.5 renders it by literal name).
+    on_disk = {p.stem[len("help_"):] for p in prompts.glob("help_*.md")}
+    orphan = on_disk - set(HELP_MODALITIES) - {"elaborate"}
+    assert not orphan, f"help_*.md files no modality can reach: {sorted(orphan)}"
