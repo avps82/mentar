@@ -74,9 +74,12 @@ so it survives replacing the binary with a newer one:
 | macOS | `~/Library/Application Support/Mentar/` |
 | Linux | `~/.local/share/mentar/` (or `$XDG_DATA_HOME/mentar`) |
 
-Builds come from `.github/workflows/build-binary.yml` (GitHub-hosted runners, from a
-tagged commit). Mentar is AGPL-3.0-only: if you were given a binary, you are entitled
-to the source it was built from.
+Builds come from `.github/workflows/build-binary.yml` (GitHub-hosted runners). While
+the binaries are experimental that workflow is **run on demand only** — its tag and
+pull-request triggers are commented out, because three OS runners are the most
+expensive thing in this repo's CI (macOS bills at 10x the minute rate). Re-enable the
+tag trigger when the binaries are ready to ship. Mentar is AGPL-3.0-only: if you were
+given a binary, you are entitled to the source it was built from.
 
 ---
 

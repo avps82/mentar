@@ -1,27 +1,42 @@
 # Single-file builds. EXPERIMENTAL — see docs/RUNNING.md "Download and run".
 #
 # Deliberately NOT run on every push: three OS runners doing a full PyInstaller
-# build is slow and buys nothing on a docs commit. It runs when the packaging
-# itself changes, on a tag, or on demand.
+# build is slow and buys nothing on a docs commit. As of 2026-08-17 it runs ON
+# DEMAND ONLY -- see the trigger block below for why, and for how to turn the
+# tag build back on when the binaries are ready to ship.
 #
 # What this cannot do: bundle the language model -- it is multi-gigabyte, so the binary
 # fetches it on first run. WHICH model the binary uses is undecided: the plan is ONE fixed
 # model for the download (not the source install's roster auto-select), not yet chosen.
 name: Build binaries
 
+# ── AUTOMATIC TRIGGERS DISABLED (2026-08-17) ─────────────────────────────────
+# The binaries are still experimental, and this workflow is the expensive one:
+# three OS runners, and Actions bills macOS at 10x and Windows at 2x the minute
+# rate. On a private repo that comes out of the 2000/minute monthly free
+# allowance -- five builds is roughly a full day of CI.
+#
+# Only `workflow_dispatch` is left, so a build happens when someone deliberately
+# asks for one (Actions tab -> Build binaries -> Run workflow, or
+# `gh workflow run build-binary.yml`). Nothing fires on its own.
+#
+# TO RE-ENABLE when the binaries are ready to ship: uncomment the `push.tags`
+# block. Note it is deliberately WITHOUT a paths filter -- GitHub ANDs paths
+# with the ref filter, so a release tag on a commit that happened not to touch
+# packaging/ would silently skip its own release build. The `pull_request`
+# block is the packaging safety net (it rebuilds when packaging/ or paths.py
+# changes); uncomment it too if you want that back, but it is the one that costs
+# three OS builds per PR.
 on:
   workflow_dispatch:
-  push:
-    # Tags only, and deliberately WITHOUT a paths filter: GitHub ANDs paths with
-    # the ref filter, so a release tag on a commit that happened not to touch
-    # packaging/ would silently skip its own release build.
-    tags:
-      - "v*"
-  pull_request:
-    paths:
-      - "packaging/**"
-      - ".github/workflows/build-binary.yml"
-      - "src/mentar/paths.py"
+  # push:
+  #   tags:
+  #     - "v*"
+  # pull_request:
+  #   paths:
+  #     - "packaging/**"
+  #     - ".github/workflows/build-binary.yml"
+  #     - "src/mentar/paths.py"
 
 permissions:
   contents: read
