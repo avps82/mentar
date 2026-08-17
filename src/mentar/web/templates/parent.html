@@ -43,7 +43,16 @@
 <div class="card">
   <b>Session summary:</b>
   <b>{{ session_summary.n_correct }} correct out of {{ session_summary.n_responses }}</b>
-  answer(s) &nbsp;·&nbsp; {{ session_summary.n_help }} help request(s)
+  {# "help request(s)" was false: help_event is written for EVERY help round,
+     including the auto-help the system starts itself after a wrong unaided
+     answer. A parent read "3 help requests" as "my child asked three times"
+     when the child asked none (2026-08-17). The engine keeps that distinction
+     elsewhere -- help_by_node is set only by child-initiated help, because
+     auto-help would pollute the false-confidence probe -- but help_event has no
+     column recording it, so the honest fix is to name what the number IS.
+     Separating asked-for from offered needs a schema column; see the note in
+     docs/PHASE0_STATUS.md. #}
+  answer(s) &nbsp;·&nbsp; {{ session_summary.n_help }} time(s) we worked through it together
 </div>
 {% endif %}
 

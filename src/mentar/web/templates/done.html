@@ -6,7 +6,11 @@
   {% if recap %}
   <div class="done-recap">
     <b>{{ recap.n_correct }}</b> correct out of <b>{{ recap.n_responses }}</b> question(s)
-    &nbsp;·&nbsp; {{ recap.n_help }} help request(s)
+    {# Same correction as parent.html (2026-08-17): help_event counts every help
+       ROUND, including the auto-help the system starts itself after a wrong
+       answer. Telling a child "2 help requests" when they asked for none is
+       both untrue and reads like a tally against them. #}
+    &nbsp;·&nbsp; {{ recap.n_help }} time(s) we worked through it together
     {% if recap.skills_touched %}
     <div style="margin-top:8px">Skills practised today:
       {{ recap.skills_touched | join(', ') }}
