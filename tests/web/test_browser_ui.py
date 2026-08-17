@@ -652,3 +652,80 @@ def test_the_card_sits_between_the_lead_in_and_the_call_to_action():
         if browser:
             browser.close()
         server.stop()
+
+
+def test_read_aloud_never_speaks_the_diagram_ornament():
+    """2026-08-17. Cards gained computed diagrams (a square array, a fraction
+    bar, a hundred-grid, a labelled rectangle) and read-aloud spoke them
+    verbatim -- five rows of "square square square...", or ten lines of
+    box-drawing, straight after the answer. That lands on exactly the child who
+    needs read-aloud most.
+
+    Only a browser can prove this: the spoken string is assembled in tts.js.
+
+    The card content is INJECTED rather than drawn, on purpose. A real draw gives
+    a step grid as often as a method card, so the assertion could pass without
+    ever meeting a diagram -- green because it tested nothing, the failure mode
+    this suite exists to end.
+
+    Stubs only SpeechSynthesisUtterance and the two methods used: replacing
+    window.speechSynthesis wholesale breaks the module, which captures voices at
+    load via getVoices().
+    """
+    _skip_unless_browser()
+    ornament_rows = ["┌───┐", "│   │  4 cm", "□□□□□", "|████|    |", "[●●●] [●●●]"]
+    server, browser = _Server(), None
+    try:
+        browser = _Browser()
+        browser.goto(server.url + "/")
+        browser.js("""
+            [...document.querySelectorAll('.subject-card, a')]
+              .find(a => /fraction/i.test(a.textContent))?.click()
+        """)
+        browser.wait_for("!!document.querySelector('.question-text')")
+        browser.js("""
+            window.__spoken = [];
+            window.SpeechSynthesisUtterance = function (t) { window.__spoken.push(t); this.text = t; };
+            window.speechSynthesis.speak = function () {};
+            window.speechSynthesis.cancel = function () {};
+        """)
+        rows = json.dumps(["Answer: 25", *ornament_rows, "5 rows of 5 = 25"])
+        browser.js("""
+            (() => {
+                let fb = document.querySelector('.feedback');
+                if (!fb) {
+                    fb = document.createElement('div');
+                    fb.className = 'feedback';
+                    fb.innerHTML = '<button class="tts-btn" type="button">S</button>'
+                                 + '<div class="msg-text">Here is how it works.</div>';
+                    document.querySelector('#turn-area').prepend(fb);
+                }
+                const pre = document.createElement('pre');
+                pre.className = 'steps-pre';
+                pre.innerHTML = ROWS.map(
+                    r => '<span class="steps-pre-line"></span>').join('');
+                [...pre.children].forEach((el, i) => { el.textContent = ROWS[i]; });
+                fb.appendChild(pre);
+            })()
+        """.replace("ROWS", rows))
+        assert browser.js("!!document.querySelector('.feedback .steps-pre')")
+        browser.js("document.querySelector('.feedback .tts-btn').click()")
+        browser.wait_for("window.__spoken && window.__spoken.length > 0")
+
+        spoken = browser.js("window.__spoken.join(' ')")
+        bad = sorted({ch for ch in spoken if ch in "┌─┐│└┘█□●○|"})
+        assert not bad, f"read-aloud speaks diagram characters {bad!r}: {spoken[:200]!r}"
+        # An ornament row must be DROPPED, not merely blanked. Stripping the
+        # characters alone leaves "Answer: 25. . 4 cm. . . [ ] [ ]. 5 rows..."
+        # -- stray pauses and leftover brackets. Both halves of the fix are
+        # load-bearing, so both are asserted.
+        assert ". ." not in spoken, f"empty segments left by blanked rows: {spoken[:200]!r}"
+        assert "[" not in spoken and "]" not in spoken, spoken[:200]
+        # The picture is NARRATED, not dropped: its summary line survives...
+        assert "5 rows of 5" in spoken, spoken[:200]
+        # ...and so does a label sitting beside a rectangle wall.
+        assert "4 cm" in spoken, spoken[:200]
+    finally:
+        if browser:
+            browser.close()
+        server.stop()

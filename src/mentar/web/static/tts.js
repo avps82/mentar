@@ -92,6 +92,10 @@
     return text
       .replace(EMOJI_RE, "")
       .replace(/[→⇒]/g, ",")
+      // Drawing characters that survive on a kept row -- the "4 cm" label
+      // beside a rectangle's wall, the pipes in "4 | 6 | 3". A synthesiser
+      // either says nothing for these or invents a name for each one.
+      .replace(/[\u2500-\u257F\u2580-\u259F\u25A0-\u25FF●○|]/g, " ")
       .replace(/\b[A-Z]{2,}\b/g, function (w) { return KEEP_CAPS[w] ? w : w.toLowerCase(); })
       .replace(/\s+/g, " ")
       .trim();
@@ -150,7 +154,19 @@
         if (card) {
           card.querySelectorAll(".steps-pre-line").forEach(function (line) {
             var t = line.textContent.trim();
-            if (t) parts.push(t);
+            // Skip the PICTURE rows. Cards gained computed diagrams on
+            // 2026-08-16/17 -- a square array, a fraction bar, a hundred-grid,
+            // a labelled rectangle -- and read-aloud spoke them verbatim:
+            // "square square square square square" five times over, or ten
+            // lines of box-drawing, straight after the answer. That lands on
+            // exactly the child who needs read-aloud most.
+            //
+            // A row with no letter and no digit is pure ornament. Every diagram
+            // added deliberately ends with a spoken summary line ("5 rows of 5
+            // = 25", "1 of 3 equal parts shaded = 1/3", "3 plates, 6 each"),
+            // which HAS letters and is what a listener actually needs -- so the
+            // picture is not lost, it is narrated.
+            if (t && /[A-Za-z0-9]/.test(t)) parts.push(t);
           });
         }
       } else {
