@@ -175,3 +175,61 @@ jobs:
                 '(Reminder only — CI does not run the eval itself; eval is run-only/off-CI.)',
               ].join('\n'),
             })
+
+  # The OKF spec moved 0.1 -> 0.2 upstream and this repo did not notice for two
+  # months (found 2026-08-18 only because the maintainer read an article). The
+  # bundles are Open Knowledge Format (GoogleCloudPlatform/knowledge-catalog);
+  # nothing local can see an upstream revision, so something has to look.
+  #
+  # WEEKLY ONLY, deliberately. It reaches the network, so on a push it would
+  # couple every commit to GitHub's availability and turn an upstream edit into
+  # a red build on unrelated work. It is also the reason the offline conformance
+  # test (tests/test_okf_conformance.py) does NOT fetch: that one asserts the
+  # repo matches the version it declares, this one asserts the declared version
+  # is still the current one. Two different questions.
+  #
+  # Failure channel is the job itself: GitHub emails the owner when a SCHEDULED
+  # workflow fails, so drift arrives without any issue-filing code here.
+  #
+  # Costs one runner minute a week against a 2000/month allowance.
+  okf-spec-version:
+    name: OKF spec still current
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Compare declared okf_version against upstream
+        run: |
+          set -uo pipefail
+          SPEC=https://raw.githubusercontent.com/GoogleCloudPlatform/knowledge-catalog/main/okf/SPEC.md
+
+          declared=$(sed -n 's/^okf_version: *"\{0,1\}\([0-9][0-9.]*\)"\{0,1\} *$/\1/p' docs/index.md)
+          if [ -z "$declared" ]; then
+            echo "::error::no okf_version in docs/index.md -- the conformance test should have caught this"
+            exit 1
+          fi
+
+          if ! curl -sSfL --max-time 30 --retry 2 -o spec.md "$SPEC"; then
+            echo "::error::could not fetch $SPEC (moved? renamed? repo gone?) -- check by hand"
+            exit 1
+          fi
+
+          # Both forms the spec states its version in, so a reformat of one
+          # still resolves. An unparseable spec FAILS rather than passing
+          # quietly: a check that silently stops matching is worse than none,
+          # and this repo has shipped that bug before.
+          upstream=$(grep -oE 'specifies OKF version \*\*[0-9]+\.[0-9]+\*\*' spec.md | grep -oE '[0-9]+\.[0-9]+' | head -1)
+          [ -n "$upstream" ] || upstream=$(grep -m1 -oE '^\*\*Version [0-9]+\.[0-9]+\*\*' spec.md | grep -oE '[0-9]+\.[0-9]+')
+          if [ -z "$upstream" ]; then
+            echo "::error::fetched the spec but found no version in it -- the heading format changed; update this check"
+            exit 1
+          fi
+
+          echo "declared=$declared  upstream=$upstream"
+          if [ "$declared" != "$upstream" ]; then
+            echo "::error::OKF spec is now $upstream, this repo declares $declared."
+            echo "Re-derive the diff from the spec text (AGENTS.md), bump the three bundle-root"
+            echo "index.md files and DECLARED_VERSION in tests/test_okf_conformance.py."
+            exit 1
+          fi
+          echo "OKF $declared is current."

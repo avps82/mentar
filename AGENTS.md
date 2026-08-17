@@ -87,6 +87,15 @@ inferred from existing files — that inference was wrong once already, see `doc
 Before trusting any "is this OKF-compliant" claim (including a prior one in this repo's own
 history), re-derive it from the spec text, not from what similar files already look like.
 
+Two checks split that job, because they ask different questions:
+- `tests/test_okf_conformance.py` — **offline**, every run. Does the repo match the version it
+  *declares*? It never fetches, so no upstream edit can redden an unrelated commit.
+- the `okf-spec-version` CI job — **network, weekly only**. Is the declared version still the
+  *current* one? The bundles sat on v0.1 for two months after v0.2 shipped because nothing asked.
+  It fails the weekly run on drift, and GitHub emails the owner when a scheduled workflow fails.
+  To act on that failure: re-derive the diff from the spec text (above), then bump the three
+  bundle-root `index.md` files **and** `DECLARED_VERSION` in the conformance test.
+
 ## The gate (every change)
 `python -m pytest tests/ -q` **green** *and* `ruff check .` **clean** before a change is done.
 
