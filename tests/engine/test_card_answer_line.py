@@ -80,3 +80,48 @@ def test_the_answer_line_closes_the_explanation():
         if not head[-1].strip().lower().startswith("answer:"):
             late.append((name, head[-1][:60]))
     assert not late, f"the explanation does not end on its answer: {late[:6]}"
+
+
+def test_the_stated_answer_would_itself_be_marked_correct():
+    """A card must never show an answer its own verifier would reject.
+
+    This is the trap class, not a hypothetical: rendering `*` as `×` looked like
+    a pure display change until a check showed verify_numeric SAFE_REJECTed
+    "6 × (x + 7)" -- a child copying the card would have been marked wrong. The
+    same shape recurs whenever a card states an answer more richly than the bare
+    ground truth (units: "-7°C" against truth "-7", "$300" against "300"), which
+    is GOOD teaching and works only because the verifier extracts through it.
+
+    So the check is not "card text == ground truth" -- that flags the unit cards
+    as false positives. It is the thing that actually matters to a child: run the
+    card's own answer through the item's own checker.
+    """
+    from mentar.eval.verify_numeric import CheckResult, check
+
+    letters = "ABCD"
+    # Walks the registry directly rather than _cards(), which yields only the
+    # card -- choices and answer_type are needed to know what "correct" means.
+    failures = []
+    reg = build_registry(REPO_ROOT / "curriculum" / "item_bank.json")
+    rng = random.Random(31)
+    for src, entry in sorted(reg.items()):
+        for node, fn in sorted((entry.get("generators") or {}).items()):
+            try:
+                res = fn(rng)
+            except Exception:  # noqa: BLE001
+                continue
+            answer_type, checker, _problem, answer = res[:4]
+            choices = tuple(res[4]) if len(res) > 4 and res[4] else None
+            card = res[5] if len(res) > 5 and res[5] else None
+            if not card:
+                continue
+            stated = [x for x in card if str(x).strip().lower().startswith("answer:")]
+            if not stated:
+                continue
+            text = str(stated[0]).split(":", 1)[1].strip()
+            if choices:
+                if text != choices[letters.index(answer)].strip():
+                    failures.append((f"{src}/{node}", text, choices[letters.index(answer)]))
+            elif check(answer_type, checker, text, str(answer)).result is not CheckResult.PASS:
+                failures.append((f"{src}/{node}", text, f"rejected against {answer!r}"))
+    assert not failures, f"card answers their own verifier would reject: {failures[:6]}"
