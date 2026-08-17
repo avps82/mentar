@@ -1,5 +1,5 @@
 ---
-type: Mentar Design Document
+type: Mentar Design Doc
 title: "Step-grid design — signed arithmetic and decimal multiplication (E1 Findings 3+5)"
 description: "Phases A+B SHIPPED 2026-08-12 (draw-dependent step-grid eligibility 16 nodes -> 4); Phase C still gated on maintainer worked examples. Answers docs/EXPLAIN_METHOD_AUDIT.md Findings 3 and 5."
 tags: [design, reference, arithmetic, show-human-working, partially-shipped]

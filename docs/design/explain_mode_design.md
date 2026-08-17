@@ -1,3 +1,9 @@
+---
+type: Mentar Design Doc
+title: Explain-mode design — a method explanation for every concept type
+description: Design for computed, LLM-free method explanations across all five concept types, so Explain-more never falls back to a bare answer.
+---
+
 # Explain-mode design — a proper method explanation for every concept type
 
 **Status: PLAN ONLY (2026-08-12). Nothing in here is built.**

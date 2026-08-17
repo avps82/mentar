@@ -1,3 +1,7 @@
+---
+okf_version: "0.2"
+---
+
 # Mentar documentation index
 
 Start with the [project README](../README.md). This page maps everything under `docs/`.

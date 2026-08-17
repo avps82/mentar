@@ -1,3 +1,9 @@
+---
+type: Mentar Design Doc
+title: Age modes (v0 draft, superseded)
+description: Superseded v0 age-mode draft; content folded into SAFETY.md Layer 5 §5.2. Not authoritative.
+---
+
 # Age Modes
 
 Mentar operates in one of two modes depending on the child's age. The parent configures this during setup.

@@ -1,3 +1,9 @@
+---
+type: Mentar Architecture Doc
+title: Architecture (v0 draft, superseded)
+description: Superseded v0 architecture draft, kept for history. Not authoritative — see docs/ARCHITECTURE.md.
+---
+
 # Architecture
 
 ## Core principles

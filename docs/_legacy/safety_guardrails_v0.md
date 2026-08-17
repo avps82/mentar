@@ -1,3 +1,9 @@
+---
+type: Mentar Design Doc
+title: Safety guardrails (v0 draft, superseded)
+description: Superseded v0 guardrail draft; content folded into SAFETY.md. Not authoritative.
+---
+
 # Guardrails Spec
 
 These are non-negotiable. They ship in the safety layer from day one — not bolted on later.

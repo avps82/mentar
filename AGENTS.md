@@ -52,21 +52,37 @@ dependency bump (see the comment at the top of that file).
 
 ## OKF documentation bundles — creating/editing any `.md` under `docs/`, `curriculum/templates/`, or `curriculum/visual_scaffolds/`
 These three trees are [OKF](https://github.com/GoogleCloudPlatform/knowledge-catalog/tree/main/okf)
-(Open Knowledge Format) v0.1 bundles — plain markdown + YAML frontmatter, readable by graphify and
-other agents without bespoke parsing. Two rules, verified against the spec text itself (not
+(Open Knowledge Format) **v0.2** bundles — plain markdown + YAML frontmatter, readable by graphify
+and other agents without bespoke parsing. Rules verified against the spec text itself (not
 inferred from existing files — that inference was wrong once already, see `docs/DOC_AUDIT.md`
 2026-07-23 addendum):
 
-1. **`index.md` and `log.md` are reserved filenames — they carry NO frontmatter, ever.** Just an
-   `#` heading + body (a directory listing of links, per §6 of the spec). Never add `type:`,
-   `title:`, `tags:`, etc. to one. Code already relies on this split — `_TEMPLATES_DIR` scans,
-   `visual_scaffold.py`'s loader, and web app discovery all skip `index.md`/`log.md` explicitly;
-   a test glob that forgets the exclusion will crash trying to YAML-parse a bare heading as a dict.
+1. **`index.md` and `log.md` are reserved filenames — they carry NO frontmatter, with exactly one
+   exception.** Just an `#` heading + body (a directory listing of links, per §6 of the spec).
+   Never add `type:`, `title:`, `tags:`, etc. to one. Code already relies on this split —
+   `_TEMPLATES_DIR` scans, `visual_scaffold.py`'s loader, and web app discovery all skip
+   `index.md`/`log.md` explicitly; a test glob that forgets the exclusion will crash trying to
+   YAML-parse a bare heading as a dict.
+   **The exception (v0.2 §12):** a BUNDLE-ROOT `index.md` may declare `okf_version: "0.2"`, and
+   that is "the only place frontmatter is permitted in an `index.md`". The three bundle roots
+   (`docs/`, `curriculum/templates/`, `curriculum/visual_scaffolds/`) each carry exactly that one
+   key and nothing else. Nested `index.md` files stay bare.
 2. **Every other `.md` file in these trees is a concept document and MUST start with a frontmatter
    block whose first field is `type: <Concept Type Name>`** — the one truly required OKF field.
-   `title`/`description`/`tags`/`timestamp` are recommended; add them. Producer-specific extra
-   keys (`version`, `status`, `owner`, `sources`, …) are explicitly allowed by the spec and don't
-   need to change.
+   `title`/`description`/`tags` are recommended; add them. Producer-specific extra keys
+   (`version`, `owner`, …) are explicitly allowed by the spec and don't need to change.
+
+3. **v0.2 renamed two v0.1 fields. Both old forms still parse, so existing files are valid:**
+   - `timestamp:` → `generated: { by, at }` (§5.2). **`by` is REQUIRED inside `generated`** — an
+     actor, `<producer>/<version>` for a tool (e.g. `claude/opus-5`), or `human:<id>`. The 265
+     existing files keep bare `timestamp:` deliberately: the spec says a consumer "may fall back
+     to legacy `timestamp` when `generated` is absent", and back-filling `by` for files written
+     across many sessions would be inventing provenance. **New concept docs SHOULD carry
+     `generated`** with a truthful actor.
+   - body `# Citations` → `sources:` frontmatter (§5.1). This repo has no `# Citations` sections,
+     so nothing to migrate; 18 files already use `sources:`.
+   Also new and optional in v0.2: `verified`, `status`, `stale_after`, the `Attested Computation`
+   concept type, and a `# Computation` body heading.
 
 Before trusting any "is this OKF-compliant" claim (including a prior one in this repo's own
 history), re-derive it from the spec text, not from what similar files already look like.
