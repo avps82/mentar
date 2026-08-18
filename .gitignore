@@ -32,6 +32,8 @@ __pycache__/
 .eggs/
 build/
 dist/
+# scripts/build_binary.py's serve-gate log (kept on failure for diagnosis)
+serve.log
 .venv/
 venv/
 .python-version
