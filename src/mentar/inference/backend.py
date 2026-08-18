@@ -96,6 +96,23 @@ def upsert_dotenv_value(env_path: str | Path, key: str, value: str) -> None:
     for anything that touches a credential file, not two independently-
     maintained copies."""
     env_path = Path(env_path)
+    # A newline in the value used to write a TWO-line entry, and the second line
+    # then survived every later upsert: the replace step drops only the line
+    # starting with "KEY=", so the continuation was stranded in .env forever
+    # (found 2026-08-18). Two consequences, the second worse than the first:
+    # _load_dotenv read the key back TRUNCATED at the newline, so the backend
+    # failed to authenticate and looked like a broken gateway; and a fragment of
+    # the old SECRET stayed in the file even after the key was rotated.
+    #
+    # Rejected rather than silently trimmed at the newline -- writing a
+    # half-secret that reads back as a plausible-looking key is the failure mode
+    # worth preventing, and both callers pass a value a human just pasted.
+    value = str(value).strip()
+    if "\n" in value or "\r" in value:
+        raise ValueError(
+            f"{key} contains a line break — paste the value on one line "
+            f"(a multi-line value corrupts the .env file)"
+        )
     # The directory may not exist yet. From a source checkout `config/` is in the
     # repo so this never came up; in a packaged build the data directory starts
     # empty, and /setup crashed with FileNotFoundError on a real Windows machine.

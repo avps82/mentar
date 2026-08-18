@@ -23,6 +23,8 @@ import os
 import pathlib
 import sys
 
+import pytest
+
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
@@ -276,3 +278,31 @@ if __name__ == "__main__":
         print(f"  ✓ {fn.__name__}")
         passed += 1
     print(f"\n{passed}/{len(fns)} backend tests passed.")
+
+
+def test_upsert_dotenv_rejects_a_value_with_a_line_break(tmp_path):
+    """A newline used to write a TWO-line entry whose continuation line was then
+    stranded in .env forever: the replace step only drops lines starting with
+    "KEY=". The key read back TRUNCATED (backend auth failed, looking like a
+    broken gateway) and a fragment of the old SECRET survived key rotation.
+
+    Found 2026-08-18 by round-tripping value shapes through the real writer.
+    """
+    env_path = tmp_path / ".env"
+    B.upsert_dotenv_value(env_path, "OTHER", "keep-me")
+
+    with pytest.raises(ValueError, match="line break"):
+        B.upsert_dotenv_value(env_path, "MENTAR_VLLM_API_KEY", "sk-good\nsk-stranded")
+
+    text = env_path.read_text(encoding="utf-8")
+    assert "sk-stranded" not in text, "a rejected secret must not be written at all"
+    assert "sk-good" not in text
+    assert 'OTHER="keep-me"' in text, "the failed write must not disturb other keys"
+
+
+def test_upsert_dotenv_strips_surrounding_whitespace(tmp_path):
+    """A key pasted from a file or a web page usually carries a trailing newline.
+    That one is safe to absorb -- only an EMBEDDED break is ambiguous."""
+    env_path = tmp_path / ".env"
+    B.upsert_dotenv_value(env_path, "MENTAR_VLLM_API_KEY", "  sk-padded\n")
+    assert 'MENTAR_VLLM_API_KEY="sk-padded"' in env_path.read_text(encoding="utf-8")

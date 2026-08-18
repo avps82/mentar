@@ -4,6 +4,21 @@ reports/
 *.sqlite
 *.sqlite3
 ~/.mentar/
+# The learner DB's SIDECARS and BACKUPS. `*.db` does NOT match any of these --
+# they end in "-wal" / "-shm" / ".backup-<timestamp>", not ".db" (found
+# 2026-08-18 by running `mentar backup`, which left an untracked, unignored
+# copy of the learner DB in the repo root: its documented default destination).
+#
+# These hold the same child data as the DB itself -- verbatim transcripts and
+# escalation disclosures -- so they are the LAST thing that may reach a repo
+# that is planned to go public. The DB runs in WAL mode, so the -wal/-shm pair
+# exists whenever the app is running: a `git add -A` from a second terminal
+# while a lesson is open would have staged them.
+*.db-wal
+*.db-shm
+*.db.backup-*
+*.sqlite-wal
+*.sqlite-shm
 
 # Eval data (large; pinned via dataset version hash, not committed wholesale)
 eval/responses/

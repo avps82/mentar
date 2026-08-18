@@ -265,7 +265,13 @@ def _setup_remote_api(args, repo: Path) -> int:
         return 0
 
     if args.api_key:
-        upsert_dotenv_value(cfg_path.parent / ".env", "MENTAR_VLLM_API_KEY", args.api_key)
+        try:
+            upsert_dotenv_value(cfg_path.parent / ".env", "MENTAR_VLLM_API_KEY", args.api_key)
+        except ValueError as exc:
+            # Nothing written yet -- fail before write_inference_config, so a
+            # rejected key never leaves a half-configured install behind.
+            print(f"✗ {exc}", file=sys.stderr)
+            return 1
     write_inference_config(cfg, cfg_path)
     print(f"\n✓ Wrote {cfg_path}")
 

@@ -713,7 +713,14 @@ def setup_save():
     cfg: dict = {"backend": backend, backend: {"base_url": base_url, "model": model}}
     if backend == "vllm":
         if api_key:
-            upsert_dotenv_value(_INFERENCE_CONFIG_PATH.parent / ".env", "MENTAR_VLLM_API_KEY", api_key)
+            try:
+                upsert_dotenv_value(
+                    _INFERENCE_CONFIG_PATH.parent / ".env", "MENTAR_VLLM_API_KEY", api_key
+                )
+            except ValueError as exc:
+                # A pasted key with a line break in it. Show the parent the
+                # reason on the form rather than a 500 -- nothing is written.
+                return render_template("setup.html", result={"ok": False, "error": str(exc)})
             cfg["vllm"]["api_key"] = "${MENTAR_VLLM_API_KEY}"
         else:
             cfg["vllm"]["api_key"] = "no-key"
