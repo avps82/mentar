@@ -1,0 +1,138 @@
+---
+type: Mentar Design Doc
+title: "Jump to a topic — child/parent-chosen practice of a specific concept"
+description: "PLAN ONLY, not built (2026-08-18). A visible 'Jump to a topic' affordance on each subject card, leading to a clickable topic list that pins one concept and serves items from it, bypassing fringe selection."
+tags: [design, ui, curriculum, practice, not-built]
+timestamp: "2026-08-18T00:00:00Z"
+---
+
+# Jump to a topic
+
+**Status: PLAN ONLY — nothing built.** Maintainer proposal, 2026-08-18.
+
+## The need
+
+The tool guides. Given a subject it picks what to teach next, from prerequisites and
+mastery, and that is right for a young child building from foundations. It is wrong for
+the other case the maintainer described: a learner who **already knows what they need**.
+
+> "if a child comes in and needs to start from, instead of subtraction, they need to go
+> straight to division, for instance, because they know subtraction"
+
+> "they want to jump to those topics because they're not sure. This tool can help in
+> those parts."
+
+Two variants of one need — skip what is already known, and go straight to the thing that
+is actually troubling them. Also, explicitly, **repetition**: today a topic is taught once
+and then disappears from selection, and the maintainer wants a learner to be able to come
+back and redo it "to get the memorization parts, the structure set in nicely".
+
+This is an assist tool for a parent as much as the child: *"okay, move to the next topic,
+you are good with this, it's wasting your time."*
+
+## Why it is not possible today
+
+`engine/fringe.py` `outer_fringe()` offers a concept only when **every** prereq is
+mastered, and skips any concept already mastered. Two consequences:
+
+* A topic further along the graph is **unreachable** until everything before it is
+  mastered — so there is no way to start at division, or at a specific senior topic.
+* A topic already mastered is **unreachable again** until it goes stale, which is
+  `STALE_MASTERY_DAYS = 14` (`dialogue/controller.py`), after which spaced review injects
+  it every `REVIEW_EVERY_N = 4` items. Revisiting exists, but it is engine-driven and two
+  weeks away — the "do once, forget later" the maintainer described.
+
+The existing practice packs (`curriculum/templates/practice/`) are NOT this. They are two
+separate evergreen subjects with three drill concepts each (times tables, skip counting,
+doubles/halves). They cannot express "practise Year 5 fractions again".
+
+## The proposed flow (maintainer's own wording)
+
+1. Subject card on the front page → straight into questions. *(exists — `POST /choose`)*
+2. A visible **"Jump to a topic"** affordance on that card, so the option is discoverable
+   rather than hidden behind the progress page.
+3. The topic list shows the subject's concepts.
+4. Click a concept → practise **that** concept.
+
+Discoverability is a requirement, not a nicety: a learner who does not know jumping is
+possible will sit through the guided path and conclude the tool wastes their time.
+
+## What has to change
+
+**One branch, one route, one click target.**
+
+* `_do_node_select()` (`dialogue/controller.py`) is the ONLY place a node is chosen. A
+  pinned-topic session uses the chosen node instead of calling `select_next()`. Everything
+  downstream — item generation, verifying, help, worked examples, explain cards — is
+  already per-node and does not care how the node was chosen. That is what makes this
+  small.
+* A route to enter a pinned session for `(subject, node_id)`.
+* A click target on the topic list.
+
+### Constraint: it MUST go through the normal controller turn
+
+Not a side path that draws an item and checks the answer directly. Child input has to keep
+passing the escalation classifier and the output guard. A lightweight "just serve some
+questions" route is the one way this modest feature could go badly wrong, and it is an
+easy mistake to make when the goal is only to show questions.
+
+### Markup constraint on the subject card
+
+`web/templates/subjects.html` renders each card as a `<button type="submit">` inside a
+`<form method="POST" action="/choose">`. The whole card is the button, so a "Jump to a
+topic" link **cannot be nested inside it** — interactive content inside a button is
+invalid and behaves unpredictably. It has to be a sibling element within the card wrapper,
+which means the card markup changes shape slightly.
+
+### Which topics are clickable — a real choice, not a detail
+
+`/progress` renders two things covering **different sets**:
+
+* the **graph** is built from the whole curriculum, so every concept appears, including
+  never-attempted ones;
+* the **star cards** are built only from concepts that already have a `skill_state` row,
+  so a concept never attempted has no card at all (hence "No topics yet" for a new
+  learner).
+
+If the click target is the star cards, a learner can only re-practise what they have
+already touched — which cannot serve "jump ahead to the thing I'm stuck on". So either the
+graph nodes are the target, or the card list must render every curriculum concept rather
+than only attempted ones. Choose deliberately.
+
+If graph nodes become the target: they are small SVG circles, a tight tap target for a
+younger child on a tablet.
+
+## Open decisions
+
+1. **Does a practice win feed mastery?** Simplest is no — the learner model then stays
+   strictly "what the guided path demonstrated". The maintainer's position is that the
+   mastery flag is not the point here ("If mastery flag is not touched or it's not
+   succeeded, that is fine"), which favours not writing it.
+2. **What happens after the pinned topic?** Keep serving items from it until the learner
+   leaves (favours the repetition goal), or hand back to normal selection (which would
+   throw a senior learner back to foundational nodes — jarring).
+3. **Is `STALE_MASTERY_DAYS = 14` too long for the guided path anyway?** Independent of
+   this feature, and a one-constant change if so.
+
+## What this feature does NOT need
+
+Earlier discussion treated parent/child delineation as a prerequisite, on the grounds that
+a child would abuse a skip control. That reasoning does not hold: **skipping to work you
+cannot do is self-punishing**, not a shortcut — there is no reward to chase, and the
+learner meets harder material immediately. Delineation remains a real and separate topic
+(see § Related) but does not gate this.
+
+Seeding prerequisite mastery to unlock a topic was also considered and is NOT proposed
+here — pinning the node sidesteps the fringe entirely, so no concept has to be falsely
+recorded as mastered.
+
+## Related
+
+* Senior-year **content depth** limits how useful this is per year: AU maths has 4
+  concepts at Year 9, 4 at Year 10, 4 at Year 11, 3 at Year 12, and no quadratic-equation
+  solving anywhere. Jumping works identically at every year; there is simply less to jump
+  to in the senior ones. See
+  [`comprehensive_math_templates_reference.md`](comprehensive_math_templates_reference.md).
+* Parent/child delineation: the grown-up-page guard is a **location** boundary, not an
+  identity one, and is absent entirely outside `--lan` mode. Separate work; noted in
+  [`../PHASE0_STATUS.md`](../PHASE0_STATUS.md).

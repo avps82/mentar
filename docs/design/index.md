@@ -22,6 +22,7 @@ Deeper design decisions and build contracts behind specific workstreams. Point-i
 * [SAFEGUARDING_REVIEW_PACKET](SAFEGUARDING_REVIEW_PACKET.md) — Packet for an external safeguarding professional review.
 * [hybrid_content_architecture](hybrid_content_architecture.md) — Hand-authored + retrieval-verified hybrid content pipeline decision (ratified direction, not yet built).
 * [htmx4_migration_plan](htmx4_migration_plan.md) — htmx 4 (currently beta) migration readiness check against Mentar's actual usage; monitoring only, not started.
+* [topic_jump_and_practice](topic_jump_and_practice.md) — "Jump to a topic": learner/parent-chosen practice of one concept, bypassing fringe selection. PLAN ONLY, not built.
 
 ## Reference material (logged, not designed/built)
 
