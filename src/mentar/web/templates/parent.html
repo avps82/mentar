@@ -28,12 +28,17 @@
 {% if escalations %}
 <div class="card">
   <h2 style="margin-top:0;font-size:1.1rem">Safety alerts</h2>
+  {# CONCERN rows (severity "concern") did NOT freeze the lesson: they are
+     "worth a conversation" notes, not emergencies, and need no acknowledgement.
+     Everything else here froze the session and awaits/records an ack. #}
   <table>
-    <tr><th>When</th><th>Type</th><th>What the child wrote</th><th>Acknowledged</th></tr>
+    <tr><th>When</th><th>Level</th><th>Type</th><th>What the child wrote</th><th>Acknowledged</th></tr>
     {% for e in escalations %}
-    <tr><td>{{ e.freeze_started_at }}</td><td>{{ e.trigger_class }}</td>
+    <tr><td>{{ e.freeze_started_at }}</td>
+        <td>{% if e.severity == 'concern' %}worth a conversation{% else %}{{ e.severity or 'high' }} — lesson paused{% endif %}</td>
+        <td>{{ e.trigger_class }}</td>
         <td>{{ e.trigger_text_verbatim }}</td>
-        <td>{{ 'yes' if e.parent_ack_at else 'no' }}</td></tr>
+        <td>{% if e.severity == 'concern' %}—{% else %}{{ 'yes' if e.parent_ack_at else 'no' }}{% endif %}</td></tr>
     {% endfor %}
   </table>
 </div>

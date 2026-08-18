@@ -299,7 +299,24 @@ The following input types trigger the escalation flow immediately, regardless of
 **Category D — Technical (AI integrity):**
 - Inputs classified as adversarial jailbreak attempts designed to override safety framing (logged under Category D; Layer 1 §1.4 handles the immediate block; this category ensures they reach the escalation log)
 
-> **Bucket D dependency:** this trigger list is provisional. Research Bucket D (safeguarding & disclosure handling) will produce a validated keyword list and classifier approach grounded in safeguarding professional standards (e.g., NSPCC, Childhelp). The v0.1 list is biased toward sensitivity — it will generate false positives, which are intentional and preferable to false negatives.
+**Category E — Welfare concern (added 2026-08-18, maintainer-authorised; CONCERN tier):**
+- Ambiguous welfare indicators where a full freeze would misfire on innocent uses but silence
+  would miss a disclosure: unqualified self-harm phrasing ("I cut myself" with no intent
+  qualifier), a person entering the child's room at night, being made to do unwanted things,
+  fear of going home, not having eaten for days.
+- **Response differs from A–C:** the input is logged verbatim to `escalation_log`
+  (severity `concern`, outcome `logged_concern`) and surfaced on the parent page as
+  "worth a conversation". The session is NOT frozen and the child is shown nothing.
+- **Accumulation:** a second Category E match within the same session escalates to the full
+  §3.3 freeze — distress that builds across turns with no single alarming line is itself a
+  signal (the "multi-turn distress" gap in the review packet).
+- Nothing in Category E weakens A–D: every phrasing that froze before this tier still freezes.
+  The one deliberate exception is idiom neutralisation ("die of boredom", "bored to death"),
+  which previously fired Category A on a maths-tutor commonplace; the idiom is rewritten
+  before classification rather than the Category A patterns being weakened, so a real intent
+  statement sharing a sentence with the idiom still fires.
+
+> **Bucket D dependency:** this trigger list is provisional. Research Bucket D (safeguarding & disclosure handling) will produce a validated keyword list and classifier approach grounded in safeguarding professional standards (e.g., NSPCC, Childhelp). The v0.1 list is biased toward sensitivity — it will generate false positives, which are intentional and preferable to false negatives. Category E's tier assignments are engineering placements awaiting the same professional calibration (see `docs/design/SAFEGUARDING_REVIEW_PACKET.md` Part 4).
 
 ### 3.3 Escalation Flow (v0.1-interim)
 

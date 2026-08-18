@@ -354,7 +354,7 @@ class TestExportCopyOpensIndependently:
         # Open the copy with a FRESH store instance — no shared state
         with LearnerStore(copy_path) as copy_store:
             # schema_version must still be valid
-            assert copy_store.schema_version() == 4
+            assert copy_store.schema_version() == 5
 
             responses = copy_store.session_responses(learner_id, sid)
             assert len(responses) == 1
@@ -382,7 +382,7 @@ class TestExportCopyOpensIndependently:
 # ─────────────────────────────────────────────────────────────────────────────
 
 class TestSchemaVersionMigrationStub:
-    """T3.6 (d): PRAGMA user_version == 4 after first open; re-open honours it
+    """T3.6 (d): PRAGMA user_version == 5 after first open; re-open honours it
     (schema not applied twice); real v1->v2 (A3: escalation_log gains severity/
     session_id/turn_index), v2->v3 (A19: session gains rng_seed), and v3->v4
     (R-RES: session gains checkpoint_state) migrations run on an older DB; a
@@ -391,8 +391,8 @@ class TestSchemaVersionMigrationStub:
 
     def test_schema_version_is_current(self, tmp_path):
         store = _make_store(tmp_path)
-        assert store.schema_version() == 4, (
-            f"Expected user_version 4, got {store.schema_version()}"
+        assert store.schema_version() == 5, (
+            f"Expected user_version 5, got {store.schema_version()}"
         )
         store.close()
 
@@ -403,11 +403,11 @@ class TestSchemaVersionMigrationStub:
         # First open: schema applied
         with LearnerStore(db_path) as s1:
             lid = s1.create_learner("Dave", 3, "CA", "parent_mediated")
-            assert s1.schema_version() == 4
+            assert s1.schema_version() == 5
 
         # Second open: schema already current; no error, no duplicate tables
         with LearnerStore(db_path) as s2:
-            assert s2.schema_version() == 4
+            assert s2.schema_version() == 5
             profile = s2.get_learner(lid)
             assert profile is not None
             assert profile["name"] == "Dave"
@@ -452,7 +452,7 @@ class TestSchemaVersionMigrationStub:
 
         # Reopen: all three migrations run, columns exist, version bumps to current.
         with LearnerStore(db_path) as s2:
-            assert s2.schema_version() == 4
+            assert s2.schema_version() == 5
             eid = s2.write_escalation(
                 lid, "harm_to_self", "test", severity="critical",
                 session_id="sess-1", turn_index=3,
@@ -476,7 +476,7 @@ class TestSchemaVersionMigrationStub:
         import mentar.db.store as store_module
         original = store_module._EXPECTED_VERSION
         try:
-            store_module._EXPECTED_VERSION = 5  # no migration registered for v4->v5
+            store_module._EXPECTED_VERSION = 6  # no migration registered for v5->v6
             with pytest.raises(RuntimeError, match="schema version"):
                 LearnerStore(db_path)
         finally:

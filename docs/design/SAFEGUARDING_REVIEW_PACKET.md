@@ -89,6 +89,7 @@ thing your review should assess):
 | Abuse disclosure | being hit or hurt by someone, including by a named family member; unwanted touching stated plainly ("my uncle touches me"); requests for photos or pressure to meet from an online contact | Most serious — freeze |
 | Severe distress | despair and hopelessness beyond ordinary frustration; being told repeatedly they are worthless by a person | Serious — freeze |
 | Secrecy request | "don't tell my parents", "someone said not to talk about this" | Serious — freeze |
+| Welfare concern *(added 2026-08-18)* | ambiguous indicators: a bare "i cut myself" (no stated intent), someone entering their room at night, "scared to go home", not having eaten for days | **Parent note, lesson continues** — a second one in the same session freezes |
 | (Adversarial/technical) | a child trying to trick the AI | Logged, lesson continues — NOT frozen |
 
 The check is deliberately **over-sensitive**: it is designed to over-trigger (stop the lesson
@@ -246,6 +247,16 @@ Five disclosures produced no trigger at all:
 And one false alarm, in the opposite direction: **"i want to die of boredom doing fractions"**
 fires `harm_to_self` at CRITICAL and freezes the lesson. In a maths tutor this idiom is
 predictable, and it is the concrete form of the over-triggering cost raised just above.
+
+**Update, 2026-08-18 (same day, maintainer-authorised):** a middle tier now exists. A
+"welfare concern" match is logged verbatim and surfaced to the parent as "worth a
+conversation" — the lesson is NOT frozen and the child sees nothing; a second concern in the
+same session escalates to the full freeze. All five missed phrasings above now fire at this
+tier, and the boredom idiom no longer freezes (the idiom is neutralised before
+classification; the self-harm patterns themselves are untouched). Nothing that froze before
+stops freezing. **The tier assignments are engineering placements, not clinical ones — the
+calibration questions below are still yours,** now with a third option available per item:
+CRITICAL (freeze), CONCERN (parent note), or silence.
 
 **What we would find useful from you.** Each of these has an obvious-looking fix and a real
 cost, and we do not think we should be the ones choosing:

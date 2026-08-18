@@ -36,15 +36,23 @@ from enum import Enum
 class TriggerClass(str, Enum):
     HARM_TO_SELF          = "harm_to_self"
     PHYSICAL_DANGER       = "physical_danger"
-    SEVERE_DISTRESS       = "severe_distress"
+    SEVERE_DISTRESS      = "severe_distress"
     ABUSE_DISCLOSURE      = "abuse_disclosure"
     SECRECY_REQUEST       = "secrecy_request"
+    WELFARE_CONCERN       = "welfare_concern"
     ADVERSARIAL_JAILBREAK = "adversarial_jailbreak"
 
 
 class Severity(str, Enum):
     CRITICAL = "critical"
     HIGH     = "high"
+    # CONCERN (2026-08-18, maintainer-authorised): log + surface to the parent,
+    # do NOT freeze. For ambiguous welfare indicators where a freeze on a false
+    # positive costs real trust ("i cut myself" on the scissors) but silence on
+    # a true positive costs a disclosure. The child sees nothing; the lesson
+    # continues; two CONCERN hits in one session escalate to a freeze
+    # (CONCERN_FREEZE_THRESHOLD in dialogue/controller.py).
+    CONCERN  = "concern"
     LOW      = "low"
 
 
@@ -373,6 +381,15 @@ _JAILBREAK_DEOBFUSCATED = re.compile(
 )
 
 
+# The idiom, not the sentiment: only death-of-boredom/laughter forms, nothing
+# that could swallow a real statement of intent.
+_BOREDOM_IDIOM_RE = re.compile(
+    r"\b(?:die|dying|died|dies)\s+(?:of|from)\s+(?:boredom|laughter|laughing)\b"
+    r"|\bbored\s+to\s+death\b",
+    re.I,
+)
+
+
 def _deobfuscated_views(text: str) -> list[str]:
     """Normalised variants of *text* for catching obfuscated jailbreaks."""
     low = text.lower()
@@ -390,6 +407,27 @@ def _deobfuscated_views(text: str) -> list[str]:
     return views
 
 
+# ── E: welfare_concern (CONCERN — log + parent note, no freeze) ──────────────
+# The five disclosure shapes the 2026-08-18 probe found NOTHING firing on
+# (SAFEGUARDING_REVIEW_PACKET.md Part 4, third probe). Every one is ambiguous
+# enough that a freeze would misfire on innocent uses — which is exactly what
+# the CONCERN tier exists for. Additive only: nothing that froze before stops
+# freezing, and the qualified self-harm patterns above remain CRITICAL.
+_WELFARE_CONCERN_PATTERNS: list[re.Pattern[str]] = [p for p in (
+    # "my mum's boyfriend comes into my room at night"
+    re.compile(r"\b(comes?|came|gets?|got|sneaks?|snuck)\s+in(to)?\s+my\s+(room|bed(room)?)\b[^.?!]{0,25}\bat night\b", re.I),
+    # bare "i cut myself" — the CRITICAL pattern above requires a qualifier
+    # (on purpose / to hurt / because); the bare form lands here instead of
+    # nowhere. "I cut myself on the scissors" costs a parent note, not a freeze.
+    re.compile(r"\bi('?ve| have)?\s+(been\s+)?cut(ting)?\s+myself\b", re.I),
+    # "my brother makes me do things i dont like" — requires the discomfort
+    # clause, or every gym coach fires it
+    re.compile(r"\b(makes?|made|force[sd]?)\s+me\s+do\s+things?\b[^.?!]{0,30}\b(don'?t like|dont like|do not like|don'?t want|dont want|do not want|hate)\b", re.I),
+    re.compile(r"\b(scared|afraid|frightened|terrified)\s+to\s+go\s+home\b", re.I),
+    re.compile(r"\bhave?n'?t\s+eaten\s+(for|in|since)\b[^.?!]{0,15}\bdays?\b", re.I),
+)]
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Severity + ordering table  (design §2 — precedence: A > B > C > D)
 # ─────────────────────────────────────────────────────────────────────────────
@@ -403,13 +441,15 @@ _CLASSIFIER_BANKS: list[tuple[TriggerClass, Severity, list[re.Pattern[str]]]] = 
     (TriggerClass.ABUSE_DISCLOSURE,       Severity.CRITICAL, _ABUSE_DISCLOSURE_PATTERNS),
     (TriggerClass.SEVERE_DISTRESS,        Severity.HIGH,     _SEVERE_DISTRESS_PATTERNS),
     (TriggerClass.SECRECY_REQUEST,        Severity.HIGH,     _SECRECY_REQUEST_PATTERNS),
+    (TriggerClass.WELFARE_CONCERN,        Severity.CONCERN,  _WELFARE_CONCERN_PATTERNS),
     (TriggerClass.ADVERSARIAL_JAILBREAK,  Severity.LOW,      _ADVERSARIAL_JAILBREAK_PATTERNS),
 ]
 
 # Severity rank for precedence comparison (higher = higher priority).
 _SEVERITY_RANK: dict[Severity, int] = {
-    Severity.CRITICAL: 3,
-    Severity.HIGH:     2,
+    Severity.CRITICAL: 4,
+    Severity.HIGH:     3,
+    Severity.CONCERN:  2,
     Severity.LOW:      1,
 }
 
@@ -431,6 +471,15 @@ def classify(text: str) -> TriggerMatch | None:
     """
     if not text or not text.strip():
         return None
+
+    # Boredom idioms (2026-08-18, maintainer-authorised — the ONE change here
+    # that removes a freeze): "i want to die of boredom doing fractions" fired
+    # harm_to_self at CRITICAL and froze the lesson. In a maths tutor that idiom
+    # is predictable. NEUTRALISED by rewriting the idiom itself, not by carving
+    # an exception into the harm patterns — so "i'm bored to death... i really
+    # want to die" still fires on its second clause, and the harm patterns
+    # themselves stay exactly as reviewed.
+    text = _BOREDOM_IDIOM_RE.sub("be bored", text)
 
     best: TriggerMatch | None = None
 

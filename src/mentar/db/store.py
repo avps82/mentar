@@ -27,7 +27,7 @@ from pathlib import Path
 # Path to the schema DDL file alongside this module.
 _SCHEMA_PATH = Path(__file__).parent / "schema.sql"
 
-_EXPECTED_VERSION = 4
+_EXPECTED_VERSION = 5
 
 # v1 -> v2 (A3, 2026-07-04): escalation_log gained severity/session_id/turn_index so
 # SAFETY §3.3/§3.5's claim that every escalation row carries these is actually true.
@@ -47,6 +47,33 @@ _MIGRATIONS: dict[int, list[str]] = {
     ],
     3: [
         "ALTER TABLE session ADD COLUMN checkpoint_state TEXT;",
+    ],
+    # v5 (2026-08-18): the severity CHECK gains 'concern' (the welfare-concern
+    # tier -- maintainer-authorised). SQLite cannot alter a CHECK in place, so
+    # this is the documented rebuild dance: new table, copy, drop, rename.
+    # escalation_log has no triggers and nothing references it by FK, and
+    # parent_ack_at updates keep working against the renamed table. Every
+    # existing row is copied verbatim -- this table is the audit trail, and the
+    # migration must never be a purge path.
+    4: [
+        """CREATE TABLE escalation_log_v5 (
+            id                      INTEGER PRIMARY KEY AUTOINCREMENT,
+            learner_id              INTEGER NOT NULL REFERENCES learner_profile(id) ON DELETE CASCADE,
+            trigger_class           TEXT    NOT NULL,
+            trigger_text_verbatim   TEXT    NOT NULL,
+            severity                TEXT    CHECK (severity IN ('low', 'concern', 'high', 'critical')),
+            session_id              TEXT,
+            turn_index              INTEGER,
+            freeze_started_at       TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+            parent_ack_at           TEXT,
+            session_outcome         TEXT    NOT NULL DEFAULT 'frozen'
+        );""",
+        "INSERT INTO escalation_log_v5 (id, learner_id, trigger_class, trigger_text_verbatim, "
+        "severity, session_id, turn_index, freeze_started_at, parent_ack_at, session_outcome) "
+        "SELECT id, learner_id, trigger_class, trigger_text_verbatim, severity, session_id, "
+        "turn_index, freeze_started_at, parent_ack_at, session_outcome FROM escalation_log;",
+        "DROP TABLE escalation_log;",
+        "ALTER TABLE escalation_log_v5 RENAME TO escalation_log;",
     ],
 }
 

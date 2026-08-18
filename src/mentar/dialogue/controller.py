@@ -177,6 +177,12 @@ ELABORATE_WORDS = {"more", "explain more", "tell me more"}
 ELABORATE_CAP = 2
 UNREADABLE_STREAK_CAP = 3  # A9: consecutive SAFE_REJECT/EXTRACT_FAIL before routing to Help
 PROBE_EVERY_N = 5  # W5.3 pilot default
+# CONCERN tier (2026-08-18, maintainer-authorised): a single welfare-concern
+# match logs + surfaces to the parent and the lesson continues; this many in
+# ONE session escalate to a freeze -- distress that builds across turns with no
+# single alarming line was a documented gap (packet Part 4, "multi-turn
+# distress").
+CONCERN_FREEZE_THRESHOLD = 2
 # When a proactive probe shows mastery was overestimated (false_confidence /
 # forgetting / slip-after-retry), demote mastery to this so the node returns to
 # normal practice instead of being re-probed endlessly. Below DEFAULT_MASTERY_THRESHOLD.
@@ -267,6 +273,7 @@ class _SessionCtx:
     current_answer: str | None = None             # child's latest answer
     last_scored_correct: bool | None = None
     items_since_probe: int = 0
+    concern_hits: int = 0                            # CONCERN-tier matches this session
     items_completed: int = 0       # R11: completed item cycles (drives interleave/review/cap)
     unreadable_streak: int = 0     # A9: consecutive SAFE_REJECT/EXTRACT_FAIL on this question
     # Help loop
@@ -462,6 +469,9 @@ class SessionController:
             # Additive (old checkpoints read back as un-pinned): without this a
             # server restart silently converts a pinned session into a guided one.
             "pinned_node": self._pinned_node,
+            # Same additive rule: without this, a restart resets the CONCERN
+            # accumulation and the threshold quietly never fires.
+            "concern_hits": ctx.concern_hits,
         }
         self._safe_store(
             "update_session_checkpoint", self._session_id, json.dumps(checkpoint),
@@ -485,12 +495,21 @@ class SessionController:
                 )
             trigger = classify(learner_input)
             if trigger is not None:
+                # CONCERN accumulation: the hit count includes THIS one, so the
+                # threshold-th concern freezes on the turn it arrives.
+                concern_freezes = False
+                if trigger.severity is Severity.CONCERN:
+                    ctx.concern_hits += 1
+                    concern_freezes = ctx.concern_hits >= CONCERN_FREEZE_THRESHOLD
                 # Log every trigger for the parent (SAFETY §3.x): full UNTRUNCATED
                 # text + class + severity/session/turn (A3). Best-effort — a DB
                 # failure must never block handling.
-                session_outcome = (
-                    "logged_only" if trigger.severity is Severity.LOW else "frozen"
-                )
+                if trigger.severity is Severity.LOW:
+                    session_outcome = "logged_only"
+                elif trigger.severity is Severity.CONCERN and not concern_freezes:
+                    session_outcome = "logged_concern"
+                else:
+                    session_outcome = "frozen"
                 try:
                     self._store.write_escalation(
                         self._learner_id,
@@ -516,18 +535,29 @@ class SessionController:
                     )
                     return self._compose_result("Let's keep going with our maths! 😊")
 
-                # CRITICAL / HIGH: freeze + parent handoff.
-                ctx.state = FSMState.ESCALATION_FREEZE
-                logger.warning(
-                    "escalation: span=%s class=%s", trigger.matched_span[:80], trigger.trigger_class
-                )
-                return TurnResult(
-                    state=ctx.state.value,
-                    text=HANDOFF_MESSAGE_PRIMARY,
-                    done=False,
-                    escalated=True,
-                    message=HANDOFF_MESSAGE_PRIMARY,
-                )
+                if trigger.severity is Severity.CONCERN and not concern_freezes:
+                    # CONCERN: logged + surfaced on /parent, and the lesson
+                    # simply CONTINUES -- no early return, so the child's input
+                    # flows into normal turn handling and they see exactly what
+                    # they would have seen anyway. The child is never shown that
+                    # anything was noticed; the note is for the parent.
+                    logger.warning(
+                        "welfare concern (logged, not frozen; %d this session): span=%s",
+                        ctx.concern_hits, trigger.matched_span[:80],
+                    )
+                else:
+                    # CRITICAL / HIGH -- or the CONCERN threshold: freeze + parent handoff.
+                    ctx.state = FSMState.ESCALATION_FREEZE
+                    logger.warning(
+                        "escalation: span=%s class=%s", trigger.matched_span[:80], trigger.trigger_class
+                    )
+                    return TurnResult(
+                        state=ctx.state.value,
+                        text=HANDOFF_MESSAGE_PRIMARY,
+                        done=False,
+                        escalated=True,
+                        message=HANDOFF_MESSAGE_PRIMARY,
+                    )
 
         # Drive transient states until we hit an await or terminal state.
         output_text = ""
@@ -877,6 +907,7 @@ class SessionController:
             ctx.current_node_id = node_id
             ctx.items_completed = int(cp.get("items_completed") or 0)
             ctx.items_since_probe = int(cp.get("items_since_probe") or 0)
+            ctx.concern_hits = int(cp.get("concern_hits") or 0)
             ctx.state = FSMState.PATTERN_SELECT
         else:
             ctx.state = FSMState.NODE_SELECT
