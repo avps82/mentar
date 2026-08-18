@@ -211,3 +211,21 @@ if __name__ == "__main__":
         fn()
         print(f"  ✓ {fn.__name__}")
     print(f"\n{len(fns)}/{len(fns)} explain-check tests passed.")
+
+
+def test_a_mid_chain_tail_is_not_read_as_its_own_claim():
+    """Found 2026-08-18 by running find_claims over every generator's computed
+    method cards: "130 × 20 ÷ 100 = 26" yielded the claim "20 ÷ 100 = 26" --
+    arithmetic the author never wrote -- so 8 CORRECT cards (percentage-change
+    and combine-three-expressions, x4 countries) were flagged as verified-wrong,
+    and a correct LLM explanation with the same shape would be DISCARDED and
+    replaced by the canned fallback hint. A match beginning right after an
+    operator is the tail of a longer expression: no claim, fail-open."""
+    assert not has_verified_failure("Find 20% of $130: 130 × 20 ÷ 100 = 26.")
+    assert not has_verified_failure("Combine the number terms: 4 + 7 - 9 = 2.")
+    # The flip side, accepted and documented: a WRONG 3-term chain is not
+    # checkable at all (only 2-operand claims are) -- fail-open, not fail-wrong.
+    assert find_claims("4 + 7 - 9 = 3") == []
+    # 2-operand claims on either side of prose are still fully checked.
+    assert has_verified_failure("First 3 + 4 = 8, then more.")
+    assert not has_verified_failure("First 3 + 4 = 7, then more.")

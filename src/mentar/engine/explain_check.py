@@ -53,6 +53,9 @@ _OP = r"(?:[+\-−×x*·⋅÷]|divided\s+by)"
 # which means it's a mid-chain intermediate value, not a final result
 # (e.g. "6 + 13 = 12 + 13 = 25" must not match "6 + 13 = 12" as a claim;
 # the backtracked "6 + 13 = 1" attempt is also blocked because "1" is followed by "2").
+# Matches when the text immediately before a claim ends with an operator (plus
+# optional whitespace) -- see the mid-chain guard in find_claims.
+_MID_CHAIN_RE = re.compile(r"[+\-\u2212\xd7\xf7*x\xb7\u22c5]\s*\Z")
 _CLAIM_RE = re.compile(rf"(?<![\d./])({_SNUM})\s*({_OP})\s*({_SNUM})\s*=\s*({_SNUM})(?:\s+R\s+({_NUM}))?(?!\s*[+\-−×÷*x·⋅\d])")
 
 _OPS = {
@@ -104,6 +107,19 @@ def find_claims(text: str) -> list[ClaimCheck]:
     text = strip_digit_group_separators(text)
     results = []
     for m in _CLAIM_RE.finditer(text):
+        # Mid-chain guard, the LEFT-side mirror of the trailing (?!...) in
+        # _CLAIM_RE. "130 × 20 ÷ 100 = 26" used to yield the claim
+        # "20 ÷ 100 = 26" -- arithmetic the author never wrote -- so a CORRECT
+        # explanation (and 8 correct computed method cards) was flagged as a
+        # verified-wrong claim and discarded (found 2026-08-18 by running
+        # find_claims over every generator's cards). A match that begins right
+        # after an operator is the TAIL of a longer expression: produce NO claim
+        # for it, fail-open, same posture as every other unparseable shape.
+        # (Consequence, accepted: a wrong 3+-term chain like "4 + 7 - 9 = 3" is
+        # not checkable at all -- only 2-operand claims are. A markdown bullet
+        # "- 3 + 4 = 7" is also skipped; fail-open again.)
+        if _MID_CHAIN_RE.search(text, 0, m.start()):
+            continue
         lhs_a, op, lhs_b, rhs, remainder = m.groups()
         a = _parse_num(lhs_a)
         b = _parse_num(lhs_b)

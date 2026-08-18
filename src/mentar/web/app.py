@@ -1726,8 +1726,24 @@ def _display_mul(line: dict) -> dict:
     back to * before parsing, so a child copying the card's answer verbatim is
     marked correct -- it was SAFE_REJECTed until that landed alongside this.
     """
-    text = _DISPLAY_IMPLICIT_MUL_RE.sub("", line["text"])   # 5*y -> 5y, first
-    return {**line, "text": _DISPLAY_MUL_RE.sub(" × ", text)}
+    return {**line, "text": _display_expr_text(line["text"])}
+
+
+def _display_expr_text(text: str) -> str:
+    """The transform behind _display_mul, shared with the QUESTION path.
+
+    `**` -> `^` first (2026-08-18): the quadratic families' problem and card
+    text carry Python power syntax (`4x**2 + 6x`), which reached a Year 11
+    child's screen verbatim -- the question renders through markdown-lite, a
+    different path from the card chokepoint, so the 2026-08-16 `*` fix never
+    covered it. `^` (not the prettier ²) because the verifier ACCEPTS a caret
+    and SAFE_REJECTs a superscript -- a child copying the display back as
+    their answer must never be rejected (the 6764399 invariant). Runs before
+    the single-`*` rules so `**` is never half-eaten into a stray `×`.
+    """
+    text = text.replace("**", "^")
+    text = _DISPLAY_IMPLICIT_MUL_RE.sub("", text)            # 5*y -> 5y, first
+    return _DISPLAY_MUL_RE.sub(" × ", text)
 
 
 def _split_message_around_card(message: str) -> dict:
@@ -1793,7 +1809,12 @@ def _turn_context(learner_uuid: str, ctrl: SessionController, is_first_turn: boo
         # When the tail is absent (every non-Help turn) message_tail_html is "" and
         # the bubble renders exactly as before.
         **_split_message_around_card(message),
-        "question_html": _render_markdown_lite(question),
+        # Question text is COMPUTED (item.problem + format hint), so the same
+        # machine->human transform as the cards applies; LLM prose (message) is
+        # deliberately NOT transformed -- `**` there may be markdown bold.
+        "question_html": _render_markdown_lite(
+            _display_expr_text(question) if question else question
+        ),
         "is_first_turn": is_first_turn,
         "answer_type": ctrl.current_answer_type,
         "widget": mode.widget,
