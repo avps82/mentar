@@ -79,3 +79,22 @@ def test_spoken_text_fixes_caps_and_arrows_but_keeps_choice_letters():
 if __name__ == "__main__":
     test_spoken_text_fixes_caps_and_arrows_but_keeps_choice_letters()
     print("  ✓ test_spoken_text_fixes_caps_and_arrows_but_keeps_choice_letters")
+
+
+def test_exponents_are_spoken_as_a_teacher_says_them():
+    """2026-08-18: the quadratic families display "4x^2" (caret is the
+    verifier-accepted display form). A synthesiser skips the caret ("four x
+    two" -- which is a DIFFERENT expression) or names the symbol. Squared /
+    cubed / to-the-power-of is what the child's teacher says."""
+    if shutil.which("node") is None:
+        import pytest
+        pytest.skip("node not installed (tts.js is browser code)")
+
+    sq, cu, pw = _speak([
+        "If a = 4x^2 + 6x and b = 5x + 1, what is a + b?",
+        "A cube has volume s^3.",
+        "That is 2^10 altogether.",
+    ])
+    assert "x squared" in sq and "^" not in sq
+    assert "s cubed" in cu and "^" not in cu
+    assert "2 to the power of 10" in pw and "^" not in pw

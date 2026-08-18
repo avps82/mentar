@@ -92,6 +92,12 @@
     return text
       .replace(EMOJI_RE, "")
       .replace(/[→⇒]/g, ",")
+      // Exponents (2026-08-18): the quadratic families display "4x^2" (the
+      // caret is the verifier-accepted form). Spoken, an engine skips the
+      // caret ("four x two") or names it ("caret"). Say what a teacher says.
+      .replace(/\^2\b/g, " squared")
+      .replace(/\^3\b/g, " cubed")
+      .replace(/\^(\d+)/g, " to the power of $1")
       // Drawing characters that survive on a kept row -- the "4 cm" label
       // beside a rectangle's wall, the pipes in "4 | 6 | 3". A synthesiser
       // either says nothing for these or invents a name for each one.
