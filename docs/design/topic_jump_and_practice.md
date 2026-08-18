@@ -1,14 +1,21 @@
 ---
 type: Mentar Design Doc
 title: "Jump to a topic — child/parent-chosen practice of a specific concept"
-description: "PLANNED, not built (2026-08-18). A visible 'Jump to a topic' affordance on each subject card, leading to a clickable topic list that pins one concept and serves items from it, bypassing fringe selection."
-tags: [design, ui, curriculum, practice, not-built]
+description: "SHIPPED 2026-08-18, same day as the plan. A visible 'Jump to a topic' affordance on each subject card, leading to a clickable topic list that pins one concept and serves items from it, bypassing fringe selection."
+tags: [design, ui, curriculum, practice, shipped]
 timestamp: "2026-08-18T00:00:00Z"
 ---
 
 # Jump to a topic
 
-**Status: PLANNED — build plan below, nothing built.** Maintainer proposal 2026-08-18; plan ratified same day.
+**Status: SHIPPED 2026-08-18** — built to the plan below, same day it was ratified.
+Delivered exactly the planned diff: controller pin (param + one NODE_SELECT branch +
+checkpoint field), `/choose` `topic` field + `/topics` route, the card's sibling
+"🎯 Jump to a topic" link, `topics.html`. One departure the plan missed, found while
+writing the tests: `/choose` needed an ESCALATION_FREEZE guard — without it, re-choosing
+with a topic pin would have replaced a FROZEN controller with a fresh one, letting a
+child thaw an escalation freeze by tapping a topic. Guarded and pinned by
+`test_disclosure_freezes_a_pinned_session_and_a_pin_cannot_thaw_it`.
 
 ## The need
 
@@ -114,7 +121,7 @@ younger child on a tablet.
 3. **Is `STALE_MASTERY_DAYS = 14` too long for the guided path anyway?** Independent of
    this feature, and a one-constant change if so.
 
-## Build plan (2026-08-18)
+## Build plan (2026-08-18) — executed as written
 
 **Principle: pinning changes WHICH node feeds the loop, never the loop.** The product's
 determined learning experience — question → answer → deterministic verify → help → worked

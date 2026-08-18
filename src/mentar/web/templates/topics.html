@@ -1,0 +1,26 @@
+{% extends "_base.html" %}
+{% block title %}Mentar — {{ s.label }} topics{% endblock %}
+{% block content %}
+<h1 style="font-size:1.4rem;text-align:center">{{ s.icon }} {{ s.label }} — jump to a topic</h1>
+<p class="hint" style="text-align:center;max-width:480px;margin:0 auto 16px">
+  Pick any topic to practise it right away. Guided lessons still build up to each
+  topic step by step — this is for when you already know where you want to go.
+</p>
+<div class="topic-list">
+  {% for t in topics %}
+  <form method="POST" action="/choose">
+    <input type="hidden" name="subject" value="{{ subject }}">
+    <input type="hidden" name="topic" value="{{ t.id }}">
+    <button class="topic-row" type="submit">
+      <span class="topic-label">{{ t.label }}</span>
+      {% if t.pct is not none %}<span class="topic-pct">{{ t.pct }}%</span>
+      {% else %}<span class="topic-pct topic-new">new</span>{% endif %}
+    </button>
+  </form>
+  {% endfor %}
+</div>
+{% endblock %}
+{% block footer %}
+<div class="footer-nav"><a href="/">Choose a topic</a> &nbsp;·&nbsp;
+  <a href="/progress?subject={{ subject }}">My progress</a></div>
+{% endblock %}

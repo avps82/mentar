@@ -665,6 +665,14 @@ def _get_or_create_controller(learner_uuid: str, subject: str) -> SessionControl
             max_items=SESSION_ITEMS or None,
             session_id=resume_session_id,
             resume_checkpoint=resume_checkpoint,
+            # Jump-to-topic: only ever pass a pin belonging to THIS subject; a
+            # stale cookie pin from another subject degrades to a guided session
+            # (the constructor would rightly raise on it otherwise).
+            pinned_node=(
+                session.get("pinned_node")
+                if session.get("pinned_node") in _SUBJECT_CURRICULA[subject]
+                else None
+            ),
         )
         _turn_logs[learner_uuid] = []
     return _controllers[learner_uuid]
@@ -823,10 +831,56 @@ def choose():
         subject = request.form.get("subject")
         if subject in SUBJECTS:
             session["subject"] = subject
+            # Jump-to-topic (docs/design/topic_jump_and_practice.md): an optional
+            # `topic` field pins the session to ONE concept. An invalid/stale
+            # topic degrades to a normal guided session -- never a 500.
+            topic = (request.form.get("topic") or "").strip()
+            pinned = topic if topic in _SUBJECT_CURRICULA[subject] else None
+            learner_uuid = session.get("learner_uuid", "")
+            ctrl = _controllers.get(learner_uuid)
+            frozen = ctrl is not None and ctrl.state == FSMState.ESCALATION_FREEZE.value
+            if frozen:
+                # An escalation freeze must not be escapable by re-choosing with a
+                # topic pin: leave the controller AND the stored pin untouched --
+                # /learn will route to the frozen page as it always does.
+                pass
+            else:
+                if pinned != session.get("pinned_node"):
+                    # The live controller was built with the OLD pin state; a pin
+                    # (or un-pin) always starts a fresh session.
+                    _controllers.pop(learner_uuid, None)
+                if pinned:
+                    session["pinned_node"] = pinned
+                else:
+                    session.pop("pinned_node", None)
         return redirect(url_for("learn"))
     return render_template(
         "subjects.html", subjects=SUBJECTS, subject_groups=SUBJECT_GROUPS,
         subjects_progress=_subjects_progress(session.get("learner_uuid", "")),
+    )
+
+
+@app.route("/topics")
+def topics():
+    """Jump-to-topic list (docs/design/topic_jump_and_practice.md): every concept
+    of one subject, in the template's authored (topological) order, each a one-tap
+    pinned-session start. Built from _SUBJECT_CURRICULA, NOT from skill_state --
+    the whole point is reaching topics never attempted yet. Child-facing page:
+    deliberately not under _GROWN_UP_PREFIXES."""
+    subject = request.args.get("subject") or ""
+    if subject not in SUBJECTS:
+        return redirect(url_for("choose"))
+    learner_uuid = session.get("learner_uuid", "")
+    store, db_id = _store_and_id(learner_uuid)
+    pct = {}
+    if store and db_id is not None:
+        pct = {r["skill_id"]: int(r["p_mastery"] * 100) for r in store.all_skill_states(db_id)}
+    topic_rows = [
+        {"id": nid, "label": _display_name(nid), "pct": pct.get(nid)}
+        for nid in _SUBJECT_CURRICULA[subject]
+    ]
+    return render_template(
+        "topics.html", subject=subject, s=SUBJECTS[subject], topics=topic_rows,
     )
 
 

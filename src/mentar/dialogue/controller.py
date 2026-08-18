@@ -316,6 +316,7 @@ class SessionController:
         max_items: int | None = None,
         resume_checkpoint: dict | None = None,
         scaffold_dir: Path | None = None,
+        pinned_node: str | None = None,
     ) -> None:
         self._llm = self._make_safe_llm(llm_call)
         self._prompt_dir = Path(prompt_dir)
@@ -360,6 +361,16 @@ class SessionController:
         self._rng_seed = rng_seed if rng_seed is not None else random.SystemRandom().randrange(2**32)
         self._rng = random.Random(self._rng_seed)
         logger.info("session %s: rng_seed=%d", self._session_id, self._rng_seed)
+        # Jump-to-topic (docs/design/topic_jump_and_practice.md): hold node selection
+        # on ONE curriculum concept -- the learner/parent picked it explicitly. The
+        # rest of the loop (verify, help, probes, escalation) is untouched; only
+        # select_next() is bypassed. Fail loud at the seam, not silently mid-session
+        # (same posture as _raise_on_uncovered_nodes above).
+        if pinned_node is not None and pinned_node not in curriculum:
+            raise ValueError(
+                f"pinned_node {pinned_node!r} is not a concept of this subject's curriculum"
+            )
+        self._pinned_node = pinned_node
         self._ctx = _SessionCtx()
 
     # ── Public API ────────────────────────────────────────────────────────────
@@ -448,6 +459,9 @@ class SessionController:
             "items_completed": ctx.items_completed,
             "items_since_probe": ctx.items_since_probe,
             "turn_index": ctx.turn_index,
+            # Additive (old checkpoints read back as un-pinned): without this a
+            # server restart silently converts a pinned session into a guided one.
+            "pinned_node": self._pinned_node,
         }
         self._safe_store(
             "update_session_checkpoint", self._session_id, json.dumps(checkpoint),
@@ -842,6 +856,11 @@ class SessionController:
         #     (safe degrade, not an error -- the checkpoint just wasn't trustworthy).
         cp = self._resume_checkpoint
         node_id = cp.get("current_node_id") if cp else None
+        # Jump-to-topic: restore the pin across a server restart. Constructor wins
+        # if it set one; a checkpointed pin naming a node this curriculum no longer
+        # has is dropped (same safe-degrade as a stale current_node_id below).
+        if self._pinned_node is None and cp and cp.get("pinned_node") in self._curriculum:
+            self._pinned_node = cp["pinned_node"]
         if cp:
             # R-RES: restore turn_index so _log_transcript doesn't collide with
             # transcript rows already written by the previous server process.
@@ -865,6 +884,15 @@ class SessionController:
 
     def _do_node_select(self) -> tuple[str, bool]:
         ctx = self._ctx
+        # Jump-to-topic: a pinned session always serves its one chosen concept --
+        # repetition is the point, so an already-mastered pin is served again, not
+        # skipped. Every re-entry to NODE_SELECT (post-probe, post-help) passes
+        # through here, so this one branch covers all paths; the session still ends
+        # via the max_items cap in _do_branch_decision (or the child's stop).
+        if self._pinned_node is not None:
+            ctx.current_node_id = self._pinned_node
+            ctx.state = FSMState.PATTERN_SELECT
+            return ("", True)
         graph = {nid: n.get("prerequisites", []) for nid, n in self._curriculum.items()}
         # R11 micro-learning: interleave among ready concepts + inject spaced review of
         # mastered-but-stale nodes (makes the FORGETTING_SUSPECT probe path reachable).

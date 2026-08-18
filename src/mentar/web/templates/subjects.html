@@ -20,6 +20,10 @@
 <div class="subject-grid">
   {% for key in keys %}
   {% set s = subjects[key] %}
+  {# Jump-to-topic: the card is a <button> submitting the whole tile, so the
+     link is a SIBLING inside this wrapper -- interactive content must not nest
+     inside a button (docs/design/topic_jump_and_practice.md). #}
+  <div class="subject-cell">
   <form method="POST" action="/choose">
     <input type="hidden" name="subject" value="{{ key }}">
     <button class="subject-card" type="submit">
@@ -30,6 +34,8 @@
       {% if p %}<div class="subject-progress">{{ p.mastered }} of {{ p.total }} skills mastered</div>{% endif %}
     </button>
   </form>
+  <a class="topic-jump" href="/topics?subject={{ key }}">🎯 Jump to a topic</a>
+  </div>
   {% endfor %}
 </div>
 {% endfor %}

@@ -646,6 +646,30 @@ th { background: var(--bg); }
    the form. */
 .subject-grid > form { display: flex; justify-content: center; }
 .subject-grid > form > .subject-card { flex: 1; }
+/* Jump-to-topic: the grid cell is now a column of card + link (the link cannot
+   live inside the card's <button>). */
+.subject-grid > .subject-cell { display: flex; flex-direction: column; }
+.subject-cell > form { display: flex; flex: 1; }
+.subject-cell > form > .subject-card { flex: 1; }
+.topic-jump {
+  display: block; text-align: center; margin-top: 6px;
+  font-size: 0.85rem; font-weight: 600; color: var(--primary-strong);
+  text-decoration: none; padding: 6px 4px; border-radius: 8px;
+}
+.topic-jump:hover { background: var(--bg); text-decoration: underline; }
+/* /topics list: generous tap targets (young children on tablets). */
+.topic-list { max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; gap: 8px; }
+.topic-list > form { display: flex; }
+.topic-row {
+  flex: 1; display: flex; justify-content: space-between; align-items: center;
+  gap: 12px; padding: 14px 16px; min-height: 48px;
+  font-size: 1rem; font-family: inherit; text-align: left; cursor: pointer;
+  color: var(--text); background: var(--surface); border: 2px solid var(--border);
+  border-radius: 12px;
+}
+.topic-row:hover { border-color: var(--primary-strong); background: var(--bg); }
+.topic-pct { font-weight: 700; color: var(--primary-strong); font-size: 0.9rem; }
+.topic-pct.topic-new { color: var(--text-muted); font-weight: 600; }
 .subject-card {
   font-size: 1.1rem;
   padding: 22px 26px;

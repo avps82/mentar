@@ -451,7 +451,8 @@ def test_picker_cards_in_a_row_are_the_same_height():
         server.stop()
 
 
-_PAGES = ("/choose", "/learn", "/progress", "/parent", "/settings", "/setup")
+_PAGES = ("/choose", "/learn", "/progress", "/parent", "/settings", "/setup",
+          "/topics?subject=fractions")
 
 _PAGE_PROBE = """(() => {
   const out = {overflowX: document.documentElement.scrollWidth > window.innerWidth + 1,
@@ -513,6 +514,47 @@ def test_every_page_is_laid_out_sanely():
             if r["tiny"]:
                 problems.append(f"{path}: targets under 24x24: {r['tiny'][:5]}")
         assert not problems, "\n".join(problems)
+    finally:
+        if browser:
+            browser.close()
+        server.stop()
+
+
+
+
+def test_jump_to_a_topic_reaches_a_question_with_tappable_rows():
+    """Jump-to-topic (docs/design/topic_jump_and_practice.md): the card's link
+    must actually reach the topic list, the rows must be child-sized tap targets,
+    and tapping one must land on a live question. Server tests prove the pin;
+    only a browser proves the three-tap journey exists on screen."""
+    _skip_unless_browser()
+    server, browser = _Server(), None
+    try:
+        browser = _Browser()
+        browser.goto(server.url + "/choose")
+        browser.wait_for("document.querySelectorAll('.topic-jump').length > 10")
+        # Every card carries the affordance -- one link per card.
+        counts = browser.js(
+            "[document.querySelectorAll('.subject-card').length,"
+            " document.querySelectorAll('.topic-jump').length]"
+        )
+        assert counts[0] == counts[1], f"cards vs jump-links mismatch: {counts}"
+
+        browser.js("document.querySelector('.topic-jump').click()")
+        browser.wait_for("document.querySelectorAll('.topic-row').length > 0")
+        assert "/topics" in browser.js("location.pathname")
+
+        # WCAG 2.5.8 wants 24px; a child-facing list should clear 44px.
+        short = browser.js("""
+            [...document.querySelectorAll('.topic-row')]
+              .map(r => Math.round(r.getBoundingClientRect().height))
+              .filter(h => h < 44)
+        """)
+        assert short == [], f"topic rows under 44px tall: {short}"
+
+        browser.js("document.querySelector('.topic-row').click()")
+        browser.wait_for("location.pathname === '/learn'")
+        browser.wait_for("document.querySelector('.question-text') !== null")
     finally:
         if browser:
             browser.close()
