@@ -123,6 +123,19 @@ _DECIMAL_RE = re.compile(r"\b\d+\.\d+\b")
 _DIGIT_GROUP_SEP_RE = re.compile(r"(?<=\d),(?=\d)")
 
 
+def strip_digit_group_separators(text: str) -> str:
+    """Remove digit-GROUP commas ("1,200" -> "1200"), leaving list commas alone.
+
+    Public because TWO modules must agree on this. engine/explain_check.py parses
+    the same numerals out of LLM prose, and until 2026-08-18 it did not strip
+    them: "1,200 + 300 = 1,500" matched as the claim "200 + 300 = 1", which is
+    false, so a CORRECT explanation was discarded as a verified-wrong claim.
+    Same root cause as the 2026-08-16 extract_answer fix, in the sibling that
+    was missed. One function, so a third caller cannot drift again.
+    """
+    return _DIGIT_GROUP_SEP_RE.sub("", text)
+
+
 # ---------------------------------------------------------------------------
 # normalise_fraction
 # ---------------------------------------------------------------------------
@@ -240,7 +253,7 @@ def extract_answer(text: str, answer_type: str) -> str | None:
     # the ambiguity rule still sees two candidates. Handles Indian lakh grouping
     # ("1,00,000") as well as thousands. Assumes a period decimal point, which
     # holds for every country Mentar ships (AU/IN/US/SG).
-    text_expanded = _DIGIT_GROUP_SEP_RE.sub("", text_expanded)
+    text_expanded = strip_digit_group_separators(text_expanded)
 
     if answer_type == "mc4":
         return _extract_mc(text_expanded)

@@ -166,6 +166,7 @@ dialogue controller, web app, eval dataset, FSM caller wiring) has **all shipped
 
 **Maintainer-gated still open (2026-07-22):**
 - **W2.2** — emergency-services signposting design + professional handoff-wording review. Interim trigger→freeze path is live and sufficient for the supervised pilot (W2.2 interim ✅); the professional review is the remaining blocker for broader rollout. See SAFETY.md §3.4/§3.5 + SECURITY.md.
+- **Escalation probe 2026-08-18 — 5 missed disclosures + 1 false CRITICAL, unchanged by design.** A bug sweep ran 37 phrasings past `classify()`: five disclosures produced no trigger ("my mum's boyfriend comes into my room at night"; a bare "i cut myself", which the list only matches with a qualifier; "my brother makes me do things i dont like"; "i'm scared to go home"; "i havent eaten in two days"), and "i want to die of boredom doing fractions" fires `harm_to_self` CRITICAL and freezes the lesson. `escalation.py` is a RULES-protected path ("changes need safety review"), so **nothing was changed** — each fix trades a miss against a false freeze, which is the safeguarding professional's call, not ours. Written up with the three specific questions in `docs/design/SAFEGUARDING_REVIEW_PACKET.md` Part 4 as third-probe evidence. Third such widening finding; the recurrence is itself the argument that an adult-authored pattern list needs clinical review.
 
 *Previously listed here — all ✅ done (2026-06-27):* W1.3 (gemma2:9b pick), W4.2 (AGPL-3.0-only licence), W5.6 (kill criteria), W7.4 (ZIM acquisition + re-pointed to KA 2026-07-05).
 

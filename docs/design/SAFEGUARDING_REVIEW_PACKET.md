@@ -226,6 +226,37 @@ unqualified to make, and a wrong guess implemented confidently is worse than the
   chose over-sensitivity anyway. Is that still right if it happens repeatedly to the same
   child?
 
+### Third widening probe (2026-08-18) — six more phrasings, unresolved by design
+
+A routine bug sweep ran 37 further phrasings past the classifier. It is listed here as
+evidence, not as a defect report: `escalation.py` is a protected path whose changes need
+safeguarding review, so **nothing was changed in response to any of these.** The pattern is
+the same one Part 2 already documents — an adult guessing at a child's words.
+
+Five disclosures produced no trigger at all:
+
+| Phrasing | Why it is hard for a pattern list |
+|---|---|
+| "my mum's boyfriend comes into my room at night" | Every word is innocuous alone. The concern is entirely in the combination and the context. |
+| "im being bullied and i cut myself" | The list requires a qualifier — `cut myself on purpose / to hurt / because`. A bare "i cut myself" does not fire, because it collides with accidental injury ("I cut myself on the scissors"). |
+| "my brother makes me do things i dont like" | Indistinguishable, by wording alone, from a complaint about chores. |
+| "i'm scared to go home" | A recognised indicator that reads as ordinary reluctance. |
+| "i havent eaten in two days" | Only fires today when the child adds "on purpose", which attributes intent a neglected child would not state. |
+
+And one false alarm, in the opposite direction: **"i want to die of boredom doing fractions"**
+fires `harm_to_self` at CRITICAL and freezes the lesson. In a maths tutor this idiom is
+predictable, and it is the concrete form of the over-triggering cost raised just above.
+
+**What we would find useful from you.** Each of these has an obvious-looking fix and a real
+cost, and we do not think we should be the ones choosing:
+
+1. Should a bare "I cut myself" fire, accepting that some accidental cuts will freeze a
+   lesson? We currently require a qualifier and so miss the disclosure.
+2. Is a narrow idiom exception ("die of boredom", "bored to death") safe, or does any
+   carve-out around "want to die" set a precedent that erodes the category?
+3. Are indicators like "scared to go home" and "haven't eaten in two days" ones a tool like
+   this should act on at all, or ones that belong to an adult who knows the child?
+
 ---
 
 ## Part 5 — What we are NOT asking you to do

@@ -19,7 +19,11 @@ import re
 from dataclasses import dataclass
 from fractions import Fraction
 
-from mentar.eval.verify_numeric import normalise_decimal, normalise_fraction
+from mentar.eval.verify_numeric import (
+    normalise_decimal,
+    normalise_fraction,
+    strip_digit_group_separators,
+)
 
 # E2.3 (2026-08-10): decimals added. The original _NUM had no "." handling, so a
 # decimal claim ("3.5 + 2.1 = 5.6") never matched _CLAIM_RE at all and SAFETY §6.2's
@@ -27,9 +31,18 @@ from mentar.eval.verify_numeric import normalise_decimal, normalise_fraction
 # not a design choice, once R13 shipped decimal answer types (Y5-8 decimal content
 # is live). Decimal alternative goes FIRST so "3.5" parses as one token, not "3"+".5".
 _NUM = r"(?:\d+\.\d+|\d+\s+\d+/\d+|\d+/\d+|\d+)"
+# A SIGNED number. Signed arithmetic is live content (Y7+ integers), and until
+# 2026-08-18 no part of a signed claim matched: "5 - 8 = -4" produced no claim at
+# all, so the verify-or-discard guard was inert for every signed explanation.
+#
+# The sign must be allowed on the OPERANDS too, not just the result. Allowing it
+# only on the right-hand side would make "-5 + 2 = -3" match as "5 + 2 = -3" --
+# turning a CORRECT explanation into a verified-wrong one. That is a worse bug
+# than the gap it closes, which is why both ends move together.
+_SNUM = rf"(?:[-−]?{_NUM})"
 # ponytail: only the plain "/" division operator is not matched — it collides with
 # the fraction slash ("3/4 / 1/2"). "÷" and "divided by" are explicitly supported.
-_OP = r"(?:[+\-×x*÷]|divided\s+by)"
+_OP = r"(?:[+\-−×x*·⋅÷]|divided\s+by)"
 # (?<![\d./]) — don't start a match inside a number (e.g. the "2" in "12"), NOR right
 # after a decimal point or fraction slash (E2.3: "3.5/7 + 1.5 = 2" must not yield a
 # phantom "5/7..." or "7 + 1.5 = 2" claim — starting mid-token verifies arithmetic the
@@ -40,14 +53,20 @@ _OP = r"(?:[+\-×x*÷]|divided\s+by)"
 # which means it's a mid-chain intermediate value, not a final result
 # (e.g. "6 + 13 = 12 + 13 = 25" must not match "6 + 13 = 12" as a claim;
 # the backtracked "6 + 13 = 1" attempt is also blocked because "1" is followed by "2").
-_CLAIM_RE = re.compile(rf"(?<![\d./])({_NUM})\s*({_OP})\s*({_NUM})\s*=\s*({_NUM})(?:\s+R\s+({_NUM}))?(?!\s*[+\-×÷*x\d])")
+_CLAIM_RE = re.compile(rf"(?<![\d./])({_SNUM})\s*({_OP})\s*({_SNUM})\s*=\s*({_SNUM})(?:\s+R\s+({_NUM}))?(?!\s*[+\-−×÷*x·⋅\d])")
 
 _OPS = {
     "+": lambda a, b: a + b,
     "-": lambda a, b: a - b,
+    # U+2212 MINUS SIGN. Models emit it constantly, and until 2026-08-18 it was
+    # absent here, so "9 − 4 = 6" produced NO claim and went unchecked.
+    "−": lambda a, b: a - b,
     "×": lambda a, b: a * b,
     "x": lambda a, b: a * b,
     "*": lambda a, b: a * b,
+    # Same story for the dot operators; verify_numeric already translates both.
+    "·": lambda a, b: a * b,
+    "⋅": lambda a, b: a * b,
     "÷": lambda a, b: a / b,
 }
 
@@ -63,16 +82,26 @@ def _parse_num(token: str):
     normalise_decimal (E2.3) then exact Fraction conversion — NOT through
     normalise_fraction, whose decimal-safe-reject guard is deliberate and untouched
     (it protects the child-ANSWER path; this is the explanation-CLAIM path)."""
+    sign = 1
+    token = token.strip()
+    if token[:1] in ("-", "−"):
+        sign, token = -1, token[1:]
     if "." in token:
         d = normalise_decimal(token)
-        return Fraction(d) if d is not None else None
-    return normalise_fraction(token)
+        return sign * Fraction(d) if d is not None else None
+    mag = normalise_fraction(token)
+    return sign * mag if mag is not None else None
 
 
 def find_claims(text: str) -> list[ClaimCheck]:
     """Extract and verify every `a <op> b = c` claim in *text*."""
     if not text:
         return []
+    # Digit-group commas first, for the same reason extract_answer does it: an
+    # unstripped "1,200 + 300 = 1,500" matched as "200 + 300 = 1" and reported a
+    # CORRECT explanation as a verified-wrong claim, which discarded it and left
+    # the child with the canned fallback hint instead (found 2026-08-18).
+    text = strip_digit_group_separators(text)
     results = []
     for m in _CLAIM_RE.finditer(text):
         lhs_a, op, lhs_b, rhs, remainder = m.groups()

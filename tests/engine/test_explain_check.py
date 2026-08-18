@@ -154,6 +154,57 @@ def test_division_remainder_claim_extraction():
     assert claims[0].ok is True
 
 
+def test_digit_group_commas_do_not_mangle_a_correct_claim():
+    """The bug this closes (2026-08-18): "1,200 + 300 = 1,500" matched as the
+    claim "200 + 300 = 1" -- false -- so a CORRECT explanation was discarded as
+    a verified-wrong arithmetic claim and the child got the canned fallback hint
+    instead. Same root cause as the 2026-08-16 extract_answer comma fix; this
+    sibling module was missed then, so both now share one helper.
+    """
+    assert not has_verified_failure("So 1,200 + 300 = 1,500 altogether.")
+    assert not has_verified_failure("$1,250 + $750 = $2,000")
+    assert not has_verified_failure("1,00,000 + 1,00,000 = 2,00,000")   # lakh grouping
+    # Still CATCHES a genuinely wrong comma-formatted claim -- the point is to
+    # parse the numbers correctly, not to skip them.
+    assert has_verified_failure("So 1,200 + 300 = 1,600 altogether.")
+
+
+def test_signed_arithmetic_is_actually_checked():
+    """Signed integers are live content (Y7+), and no part of a signed claim
+    matched before: "5 - 8 = -4" produced NO claim, so verify-or-discard was
+    inert for every signed explanation."""
+    assert has_verified_failure("Take away: 5 - 8 = -4.")
+    assert not has_verified_failure("Take away: 5 - 8 = -3.")
+    assert has_verified_failure("-3 - 4 = -1")
+    assert not has_verified_failure("-3 - 4 = -7")
+
+
+def test_a_negative_first_operand_is_not_read_as_positive():
+    """The trap in the fix itself: allowing the sign only on the RESULT would
+    read "-5 + 2 = -3" as "5 + 2 = -3" and flag a CORRECT explanation as wrong.
+    Operands and result had to move together."""
+    assert not has_verified_failure("Add: -5 + 2 = -3.")
+    assert has_verified_failure("Add: -5 + 2 = -1.")
+
+
+def test_unicode_minus_and_dot_operators_are_recognised():
+    """Models emit U+2212 and · constantly; neither was in the operator class,
+    so those claims went unchecked entirely."""
+    assert has_verified_failure("Take away: 9 − 4 = 6.")
+    assert not has_verified_failure("Take away: 9 − 4 = 5.")
+    assert not has_verified_failure("9 − 14 = −5")
+    assert has_verified_failure("Multiply: 3 · 4 = 11.")
+    assert not has_verified_failure("Multiply: 3 · 4 = 12.")
+
+
+def test_prose_and_chains_still_do_not_misfire():
+    """Guards against the fix over-matching: an intermediate value in a chain and
+    ordinary prose must still produce no verified failure."""
+    assert not has_verified_failure("6 + 13 = 12 + 13 = 25")
+    assert not has_verified_failure("Numbers from -5 to 5 include 0.")
+    assert not has_verified_failure("Think about how many groups of 4 fit into 12.")
+
+
 if __name__ == "__main__":
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     for fn in fns:
