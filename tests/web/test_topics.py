@@ -126,3 +126,63 @@ def test_unknown_subject_redirects_to_the_picker():
     _, c = _client()
     r = c.get("/topics?subject=bogus")
     assert r.status_code == 302
+
+
+def _drive_to_completion(app_mod, c, ctrl, tries=60):
+    for _ in range(tries):
+        item = getattr(ctrl._ctx, "current_item", None)
+        c.post("/answer", data={"answer": str(item.answer) if item else "1/2"}, headers=H)
+        if "END" in str(ctrl._ctx.state):
+            return True
+    return False
+
+
+def test_rechoosing_the_same_topic_after_completion_starts_fresh():
+    """Found 2026-08-18, first re-jump after a completed session: the pin had not
+    changed, so /choose kept the TERMINAL controller and /learn bounced straight
+    to /done -- tapping the topic again did nothing. "Practise it again" is the
+    feature's whole point, so a topic tap on a terminal session must start over."""
+    app_mod, c = _client()
+    nodes = _pilot_nodes(app_mod)
+    c.post("/choose", data={"subject": "fractions", "topic": nodes[0]})
+    c.get("/learn")
+    ctrl = app_mod._controllers[_uuid(c)]
+    assert _drive_to_completion(app_mod, c, ctrl), "precondition: session must end"
+
+    c.post("/choose", data={"subject": "fractions", "topic": nodes[0]})
+    assert c.get("/learn").status_code == 200, "re-jump bounced to /done"
+    fresh = app_mod._controllers[_uuid(c)]
+    assert fresh is not ctrl
+    assert fresh._pinned_node == nodes[0]
+
+
+def test_retapping_the_same_topic_mid_session_does_not_reset_progress():
+    """The other half of the same rule: a double-tap / back-button re-choose of
+    the topic already LIVE must be a no-op, not a session reset."""
+    app_mod, c = _client()
+    nodes = _pilot_nodes(app_mod)
+    c.post("/choose", data={"subject": "fractions", "topic": nodes[0]})
+    c.get("/learn")
+    ctrl = app_mod._controllers[_uuid(c)]
+    c.post("/answer", data={"answer": "999999"}, headers=H)
+    n = ctrl._ctx.items_completed
+
+    c.post("/choose", data={"subject": "fractions", "topic": nodes[0]})
+    c.get("/learn")
+    assert app_mod._controllers[_uuid(c)] is ctrl, "a mid-session re-tap replaced the session"
+    assert ctrl._ctx.items_completed == n
+
+
+def test_guided_subject_card_tap_after_done_also_starts_fresh():
+    """Same rule unified for GUIDED sessions: tapping the subject card after
+    /done used to bounce back to /done (only the done page's Start-again button
+    escaped it). A card tap is an explicit start intent either way."""
+    app_mod, c = _client()
+    c.post("/choose", data={"subject": "fractions"})
+    c.get("/learn")
+    ctrl = app_mod._controllers[_uuid(c)]
+    assert _drive_to_completion(app_mod, c, ctrl), "precondition: session must end"
+
+    c.post("/choose", data={"subject": "fractions"})
+    assert c.get("/learn").status_code == 200, "card tap after done still bounced to /done"
+    assert app_mod._controllers[_uuid(c)] is not ctrl

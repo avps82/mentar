@@ -845,9 +845,21 @@ def choose():
                 # /learn will route to the frozen page as it always does.
                 pass
             else:
-                if pinned != session.get("pinned_node"):
-                    # The live controller was built with the OLD pin state; a pin
-                    # (or un-pin) always starts a fresh session.
+                # Pop when the pin CHANGES (the live controller was built with the
+                # old pin state) -- and also when a topic is re-chosen after its
+                # session ENDED: the terminal controller would otherwise bounce
+                # /learn straight back to /done, so tapping the same topic again
+                # did nothing (found 2026-08-18, first re-jump after completion).
+                # "Practise it again" is the feature's whole point. A LIVE session
+                # already pinned to the same topic is left alone (a double-tap or
+                # refresh must not reset progress).
+                if pinned != session.get("pinned_node") or (
+                    ctrl is not None and ctrl.is_terminal
+                ):
+                    # Terminal applies to the GUIDED case too: tapping the subject
+                    # card after /done used to bounce straight back to /done (the
+                    # only way onward was the done page's Start-again button). A
+                    # card tap is an explicit "start" intent either way.
                     _controllers.pop(learner_uuid, None)
                 if pinned:
                     session["pinned_node"] = pinned

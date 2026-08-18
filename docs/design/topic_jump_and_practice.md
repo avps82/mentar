@@ -17,6 +17,16 @@ with a topic pin would have replaced a FROZEN controller with a fresh one, letti
 child thaw an escalation freeze by tapping a topic. Guarded and pinned by
 `test_disclosure_freezes_a_pinned_session_and_a_pin_cannot_thaw_it`.
 
+**Post-ship sweep, same day:** the first re-jump after a COMPLETED session exposed a
+second gap — the pin hadn't changed, so `/choose` kept the terminal controller and
+`/learn` bounced to `/done`; tapping the topic again did nothing, which broke the
+repetition goal for exactly the topic just finished. Fixed by popping the controller on
+any explicit choose when the live one `is_terminal` — unified with the GUIDED case,
+where tapping the subject card after `/done` had the same dead-end (previously escaped
+only via the done page's Start-again button). A LIVE session re-chosen unchanged is
+still a no-op (double-tap/refresh must not reset progress). All three behaviours are
+mutation-proved tests in `tests/web/test_topics.py`.
+
 ## The need
 
 The tool guides. Given a subject it picks what to teach next, from prerequisites and
