@@ -109,6 +109,9 @@ _KNOWN_ABSENT = {
     "tests/test_session_fsm_invariants.py",        # SESSION_FSM.md says "(it doesn't)"
     "docs/bkt_notes.md",                           # never created; W3.3_bkt.md instead
     "src/mentar/web/static/turn.js",               # historical stopgap, replaced by htmx
+    # topic_jump_and_practice.md build plan names its planned new template; the
+    # doc is a PLAN (status says "nothing built"), so the file rightly precedes it.
+    "web/templates/topics.html",
     # TESTS.md T-task rows name the ORIGINAL PLAN's filenames; the coverage shipped
     # under different names. TESTS.md's translation note says so explicitly, and the
     # per-row mapping is flagged there as an open verification task.
