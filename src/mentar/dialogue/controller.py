@@ -407,6 +407,11 @@ class _SessionCtx:
     # resurrect the button for an already-revealed question. Per-question flag,
     # reset when a new question is presented.
     working_shown: bool = False
+    # ...and WHICH item it was shown for. Inside one help loop the recheck draws
+    # a NEW item, so the re-show can legitimately display a card the child has
+    # not seen before -- the lead-in must not say "again" then (maintainer nit,
+    # 2026-08-19: right card, wrong sentence).
+    working_shown_item_id: str | None = None
     # A5: per-node, CHILD-INITIATED help only (never the auto-help branch in
     # _do_bkt_update) — the false-confidence probe signal must not be polluted by
     # a previous node's help use or by the system's own auto-help scaffolding.
@@ -1083,6 +1088,7 @@ class SessionController:
         ctx.elaborate_steps_grid = None  # "show human working": stale grid must not linger
         ctx.elaborate_method_card = None  # explain-mode: stale card must not linger either
         ctx.working_shown = False         # new question -- the working may be offered again
+        ctx.working_shown_item_id = None
         node = self._curriculum[ctx.current_node_id]
         item = self._sample_item(ctx.current_node_id)
         if item is not None:
@@ -1423,8 +1429,10 @@ class SessionController:
         if elaborate:
             ctx.elaborate_steps_grid = self._build_steps_grid_if_eligible()
             if ctx.elaborate_steps_grid is not None:
-                repeat = ctx.working_shown
+                live_id = getattr(ctx.current_item, "id", None)
+                repeat = ctx.working_shown and ctx.working_shown_item_id == live_id
                 ctx.working_shown = True
+                ctx.working_shown_item_id = live_id
                 explanation = ("Look again at the steps we worked through — the answer "
                                "is at the bottom. 👇") if repeat else "Let's see the steps! 👇"
                 ctx.last_explanation = explanation
@@ -1478,8 +1486,10 @@ class SessionController:
                         ctx.elaborate_method_card = (
                             *ctx.elaborate_method_card, "", *diagram.splitlines()
                         )
-                repeat = ctx.working_shown
+                live_id = getattr(ctx.current_item, "id", None)
+                repeat = ctx.working_shown and ctx.working_shown_item_id == live_id
                 ctx.working_shown = True
+                ctx.working_shown_item_id = live_id
                 explanation = ("Look again at how it's solved — the answer is on "
                                "the last line. 👇") if repeat else "Let's see how it's solved! 👇"
                 ctx.last_explanation = explanation

@@ -476,3 +476,35 @@ def test_trimmer_drops_a_dangling_answer_heading():
     # A heading WITH content is not a stump.
     assert trim("Some prose.\nAnswer: see the steps above.") == \
         "Some prose.\nAnswer: see the steps above."
+
+
+def test_look_again_matches_whether_the_card_was_actually_seen():
+    """Maintainer nit (2026-08-19): the lead-in said "Look again" for cards the
+    child had never seen. The rule now keyed on item id: "again" appears IFF the
+    re-shown card belongs to the same item whose working was already displayed.
+    Asserted as an equivalence rather than a scripted branch -- which item the
+    recheck serves varies, and the INVARIANT is what the child must never see
+    violated. (Noted, not separately forced: the same-id path itself -- it needs
+    a bank-backed node that re-serves an item; PHASE0_STATUS carries the note.)
+    """
+    llm = _PromptCapturingLlm()
+    ctrl = SessionController(
+        llm_call=llm, prompt_dir=PROMPTS, grounding_cfg={},
+        curriculum=_PERCENTAGE_CURRICULUM, db_store=_FakeStore(), learner_id="L",
+        item_bank=_percentage_bank(), rng_seed=7,
+    )
+    ctrl.step(None)
+    ctrl.step("?")
+    r = ctrl.step("more")
+    assert "Look again" not in r.text, "the FIRST view must never say 'again'"
+
+    for _ in range(3):
+        shown_id = ctrl._ctx.working_shown_item_id
+        answering_id = getattr(ctrl._ctx.current_item, "id", None)
+        r = ctrl.step("999999")
+        if ctrl.state != FSMState.HELP_RECHECK_AWAIT.value or not ctrl.elaborate_method_card:
+            break                                   # loop exited via the retry cap
+        said_again = "Look again" in r.text
+        assert said_again == (answering_id == shown_id), (
+            f"'again'={said_again} but seen-before={answering_id == shown_id}"
+        )
