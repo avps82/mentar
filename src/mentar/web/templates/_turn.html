@@ -48,7 +48,12 @@
   <form method="POST" action="/answer" class="elaborate-form"
         hx-post="/answer" hx-target="#turn-area" hx-swap="innerHTML" hx-indicator="#thinking, find button" hx-disabled-elt="find button">
     <input type="hidden" name="answer" value="more">
-    <button class="btn" type="submit">💡 Explain more</button>
+    {# "Show me the working", not "Explain more" (maintainer, 2026-08-19):
+       every node now answers this press with a WORKED SOLUTION ending in
+       "Answer: ..." -- a card or a step grid -- so "Explain more" promised
+       another explanation and under-described what actually appears. UI label
+       only: the hidden answer value ("more") and the FSM are unchanged. #}
+    <button class="btn" type="submit">✏️ Show me the working</button>
   </form>
   {% endif %}
 </div>{% endif %}

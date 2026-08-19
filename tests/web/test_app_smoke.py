@@ -511,7 +511,10 @@ def test_elaborate_form_uses_hidden_input():
     c.get("/learn")
     frag = c.post("/answer", data={"answer": "no idea"},
                   headers={"HX-Request": "true"}).get_data(as_text=True)
-    assert "Explain more" in frag
+    # Label renamed 2026-08-19 ("Show me the working" -- every node now answers
+    # this press with a worked solution, so "Explain more" under-described it).
+    assert "Show me the working" in frag
+    assert "Explain more" not in frag
     form = frag.split('class="elaborate-form"')[1].split("</form>")[0]
     assert '<input type="hidden" name="answer" value="more">' in form
     assert 'name="answer"' not in form.split("<button")[1]  # nothing on the button

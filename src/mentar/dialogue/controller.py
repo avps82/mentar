@@ -131,6 +131,29 @@ def _is_dont_know_or_question(text: str) -> bool:
     return stripped.startswith(_QUESTION_STARTERS)
 
 
+_SENTENCE_END = ".!?…:"
+
+
+def _trim_truncated_tail(text: str) -> str:
+    """Drop a mid-sentence stump left by an output-token cap.
+
+    "…D) a rolling ball: kinetic energy.\n\nBecause a" -> everything up to the
+    last completed sentence. Only fires when the text ends in a WORD character
+    or comma/hyphen (a genuine mid-clause cut): endings like ".", "!", ":",
+    a quote, bracket or an emoji are left alone, so ordinary prose, list
+    headers and card-style lines are untouched. If no earlier sentence
+    boundary exists, the text is returned unchanged -- a short stump is still
+    better than nothing at all.
+    """
+    t = text.rstrip()
+    if not t or not (t[-1].isalnum() or t[-1] in ",-"):
+        return text
+    cut = max(t.rfind(ch) for ch in _SENTENCE_END)
+    if cut <= 0:
+        return text
+    return t[: cut + 1]
+
+
 def _is_stale_mastery(updated_at: str | None, now: datetime | None = None) -> bool:
     """True if a skill's mastery timestamp is older than STALE_MASTERY_DAYS.
 
@@ -289,6 +312,13 @@ class _SessionCtx:
     # item carries a computed method_steps card (Type 2/4) instead of a step
     # grid (Type 1) -- mutually exclusive with elaborate_steps_grid per node.
     elaborate_method_card: tuple | None = None
+    # Jump-to-answer honesty (maintainer, 2026-08-19): once the working -- which
+    # ENDS IN THE ANSWER -- has been shown for this question, the button must not
+    # be offered again for it. A plain "card is showing" check is not enough: a
+    # fresh Help round (wrong answer again) clears the card, which would
+    # resurrect the button for an already-revealed question. Per-question flag,
+    # reset when a new question is presented.
+    working_shown: bool = False
     # A5: per-node, CHILD-INITIATED help only (never the auto-help branch in
     # _do_bkt_update) — the false-confidence probe signal must not be polluted by
     # a previous node's help use or by the system's own auto-help scaffolding.
@@ -680,6 +710,9 @@ class SessionController:
             self._ctx.state is FSMState.HELP_RECHECK_AWAIT
             and bool(self._ctx.last_explanation)
             and self._ctx.elaborate_count < ELABORATE_CAP
+            # The working ends in the ANSWER: once shown for this question, the
+            # offer disappears until the next question (maintainer, 2026-08-19).
+            and not self._ctx.working_shown
         )
 
     @property
@@ -961,6 +994,7 @@ class SessionController:
         ctx.elaborate_count = 0
         ctx.elaborate_steps_grid = None  # "show human working": stale grid must not linger
         ctx.elaborate_method_card = None  # explain-mode: stale card must not linger either
+        ctx.working_shown = False         # new question -- the working may be offered again
         node = self._curriculum[ctx.current_node_id]
         item = self._sample_item(ctx.current_node_id)
         if item is not None:
@@ -1289,10 +1323,22 @@ class SessionController:
         are computed, never composed. Non-eligible nodes fall through
         unchanged to the existing LLM-prose explanation."""
         ctx = self._ctx
+        # Once the WORKING (which ends in the answer) has been shown for this
+        # question, a further wrong answer must not start another LLM explain
+        # loop -- the child has the answer in front of them, and a fresh prose
+        # explanation buries it (maintainer, 2026-08-19: "it should rehighlight
+        # that the answer again"). Re-show the same deterministic working with a
+        # pointing lead-in instead. Falls through to the normal path only if the
+        # working genuinely cannot be rebuilt (both branches below miss).
+        if not elaborate and ctx.working_shown:
+            elaborate = True
         if elaborate:
             ctx.elaborate_steps_grid = self._build_steps_grid_if_eligible()
             if ctx.elaborate_steps_grid is not None:
-                explanation = "Let's see the steps! 👇"
+                repeat = ctx.working_shown
+                ctx.working_shown = True
+                explanation = ("Look again at the steps we worked through — the answer "
+                               "is at the bottom. 👇") if repeat else "Let's see the steps! 👇"
                 ctx.last_explanation = explanation
                 ctx.state = FSMState.HELP_RECHECK_PRESENT
                 return (explanation, True)
@@ -1344,7 +1390,10 @@ class SessionController:
                         ctx.elaborate_method_card = (
                             *ctx.elaborate_method_card, "", *diagram.splitlines()
                         )
-                explanation = "Let's see how it's solved! 👇"
+                repeat = ctx.working_shown
+                ctx.working_shown = True
+                explanation = ("Look again at how it's solved — the answer is on "
+                               "the last line. 👇") if repeat else "Let's see how it's solved! 👇"
                 ctx.last_explanation = explanation
                 ctx.state = FSMState.HELP_RECHECK_PRESENT
                 return (explanation, True)
@@ -1374,6 +1423,12 @@ class SessionController:
             # question. Strip trailing question lines so only ONE question is live.
             candidate = self._strip_trailing_questions(candidate or "")
             candidate = realign_algebra_blocks(candidate)
+            # A backend that hits its output-token cap returns prose cut mid-
+            # sentence ("Because a") with no error signal -- the maintainer saw
+            # exactly that reach a child (2026-08-19). Deterministic guard: when
+            # the text ends mid-word/mid-clause, trim back to the last complete
+            # sentence rather than displaying the stump.
+            candidate = _trim_truncated_tail(candidate)
             if not (candidate and candidate.strip()):
                 break  # empty/unavailable — no point retrying, go to fallback
             # A14 / SAFETY §6.2 Level 2: verify arithmetic claims in the explanation

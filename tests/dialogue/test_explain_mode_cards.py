@@ -238,3 +238,103 @@ if __name__ == "__main__":
         if name.startswith("test_") and callable(fn):
             fn()
             print(f"  ✓ {name}")
+
+
+def test_the_working_is_offered_only_once_per_question():
+    """Maintainer, 2026-08-19: the working ENDS IN THE ANSWER, so once shown the
+    offer (can_elaborate -> the "Show me the working" button) must disappear for
+    that question -- including after a further wrong answer, whose fresh Help
+    round clears the card and would otherwise resurrect the offer. It returns
+    with the next question."""
+    ctrl = SessionController(
+        llm_call=_PromptCapturingLlm(), prompt_dir=PROMPTS, grounding_cfg={},
+        curriculum=_PERCENTAGE_CURRICULUM, db_store=_FakeStore(), learner_id="L",
+        item_bank=_percentage_bank(), rng_seed=7,
+    )
+    ctrl.step(None)
+    ctrl.step("?")                              # Help -> offer live
+    assert ctrl.can_elaborate, "precondition: offer live after Help"
+
+    ctrl.step("more")                           # the working (card) is shown
+    assert ctrl.elaborate_method_card is not None, "precondition: card shown"
+    assert not ctrl.can_elaborate, "the working was shown -- no second offer"
+
+    ctrl.step("999999")                         # wrong again
+    # Superseded same-day by the re-show fix: a wrong answer after the working
+    # now RE-SHOWS the card (see test_wrong_answer_after_the_working_reshows...)
+    # rather than starting a fresh LLM round that would have cleared it. Either
+    # way, the OFFER must stay gone -- the answer is already on screen.
+    assert ctrl.elaborate_method_card is not None
+    assert not ctrl.can_elaborate, (
+        "the offer resurfaced for a question whose answer was already revealed"
+    )
+
+    answer = ctrl._ctx.current_item.answer      # correct -> NEXT question
+    ctrl.step(str(answer))
+    ctrl.step("?")
+    assert ctrl.can_elaborate, "a NEW question must offer the working again"
+
+
+def test_wrong_answer_after_the_working_reshows_it_without_an_llm_loop():
+    """Maintainer, 2026-08-19: after the working (which ends in the answer) has
+    been shown, a further WRONG answer used to start a fresh LLM explain loop,
+    burying the revealed answer under new prose. It must instead re-show the
+    same deterministic working with a pointing lead-in — zero LLM calls."""
+    llm = _PromptCapturingLlm()
+    ctrl = SessionController(
+        llm_call=llm, prompt_dir=PROMPTS, grounding_cfg={},
+        curriculum=_PERCENTAGE_CURRICULUM, db_store=_FakeStore(), learner_id="L",
+        item_bank=_percentage_bank(), rng_seed=7,
+    )
+    ctrl.step(None)
+    ctrl.step("?")
+    ctrl.step("more")                          # working shown
+    assert ctrl.elaborate_method_card is not None
+    calls = llm.calls
+
+    r = ctrl.step("999999")                    # parseable and WRONG
+    assert llm.calls == calls, "a wrong answer after the working must not call the LLM"
+    assert ctrl.elaborate_method_card is not None, "the working must be re-shown"
+    assert "Look again" in r.text, r.text[:120]
+    assert ctrl.state == FSMState.HELP_RECHECK_AWAIT.value
+
+    # ...and the child can still finish: typing the shown answer succeeds.
+    answer = ctrl._ctx.current_item.answer
+    r = ctrl.step(str(answer))
+    assert ctrl.state != FSMState.ESCALATION_FREEZE.value
+    assert "Look again" not in r.text
+
+
+def test_trim_truncated_tail_unit_cases():
+    """Bug: a backend hitting its output-token cap returns prose cut mid-
+    sentence ('Because a') with no error signal, and it reached a child's
+    screen verbatim (maintainer, 2026-08-19)."""
+    from mentar.dialogue.controller import _trim_truncated_tail as trim
+
+    body = "A) moving: kinetic energy.\n\nBecause a"
+    assert trim(body) == "A) moving: kinetic energy."
+    assert trim("First sentence. Second cut mid") == "First sentence."
+    # Endings that must be left alone.
+    for ok in ("A full sentence.", "Ends with an emoji 🌟", "Try this:",
+               "a question?", "wow!"):
+        assert trim(ok) == ok, ok
+    # No earlier boundary: keep the stump rather than blanking the explanation.
+    assert trim("just words no boundary") == "just words no boundary"
+
+
+def test_a_truncated_llm_explanation_is_trimmed_before_the_child_sees_it():
+    class _TruncatingLlm:
+        calls = 0
+        def __call__(self, messages):
+            self.calls += 1
+            return "One slice is one third of the pizza. Because a"
+
+    ctrl = SessionController(
+        llm_call=_TruncatingLlm(), prompt_dir=PROMPTS, grounding_cfg={},
+        curriculum=_PERCENTAGE_CURRICULUM, db_store=_FakeStore(), learner_id="L",
+        item_bank=_percentage_bank(), rng_seed=7,
+    )
+    ctrl.step(None)
+    r = ctrl.step("?")
+    assert "Because a" not in r.text, "the truncation stump reached the child"
+    assert "one third of the pizza." in r.text
