@@ -169,6 +169,72 @@ def _trim_truncated_tail(text: str) -> str:
     return t if t else text
 
 
+# LaTeX the local models emit despite plain-text prompts. Narrow, additive list.
+_LATEX_SUBS = [
+    ("$\\rightarrow$", "→"), ("\\rightarrow", "→"),
+    ("$\\times$", "×"), ("\\times", "×"),
+    ("$\\div$", "÷"), ("\\div", "÷"),
+    ("$\\cdot$", "·"), ("\\cdot", "·"),
+]
+
+
+def _normalise_llm_math(text: str) -> str:
+    """Replace the LaTeX tokens models emit ("force $\\rightarrow$ a VECTOR")
+    with the plain characters a child can read. Substring replacement on a
+    fixed list -- never a LaTeX parser."""
+    for src, dst in _LATEX_SUBS:
+        if src in text:
+            text = text.replace(src, dst)
+    return text
+
+
+# An explicit reveal formula: "Final Answer: A", "the answer is C", "Answer - 42".
+_REVEAL_MC_RE = re.compile(
+    r"\b(?:final\s+answer|the\s+answer\s+is|answer)\s*(?:[:\-–—]|\bis\b)\s*\(?([A-Da-d])\b(?![\w'])",
+    re.IGNORECASE,
+)
+
+
+def _scrub_answer_reveal(text: str, answer_type: str, truth: str) -> str:
+    """Cut an LLM Help explanation at the line that announces the final answer.
+
+    The Help loop's contract is scaffold-then-recheck: the child attempts the
+    question again after the explanation, so the explanation must not hand over
+    the live answer (the deterministic card DOES -- but only via the explicit
+    "Show me the working" press, which then hides itself). Everything before
+    the reveal line is kept; if nothing substantial remains, "" is returned so
+    the caller's existing retry/fallback path takes over.
+
+    mc4 scrubs ANY explicit "answer: <letter>" formula -- a wrong letter handed
+    over confidently is as bad as the right one. Other types scrub only a
+    formula naming the LIVE ground truth, because bare numbers appear
+    legitimately throughout worked arithmetic.
+    """
+    if not text:
+        return text
+    lines = text.splitlines()
+    cut = None
+    if answer_type == "mc4":
+        for i, line in enumerate(lines):
+            if _REVEAL_MC_RE.search(line):
+                cut = i
+                break
+    elif truth:
+        needle = re.compile(
+            r"\b(?:final\s+answer|the\s+answer\s+is|answer)\s*(?:[:\-–—]|\bis\b)\s*"
+            + re.escape(truth) + r"(?![\w])",
+            re.IGNORECASE,
+        )
+        for i, line in enumerate(lines):
+            if needle.search(line):
+                cut = i
+                break
+    if cut is None:
+        return text
+    kept = "\n".join(lines[:cut]).rstrip()
+    return kept if len(kept) >= 40 else ""
+
+
 def _is_stale_mastery(updated_at: str | None, now: datetime | None = None) -> bool:
     """True if a skill's mastery timestamp is older than STALE_MASTERY_DAYS.
 
@@ -1444,6 +1510,18 @@ class SessionController:
             # the text ends mid-word/mid-clause, trim back to the last complete
             # sentence rather than displaying the stump.
             candidate = _trim_truncated_tail(candidate)
+            candidate = _normalise_llm_math(candidate)
+            # No-reveal contract (SPEC/pattern templates: "do NOT give the
+            # answer" -- the child must attempt the re-check themselves). The
+            # model sees the live question in {{question}} and, given budget,
+            # will happily finish with "Final Answer: A" (maintainer report,
+            # 2026-08-19; masked while max_tokens=400 cut it off). Deterministic
+            # scrub, not prompt surgery -- prompts are A18-gated.
+            candidate = _scrub_answer_reveal(
+                candidate,
+                self._ctx.current_item.answer_type if self._ctx.current_item else "",
+                str(self._ctx.current_item.answer) if self._ctx.current_item else "",
+            )
             if not (candidate and candidate.strip()):
                 break  # empty/unavailable — no point retrying, go to fallback
             # A14 / SAFETY §6.2 Level 2: verify arithmetic claims in the explanation
@@ -1866,9 +1944,24 @@ class SessionController:
         if node.get("worked_example"):
             return str(node["worked_example"])
         if self._item_bank is not None:
-            cur_id = getattr(self._ctx.current_item, "id", None)
-            ex = self._item_bank.example(node_id, exclude_id=cur_id)
-            if ex is not None:
+            live = self._ctx.current_item
+            cur_id = getattr(live, "id", None)
+            live_text = (getattr(live, "stem", None) or getattr(live, "problem", "")) if live else ""
+            # Exclusion by id is NOT enough (found 2026-08-19): generator-backed
+            # sources mint a fresh id per draw, so on a small mc domain the
+            # "sibling" is routinely the SAME question -- and the help templates
+            # then work the child's own question "through to its final answer".
+            # The leak was masked while max_tokens=400 truncated explanations
+            # before the reveal. Retry for different CONTENT; a domain so small
+            # that every draw collides gets NO worked example rather than a
+            # solved copy of the live question.
+            for _ in range(6):
+                ex = self._item_bank.example(node_id, exclude_id=cur_id)
+                if ex is None:
+                    break
+                ex_text = getattr(ex, "stem", None) or ex.problem
+                if live_text and ex_text == live_text:
+                    continue
                 if getattr(ex, "method_steps", None):
                     return "\n".join(ex.method_steps)
                 return f"{ex.problem} (Answer: {ex.answer})"

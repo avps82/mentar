@@ -348,3 +348,83 @@ def test_a_truncated_llm_explanation_is_trimmed_before_the_child_sees_it():
     r = ctrl.step("?")
     assert "Because a" not in r.text, "the truncation stump reached the child"
     assert "one third of the pizza." in r.text
+
+
+def test_help_explanation_never_hands_over_the_final_answer():
+    """Maintainer, 2026-08-19 (second-order effect of the max_tokens raise): at
+    400 tokens the model's "Final Answer: A" was accidentally TRUNCATED away;
+    at 1200 it reliably lands, and a Help explanation ended by announcing the
+    live answer. The Help contract is scaffold-then-recheck -- only the child's
+    explicit "Show me the working" press may reveal. Deterministic scrub, not
+    prompt surgery (prompts are A18-gated)."""
+    reveal = (
+        "It is okay to feel confused! Let's think about vectors and scalars.\n\n"
+        "* Distance: just how far. It is a Scalar.\n"
+        "* Force: size AND direction. It is a Vector.\n\n"
+        "4. Final Answer: A \U0001F388"
+    )
+
+    class _RevealingLlm:
+        def __call__(self, messages):
+            return reveal
+
+    # An mc4 node, mirroring the real report (a science mc question).
+    from mentar.engine.itemgen import ItemGenerator
+
+    def mc_gen(rng):
+        return ("mc4", "mc_choice",
+                "Which is the vector? A) force B) mass C) speed D) time. Answer with the letter.",
+                "A", ("force", "mass", "speed", "time"))
+
+    curriculum = {"vec": {"label": "vectors", "answer_type": "mc4", "checker": "mc_choice",
+                          "expected_answer": "A", "grounding": {}, "prerequisites": []}}
+    ctrl = SessionController(
+        llm_call=_RevealingLlm(), prompt_dir=PROMPTS, grounding_cfg={},
+        curriculum=curriculum, db_store=_FakeStore(), learner_id="L",
+        item_bank=ItemGenerator(generators={"vec": mc_gen}), rng_seed=7,
+    )
+    ctrl.step(None)
+    r = ctrl.step("?")
+    assert "Final Answer" not in r.text, "the reveal reached the child"
+    assert "It is a Scalar" in r.text, "the teaching before the reveal must survive"
+
+
+def test_latex_arrow_is_normalised_for_the_child():
+    class _LatexLlm:
+        def __call__(self, messages):
+            return "Check the definition: force $\\rightarrow$ a VECTOR quantity, and 2 $\\times$ 3."
+
+    ctrl = SessionController(
+        llm_call=_LatexLlm(), prompt_dir=PROMPTS, grounding_cfg={},
+        curriculum=_PERCENTAGE_CURRICULUM, db_store=_FakeStore(), learner_id="L",
+        item_bank=_percentage_bank(), rng_seed=7,
+    )
+    ctrl.step(None)
+    r = ctrl.step("?")
+    assert "\\rightarrow" not in r.text and "$" not in r.text
+    assert "→" in r.text and "×" in r.text
+
+
+def test_worked_example_sibling_never_matches_the_live_question():
+    """Exclusion by id is not enough: generator-backed sources mint a fresh id
+    per draw, so on a small domain the "sibling" was routinely the SAME
+    question -- which the help templates then solve outright. A single-item
+    domain must yield NO worked example rather than a solved copy."""
+    from mentar.engine.itemgen import ItemGenerator
+
+    def fixed_gen(rng):
+        return ("mc4", "mc_choice", "Which is the vector? A) force B) mass. Answer with the letter.",
+                "A", ("force", "mass", "x", "y"))
+
+    curriculum = {"vec": {"label": "vectors", "answer_type": "mc4", "checker": "mc_choice",
+                          "expected_answer": "A", "grounding": {}, "prerequisites": []}}
+    llm = _PromptCapturingLlm()
+    ctrl = SessionController(
+        llm_call=llm, prompt_dir=PROMPTS, grounding_cfg={},
+        curriculum=curriculum, db_store=_FakeStore(), learner_id="L",
+        item_bank=ItemGenerator(generators={"vec": fixed_gen}), rng_seed=7,
+    )
+    ctrl.step(None)
+    assert ctrl._worked_example_for("vec") == "", (
+        "a domain where every draw is the live question must give NO sibling"
+    )
