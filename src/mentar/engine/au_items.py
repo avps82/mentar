@@ -1091,16 +1091,24 @@ def gen_square_expression(rng: random.Random):
     n = rng.randint(1, 8)
     problem = f"A square has side length ({var} + {n}). Write an expression for its area."
     answer = f"({var} + {n})**2"
+    # The card leads with the FORMULA, not the answer (maintainer, 2026-08-19:
+    # "the formula needs to be shown in between. That step reinforces the
+    # formula and its application"). Line 1 still echoes the question -- the
+    # registry sweep in tests/engine/test_method_cards.py pins that -- but the
+    # "→ answer" reveal is gone, so a child reads the method before the result.
     card = (
         "AREA OF A SQUARE WITH AN ALGEBRAIC SIDE",
-        f"{problem} → {answer}",
-        "  1. Area of a square = side × side.",
-        f"  2. Both sides are the same here: ({var} + {n}) × ({var} + {n}).",
-        f"  3. Written as a square: ({var} + {n})**2.",
+        problem,
+        "  Area of a square = side × side",
+        f"  1. Both sides are the same here: ({var} + {n}) × ({var} + {n}).",
+        f"  2. Written as a square: ({var} + {n})**2.",
         f"  Expanding to {var}**2 + {2 * n}{var} + {n * n} is also correct — same value, either form.",
         f"  Answer: {answer}",
     )
-    return ("expression", "expression_equiv", problem, answer, None, card)
+    # ...and the same formula stands in for the generic "(answer like 2x + 6)"
+    # cue, which would otherwise point at a LINEAR shape for a squared answer.
+    return ("expression", "expression_equiv", problem, answer, None, card,
+            "(Area of a square = side × side)")
 
 
 def gen_combined_rectangles_perimeter(rng: random.Random):

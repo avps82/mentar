@@ -42,6 +42,14 @@ class Item:
     # twice. None for non-choice items; `problem` keeps the full inline form for
     # CLI/transcript surfaces that have no radios.
     stem: str | None = None
+    # Per-ITEM answer-format cue, overriding the generic per-TYPE one
+    # (controller._answer_format_hint). A formula question wants the FORMULA in
+    # that slot -- "(Area of a square = side x side)" -- because the generic
+    # expression cue "(answer like 2x + 6)" points a child at a LINEAR shape
+    # when the answer is squared (maintainer, 2026-08-19: showing the formula
+    # there "reinforces the formula and its application"). None -> the generic
+    # per-type hint, unchanged for every other generator.
+    format_hint: str | None = None
     # explain-mode (2026-08-12): a computed, provably-correct method explanation,
     # one line per step, attached AT DRAW TIME by a migrated generator -- the
     # generator holds the parameters that make `answer` right (e.g. pct/quantity)

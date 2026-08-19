@@ -968,7 +968,7 @@ class SessionController:
             ctx.current_item = item
             ctx.current_question = item.problem
             ctx.state = FSMState.AWAIT_ANSWER
-            hint = self._answer_format_hint(item.answer_type)
+            hint = item.format_hint or self._answer_format_hint(item.answer_type)
             ctx.question_display = f"{item.problem} {hint}".rstrip()
             return ("", False)
         # Fallback: LLM-generated question (nodes without a bank / legacy callers).
@@ -1535,7 +1535,7 @@ class SessionController:
             ctx.current_item = item
             ctx.current_question = item.problem
             ctx.state = FSMState.PROBE_AWAIT_ANSWER
-            hint = self._answer_format_hint(item.answer_type)
+            hint = item.format_hint or self._answer_format_hint(item.answer_type)
             ctx.question_display = f"{item.problem} {hint}".rstrip()
             return ("", False)
         ctx.current_item = None

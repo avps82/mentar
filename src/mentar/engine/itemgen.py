@@ -349,11 +349,15 @@ class ItemGenerator:
         # mc4 or not), so this is always unambiguous: a non-mc4 generator that
         # wants a card explicitly passes None at index 4.
         method_steps = tuple(result[5]) if len(result) > 5 and result[5] else None
+        # A 7th element (2026-08-19): a per-item answer-format hint, used by
+        # formula questions to put the FORMULA in the cue slot. Same
+        # present-or-None positional rule as choices/method_steps above.
+        format_hint = result[6] if len(result) > 6 and result[6] else None
         return Item(
             id=f"gen-{node_id}-{self._rng.randrange(10 ** 9)}",
             node=node_id, problem=problem, answer=answer,
             answer_type=answer_type, checker=checker, choices=choices, stem=stem,
-            method_steps=method_steps,
+            method_steps=method_steps, format_hint=format_hint,
         )
 
     _NO_REPEAT_WINDOW = 8  # remember this many recent problems per node

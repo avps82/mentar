@@ -277,3 +277,41 @@ def test_alternative_forms_a_card_offers_are_genuinely_equivalent():
                                     llm_output=frag, ground_truth=answer)
                     assert outcome.result is CheckResult.PASS, (gen.__name__, frag, answer)
     assert checked >= 50, f"expected the alternative-form lines to be exercised, saw {checked}"
+
+
+def test_a_formula_question_shows_its_formula_instead_of_the_generic_cue():
+    """Maintainer, 2026-08-19: the generic expression cue "(answer like 2x + 6)"
+    points a child at a LINEAR shape for a question whose answer is squared, and
+    the formula in that slot "reinforces the formula and its application".
+
+    Pinned on the GENERATOR contract (7th element) rather than the rendered page,
+    so any generator adopting a formula cue is covered by the same rule.
+    """
+    from mentar.engine.au_items import gen_square_expression
+
+    rng = random.Random(2026)
+    for _ in range(50):
+        result = gen_square_expression(rng)
+        assert len(result) > 6, "no format-hint element"
+        hint = result[6]
+        assert hint == "(Area of a square = side × side)", hint
+        # ...and it must NOT be the generic linear cue.
+        assert "2x + 6" not in hint
+
+
+def test_the_square_card_teaches_the_formula_before_revealing_the_answer():
+    """The card used to open with "<question> → (y + 6)**2", handing over the
+    answer before any reasoning. It now leads with the formula; the answer
+    stays on the final Answer: line."""
+    from mentar.engine.au_items import gen_square_expression
+
+    rng = random.Random(77)
+    for _ in range(50):
+        result = gen_square_expression(rng)
+        problem, answer, card = result[2], result[3], result[5]
+        assert card[1] == problem, "line 1 must still echo the question verbatim"
+        assert answer not in card[1], "the card must not reveal the answer up front"
+        assert card[2].strip() == "Area of a square = side × side", card[2]
+        # The answer still appears exactly where it belongs.
+        assert _answer_line(card).strip().startswith("Answer:")
+        assert answer in _answer_line(card)
