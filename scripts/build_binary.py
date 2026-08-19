@@ -101,6 +101,35 @@ def selftest(binary: Path, workdir: Path) -> None:
     run([str(binary), "--selftest"], cwd=workdir)
 
 
+def _stop(proc: subprocess.Popen) -> None:
+    """Stop the server AND its children.
+
+    A PyInstaller one-file binary is two processes: the bootloader that unpacks
+    the bundle, and the real app it spawns. Popen.terminate() only ends the
+    bootloader, so on Windows the app kept serving and kept a LOCK on the .exe
+    -- which is what made the temp-dir cleanup fail, and left a server running
+    after the script had exited (maintainer, 2026-08-19). taskkill /T ends the
+    tree. POSIX terminate() already reaped the child here, but the same
+    belt-and-braces wait applies.
+    """
+    if sys.platform.startswith("win"):
+        subprocess.run(
+            ["taskkill", "/F", "/T", "/PID", str(proc.pid)],
+            capture_output=True, check=False,
+        )
+    else:
+        proc.terminate()
+    try:
+        proc.wait(timeout=15)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        try:
+            proc.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            print("WARNING: the test server did not exit; check for a stray process",
+                  file=sys.stderr)
+
+
 def serve_check(binary: Path, workdir: Path) -> None:
     """Start the built binary and prove it actually serves. Mirrors the workflow's
     'Start it and check it actually serves' step, including its two assertions."""
@@ -134,12 +163,11 @@ def serve_check(binary: Path, workdir: Path) -> None:
         if status >= 500:
             sys.exit(f"server answered {status}")
     finally:
-        proc.terminate()
-        try:
-            proc.wait(timeout=15)
-        except subprocess.TimeoutExpired:
-            proc.kill()
+        _stop(proc)
         handle.close()
+        # Give the OS a moment to release the executable before anything tries
+        # to delete it (Windows holds the lock briefly past process exit).
+        time.sleep(1.5)
 
     banner = log_path.read_text(encoding="utf-8", errors="replace")
     print("--- what a parent sees on startup ---")
@@ -163,8 +191,16 @@ def verify(binary: Path) -> None:
     is closer to the thing being tested, since a parent runs the binary from
     their own disk.
     """
-    with tempfile.TemporaryDirectory(prefix="mentar-verify-") as tmp:
-        workdir = Path(tmp)
+    # mkdtemp + an EXPLICIT ignore_errors cleanup, not TemporaryDirectory: on
+    # Windows a PyInstaller one-file binary runs a CHILD process that outlives
+    # terminate() by a moment and keeps a lock on the .exe, so removing the
+    # directory raises WinError 5 -- AFTER both gates have already passed
+    # (maintainer, 2026-08-19). A stray file in %TEMP% must never fail a
+    # verified build; the OS clears it later. shutil.rmtree(ignore_errors=True)
+    # says that in one unambiguous flag rather than relying on the context
+    # manager's cleanup semantics.
+    workdir = Path(tempfile.mkdtemp(prefix="mentar-verify-"))
+    try:
         local = workdir / binary.name
         shutil.copy2(binary, local)
         if not sys.platform.startswith("win"):
@@ -179,6 +215,8 @@ def verify(binary: Path) -> None:
                 f"could not execute the built binary even from a local temp dir: {exc}\n"
                 "  Antivirus or an execution policy is likely blocking it."
             )
+    finally:
+        shutil.rmtree(workdir, ignore_errors=True)
 
 
 def main(argv: list[str] | None = None) -> int:
