@@ -219,6 +219,38 @@ def verify(binary: Path) -> None:
         shutil.rmtree(workdir, ignore_errors=True)
 
 
+def publish(binary: Path, artifact_name: str) -> Path | None:
+    """File the verified binary under dist/binaries/ using CI's artifact name.
+
+    BEST EFFORT, deliberately: this runs AFTER both gates have passed, so the
+    build is already good and a filing problem must not throw that away. On a
+    network share the destination can be owned by another user (a previously
+    downloaded CI artifact, root-owned over SMB), and the copy fails with
+    "Permission denied" -- which is exactly how a green build ended in a
+    traceback (maintainer, 2026-08-19). An existing file is cleared first where
+    permissions allow; if the copy still fails, say where the binary IS and
+    carry on.
+    """
+    out_dir = REPO / "dist" / "binaries" / artifact_name
+    destination = out_dir / artifact_name
+    try:
+        out_dir.mkdir(parents=True, exist_ok=True)
+        if destination.exists():
+            try:
+                destination.chmod(0o666)      # a read-only leftover blocks the write
+            except OSError:
+                pass
+            destination.unlink()
+        shutil.copy2(binary, destination)
+        return destination
+    except OSError as exc:
+        print(f"\nNOTE: could not file a copy into {out_dir} ({exc.strerror or exc}).")
+        print("      The build and BOTH gates passed -- the verified binary is at:")
+        print(f"      {binary}")
+        print("      Copy it from there; nothing needs rebuilding.")
+        return None
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--skip-install", action="store_true",
@@ -249,13 +281,11 @@ def main(argv: list[str] | None = None) -> int:
     if not args.skip_verify:
         verify(binary)
 
-    out_dir = REPO / "dist" / "binaries" / artifact_name
-    out_dir.mkdir(parents=True, exist_ok=True)
-    destination = out_dir / artifact_name
-    shutil.copy2(binary, destination)
+    size_mb = binary.stat().st_size / (1024 * 1024)
+    published = publish(binary, artifact_name)
 
-    size_mb = destination.stat().st_size / (1024 * 1024)
-    print(f"\nOK -- {destination.relative_to(REPO)}  ({size_mb:.1f} MB)")
+    print(f"\nOK -- built and verified  ({size_mb:.1f} MB)")
+    print(f"   {published if published else binary}")
     if args.skip_verify:
         print("WARNING: built WITHOUT the selftest/serve gates (--skip-verify).")
     return 0
