@@ -134,7 +134,14 @@ def _is_dont_know_or_question(text: str) -> bool:
 _SENTENCE_END = ".!?…:"
 # A final line that is ONLY a list marker -- "2.", "A)", "iv.", "-", "*", "•" --
 # is the start of an item the token cap swallowed, not content.
-_STUMP_LINE_RE = re.compile(r"^\s*(?:\d{1,3}[.)]|[A-Za-z][.)]|[ivxIVX]{1,4}[.)]|[-*•])\s*$")
+_STUMP_LINE_RE = re.compile(
+    r"^\s*(?:\d{1,3}[.)]|[A-Za-z][.)]|[ivxIVX]{1,4}[.)]|[-*•])\s*$"
+    # ...and a bare "Answer:" / "Final Answer:" heading with nothing after the
+    # colon (2026-08-19 report: the model announced an answer it never wrote,
+    # leaving the heading dangling above "Now you try it").
+    r"|^\s*(?:final\s+)?answer\s*[:\-]?\s*$",
+    re.IGNORECASE,
+)
 
 
 def _trim_truncated_tail(text: str) -> str:
@@ -1488,7 +1495,16 @@ class SessionController:
         help_text = self._render_template(
             template_name, node, passage,
             worked_example=self._worked_example_for(ctx.current_node_id),
-            question=ctx.current_question or "",
+            # STEM ONLY for choice questions (2026-08-19, third leak report).
+            # The full problem text carries "A) velocity B) mass ..." -- and a
+            # model that can see the options will identify the right one in
+            # unlimited phrasings no scrub can enumerate ("Velocity: ... It is
+            # a Vector."). Withhold the options and that whole failure CLASS is
+            # structurally impossible: the model teaches the concept and works
+            # the sibling, but cannot point at a choice it has never seen.
+            question=(
+                getattr(ctx.current_item, "stem", None) or ctx.current_question or ""
+            ),
             previous_explanation=ctx.last_explanation,
         )
         messages = [

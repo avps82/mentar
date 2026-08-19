@@ -428,3 +428,51 @@ def test_worked_example_sibling_never_matches_the_live_question():
     assert ctrl._worked_example_for("vec") == "", (
         "a domain where every draw is the live question must give NO sibling"
     )
+
+
+def test_help_prompt_carries_the_stem_never_the_live_options():
+    """Third leak report (2026-08-19) closed structurally: a model that can see
+    "A) velocity B) mass ..." will identify the right option in unlimited
+    phrasings no scrub can enumerate ("Velocity: ... It is a Vector."). The
+    Help prompt gets the STEM only -- the model cannot point at a choice it
+    has never seen. The sibling worked example (a DIFFERENT question) still
+    carries its own options; that is by design."""
+    from mentar.engine.itemgen import ItemGenerator
+
+    def mc_gen(rng):
+        # 5-tuple contract: with choices present, element 3 is the STEM (no
+        # inline options) -- compose_mc_problem builds the full form centrally.
+        return ("mc4", "mc_choice", "Which is the vector?",
+                "A", ("zzduck", "zzgoat", "zzhen", "zzcow"))
+
+    curriculum = {"vec": {"label": "vectors", "answer_type": "mc4", "checker": "mc_choice",
+                          "expected_answer": "A", "grounding": {}, "prerequisites": []}}
+    llm = _PromptCapturingLlm()
+    ctrl = SessionController(
+        llm_call=llm, prompt_dir=PROMPTS, grounding_cfg={},
+        curriculum=curriculum, db_store=_FakeStore(), learner_id="L",
+        item_bank=ItemGenerator(generators={"vec": mc_gen}), rng_seed=7,
+    )
+    ctrl.step(None)
+    ctrl.step("?")
+    prompt = "\n".join(m["content"] for m in llm.last_messages)
+    assert "Which is the vector?" in prompt, "the stem must still be given"
+    # The distinctive option tokens must be absent. (The sibling drawn by this
+    # single-shape generator is content-identical, so _worked_example_for
+    # returns "" here -- also asserted, same guard as the sibling test above.)
+    for tok in ("zzduck", "zzgoat", "zzhen", "zzcow"):
+        assert tok not in prompt, f"live option {tok!r} reached the LLM"
+    assert "Answer with the letter" not in prompt
+
+
+def test_trimmer_drops_a_dangling_answer_heading():
+    """2026-08-19 report: the model wrote "Answer:" and stopped -- a bare
+    heading dangling above "Now you try it"."""
+    from mentar.dialogue.controller import _trim_truncated_tail as trim
+
+    assert trim("The only scalar there is distance.\nAnswer:") == \
+        "The only scalar there is distance."
+    assert trim("Working shown above.\nFinal Answer:") == "Working shown above."
+    # A heading WITH content is not a stump.
+    assert trim("Some prose.\nAnswer: see the steps above.") == \
+        "Some prose.\nAnswer: see the steps above."
