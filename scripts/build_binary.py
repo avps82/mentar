@@ -27,6 +27,14 @@ Usage, from the repo root:
 
 Windows note: use a real Python 3.12 (python.org or the Store), not WSL --
 a WSL build produces a LINUX binary that will not run on Windows.
+
+Network drives (found 2026-08-19 on a real mapped drive): BUILDING on a share
+works, but RUNNING the result from one does not -- Windows denies CreateProcess
+for an executable on a UNC path ("[WinError 5] Access is denied"), and
+Path.resolve() silently rewrites a mapped drive letter into its
+server/share form, so even a drive-letter invocation ends up UNC. Both verification gates
+therefore run the binary from a LOCAL temp copy, which is also how a parent will
+actually run it.
 """
 
 from __future__ import annotations
@@ -36,6 +44,7 @@ import platform
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 import urllib.error
 import urllib.request
@@ -53,9 +62,9 @@ ARTIFACTS = {
 }
 
 
-def run(cmd: list[str], **kw) -> None:
+def run(cmd: list[str], cwd: Path | None = None, **kw) -> None:
     print(f"\n$ {' '.join(cmd)}", flush=True)
-    subprocess.run(cmd, check=True, cwd=REPO, **kw)
+    subprocess.run(cmd, check=True, cwd=cwd or REPO, **kw)
 
 
 def install_dependencies() -> None:
@@ -67,7 +76,7 @@ def install_dependencies() -> None:
 
 
 def check_prerequisites() -> None:
-    # noqa-worthy on purpose: ruff calls this dead because requires-python is
+    # Deliberately kept: ruff calls this dead because requires-python is
     # >=3.11, but this script is run BY HAND on a machine whose Python is
     # unknown (a fresh Windows install often has 3.9). A clear sentence beats
     # a confusing pip resolution error.
@@ -87,20 +96,20 @@ def check_prerequisites() -> None:
         sys.exit("pyinstaller is not installed.\n  Fix: python -m pip install pyinstaller")
 
 
-def selftest(binary: Path) -> None:
+def selftest(binary: Path, workdir: Path) -> None:
     print("\n=== gate 1: --selftest (are all bundled assets present?) ===", flush=True)
-    run([str(binary), "--selftest"])
+    run([str(binary), "--selftest"], cwd=workdir)
 
 
-def serve_check(binary: Path) -> None:
+def serve_check(binary: Path, workdir: Path) -> None:
     """Start the built binary and prove it actually serves. Mirrors the workflow's
     'Start it and check it actually serves' step, including its two assertions."""
     print(f"\n=== gate 2: real server start on port {PORT} ===", flush=True)
-    log_path = REPO / "serve.log"
+    log_path = workdir / "serve.log"
     handle = log_path.open("w", encoding="utf-8")
     proc = subprocess.Popen(
         [str(binary), "serve", "--port", str(PORT)],
-        stdout=handle, stderr=subprocess.STDOUT, text=True, cwd=REPO,
+        stdout=handle, stderr=subprocess.STDOUT, text=True, cwd=str(workdir),
     )
     status = None
     try:
@@ -142,7 +151,34 @@ def serve_check(binary: Path) -> None:
         )
     if "Only THIS computer" not in banner:
         sys.exit("FAILED: the default-mode banner did not print")
-    log_path.unlink(missing_ok=True)
+
+
+def verify(binary: Path) -> None:
+    """Run both gates against a LOCAL copy of the binary.
+
+    Never run the artifact in place: on Windows a repo on a mapped/UNC drive
+    cannot be executed at all ("[WinError 5] Access is denied"), and even the
+    working directory must be local -- Windows has no real notion of a UNC
+    current directory. Copying first is not a workaround for a corner case; it
+    is closer to the thing being tested, since a parent runs the binary from
+    their own disk.
+    """
+    with tempfile.TemporaryDirectory(prefix="mentar-verify-") as tmp:
+        workdir = Path(tmp)
+        local = workdir / binary.name
+        shutil.copy2(binary, local)
+        if not sys.platform.startswith("win"):
+            local.chmod(0o755)
+        print(f"verifying a local copy at {local} "
+              f"(the repo may be on a network drive, which cannot execute)")
+        try:
+            selftest(local, workdir)
+            serve_check(local, workdir)
+        except PermissionError as exc:
+            sys.exit(
+                f"could not execute the built binary even from a local temp dir: {exc}\n"
+                "  Antivirus or an execution policy is likely blocking it."
+            )
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -173,8 +209,7 @@ def main(argv: list[str] | None = None) -> int:
         sys.exit(f"expected {binary} to exist after the build")
 
     if not args.skip_verify:
-        selftest(binary)
-        serve_check(binary)
+        verify(binary)
 
     out_dir = REPO / "dist" / "binaries" / artifact_name
     out_dir.mkdir(parents=True, exist_ok=True)
