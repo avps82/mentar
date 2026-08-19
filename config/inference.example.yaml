@@ -43,7 +43,7 @@ ollama:
 #   reasoning_effort:none. A child tutor wants a direct answer; correctness is the verifier's job.
 generation:
   temperature: 0.3
-  max_tokens: 512
+  max_tokens: 1200   # Help explanations are long (story + per-choice analysis); 512 truncated them mid-list
   extra_body:
     think: false        # disable hidden chain-of-thought on reasoning models
 

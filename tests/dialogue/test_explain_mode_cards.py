@@ -320,6 +320,16 @@ def test_trim_truncated_tail_unit_cases():
         assert trim(ok) == ok, ok
     # No earlier boundary: keep the stump rather than blanking the explanation.
     assert trim("just words no boundary") == "just words no boundary"
+    # SECOND report (2026-08-19, after rebuild): the cap swallowed a list item,
+    # leaving a bare "2." as the final line -- which ends in "." and defeated
+    # the sentence rule alone. The marker-only line is dropped; a LEGITIMATE
+    # completed list is untouched.
+    rep = "This matches the Third Law! 🏊‍♂️\n\n2."
+    assert trim(rep) == "This matches the Third Law! 🏊‍♂️"
+    assert trim("List:\n1. done.\n2. also done.") == "List:\n1. done.\n2. also done."
+    assert trim("intro line\n-") == "intro line"
+    # Compound: mid-word cut exposes a bare marker, both must go.
+    assert trim("Great! 🏊‍♂️\n\n2. A swim") == "Great! 🏊‍♂️"
 
 
 def test_a_truncated_llm_explanation_is_trimmed_before_the_child_sees_it():

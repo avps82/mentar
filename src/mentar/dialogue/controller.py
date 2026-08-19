@@ -132,26 +132,41 @@ def _is_dont_know_or_question(text: str) -> bool:
 
 
 _SENTENCE_END = ".!?…:"
+# A final line that is ONLY a list marker -- "2.", "A)", "iv.", "-", "*", "•" --
+# is the start of an item the token cap swallowed, not content.
+_STUMP_LINE_RE = re.compile(r"^\s*(?:\d{1,3}[.)]|[A-Za-z][.)]|[ivxIVX]{1,4}[.)]|[-*•])\s*$")
 
 
 def _trim_truncated_tail(text: str) -> str:
-    """Drop a mid-sentence stump left by an output-token cap.
+    """Drop the stump an output-token cap leaves behind.
 
-    "…D) a rolling ball: kinetic energy.\n\nBecause a" -> everything up to the
-    last completed sentence. Only fires when the text ends in a WORD character
-    or comma/hyphen (a genuine mid-clause cut): endings like ".", "!", ":",
-    a quote, bracket or an emoji are left alone, so ordinary prose, list
-    headers and card-style lines are untouched. If no earlier sentence
-    boundary exists, the text is returned unchanged -- a short stump is still
-    better than nothing at all.
+    Two stump shapes, applied repeatedly until the tail is clean (the second
+    report's "…🏊\n\n2." needs both: the sentence-cut exposes the bare "2.",
+    which the line rule then removes):
+
+      * a MID-CLAUSE cut -- the text ends in a word character or comma/hyphen
+        ("Because a") -> cut back to the last completed sentence;
+      * a LIST-MARKER-ONLY final line ("2.", "A)", "-") -- the marker ends in
+        "." so the sentence rule alone cannot see it -> drop the line.
+
+    Clean endings (./!/?/:/quote/bracket/emoji) are left alone, so ordinary
+    prose and card-style lines never change. If no earlier sentence boundary
+    exists, the text is returned unchanged -- a stump is still better than
+    nothing at all.
     """
     t = text.rstrip()
-    if not t or not (t[-1].isalnum() or t[-1] in ",-"):
-        return text
-    cut = max(t.rfind(ch) for ch in _SENTENCE_END)
-    if cut <= 0:
-        return text
-    return t[: cut + 1]
+    for _ in range(6):                                   # bounded; each pass shrinks t
+        lines = t.split("\n")
+        if len(lines) > 1 and _STUMP_LINE_RE.match(lines[-1]):
+            t = "\n".join(lines[:-1]).rstrip()
+            continue
+        if t and (t[-1].isalnum() or t[-1] in ",-"):
+            cut = max(t.rfind(ch) for ch in _SENTENCE_END)
+            if cut > 0:
+                t = t[: cut + 1]
+                continue
+        break
+    return t if t else text
 
 
 def _is_stale_mastery(updated_at: str | None, now: datetime | None = None) -> bool:

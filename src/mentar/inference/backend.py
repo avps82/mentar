@@ -44,7 +44,12 @@ LLMCall = Callable[[list[dict]], str]
 
 # Tutoring generation defaults (overridable via cfg["generation"]).
 _DEFAULT_TEMPERATURE = 0.3
-_DEFAULT_MAX_TOKENS = 400
+# 400 -> 1200 (2026-08-19): the Help templates legitimately produce long output
+# -- a story, then per-choice analysis -- and 400 truncated a real science
+# explanation MID-LIST on the maintainer's machine ("2." was the final line a
+# child saw). The verifier, not brevity, is the safety mechanism; the cap only
+# needs to bound runaway generation, not shape the prose.
+_DEFAULT_MAX_TOKENS = 1200
 _DEFAULT_TIMEOUT_S = 120.0
 _DEFAULT_RETRIES = 2          # total attempts = retries + 1
 _RETRY_BACKOFF_S = 1.5
@@ -257,7 +262,18 @@ def _make_openai_call(endpoint: dict, gen: dict) -> LLMCall:
                     max_tokens=max_tokens,
                     extra_body=extra_body,
                 )
-                return resp.choices[0].message.content or ""
+                choice = resp.choices[0]
+                # finish_reason == "length" is the backend saying, definitively,
+                # "I was cut off by max_tokens". Discarding it is how a stump
+                # like "Because a" reached a child with every heuristic
+                # downstream guessing (2026-08-19). Named loudly here; the
+                # controller's _trim_truncated_tail cleans the visible text.
+                if getattr(choice, "finish_reason", None) == "length":
+                    logger.warning(
+                        "llm_call: output TRUNCATED at max_tokens=%d — raise "
+                        "generation.max_tokens in the inference config", max_tokens,
+                    )
+                return choice.message.content or ""
             except Exception as exc:  # network/5xx/timeout — retry a couple times
                 last_exc = exc
                 if attempt < retries:
@@ -299,7 +315,13 @@ def _make_in_process_call(block: dict, gen: dict) -> LLMCall:
             temperature=temperature,
             max_tokens=max_tokens,
         )
-        return resp["choices"][0]["message"]["content"] or ""
+        choice = resp["choices"][0]
+        if choice.get("finish_reason") == "length":
+            logger.warning(
+                "llm_call: output TRUNCATED at max_tokens=%d — raise "
+                "generation.max_tokens in the inference config", max_tokens,
+            )
+        return choice["message"]["content"] or ""
 
     return call
 

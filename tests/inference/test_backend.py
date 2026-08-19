@@ -144,7 +144,9 @@ def test_dispatch_vllm(monkeypatch=None):
     assert cli.init_kwargs["base_url"] == "http://h:4000/v1"
     assert cli.calls[-1]["model"] == "gemma2:9b"
     assert cli.calls[-1]["temperature"] == 0.3
-    assert cli.calls[-1]["max_tokens"] == 400
+    # 400 -> 1200 (2026-08-19): 400 truncated a real science explanation
+    # mid-list on the maintainer's machine.
+    assert cli.calls[-1]["max_tokens"] == 1200
 
 
 def test_dispatch_ollama_appends_v1(monkeypatch=None):
