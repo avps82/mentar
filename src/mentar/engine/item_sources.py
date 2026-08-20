@@ -29,8 +29,6 @@ from mentar.engine.au_english_items import (
     AU_ENGLISH_YEAR8_GENERATORS,
     AU_ENGLISH_YEAR9_GENERATORS,
     AU_ENGLISH_YEAR10_GENERATORS,
-    AU_ENGLISH_YEAR11_GENERATORS,
-    AU_ENGLISH_YEAR12_GENERATORS,
 )
 from mentar.engine.au_items import (
     AU_YEAR2_GENERATORS,
@@ -42,6 +40,14 @@ from mentar.engine.au_items import (
     AU_YEAR8_GENERATORS,
     AU_YEAR9_GENERATORS,
     AU_YEAR10_GENERATORS,
+)
+from mentar.engine.au_senior_english_items import (
+    AU_ESSENTIAL_ENGLISH_Y11_GENERATORS,
+    AU_ESSENTIAL_ENGLISH_Y12_GENERATORS,
+    AU_LITERATURE_Y11_GENERATORS,
+    AU_LITERATURE_Y12_GENERATORS,
+    AU_MAINSTREAM_ENGLISH_Y11_GENERATORS,
+    AU_MAINSTREAM_ENGLISH_Y12_GENERATORS,
 )
 from mentar.engine.au_senior_maths_items import (
     AU_ESSENTIAL_Y11_GENERATORS,
@@ -126,8 +132,12 @@ def build_registry(pilot_itembank_path: Path) -> dict[str, dict]:
         # English stays one subject through Year 12, so it extends cleanly.
         "au_english_year9": {"generators": AU_ENGLISH_YEAR9_GENERATORS, "itembank": None},
         "au_english_year10": {"generators": AU_ENGLISH_YEAR10_GENERATORS, "itembank": None},
-        "au_english_year11": {"generators": AU_ENGLISH_YEAR11_GENERATORS, "itembank": None},
-        "au_english_year12": {"generators": AU_ENGLISH_YEAR12_GENERATORS, "itembank": None},
+        "au11_essential_english": {"generators": AU_ESSENTIAL_ENGLISH_Y11_GENERATORS, "itembank": None},
+        "au12_essential_english": {"generators": AU_ESSENTIAL_ENGLISH_Y12_GENERATORS, "itembank": None},
+        "au11_mainstream_english": {"generators": AU_MAINSTREAM_ENGLISH_Y11_GENERATORS, "itembank": None},
+        "au12_mainstream_english": {"generators": AU_MAINSTREAM_ENGLISH_Y12_GENERATORS, "itembank": None},
+        "au11_literature": {"generators": AU_LITERATURE_Y11_GENERATORS, "itembank": None},
+        "au12_literature": {"generators": AU_LITERATURE_Y12_GENERATORS, "itembank": None},
         "maths_practice": {"generators": MATHS_PRACTICE_GENERATORS, "itembank": None},
         "english_practice": {"generators": ENGLISH_PRACTICE_GENERATORS, "itembank": None},
         # IN_GENERIC ships in-repo under curriculum/templates/ like every other

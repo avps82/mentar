@@ -98,7 +98,7 @@ concepts:
     bkt_priors: { guess: 0.2, slip: 0.1, learns: 0.2, forgets: 0 }
   - id: au12g_best_fit_prediction
     label: "Predicting with a line of best fit"
-    strand: "Statistics"
+    strand: "Bivariate data"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -109,7 +109,7 @@ concepts:
     bkt_priors: { guess: 0.05, slip: 0.1, learns: 0.2, forgets: 0 }
   - id: au12g_residual
     label: "Residual"
-    strand: "Statistics"
+    strand: "Bivariate data"
     prereqs: [au12g_best_fit_prediction]
     grounding: {}
     transfer_seeds:
@@ -120,7 +120,7 @@ concepts:
     bkt_priors: { guess: 0.05, slip: 0.1, learns: 0.2, forgets: 0 }
   - id: au12g_reducing_balance
     label: "Reducing-balance loan (one month)"
-    strand: "Financial mathematics"
+    strand: "Loans and annuities"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -136,6 +136,28 @@ concepts:
     grounding: {}
     transfer_seeds:
       - "Inflation is 10% this year. Something costing $100 now will cost how many dollars after one year of that inflation?"
+    verifier:
+      answer_type: int
+      checker: int_exact
+    bkt_priors: { guess: 0.05, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au12g_moving_average
+    label: "Moving average"
+    strand: "Time series"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Monthly sales for three months are 20, 30 and 40. What is the 3-point moving average for these months?"
+    verifier:
+      answer_type: int
+      checker: int_exact
+    bkt_priors: { guess: 0.05, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au12g_max_area
+    label: "Design for maximum area"
+    strand: "Design problems"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "A farmer has 20 m of fencing for a rectangular pen. What is the LARGEST area, in square metres, the pen can enclose?"
     verifier:
       answer_type: int
       checker: int_exact

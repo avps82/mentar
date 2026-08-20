@@ -84,6 +84,16 @@ Visual scaffold hints for mathematics topics.
 * [senior_momentum](senior_momentum.md) — Visual scaffold for momentum p = mv
 * [senior_sampling_mean](senior_sampling_mean.md) — Visual scaffold for the centre of the sampling distribution of the mean
 * [senior_se_sampling](senior_se_sampling.md) — Visual scaffold for the standard error as the sampling distribution's spread
+* [senior_using_formula](senior_using_formula.md) — Visual scaffold for substituting a value into a worded cost formula
+* [senior_matrix_read](senior_matrix_read.md) — Visual scaffold for locating an entry by row and column
+* [senior_matrix_addition](senior_matrix_addition.md) — Visual scaffold for adding matrices entry by entry
+* [senior_scatterplot](senior_scatterplot.md) — Visual scaffold for reading association direction from a scatterplot
+* [senior_fitted_line](senior_fitted_line.md) — Visual scaffold for substituting into the rule of a line fitted to data
+* [senior_time_zones](senior_time_zones.md) — Visual scaffold for time differences from longitude
+* [senior_meridian_distance](senior_meridian_distance.md) — Visual scaffold for distance from degrees of latitude
+* [senior_nonlinear_rule](senior_nonlinear_rule.md) — Visual scaffold for evaluating a simple squared rule
+* [senior_moving_average](senior_moving_average.md) — Visual scaffold for a 3-point moving average as a sliding window
+* [senior_max_area](senior_max_area.md) — Visual scaffold for the fixed-perimeter maximum-area design problem
 
 <!-- One topic per file: visual_scaffold.first_diagram() shows a scaffold's
      FIRST fenced block to a child, so a file holding two topics hands the

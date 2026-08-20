@@ -38,6 +38,7 @@ concepts:
 
   - id: au11_cell_transport
     label: "Diffusion, osmosis and active transport"
+    strand: "Cells"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -49,6 +50,7 @@ concepts:
 
   - id: au11_enzymes
     label: "Enzymes"
+    strand: "Cells"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -60,6 +62,7 @@ concepts:
 
   - id: au11_photosynthesis_respiration
     label: "Photosynthesis and respiration"
+    strand: "Cells"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -68,6 +71,40 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au11_ecosystem_roles
+    label: "Roles in an ecosystem"
+    strand: "Ecosystems"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a PRODUCER? A) grass on a plain  B) soil bacteria recycling dead leaves  C) fungi breaking down a fallen log  D) a shark hunting fish. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au11_adaptation_types
+    label: "Types of adaptation"
+    strand: "Adaptations"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a PHYSIOLOGICAL adaptation (an internal process)? A) kidneys concentrating urine in desert mammals  B) birds migrating before winter  C) a polar bear's layer of blubber  D) desert animals feeding only at night. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au11_transport_systems
+    label: "Transport systems"
+    strand: "Transport systems"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is part of the CIRCULATORY system? A) oxygen diffusing across the alveoli into the blood  B) xylem carrying water up from the roots  C) carbon dioxide leaving the blood to be breathed out  D) arteries carrying blood away from the heart. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+
 ---
 
 # Australia — Year 11 Biology (senior)

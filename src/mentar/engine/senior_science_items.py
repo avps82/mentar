@@ -439,6 +439,18 @@ STAGE_CONCEPTS: dict[str, dict[int, dict[str, GenFn]]] = {
     },
 }
 
+# W3 depth (docs/design/curriculum_depth_program.md): the reference-strand
+# concepts live in senior_science_depth_items.py and merge in here, so every
+# country's senior packs share them exactly like the original trio.
+from mentar.engine.senior_science_depth_items import (  # noqa: E402
+    DEPTH_STAGE_CONCEPTS,
+    EARTH_ENV_STAGE_CONCEPTS,
+)
+
+for _subj, _stages in DEPTH_STAGE_CONCEPTS.items():
+    for _stage, _extra in _stages.items():
+        STAGE_CONCEPTS[_subj][_stage].update(_extra)
+
 # Authority -> [(node-id prefix, level display name, senior stage)]. AU's au11/
 # au12 prefixes are already used by its maths pack; the subject slugs differ, so
 # ids stay unique (test_no_skill_id_collides_across_any_shipped_template).
@@ -492,6 +504,11 @@ def build_full_subject(prefix: str, subject: str) -> dict[str, GenFn]:
 # item_source name -> generators, e.g. "au11_physics", "in_c12_biology",
 # "us_g9_biology".
 SENIOR_SCIENCE_ITEM_SOURCES: dict[str, dict[str, GenFn]] = {
+    # Earth & Environmental Science: a fourth senior subject, AU-ONLY until the
+    # other countries' syllabus shapes are verified (they teach it under
+    # different names/structures -- verify, never assume).
+    "au11_earth_env": {f"au11_{slug}": fn for slug, fn in EARTH_ENV_STAGE_CONCEPTS[1].items()},
+    "au12_earth_env": {f"au12_{slug}": fn for slug, fn in EARTH_ENV_STAGE_CONCEPTS[2].items()},
     **{
         f"{prefix}_{subject}": build_generators(prefix, subject, stage)
         for levels in SENIOR_LEVELS.values()

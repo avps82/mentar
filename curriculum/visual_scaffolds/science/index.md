@@ -47,6 +47,25 @@ Visual scaffold hints for science topics.
 * [states_of_matter](states_of_matter.md) — Visual scaffold hints for the three states of matter and changes between them
 * [vertebrates](vertebrates.md) — Visual scaffold hints for classifying animals as vertebrates (backbone) or invertebrates (no backbone)
 * [waves](waves.md) — Visual scaffold hints for the two ways a wave can move relative to its direction of travel
+* [senior_nuclear_radiation](senior_nuclear_radiation.md) — Visual scaffold for alpha, beta and gamma radiation and their penetration
+* [senior_circuit_quantities](senior_circuit_quantities.md) — Visual scaffold for the roles of V, I and R in a circuit
+* [senior_quantum](senior_quantum.md) — Visual scaffold for photons, energy levels and wave-particle duality
+* [senior_relativity](senior_relativity.md) — Visual scaffold for the postulates and consequences of special relativity
+* [senior_organic_families](senior_organic_families.md) — Visual scaffold for alkanes, alkenes and alcohols by their defining feature
+* [senior_equilibrium](senior_equilibrium.md) — Visual scaffold for dynamic equilibrium and Le Chatelier's principle
+* [senior_electrochemistry](senior_electrochemistry.md) — Visual scaffold for galvanic versus electrolytic cells
+* [senior_transport_systems](senior_transport_systems.md) — Visual scaffold for plant and animal transport systems
+* [senior_disease_defence](senior_disease_defence.md) — Visual scaffold for infectious vs non-infectious disease and immune defence
+* [senior_gravity_orbits](senior_gravity_orbits.md) — Visual scaffold for gravitational fields, weight and orbital motion
+* [senior_earth_layers](senior_earth_layers.md) — Visual scaffold for crust, mantle and core
+* [senior_minerals](senior_minerals.md) — Visual scaffold for mineral identification and ores
+* [senior_rock_cycle](senior_rock_cycle.md) — Visual scaffold for igneous, sedimentary and metamorphic rocks
+* [senior_atmosphere](senior_atmosphere.md) — Visual scaffold for atmospheric layers and the greenhouse effect
+* [senior_human_impact](senior_human_impact.md) — Visual scaffold for human impacts on air, water and land
+* [senior_hazards](senior_hazards.md) — Visual scaffold for earthquakes, volcanoes and cyclones
+* [senior_climate_systems](senior_climate_systems.md) — Visual scaffold for ocean currents, the carbon cycle and climate proxies
+* [senior_resources](senior_resources.md) — Visual scaffold for renewable vs non-renewable resources
+* [senior_sustainability](senior_sustainability.md) — Visual scaffold for reduce, reuse-recycle and restore
 
 <!-- One topic per file: visual_scaffold.first_diagram() shows a scaffold's
      FIRST fenced block to a child, so a file holding two topics hands the

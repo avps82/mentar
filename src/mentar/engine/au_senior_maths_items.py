@@ -714,3 +714,207 @@ AU_GENERAL_Y12_GENERATORS = {
     "au12g_reducing_balance": gen_reducing_balance,
     "au12g_inflation_price": gen_inflation_price,
 }
+
+
+# ── W2b: strand-gap closers (docs/design/curriculum_depth_program.md) ────────
+# The auditor read four MISSING strands across Essential/General after W1;
+# these close them. Same contract, same exact-by-construction rule.
+
+def gen_formula_value(rng):
+    a = rng.choice([40, 50, 60])
+    b = rng.choice([20, 25, 30])
+    n = rng.choice([2, 3, 4, 5, 6])
+    ans = a + b * n
+    p = (f"A plumber charges a ${a} call-out fee plus ${b} per hour. "
+         f"Using the formula C = {a} + {b}n, how many dollars is a job of {n} hours?")
+    card = _card("USING A FORMULA", p, ans,
+                 f"  C = {a} + {b}n — substitute the number of hours for n",
+                 f"  1. {b} × {n} = {b * n}.",
+                 f"  2. {a} + {b * n} = {ans}.")
+    return ("int", "int_exact", p, str(ans), None, card,
+            f"(C = {a} + {b}n: substitute n, multiply first, then add)")
+
+
+def gen_formula_perimeter(rng):
+    length = rng.choice([8, 10, 12, 15])
+    w = rng.choice([3, 4, 5, 6])
+    ans = 2 * (length + w)
+    p = (f"Using the formula P = 2(l + w), find the perimeter in metres of a "
+         f"rectangle with l = {length} m and w = {w} m.")
+    card = _card("PERIMETER FORMULA", p, f"{ans} m",
+                 "  P = 2(l + w) — add the sides first, then double",
+                 f"  1. {length} + {w} = {length + w}.",
+                 f"  2. 2 × {length + w} = {ans}, so P = {ans} m.")
+    return ("int", "int_exact", p, str(ans), None, card,
+            "(P = 2(l + w): add inside the brackets first)")
+
+
+def gen_matrix_read(rng):
+    rows = [[rng.choice([2, 3, 4, 5, 6, 7, 8, 9]) for _ in range(3)] for _ in range(2)]
+    r = rng.choice([1, 2])
+    c = rng.choice([1, 2, 3])
+    ans = rows[r - 1][c - 1]
+    p = ("A stock matrix has shops as rows and products as columns.\n"
+         f"Row 1: [{rows[0][0]}  {rows[0][1]}  {rows[0][2]}]\n"
+         f"Row 2: [{rows[1][0]}  {rows[1][1]}  {rows[1][2]}]\n"
+         f"What is the entry in row {r}, column {c}?")
+    card = _card("READING A MATRIX", p, ans,
+                 "  Entry (row, column): count rows top-down, columns left-right",
+                 f"  1. Go to row {r}, then across to column {c}.",
+                 f"  2. The entry there is {ans}.")
+    return ("int", "int_exact", p, str(ans), None, card,
+            "(Row first, then column)")
+
+
+def gen_matrix_add(rng):
+    a = [rng.choice([1, 2, 3, 4, 5]) for _ in range(4)]
+    b = [rng.choice([1, 2, 3, 4, 5]) for _ in range(4)]
+    pos = rng.choice([1, 2, 3, 4])
+    labels = {1: "row 1, column 1", 2: "row 1, column 2",
+              3: "row 2, column 1", 4: "row 2, column 2"}
+    ans = a[pos - 1] + b[pos - 1]
+    p = (f"For the matrices A = [{a[0]} {a[1]} / {a[2]} {a[3]}] and "
+         f"B = [{b[0]} {b[1]} / {b[2]} {b[3]}] (rows separated by /), "
+         f"what is the entry of A + B in {labels[pos]}?")
+    card = _card("ADDING MATRICES", p, ans,
+                 "  Matrices add entry by entry — same position in A and B",
+                 f"  1. A's entry in {labels[pos]}: {a[pos - 1]}. B's: {b[pos - 1]}.",
+                 f"  2. {a[pos - 1]} + {b[pos - 1]} = {ans}.")
+    return ("int", "int_exact", p, str(ans), None, card,
+            "(Add the entries in the SAME position)")
+
+
+def gen_scatter_trend(rng):
+    ctx, correct = rng.choice([
+        ("as the hours of practice increase, the scores also increase", "positive"),
+        ("as the price increases, the number sold decreases", "negative"),
+        ("as shoe size increases, the test scores show no pattern at all", "no association"),
+        ("as the temperature rises, ice-cream sales also rise", "positive")])
+    choices = ("positive", "negative", "no association", "it cannot be told")
+    letter = "ABCD"[choices.index(correct)]
+    stem = (f"A scatterplot of two variables shows that {ctx}. "
+            "What association does the plot show?")
+    card = _card("READING A SCATTERPLOT", stem, correct,
+                 "  Both rise together → positive; one rises as the other falls → negative",
+                 f"  1. Here: {ctx}.",
+                 f"  2. That is a {correct} association.")
+    return ("mc4", "mc_choice", stem, letter, choices, card)
+
+
+def gen_prediction_rule(rng):
+    a = rng.choice([10, 20, 30])
+    b = rng.choice([2, 3, 5])
+    x = rng.choice([4, 6, 8, 10])
+    ans = a + b * x
+    p = (f"A line fitted to bivariate data has the rule y = {a} + {b}x. "
+         f"Predict y when x = {x}.")
+    card = _card("PREDICTING FROM A FITTED LINE", p, ans,
+                 "  Substitute the x-value into the rule",
+                 f"  1. {b} × {x} = {b * x}.",
+                 f"  2. {a} + {b * x} = {ans}.")
+    return ("int", "int_exact", p, str(ans), None, card,
+            f"(y = {a} + {b}x: substitute x)")
+
+
+def gen_time_zones(rng):
+    deg = rng.choice([30, 45, 60, 75, 90, 120])
+    ans = deg // 15
+    p = (f"Two cities are {deg}° of longitude apart. The Earth turns 15° each "
+         "hour. How many hours apart are their local times?")
+    card = _card("TIME ZONES", p, ans,
+                 "  Hours apart = degrees of longitude ÷ 15",
+                 f"  1. {deg} ÷ 15 = {ans}.")
+    return ("int", "int_exact", p, str(ans), None, card,
+            "(Hours apart = longitude difference ÷ 15)")
+
+
+def gen_latitude_distance(rng):
+    deg = rng.choice([2, 3, 4, 5, 6, 10])
+    ans = deg * 111
+    p = (f"Two towns lie on the same line of longitude, {deg}° of latitude apart. "
+         "Taking one degree of latitude as 111 km, how many kilometres apart are they?")
+    card = _card("DISTANCE ALONG A MERIDIAN", p, f"{ans} km",
+                 "  Distance = degrees of latitude × 111 km",
+                 f"  1. {deg} × 111 = {ans}, so the towns are {ans} km apart.")
+    return ("int", "int_exact", p, str(ans), None, card,
+            "(Distance = degrees of latitude × 111 km)")
+
+
+def gen_percentage_change(rng):
+    amount = rng.choice([40, 60, 80, 120, 200])
+    pct = rng.choice([5, 10, 25, 50])
+    rise = amount * pct // 100
+    ans = amount + rise
+    p = (f"A gym membership costs ${amount} a month. The price rises by {pct}%. "
+         "How many dollars is the new monthly price?")
+    card = _card("PERCENTAGE INCREASE", p, ans,
+                 "  New price = old price + old price × percentage ÷ 100",
+                 f"  1. {amount} × {pct} ÷ 100 = {rise}.",
+                 f"  2. {amount} + {rise} = {ans}.")
+    return ("int", "int_exact", p, str(ans), None, card,
+            "(Increase = old × % ÷ 100, then add it on)")
+
+
+def gen_parabola_value(rng):
+    c = rng.choice([1, 2, 3, 5])
+    k = rng.choice([2, 3, 4, 5])
+    ans = k * k + c
+    p = (f"The height of an arch follows the non-linear rule y = x² + {c}. "
+         f"What is y when x = {k}?")
+    card = _card("A NON-LINEAR RULE", p, ans,
+                 "  Square the x-value first, then add the constant",
+                 f"  1. {k}² = {k * k}.",
+                 f"  2. {k * k} + {c} = {ans}.")
+    return ("int", "int_exact", p, str(ans), None, card,
+            f"(y = x² + {c}: square first)")
+
+
+def gen_moving_average(rng):
+    m = rng.choice([10, 20, 30, 40])
+    d = rng.choice([2, 3, 5, 10])
+    vals = (m, m + d, m + 2 * d)
+    ans = m + d
+    p = (f"Monthly sales for three months are {vals[0]}, {vals[1]} and {vals[2]}. "
+         "What is the 3-point moving average for these months?")
+    card = _card("MOVING AVERAGE", p, ans,
+                 "  3-point moving average = the three values added, divided by 3",
+                 f"  1. {vals[0]} + {vals[1]} + {vals[2]} = {sum(vals)}.",
+                 f"  2. {sum(vals)} ÷ 3 = {ans}.")
+    return ("int", "int_exact", p, str(ans), None, card,
+            "(Moving average = sum of the window ÷ its size)")
+
+
+def gen_max_area(rng):
+    perim = rng.choice([20, 24, 28, 40])
+    side = perim // 4
+    ans = side * side
+    p = (f"A farmer has {perim} m of fencing for a rectangular pen. "
+         "What is the LARGEST area, in square metres, the pen can enclose?")
+    card = _card("DESIGN FOR MAXIMUM AREA", p, f"{ans} m²",
+                 "  For a fixed perimeter, the square encloses the most area",
+                 f"  1. Best shape: a square with side {perim} ÷ 4 = {side} m.",
+                 f"  2. Area: {side} × {side} = {ans}, so {ans} m².")
+    return ("int", "int_exact", p, str(ans), None, card,
+            "(Fixed perimeter → square wins: side = perimeter ÷ 4)")
+
+
+AU_ESSENTIAL_Y11_GENERATORS.update({
+    "au11e_formula_value": gen_formula_value,          # Algebraic formulas
+    "au11e_formula_perimeter": gen_formula_perimeter,  # Algebraic formulas
+    "au11e_matrix_read": gen_matrix_read,              # Matrices
+    "au11e_matrix_add": gen_matrix_add,                # Matrices
+})
+AU_ESSENTIAL_Y12_GENERATORS.update({
+    "au12e_scatter_trend": gen_scatter_trend,          # Bivariate data
+    "au12e_prediction_rule": gen_prediction_rule,      # Bivariate data
+    "au12e_time_zones": gen_time_zones,                # Spherical geometry
+    "au12e_latitude_distance": gen_latitude_distance,  # Spherical geometry
+})
+AU_GENERAL_Y11_GENERATORS.update({
+    "au11g_percentage_change": gen_percentage_change,  # Consumer arithmetic
+    "au11g_parabola_value": gen_parabola_value,        # Linear and non-linear relationships
+})
+AU_GENERAL_Y12_GENERATORS.update({
+    "au12g_moving_average": gen_moving_average,        # Time series
+    "au12g_max_area": gen_max_area,                    # Design problems
+})

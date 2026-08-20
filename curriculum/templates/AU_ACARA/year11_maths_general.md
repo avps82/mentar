@@ -76,7 +76,7 @@ concepts:
     bkt_priors: { guess: 0.05, slip: 0.1, learns: 0.2, forgets: 0 }
   - id: au11g_linear_rule_value
     label: "Value from a linear rule"
-    strand: "Linear relationships"
+    strand: "Linear and non-linear relationships"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -87,7 +87,7 @@ concepts:
     bkt_priors: { guess: 0.05, slip: 0.1, learns: 0.2, forgets: 0 }
   - id: au11g_pythagoras
     label: "Pythagoras' theorem"
-    strand: "Shape and trigonometry"
+    strand: "Trigonometry"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -98,7 +98,7 @@ concepts:
     bkt_priors: { guess: 0.05, slip: 0.1, learns: 0.2, forgets: 0 }
   - id: au11g_trig_opposite
     label: "Height from an angle (tan)"
-    strand: "Shape and trigonometry"
+    strand: "Trigonometry"
     prereqs: [au11g_pythagoras]
     grounding: {}
     transfer_seeds:
@@ -109,7 +109,7 @@ concepts:
     bkt_priors: { guess: 0.05, slip: 0.1, learns: 0.2, forgets: 0 }
   - id: au11g_circle_circumference
     label: "Circumference of a circle"
-    strand: "Shape and trigonometry"
+    strand: "Trigonometry"
     prereqs: [au11g_trig_opposite]
     grounding: {}
     transfer_seeds:
@@ -140,6 +140,28 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.2, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au11g_percentage_change
+    label: "Percentage increase"
+    strand: "Consumer arithmetic"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "A gym membership costs $40 a month. The price rises by 10%. How many dollars is the new monthly price?"
+    verifier:
+      answer_type: int
+      checker: int_exact
+    bkt_priors: { guess: 0.05, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au11g_parabola_value
+    label: "A non-linear rule"
+    strand: "Linear and non-linear relationships"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "The height of an arch follows the non-linear rule y = x² + 3. What is y when x = 2?"
+    verifier:
+      answer_type: int
+      checker: int_exact
+    bkt_priors: { guess: 0.05, slip: 0.1, learns: 0.2, forgets: 0 }
 
 ---
 

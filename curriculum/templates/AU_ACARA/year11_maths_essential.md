@@ -140,6 +140,50 @@ concepts:
       answer_type: int
       checker: int_exact
     bkt_priors: { guess: 0.05, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au11e_formula_value
+    label: "Using a formula"
+    strand: "Algebraic formulas"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "A plumber charges a $40 call-out fee plus $25 per hour. Using the formula C = 40 + 25n, how many dollars is a job of 4 hours?"
+    verifier:
+      answer_type: int
+      checker: int_exact
+    bkt_priors: { guess: 0.05, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au11e_formula_perimeter
+    label: "Perimeter formula"
+    strand: "Algebraic formulas"
+    prereqs: [au11e_formula_value]
+    grounding: {}
+    transfer_seeds:
+      - "Using the formula P = 2(l + w), find the perimeter in metres of a rectangle with l = 15 m and w = 5 m."
+    verifier:
+      answer_type: int
+      checker: int_exact
+    bkt_priors: { guess: 0.05, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au11e_matrix_read
+    label: "Reading a matrix"
+    strand: "Matrices"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "A stock matrix has shops as rows and products as columns. / Row 1: [4  6  8] / Row 2: [7  4  3] / What is the entry in row 2, column 2?"
+    verifier:
+      answer_type: int
+      checker: int_exact
+    bkt_priors: { guess: 0.05, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au11e_matrix_add
+    label: "Adding matrices"
+    strand: "Matrices"
+    prereqs: [au11e_matrix_read]
+    grounding: {}
+    transfer_seeds:
+      - "For the matrices A = [1 4 / 5 3] and B = [5 2 / 4 5] (rows separated by /), what is the entry of A + B in row 1, column 2?"
+    verifier:
+      answer_type: int
+      checker: int_exact
+    bkt_priors: { guess: 0.05, slip: 0.1, learns: 0.2, forgets: 0 }
 
 ---
 

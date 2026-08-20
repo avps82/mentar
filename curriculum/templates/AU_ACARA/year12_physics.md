@@ -38,6 +38,7 @@ concepts:
 
   - id: au12_circuits_series_parallel
     label: "Series and parallel circuits"
+    strand: "Electrical circuits"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -49,6 +50,7 @@ concepts:
 
   - id: au12_em_spectrum
     label: "The electromagnetic spectrum"
+    strand: "Electromagnetism"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -60,6 +62,7 @@ concepts:
 
   - id: au12_conservation_collisions
     label: "What is conserved in a collision"
+    strand: "Momentum"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -68,6 +71,51 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au12_gravity_fields
+    label: "Gravity and orbits"
+    strand: "Gravity"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which statement is true of a gravitational FIELD? A) a satellite is continually falling toward Earth while moving sideways fast enough to keep missing it  B) it changes when you move to the Moon; your mass does not  C) it points toward the mass creating it  D) the Moon is held in its path by Earth's gravity alone. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au12_wave_properties
+    label: "Wave properties"
+    strand: "Waves"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a property of wave FREQUENCY? A) what determines how loud a sound or bright a light is  B) the distance from one crest to the next  C) measured in hertz  D) measured in metres. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au12_quantum_ideas
+    label: "Quantum ideas"
+    strand: "Quantum"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a quantum idea about ATOMS? A) light energy arriving in discrete lumps proportional to frequency  B) light spreading out after passing a narrow gap  C) electrons occupying only fixed energy levels  D) the double-slit experiment producing an interference pattern. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au12_relativity_ideas
+    label: "Special relativity"
+    strand: "Special relativity"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a CONSEQUENCE of special relativity? A) GPS satellite clocks needing correction to stay accurate  B) the speed of light in a vacuum is the same for every observer  C) the laws of physics are the same in every non-accelerating frame  D) a fast-moving object is measured shorter along its direction of travel. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+
 ---
 
 # Australia — Year 12 Physics (senior)

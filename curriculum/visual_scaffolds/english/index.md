@@ -38,6 +38,20 @@ Visual scaffold hints for English topics including vocabulary, grammar, and writ
 * [tone](tone.md) — Visual scaffold hints for identifying tone from word choice
 * [vocabulary](vocabulary.md) — Visual scaffold hints for word-study questions using the Frayer model (definition, characteristics, examples, non-examples)
 * [word_forms](word_forms.md) — Visual scaffold hints for word formation including plurals, compound words, and rhyming pairs
+* [senior_workplace_texts](senior_workplace_texts.md) — Visual scaffold for recognising workplace text types and their features
+* [senior_instructional_texts](senior_instructional_texts.md) — Visual scaffold for the features of instructions
+* [senior_news_perspectives](senior_news_perspectives.md) — Visual scaffold for separating fact, opinion and perspective in news
+* [senior_professional_comm](senior_professional_comm.md) — Visual scaffold for professional versus casual register in workplace writing
+* [senior_perspectives_values](senior_perspectives_values.md) — Visual scaffold for identifying whose perspective a statement carries
+* [senior_text_structures](senior_text_structures.md) — Visual scaffold for cause-effect, compare-contrast and chronological structures
+* [senior_contexts](senior_contexts.md) — Visual scaffold for historical, cultural and personal context in reading
+* [senior_literary_periods](senior_literary_periods.md) — Visual scaffold for major literary periods on a timeline
+* [senior_poetic_forms](senior_poetic_forms.md) — Visual scaffold for sonnet, haiku and free verse
+* [senior_genre_conventions](senior_genre_conventions.md) — Visual scaffold for gothic, science fiction and detective conventions
+* [senior_critical_lenses](senior_critical_lenses.md) — Visual scaffold for feminist, Marxist and postcolonial readings
+* [senior_advertising](senior_advertising.md) — Visual scaffold for bandwagon, authority and emotional appeals in advertising
+* [senior_comparative_essays](senior_comparative_essays.md) — Visual scaffold for block versus point-by-point comparison
+* [senior_dramatic_techniques](senior_dramatic_techniques.md) — Visual scaffold for soliloquy, dramatic irony and aside
 
 <!-- One topic per file: visual_scaffold.first_diagram() shows a scaffold's
      FIRST fenced block to a child, so a file holding two topics hands the

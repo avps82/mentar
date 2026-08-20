@@ -38,6 +38,7 @@ concepts:
 
   - id: au11_scalars_vectors
     label: "Scalars and vectors"
+    strand: "Linear motion"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -49,6 +50,7 @@ concepts:
 
   - id: au11_energy_forms
     label: "Forms of energy"
+    strand: "Energy"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -60,6 +62,7 @@ concepts:
 
   - id: au11_newton_laws
     label: "Newton's laws of motion"
+    strand: "Forces"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -68,6 +71,40 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au11_heating_processes
+    label: "Heat transfer processes"
+    strand: "Heating processes"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is an example of heat transfer by RADIATION (no matter needed at all)? A) a metal spoon handle warming in hot soup  B) the Sun warming your face across empty space  C) a saucepan base heating on an electric hotplate  D) warm air rising above a heater. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au11_nuclear_radiation
+    label: "Types of nuclear radiation"
+    strand: "Nuclear physics"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these describes GAMMA radiation (electromagnetic waves — needs thick lead)? A) the radiation that needs thick lead or concrete to block  B) the radiation stopped by a sheet of paper  C) the most ionising but least penetrating type  D) fast electrons ejected from a decaying nucleus. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au11_circuit_quantities
+    label: "Voltage, current and resistance"
+    strand: "Electrical circuits"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these describes VOLTAGE (the push, measured in volts)? A) the ratio of voltage across a component to current through it  B) what an ammeter placed in the loop reads  C) the rate at which charge passes a point in the wire  D) what a voltmeter placed across a component reads. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+
 ---
 
 # Australia — Year 11 Physics (senior)

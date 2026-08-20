@@ -32,13 +32,19 @@ REFERENCE = REPO / "docs" / "design" / "curriculum_reference_au.json"
 TEMPLATES = REPO / "curriculum" / "templates" / "AU_ACARA"
 
 # Course-split senior templates map onto the reference's parenthesised entries.
-_COURSE_KEYS = {"essential": "Essential", "general": "General",
-                "methods": "Methods", "specialist": "Specialist"}
+# Course names are SUBJECT-relative: "essential" means "Essential" in maths but
+# "Essential English" in English (that is what the reference calls the course).
+_COURSE_KEYS = {
+    "mathematics": {"essential": "Essential", "general": "General",
+                    "methods": "Methods", "specialist": "Specialist"},
+    "english": {"english_essential": "Essential English", "english_main": "English",
+                "literature": "Literature"},
+}
 
 
 def _template_year_key(fm: dict, filename: str) -> str:
     year = fm.get("year_level", "?")
-    for k, label in _COURSE_KEYS.items():
+    for k, label in _COURSE_KEYS.get(fm.get("subject", ""), {}).items():
         if k in filename:
             return f"{year} ({label})"
     return str(year)

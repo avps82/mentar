@@ -140,6 +140,50 @@ concepts:
       answer_type: int
       checker: int_exact
     bkt_priors: { guess: 0.05, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au12e_scatter_trend
+    label: "Reading a scatterplot"
+    strand: "Bivariate data"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "A scatterplot of two variables shows that as the hours of practice increase, the scores also increase. What association does the plot show?"
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.2, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au12e_prediction_rule
+    label: "Predicting from a fitted line"
+    strand: "Bivariate data"
+    prereqs: [au12e_scatter_trend]
+    grounding: {}
+    transfer_seeds:
+      - "A line fitted to bivariate data has the rule y = 30 + 2x. Predict y when x = 4."
+    verifier:
+      answer_type: int
+      checker: int_exact
+    bkt_priors: { guess: 0.05, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au12e_time_zones
+    label: "Time zones"
+    strand: "Spherical geometry"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Two cities are 30° of longitude apart. The Earth turns 15° each hour. How many hours apart are their local times?"
+    verifier:
+      answer_type: int
+      checker: int_exact
+    bkt_priors: { guess: 0.05, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au12e_latitude_distance
+    label: "Distance along a meridian"
+    strand: "Spherical geometry"
+    prereqs: [au12e_time_zones]
+    grounding: {}
+    transfer_seeds:
+      - "Two towns lie on the same line of longitude, 10° of latitude apart. Taking one degree of latitude as 111 km, how many kilometres apart are they?"
+    verifier:
+      answer_type: int
+      checker: int_exact
+    bkt_priors: { guess: 0.05, slip: 0.1, learns: 0.2, forgets: 0 }
 
 ---
 

@@ -54,6 +54,7 @@ _SUBJECT_TO_SCAFFOLD_DIR = {
     "physics": "science",
     "chemistry": "science",
     "biology": "science",
+    "earth_environmental": "science",
 }
 
 _RESERVED_NAMES = {"index.md", "log.md"}

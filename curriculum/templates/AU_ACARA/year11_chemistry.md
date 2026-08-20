@@ -38,6 +38,7 @@ concepts:
 
   - id: au11_bonding_types
     label: "Ionic, covalent and metallic bonding"
+    strand: "Bonding"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -49,6 +50,7 @@ concepts:
 
   - id: au11_periodic_groups
     label: "Groups of the periodic table"
+    strand: "Periodic trends"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -60,6 +62,7 @@ concepts:
 
   - id: au11_mole_concept
     label: "The mole and amount of substance"
+    strand: "Stoichiometry"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -68,6 +71,51 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au11_atomic_structure
+    label: "Atomic structure"
+    strand: "Atomic structure"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which statement is true of ELECTRONS? A) their count defines which element the atom is  B) uncharged particles that add mass to the nucleus  C) they occupy shells around the nucleus and set the chemistry  D) positively charged particles in the nucleus. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au11_gas_laws
+    label: "Gas laws"
+    strand: "Gas laws"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is what happens when a gas is COMPRESSED at fixed temperature? A) its pressure rises because the same particles hit the walls more often  B) it expands, taking up more volume  C) its pressure rises as particles hit the walls harder and more often  D) a balloon in the sun swelling up. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au11_reaction_kinds
+    label: "Kinds of chemical reaction"
+    strand: "Chemical reactions"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a PRECIPITATION reaction? A) hydrogen peroxide breaking down into water and oxygen  B) silver nitrate and salt solution giving a white solid  C) one compound breaking into simpler substances when heated  D) a fuel reacting with oxygen and releasing heat. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au11_organic_basics
+    label: "Organic families"
+    strand: "Organic basics"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is an ALCOHOL (contains an -OH group)? A) propane  B) ethanol  C) propene  D) ethene. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+
 ---
 
 # Australia — Year 11 Chemistry (senior)

@@ -38,6 +38,7 @@ concepts:
 
   - id: au12_acids_bases
     label: "Strong acids, weak acids and bases"
+    strand: "Acids and bases"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -49,6 +50,7 @@ concepts:
 
   - id: au12_redox
     label: "Oxidation and reduction"
+    strand: "Redox"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -60,6 +62,7 @@ concepts:
 
   - id: au12_reaction_rates
     label: "What changes the rate of a reaction"
+    strand: "Reaction rates"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -68,6 +71,40 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au12_equilibrium
+    label: "Chemical equilibrium"
+    strand: "Equilibrium"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is true AT chemical equilibrium? A) the yield the reaction eventually settles at  B) the final equilibrium position of the reaction  C) the amounts of reactants and products stay constant, though both reactions continue  D) adding more of a reactant. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au12_electrochemistry
+    label: "Electrochemical cells"
+    strand: "Electrochemistry"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is true of the ELECTRODES? A) reduction happens at the cathode  B) chemical energy is converted into electrical energy  C) used to electroplate metals and split molten salts  D) a spontaneous reaction generates an electric current. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au12_organic_synthesis
+    label: "Organic reaction types"
+    strand: "Organic synthesis"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a SUBSTITUTION reaction? A) ethene + hydrogen becoming ethane across the double bond  B) an alcohol and a carboxylic acid joining to give a fruity-smelling product  C) one hydrogen on an alkane swapped for a chlorine atom  D) the reaction that makes an ester plus water. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+
 ---
 
 # Australia — Year 12 Chemistry (senior)

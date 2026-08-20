@@ -330,12 +330,6 @@ _EXPECTED = {
     "curriculum/templates/AU_ACARA/year10_english.md": {
         "key": "au_acara_year10_english", "label": "English — Year 10 🇦🇺", "item_source": "au_english_year10",
     },
-    "curriculum/templates/AU_ACARA/year11_english.md": {
-        "key": "au_acara_year11_english", "label": "English — Year 11 🇦🇺", "item_source": "au_english_year11",
-    },
-    "curriculum/templates/AU_ACARA/year12_english.md": {
-        "key": "au_acara_year12_english", "label": "English — Year 12 🇦🇺", "item_source": "au_english_year12",
-    },
     "curriculum/templates/AU_ACARA/year9_science.md": {
         "key": "au_acara_year9_science", "label": "Science — Year 9 🇦🇺", "item_source": "au_science_year9",
     },
@@ -344,6 +338,30 @@ _EXPECTED = {
     },
     "curriculum/templates/AU_ACARA/year11_biology.md": {
         "key": "au_acara_year11_biology", "label": "Biology — Year 11 🇦🇺", "item_source": "au11_biology",
+    },
+    "curriculum/templates/AU_ACARA/year11_english_essential.md": {
+        "key": "au_acara_year11_english_essential", "label": "Essential English — Year 11 🇦🇺", "item_source": "au11_essential_english",
+    },
+    "curriculum/templates/AU_ACARA/year11_english_main.md": {
+        "key": "au_acara_year11_english_main", "label": "English — Year 11 🇦🇺", "item_source": "au11_mainstream_english",
+    },
+    "curriculum/templates/AU_ACARA/year11_literature.md": {
+        "key": "au_acara_year11_literature", "label": "Literature — Year 11 🇦🇺", "item_source": "au11_literature",
+    },
+    "curriculum/templates/AU_ACARA/year12_english_essential.md": {
+        "key": "au_acara_year12_english_essential", "label": "Essential English — Year 12 🇦🇺", "item_source": "au12_essential_english",
+    },
+    "curriculum/templates/AU_ACARA/year12_english_main.md": {
+        "key": "au_acara_year12_english_main", "label": "English — Year 12 🇦🇺", "item_source": "au12_mainstream_english",
+    },
+    "curriculum/templates/AU_ACARA/year12_literature.md": {
+        "key": "au_acara_year12_literature", "label": "Literature — Year 12 🇦🇺", "item_source": "au12_literature",
+    },
+    "curriculum/templates/AU_ACARA/year11_earth_env.md": {
+        "key": "au_acara_year11_earth_env", "label": "Earth & Env Science — Year 11 🇦🇺", "item_source": "au11_earth_env",
+    },
+    "curriculum/templates/AU_ACARA/year12_earth_env.md": {
+        "key": "au_acara_year12_earth_env", "label": "Earth & Env Science — Year 12 🇦🇺", "item_source": "au12_earth_env",
     },
     "curriculum/templates/AU_ACARA/year11_chemistry.md": {
         "key": "au_acara_year11_chemistry", "label": "Chemistry — Year 11 🇦🇺", "item_source": "au11_chemistry",
