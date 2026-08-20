@@ -1676,7 +1676,18 @@ def test_explanation_renders_below_the_question_and_answer_box():
 
     app_mod, c = _client()
     c.post("/choose", data={"subject": "fractions"})
-    c.get("/learn")
+    # FIRST turn is the exception, found by rechecking the move (2026-08-20):
+    # the opening bubble carries the W5.6 assent line and the SAFETY §5.5
+    # transparency line ("not a person"), both spec'd to be seen at the START,
+    # before the child engages -- so on turn one the bubble stays ABOVE. (The
+    # very first GET is that turn -- a second GET already renders is_first_turn
+    # False, which is exactly how this assertion first failed.)
+    page = c.get("/learn").get_data(as_text=True)
+    f1 = page.find('<div class="feedback')
+    q1 = page.find('class="question')
+    assert -1 < f1 < q1, "the first-turn assent bubble must sit above the question"
+    assert "not a person" in page, "the transparency line must be in the first bubble"
+
     frag = c.post("/answer", data={"answer": "help"},
                   headers={"HX-Request": "true"}).get_data(as_text=True)
     q = frag.find('class="question')
