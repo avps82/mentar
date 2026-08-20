@@ -31,6 +31,7 @@ concepts:
 
   - id: au3_place_value
     label: "Place value to 999"           # AC9M3N01
+    strand: "Number"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -42,6 +43,7 @@ concepts:
 
   - id: au3_addition
     label: "Adding numbers to 1000"       # AC9M3N02
+    strand: "Number"
     prereqs: [au3_place_value]
     grounding: {}
     transfer_seeds:
@@ -53,6 +55,7 @@ concepts:
 
   - id: au3_subtraction
     label: "Subtracting numbers to 1000"  # AC9M3N02
+    strand: "Number"
     prereqs: [au3_addition]
     grounding: {}
     transfer_seeds:
@@ -64,6 +67,7 @@ concepts:
 
   - id: au3_mult_facts
     label: "Times tables: 3, 4, 5 and 10"  # AC9M3N03
+    strand: "Number"
     prereqs: [au3_addition]
     grounding: {}
     transfer_seeds:
@@ -75,6 +79,7 @@ concepts:
 
   - id: au3_unit_fractions
     label: "Unit fractions (1/2, 1/3, 1/4, 1/5, 1/10)"  # AC9M3N04
+    strand: "Fractions"
     prereqs: [au3_place_value]
     grounding: {}
     transfer_seeds:
@@ -86,6 +91,7 @@ concepts:
 
   - id: au3_fraction_of_whole
     label: "Fractions as parts of a whole"  # AC9M3N04
+    strand: "Fractions"
     prereqs: [au3_unit_fractions]
     grounding: {}
     transfer_seeds:

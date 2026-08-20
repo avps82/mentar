@@ -33,6 +33,7 @@ concepts:
 
   - id: au7_integers_add_sub
     label: "Adding and subtracting integers"             # AC9M7N01
+    strand: "Number"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -44,6 +45,7 @@ concepts:
 
   - id: au7_order_of_ops_negatives
     label: "Order of operations with negative numbers"   # AC9M7N01
+    strand: "Number"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -55,6 +57,7 @@ concepts:
 
   - id: au7_unlike_denom_fractions
     label: "Adding fractions with different denominators"  # AC9M7N04
+    strand: "Number"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -66,6 +69,7 @@ concepts:
 
   - id: au7_one_step_equations
     label: "Solving one-step equations"                  # AC9M7A02
+    strand: "Algebra"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -77,6 +81,7 @@ concepts:
 
   - id: au7_mult_decimal_by_decimal
     label: "Multiplying decimals"                        # AC9M7N06
+    strand: "Number"
     prereqs: []
     grounding: {}
     transfer_seeds:

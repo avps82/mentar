@@ -32,6 +32,7 @@ concepts:
 
   - id: au6_order_of_operations
     label: "Order of operations"                         # AC9M6N01
+    strand: "Number"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -43,6 +44,7 @@ concepts:
 
   - id: au6_mult_decimals
     label: "Multiplying decimals"                        # AC9M6N02
+    strand: "Fractions and decimals"
     prereqs: [au6_order_of_operations]
     grounding: {}
     transfer_seeds:
@@ -54,6 +56,7 @@ concepts:
 
   - id: au6_div_decimals
     label: "Dividing decimals"                           # AC9M6N02
+    strand: "Fractions and decimals"
     prereqs: [au6_mult_decimals]
     grounding: {}
     transfer_seeds:
@@ -65,6 +68,7 @@ concepts:
 
   - id: au6_area_perimeter
     label: "Area and perimeter of a rectangle"           # AC9M6M01
+    strand: "Measurement"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -76,6 +80,7 @@ concepts:
 
   - id: au6_fraction_decimal_equiv
     label: "Fraction-to-decimal conversion"              # AC9M6N03
+    strand: "Fractions and decimals"
     prereqs: []
     grounding: {}
     transfer_seeds:

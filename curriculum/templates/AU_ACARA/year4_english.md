@@ -33,6 +33,7 @@ concepts:
 
   - id: aue4_suffixes
     label: "Word suffixes (-ful, -less, -ness)"           # AC9E4A alignment
+    strand: "Vocabulary"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -44,6 +45,7 @@ concepts:
 
   - id: aue4_contractions
     label: "Contractions (don't, can't, it's)"             # AC9E4A alignment
+    strand: "Punctuation"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -55,6 +57,7 @@ concepts:
 
   - id: aue4_common_proper_nouns
     label: "Common and proper nouns"                       # AC9E4A alignment
+    strand: "Grammar"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -66,6 +69,7 @@ concepts:
 
   - id: aue4_similes
     label: "Similes (using 'like' or 'as')"                # AC9E4A alignment
+    strand: "Vocabulary"
     prereqs: []
     grounding: {}
     transfer_seeds:

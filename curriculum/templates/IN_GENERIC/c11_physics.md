@@ -68,6 +68,40 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: in_c11_heating_processes
+    label: "Heat transfer processes"
+    strand: "Heating processes"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is an example of heat transfer by RADIATION (no matter needed at all)? A) feeling a campfire's warmth from metres away  B) water circulating as it boils in a pot  C) a metal spoon handle warming in hot soup  D) warm air rising above a heater. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: in_c11_nuclear_radiation
+    label: "Types of nuclear radiation"
+    strand: "Nuclear physics"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these describes ALPHA radiation (helium nuclei — heavy, stopped by paper)? A) the radiation stopped by a few millimetres of aluminium  B) an electromagnetic wave from the nucleus, not a particle  C) fast electrons ejected from a decaying nucleus  D) the most ionising but least penetrating type. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: in_c11_circuit_quantities
+    label: "Voltage, current and resistance"
+    strand: "Electrical circuits"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these describes RESISTANCE (the opposition, measured in ohms)? A) the energy given to each coulomb of charge by the battery  B) what an ammeter placed in the loop reads  C) what makes a narrow wire harder for charge to pass through  D) what a voltmeter placed across a component reads. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+
 ---
 
 # India — Class 11 Physics (senior)

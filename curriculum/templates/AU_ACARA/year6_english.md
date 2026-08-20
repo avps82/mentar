@@ -32,6 +32,7 @@ concepts:
 
   - id: aue6_figurative_language
     label: "Similes and metaphors"                        # AC9E6A alignment
+    strand: "Text analysis"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -43,6 +44,7 @@ concepts:
 
   - id: aue6_synonyms_nuanced
     label: "Synonyms (nuanced vocabulary)"                # AC9E6A alignment
+    strand: "Vocabulary"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -54,6 +56,7 @@ concepts:
 
   - id: aue6_antonyms_nuanced
     label: "Antonyms (nuanced vocabulary)"                # AC9E6A alignment
+    strand: "Vocabulary"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -65,6 +68,7 @@ concepts:
 
   - id: aue6_word_classes_conjunctions_prepositions
     label: "Conjunctions and prepositions"                # AC9E6A alignment
+    strand: "Grammar"
     prereqs: []
     grounding: {}
     transfer_seeds:

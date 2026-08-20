@@ -105,6 +105,84 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: us_g10_atomic_structure
+    label: "Atomic structure"
+    strand: "Atomic structure"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which statement is true of ELECTRONS? A) they occupy shells around the nucleus and set the chemistry  B) positively charged particles in the nucleus  C) their count defines which element the atom is  D) uncharged particles that add mass to the nucleus. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: us_g10_gas_laws
+    label: "Gas laws"
+    strand: "Gas laws"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is what happens when a gas is HEATED at fixed volume? A) a balloon in the sun swelling up  B) it expands, taking up more volume  C) its pressure rises as particles hit the walls harder and more often  D) its pressure rises because the same particles hit the walls more often. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: us_g10_reaction_kinds
+    label: "Kinds of chemical reaction"
+    strand: "Chemical reactions"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a DECOMPOSITION reaction? A) hydrogen peroxide breaking down into water and oxygen  B) methane burning in oxygen to give carbon dioxide and water  C) silver nitrate and salt solution giving a white solid  D) two clear solutions mixed and an insoluble solid forming. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: us_g10_organic_basics
+    label: "Organic families"
+    strand: "Organic basics"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is an ALKENE (contains a C=C double bond)? A) propene  B) propane  C) methane  D) ethanol. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: us_g10_equilibrium
+    label: "Chemical equilibrium"
+    strand: "Equilibrium"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a change that SHIFTS an equilibrium? A) raising the temperature of the mixture  B) the amounts of reactants and products stay constant, though both reactions continue  C) the yield the reaction eventually settles at  D) the forward and reverse reactions run at equal rates. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: us_g10_electrochemistry
+    label: "Electrochemical cells"
+    strand: "Electrochemistry"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is true of an ELECTROLYTIC cell? A) an external power supply forces a non-spontaneous reaction  B) chemical energy is converted into electrical energy  C) oxidation happens at the anode  D) a spontaneous reaction generates an electric current. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: us_g10_organic_synthesis
+    label: "Organic reaction types"
+    strand: "Organic synthesis"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a SUBSTITUTION reaction? A) bromine adding across a C=C double bond, decolourising  B) the reaction that makes an ester plus water  C) one hydrogen on an alkane swapped for a chlorine atom  D) ethene + hydrogen becoming ethane across the double bond. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+
 ---
 
 # the United States — Grade 10 Chemistry (senior)

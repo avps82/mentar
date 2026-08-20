@@ -33,6 +33,7 @@ concepts:
 
   - id: aue3_antonyms
     label: "Antonyms (opposite words)"                    # AC9E3A alignment
+    strand: "Vocabulary"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -44,6 +45,7 @@ concepts:
 
   - id: aue3_prefixes
     label: "Word prefixes (un-, re-, dis-)"                # AC9E3A alignment
+    strand: "Vocabulary"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -55,6 +57,7 @@ concepts:
 
   - id: aue3_homophones
     label: "Homophones (their/there, to/too)"              # AC9E3A alignment
+    strand: "Vocabulary"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -66,6 +69,7 @@ concepts:
 
   - id: aue3_adjectives_comparative
     label: "Comparative and superlative adjectives"        # AC9E3A alignment
+    strand: "Grammar"
     prereqs: []
     grounding: {}
     transfer_seeds:

@@ -68,6 +68,51 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: sg_s3_atomic_structure
+    label: "Atomic structure"
+    strand: "Atomic structure"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which statement is true of PROTONS? A) they occupy shells around the nucleus and set the chemistry  B) the particles lost or gained when ions form  C) uncharged particles that add mass to the nucleus  D) positively charged particles in the nucleus. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: sg_s3_gas_laws
+    label: "Gas laws"
+    strand: "Gas laws"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is what happens when a gas is HEATED at fixed pressure? A) its pressure rises as particles hit the walls harder and more often  B) its pressure rises because the same particles hit the walls more often  C) its volume falls while pressure × volume stays constant  D) a balloon in the sun swelling up. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: sg_s3_reaction_kinds
+    label: "Kinds of chemical reaction"
+    strand: "Chemical reactions"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a PRECIPITATION reaction? A) two clear solutions mixed and an insoluble solid forming  B) hydrogen peroxide breaking down into water and oxygen  C) a fuel reacting with oxygen and releasing heat  D) one compound breaking into simpler substances when heated. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: sg_s3_organic_basics
+    label: "Organic families"
+    strand: "Organic basics"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is an ALKENE (contains a C=C double bond)? A) propane  B) methanol  C) methane  D) ethene. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+
 ---
 
 # Singapore — Secondary 3 Chemistry (senior)

@@ -36,6 +36,7 @@ concepts:
 
   - id: au10_science_genetic_molecules
     label: "DNA, genes and chromosomes"
+    strand: "Genetics"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -47,6 +48,7 @@ concepts:
 
   - id: au10_science_evolution_evidence
     label: "Evidence for evolution"
+    strand: "Evolution"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -58,6 +60,7 @@ concepts:
 
   - id: au10_science_reaction_types
     label: "Types of chemical reaction"
+    strand: "Chemical reactions"
     prereqs: []
     grounding: {}
     transfer_seeds:

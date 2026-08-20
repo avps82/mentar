@@ -32,6 +32,7 @@ concepts:
 
   - id: au10_distributive_word_to_expression
     label: "Distributive-law expressions from words"       # AC9M10A02 alignment
+    strand: "Algebra"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -43,6 +44,7 @@ concepts:
 
   - id: au10_combine_three_expressions
     label: "Combining three algebraic expressions"         # AC9M10A02 alignment
+    strand: "Algebra"
     prereqs: [au10_distributive_word_to_expression]
     grounding: {}
     transfer_seeds:
@@ -54,6 +56,7 @@ concepts:
 
   - id: au10_square_expression
     label: "Squared expressions (area of a square)"        # AC9M10A02 alignment
+    strand: "Algebra"
     prereqs: [au10_combine_three_expressions]
     grounding: {}
     transfer_seeds:
@@ -65,6 +68,7 @@ concepts:
 
   - id: au10_combined_rectangles_perimeter
     label: "Combined perimeter as an algebraic expression"  # AC9M10A02 alignment
+    strand: "Measurement and space"
     prereqs: [au10_square_expression]
     grounding: {}
     transfer_seeds:

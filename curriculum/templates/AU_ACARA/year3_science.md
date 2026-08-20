@@ -35,6 +35,7 @@ concepts:
 
   - id: au3_science_life_cycle
     label: "Life cycle stages"                                       # AC9S3U01 (provisional)
+    strand: "Life cycles"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -46,6 +47,7 @@ concepts:
 
   - id: au3_science_heat_sources
     label: "Sources of heat"                                         # AC9S3U02 (provisional)
+    strand: "Heat"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -57,6 +59,7 @@ concepts:
 
   - id: au3_science_habitats
     label: "Where living things live (habitats)"                     # AC9S3U03 (provisional)
+    strand: "Habitats"
     prereqs: []
     grounding: {}
     transfer_seeds:

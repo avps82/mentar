@@ -36,6 +36,7 @@ concepts:
 
   - id: aue9_modality
     label: "High and low modality"
+    strand: "Critical literacy"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -47,6 +48,7 @@ concepts:
 
   - id: aue9_nominalisation
     label: "Nominalisation (verb or adjective to noun)"
+    strand: "Essay writing"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -58,6 +60,7 @@ concepts:
 
   - id: aue9_rhetorical_devices
     label: "Rhetorical devices in persuasive writing"
+    strand: "Language devices"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -69,6 +72,7 @@ concepts:
 
   - id: aue9_sentence_types
     label: "Simple, compound and complex sentences"
+    strand: "Grammar"
     prereqs: []
     grounding: {}
     transfer_seeds:

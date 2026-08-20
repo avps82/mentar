@@ -61,6 +61,11 @@ from mentar.engine.au_senior_maths_ms_items import (
     AU_SPECIALIST_Y11_GENERATORS,
     AU_SPECIALIST_Y12_GENERATORS,
 )
+from mentar.engine.au_year1_items import (
+    AU_YEAR1_ENGLISH_GENERATORS,
+    AU_YEAR1_MATHS_GENERATORS,
+    AU_YEAR1_SCIENCE_GENERATORS,
+)
 from mentar.engine.generic_english_items import GENERIC_ENGLISH_ITEM_SOURCES
 from mentar.engine.generic_items import GENERIC_ITEM_SOURCES
 from mentar.engine.generic_science_items import GENERIC_SCIENCE_ITEM_SOURCES
@@ -104,6 +109,9 @@ def build_registry(pilot_itembank_path: Path) -> dict[str, dict]:
         "au_science_year10": {"generators": AU_SCIENCE_YEAR10_GENERATORS, "itembank": None},
         # Senior maths, split by course (maintainer 2026-08-20) -- the
         # senior-science precedent applied to maths. See au_senior_maths_items.
+        "au1_maths": {"generators": AU_YEAR1_MATHS_GENERATORS, "itembank": None},
+        "au1_english": {"generators": AU_YEAR1_ENGLISH_GENERATORS, "itembank": None},
+        "au1_science": {"generators": AU_YEAR1_SCIENCE_GENERATORS, "itembank": None},
         "au11_essential": {"generators": AU_ESSENTIAL_Y11_GENERATORS, "itembank": None},
         "au12_essential": {"generators": AU_ESSENTIAL_Y12_GENERATORS, "itembank": None},
         "au11_general": {"generators": AU_GENERAL_Y11_GENERATORS, "itembank": None},

@@ -105,6 +105,84 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: us_g11_heating_processes
+    label: "Heat transfer processes"
+    strand: "Heating processes"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is an example of heat transfer by CONVECTION (carried by a moving fluid)? A) a metal spoon handle warming in hot soup  B) feeling a campfire's warmth from metres away  C) the Sun warming your face across empty space  D) water circulating as it boils in a pot. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: us_g11_nuclear_radiation
+    label: "Types of nuclear radiation"
+    strand: "Nuclear physics"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these describes ALPHA radiation (helium nuclei — heavy, stopped by paper)? A) the radiation stopped by a few millimetres of aluminium  B) fast electrons ejected from a decaying nucleus  C) the most ionising but least penetrating type  D) the radiation that needs thick lead or concrete to block. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: us_g11_circuit_quantities
+    label: "Voltage, current and resistance"
+    strand: "Electrical circuits"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these describes CURRENT (the flow, measured in amperes)? A) what makes a narrow wire harder for charge to pass through  B) what a voltmeter placed across a component reads  C) the rate at which charge passes a point in the wire  D) the ratio of voltage across a component to current through it. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: us_g11_gravity_fields
+    label: "Gravity and orbits"
+    strand: "Gravity"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which statement is true of ORBITAL motion? A) it points toward the mass creating it  B) its strength falls off with the square of the distance  C) the Moon is held in its path by Earth's gravity alone  D) it equals mass times gravitational field strength (W = mg). Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: us_g11_wave_properties
+    label: "Wave properties"
+    strand: "Waves"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a property of WAVELENGTH? A) the maximum displacement from the middle position  B) measured in metres  C) measured in hertz  D) what determines how loud a sound or bright a light is. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: us_g11_quantum_ideas
+    label: "Quantum ideas"
+    strand: "Quantum"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a quantum idea about ATOMS? A) light spreading out after passing a narrow gap  B) electrons occupying only fixed energy levels  C) the photoelectric effect — dim blue light frees electrons where bright red cannot  D) the double-slit experiment producing an interference pattern. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: us_g11_relativity_ideas
+    label: "Special relativity"
+    strand: "Special relativity"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a postulate of special relativity? A) the laws of physics are the same in every non-accelerating frame  B) a fast-moving object is measured shorter along its direction of travel  C) a fast-moving clock ticks more slowly as seen from the ground  D) GPS satellite clocks needing correction to stay accurate. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+
 ---
 
 # the United States — Grade 11 Physics (senior)

@@ -68,6 +68,40 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: sg_s4_dna_protein
+    label: "DNA and protein synthesis"
+    strand: "DNA and protein synthesis"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which statement is true of DNA? A) each three-base codon calls for one amino acid  B) a double helix of paired bases (A-T, G-C)  C) ribosomes read the message three bases at a time  D) it uses U (uracil) where DNA uses T. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: sg_s4_evolution_evidence
+    label: "Evidence for evolution"
+    strand: "Evolution"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is evidence from COMPARATIVE ANATOMY? A) the same bone layout in a whale flipper, bat wing and human arm  B) humans and chimpanzees having nearly identical genes  C) older rock layers holding simpler life forms  D) closely related species sharing more of their genetic code. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: sg_s4_disease_types
+    label: "Disease and defence"
+    strand: "Diseases"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a DEFENCE the body mounts? A) tuberculosis caused by bacteria  B) scurvy from a lack of vitamin C  C) white blood cells engulfing invaders  D) type 2 diabetes. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+
 ---
 
 # Singapore — Secondary 4 Biology (senior)

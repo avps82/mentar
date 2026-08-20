@@ -68,6 +68,51 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: sg_s4_gravity_fields
+    label: "Gravity and orbits"
+    strand: "Gravity"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which statement is true of ORBITAL motion? A) it equals mass times gravitational field strength (W = mg)  B) its strength falls off with the square of the distance  C) it points toward the mass creating it  D) the Moon is held in its path by Earth's gravity alone. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: sg_s4_wave_properties
+    label: "Wave properties"
+    strand: "Waves"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a property of wave AMPLITUDE? A) measured in metres  B) the distance from one crest to the next  C) the maximum displacement from the middle position  D) the number of complete waves passing a point each second. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: sg_s4_quantum_ideas
+    label: "Quantum ideas"
+    strand: "Quantum"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is evidence that light behaves as PARTICLES (photons)? A) light spreading out after passing a narrow gap  B) atoms emitting light at only certain exact colours  C) the double-slit experiment producing an interference pattern  D) the photoelectric effect — dim blue light frees electrons where bright red cannot. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: sg_s4_relativity_ideas
+    label: "Special relativity"
+    strand: "Special relativity"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a postulate of special relativity? A) the laws of physics are the same in every non-accelerating frame  B) GPS satellite clocks needing correction to stay accurate  C) short-lived muons from cosmic rays reaching the ground  D) a fast-moving clock ticks more slowly as seen from the ground. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+
 ---
 
 # Singapore — Secondary 4 Physics (senior)

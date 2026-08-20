@@ -35,6 +35,7 @@ concepts:
 
   - id: au4_science_food_chain_roles
     label: "Producers and consumers"                                 # AC9S4U01 (provisional)
+    strand: "Life in environments"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -46,6 +47,7 @@ concepts:
 
   - id: au4_science_magnetic_materials
     label: "Materials attracted to a magnet"                         # AC9S4U02 (provisional)
+    strand: "Forces and friction"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -57,6 +59,7 @@ concepts:
 
   - id: au4_science_state_change_heat
     label: "Changes of state — adding or removing heat"              # AC9S4U03 (provisional)
+    strand: "Materials and rocks"
     prereqs: []
     grounding: {}
     transfer_seeds:

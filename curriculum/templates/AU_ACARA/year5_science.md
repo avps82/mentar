@@ -35,6 +35,7 @@ concepts:
 
   - id: au5_science_adaptations
     label: "Body features that help survival (adaptations)"          # AC9S5U01 (provisional)
+    strand: "Adaptations"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -46,6 +47,7 @@ concepts:
 
   - id: au5_science_dissolving
     label: "What dissolves in water"                                 # AC9S5U02 (provisional)
+    strand: "Matter"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -57,6 +59,7 @@ concepts:
 
   - id: au5_science_light_materials
     label: "Transparent and opaque materials"                        # AC9S5U03 (provisional)
+    strand: "Light"
     prereqs: []
     grounding: {}
     transfer_seeds:

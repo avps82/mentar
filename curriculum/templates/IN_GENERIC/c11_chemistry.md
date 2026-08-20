@@ -68,6 +68,51 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: in_c11_atomic_structure
+    label: "Atomic structure"
+    strand: "Atomic structure"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which statement is true of NEUTRONS? A) their count defines which element the atom is  B) changing their count makes an isotope of the same element  C) they occupy shells around the nucleus and set the chemistry  D) the particles lost or gained when ions form. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: in_c11_gas_laws
+    label: "Gas laws"
+    strand: "Gas laws"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is what happens when a gas is HEATED at fixed pressure? A) its pressure rises because the same particles hit the walls more often  B) it expands, taking up more volume  C) its volume falls while pressure × volume stays constant  D) its pressure rises as particles hit the walls harder and more often. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: in_c11_reaction_kinds
+    label: "Kinds of chemical reaction"
+    strand: "Chemical reactions"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a COMBUSTION reaction? A) two clear solutions mixed and an insoluble solid forming  B) methane burning in oxygen to give carbon dioxide and water  C) one compound breaking into simpler substances when heated  D) hydrogen peroxide breaking down into water and oxygen. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: in_c11_organic_basics
+    label: "Organic families"
+    strand: "Organic basics"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is an ALCOHOL (contains an -OH group)? A) methane  B) ethene  C) propane  D) methanol. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+
 ---
 
 # India — Class 11 Chemistry (senior)

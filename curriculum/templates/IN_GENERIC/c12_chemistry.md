@@ -68,6 +68,40 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: in_c12_equilibrium
+    label: "Chemical equilibrium"
+    strand: "Equilibrium"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is NOT affected by a catalyst? A) the final equilibrium position of the reaction  B) the amounts of reactants and products stay constant, though both reactions continue  C) the forward and reverse reactions run at equal rates  D) raising the temperature of the mixture. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: in_c12_electrochemistry
+    label: "Electrochemical cells"
+    strand: "Electrochemistry"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is true of an ELECTROLYTIC cell? A) reduction happens at the cathode  B) a spontaneous reaction generates an electric current  C) used to electroplate metals and split molten salts  D) chemical energy is converted into electrical energy. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: in_c12_organic_synthesis
+    label: "Organic reaction types"
+    strand: "Organic synthesis"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is ESTERIFICATION? A) ethene + hydrogen becoming ethane across the double bond  B) an alcohol and a carboxylic acid joining to give a fruity-smelling product  C) one hydrogen on an alkane swapped for a chlorine atom  D) bromine adding across a C=C double bond, decolourising. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+
 ---
 
 # India — Class 12 Chemistry (senior)

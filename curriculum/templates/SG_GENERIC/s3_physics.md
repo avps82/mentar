@@ -68,6 +68,40 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: sg_s3_heating_processes
+    label: "Heat transfer processes"
+    strand: "Heating processes"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is an example of heat transfer by CONDUCTION (through a material, particle to particle)? A) warm air rising above a heater  B) water circulating as it boils in a pot  C) the Sun warming your face across empty space  D) a metal spoon handle warming in hot soup. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: sg_s3_nuclear_radiation
+    label: "Types of nuclear radiation"
+    strand: "Nuclear physics"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these describes ALPHA radiation (helium nuclei — heavy, stopped by paper)? A) the radiation that needs thick lead or concrete to block  B) fast electrons ejected from a decaying nucleus  C) the radiation stopped by a sheet of paper  D) the radiation stopped by a few millimetres of aluminium. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: sg_s3_circuit_quantities
+    label: "Voltage, current and resistance"
+    strand: "Electrical circuits"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these describes CURRENT (the flow, measured in amperes)? A) what makes a narrow wire harder for charge to pass through  B) what an ammeter placed in the loop reads  C) the energy given to each coulomb of charge by the battery  D) what a voltmeter placed across a component reads. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+
 ---
 
 # Singapore — Secondary 3 Physics (senior)

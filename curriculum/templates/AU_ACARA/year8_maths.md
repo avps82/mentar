@@ -31,6 +31,7 @@ concepts:
 
   - id: au8_two_step_equations
     label: "Solving two-step equations"                  # AC9M8A02
+    strand: "Algebra"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -42,6 +43,7 @@ concepts:
 
   - id: au8_squares
     label: "Squaring numbers"                            # AC9M8N01
+    strand: "Number"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -53,6 +55,7 @@ concepts:
 
   - id: au8_negative_multiplication
     label: "Multiplying negative numbers"                # AC9M8N01
+    strand: "Number"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -64,6 +67,7 @@ concepts:
 
   - id: au8_percentage_change
     label: "Percentage increase"                         # AC9M8N03
+    strand: "Number"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -75,6 +79,7 @@ concepts:
 
   - id: au8_div_decimal_by_decimal
     label: "Dividing decimals"                           # AC9M8N05
+    strand: "Number"
     prereqs: []
     grounding: {}
     transfer_seeds:

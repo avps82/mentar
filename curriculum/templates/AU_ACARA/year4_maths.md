@@ -30,6 +30,7 @@ concepts:
 
   - id: au4_place_value
     label: "Place value to 9999"             # AC9M4N01
+    strand: "Number"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -41,6 +42,7 @@ concepts:
 
   - id: au4_mult_facts
     label: "Times tables to 10 × 10"          # AC9M4N05
+    strand: "Number"
     prereqs: [au4_place_value]
     grounding: {}
     transfer_seeds:
@@ -52,6 +54,7 @@ concepts:
 
   - id: au4_division_facts
     label: "Division facts from the times tables"  # AC9M4N05
+    strand: "Number"
     prereqs: [au4_mult_facts]
     grounding: {}
     transfer_seeds:
@@ -63,6 +66,7 @@ concepts:
 
   - id: au4_sharing_division
     label: "Sharing and grouping word problems"    # AC9M4N05
+    strand: "Number"
     prereqs: [au4_division_facts]
     grounding: {}
     transfer_seeds:
@@ -74,6 +78,7 @@ concepts:
 
   - id: au4_equivalent_fractions
     label: "Equivalent fractions"             # AC9M4N03
+    strand: "Fractions and decimals"
     prereqs: [au4_place_value]
     grounding: {}
     transfer_seeds:
@@ -85,6 +90,7 @@ concepts:
 
   - id: au4_adding_fractions
     label: "Adding fractions (same denominator)"   # AC9M4N04
+    strand: "Fractions and decimals"
     prereqs: [au4_equivalent_fractions]
     grounding: {}
     transfer_seeds:

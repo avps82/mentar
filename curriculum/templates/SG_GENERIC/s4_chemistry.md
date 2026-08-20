@@ -68,6 +68,40 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: sg_s4_equilibrium
+    label: "Chemical equilibrium"
+    strand: "Equilibrium"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is NOT affected by a catalyst? A) the forward and reverse reactions run at equal rates  B) adding more of a reactant  C) the amounts of reactants and products stay constant, though both reactions continue  D) the yield the reaction eventually settles at. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: sg_s4_electrochemistry
+    label: "Electrochemical cells"
+    strand: "Electrochemistry"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is true of an ELECTROLYTIC cell? A) chemical energy is converted into electrical energy  B) reduction happens at the cathode  C) an external power supply forces a non-spontaneous reaction  D) oxidation happens at the anode. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: sg_s4_organic_synthesis
+    label: "Organic reaction types"
+    strand: "Organic synthesis"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a SUBSTITUTION reaction? A) the reaction that makes an ester plus water  B) bromine adding across a C=C double bond, decolourising  C) ethene + hydrogen becoming ethane across the double bond  D) one hydrogen on an alkane swapped for a chlorine atom. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+
 ---
 
 # Singapore — Secondary 4 Chemistry (senior)

@@ -52,6 +52,9 @@ Visual scaffold hints for English topics including vocabulary, grammar, and writ
 * [senior_advertising](senior_advertising.md) — Visual scaffold for bandwagon, authority and emotional appeals in advertising
 * [senior_comparative_essays](senior_comparative_essays.md) — Visual scaffold for block versus point-by-point comparison
 * [senior_dramatic_techniques](senior_dramatic_techniques.md) — Visual scaffold for soliloquy, dramatic irony and aside
+* [year1_first_sounds](year1_first_sounds.md) — Visual scaffold for hearing the first sound of a word
+* [year1_letter_case](year1_letter_case.md) — Visual scaffold for matching uppercase and lowercase letters
+* [year1_speaking](year1_speaking.md) — Visual scaffold for taking turns and listening well
 
 <!-- One topic per file: visual_scaffold.first_diagram() shows a scaffold's
      FIRST fenced block to a child, so a file holding two topics hands the

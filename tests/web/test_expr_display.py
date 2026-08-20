@@ -38,7 +38,7 @@ def test_a_quadratic_question_renders_caret_not_python_power():
     question. This is the exact page a Year 11 child sees."""
     app_mod, c = _client()
     c.post("/choose", data={
-        "subject": "au_acara_year11_maths", "topic": "au11_combine_quadratic_linear",
+        "subject": "au_acara_year11_maths_methods", "topic": "au11_combine_quadratic_linear",
     })
     body = c.get("/learn").get_data(as_text=True)
     q = re.search(r'class="question-text">(.*?)</div>', body, re.S).group(1)

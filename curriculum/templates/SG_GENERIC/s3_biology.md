@@ -68,6 +68,40 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: sg_s3_ecosystem_roles
+    label: "Roles in an ecosystem"
+    strand: "Ecosystems"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a DECOMPOSER? A) a kangaroo grazing  B) grass on a plain  C) a gum tree  D) soil bacteria recycling dead leaves. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: sg_s3_adaptation_types
+    label: "Types of adaptation"
+    strand: "Adaptations"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a PHYSIOLOGICAL adaptation (an internal process)? A) kidneys concentrating urine in desert mammals  B) desert animals feeding only at night  C) a cactus storing water in a thick stem  D) a polar bear's layer of blubber. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: sg_s3_transport_systems
+    label: "Transport systems"
+    strand: "Transport systems"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is part of a PLANT's transport system? A) capillaries exchanging materials with tissues  B) arteries carrying blood away from the heart  C) oxygen diffusing across the alveoli into the blood  D) xylem carrying water up from the roots. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+
 ---
 
 # Singapore — Secondary 3 Biology (senior)

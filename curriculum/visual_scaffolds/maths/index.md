@@ -94,6 +94,11 @@ Visual scaffold hints for mathematics topics.
 * [senior_nonlinear_rule](senior_nonlinear_rule.md) — Visual scaffold for evaluating a simple squared rule
 * [senior_moving_average](senior_moving_average.md) — Visual scaffold for a 3-point moving average as a sliding window
 * [senior_max_area](senior_max_area.md) — Visual scaffold for the fixed-perimeter maximum-area design problem
+* [year1_counting](year1_counting.md) — Visual scaffold for one-to-one counting
+* [year1_skip_counting](year1_skip_counting.md) — Visual scaffold for skip counting
+* [year1_comparing](year1_comparing.md) — Visual scaffold for comparing length and weight
+* [year1_shapes](year1_shapes.md) — Visual scaffold for counting the sides of flat shapes
+* [year1_tally](year1_tally.md) — Visual scaffold for comparing counts in a simple tally
 
 <!-- One topic per file: visual_scaffold.first_diagram() shows a scaffold's
      FIRST fenced block to a child, so a file holding two topics hands the

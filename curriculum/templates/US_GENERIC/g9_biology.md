@@ -105,6 +105,73 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: us_g9_ecosystem_roles
+    label: "Roles in an ecosystem"
+    strand: "Ecosystems"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a PRODUCER? A) a shark hunting fish  B) a kangaroo grazing  C) soil bacteria recycling dead leaves  D) a gum tree. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: us_g9_adaptation_types
+    label: "Types of adaptation"
+    strand: "Adaptations"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a BEHAVIOURAL adaptation (something the organism does)? A) kidneys concentrating urine in desert mammals  B) desert animals feeding only at night  C) a snake producing venom  D) a cactus storing water in a thick stem. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: us_g9_transport_systems
+    label: "Transport systems"
+    strand: "Transport systems"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is part of a PLANT's transport system? A) carbon dioxide leaving the blood to be breathed out  B) xylem carrying water up from the roots  C) oxygen diffusing across the alveoli into the blood  D) arteries carrying blood away from the heart. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: us_g9_dna_protein
+    label: "DNA and protein synthesis"
+    strand: "DNA and protein synthesis"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which statement is true of PROTEIN synthesis? A) it uses U (uracil) where DNA uses T  B) ribosomes read the message three bases at a time  C) a single-stranded copy of a gene that travels to the ribosome  D) a double helix of paired bases (A-T, G-C). Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: us_g9_evolution_evidence
+    label: "Evidence for evolution"
+    strand: "Evolution"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is evidence from DNA? A) older rock layers holding simpler life forms  B) transitional forms like feathered dinosaurs  C) closely related species sharing more of their genetic code  D) the same bone layout in a whale flipper, bat wing and human arm. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: us_g9_disease_types
+    label: "Disease and defence"
+    strand: "Diseases"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is an INFECTIOUS disease (caused by a pathogen)? A) white blood cells engulfing invaders  B) scurvy from a lack of vitamin C  C) tuberculosis caused by bacteria  D) type 2 diabetes. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+
 ---
 
 # the United States — Grade 9 Biology (senior)

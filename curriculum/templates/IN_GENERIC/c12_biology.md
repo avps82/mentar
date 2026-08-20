@@ -68,6 +68,40 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: in_c12_dna_protein
+    label: "DNA and protein synthesis"
+    strand: "DNA and protein synthesis"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which statement is true of mRNA? A) a double helix of paired bases (A-T, G-C)  B) ribosomes read the message three bases at a time  C) it uses U (uracil) where DNA uses T  D) it stays in the nucleus while copies of its message leave. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: in_c12_evolution_evidence
+    label: "Evidence for evolution"
+    strand: "Evolution"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is evidence from DNA? A) vestigial organs like the human tailbone  B) transitional forms like feathered dinosaurs  C) older rock layers holding simpler life forms  D) humans and chimpanzees having nearly identical genes. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: in_c12_disease_types
+    label: "Disease and defence"
+    strand: "Diseases"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is an INFECTIOUS disease (caused by a pathogen)? A) antibodies tagging a specific pathogen  B) tuberculosis caused by bacteria  C) white blood cells engulfing invaders  D) scurvy from a lack of vitamin C. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+
 ---
 
 # India — Class 12 Biology (senior)

@@ -66,6 +66,9 @@ Visual scaffold hints for science topics.
 * [senior_climate_systems](senior_climate_systems.md) — Visual scaffold for ocean currents, the carbon cycle and climate proxies
 * [senior_resources](senior_resources.md) — Visual scaffold for renewable vs non-renewable resources
 * [senior_sustainability](senior_sustainability.md) — Visual scaffold for reduce, reuse-recycle and restore
+* [year1_materials](year1_materials.md) — Visual scaffold for wood, metal and glass
+* [year1_day_night](year1_day_night.md) — Visual scaffold for what we see in the day and night sky
+* [year1_push_pull](year1_push_pull.md) — Visual scaffold for push, pull and twist forces
 
 <!-- One topic per file: visual_scaffold.first_diagram() shows a scaffold's
      FIRST fenced block to a child, so a file holding two topics hands the

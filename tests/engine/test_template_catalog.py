@@ -357,6 +357,15 @@ _EXPECTED = {
     "curriculum/templates/AU_ACARA/year12_literature.md": {
         "key": "au_acara_year12_literature", "label": "Literature — Year 12 🇦🇺", "item_source": "au12_literature",
     },
+    "curriculum/templates/AU_ACARA/year1_maths.md": {
+        "key": "au_acara_year1_maths", "label": "Maths — Year 1 🇦🇺", "item_source": "au1_maths",
+    },
+    "curriculum/templates/AU_ACARA/year1_english.md": {
+        "key": "au_acara_year1_english", "label": "English — Year 1 🇦🇺", "item_source": "au1_english",
+    },
+    "curriculum/templates/AU_ACARA/year1_science.md": {
+        "key": "au_acara_year1_science", "label": "Science — Year 1 🇦🇺", "item_source": "au1_science",
+    },
     "curriculum/templates/AU_ACARA/year11_earth_env.md": {
         "key": "au_acara_year11_earth_env", "label": "Earth & Env Science — Year 11 🇦🇺", "item_source": "au11_earth_env",
     },

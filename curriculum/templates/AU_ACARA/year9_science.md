@@ -36,6 +36,7 @@ concepts:
 
   - id: au9_science_atomic_structure
     label: "Inside the atom — protons, neutrons, electrons"
+    strand: "Atoms and radiation"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -47,6 +48,7 @@ concepts:
 
   - id: au9_science_wave_types
     label: "Transverse and longitudinal waves"
+    strand: "Waves"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -58,6 +60,7 @@ concepts:
 
   - id: au9_science_plate_boundaries
     label: "Plate boundaries and the landforms they make"
+    strand: "Plate tectonics"
     prereqs: []
     grounding: {}
     transfer_seeds:

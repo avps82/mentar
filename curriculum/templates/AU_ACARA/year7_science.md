@@ -35,6 +35,7 @@ concepts:
 
   - id: au7_science_body_systems
     label: "Digestive and circulatory systems"                       # AC9S7U01 (provisional)
+    strand: "Body systems"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -46,6 +47,7 @@ concepts:
 
   - id: au7_science_forces
     label: "Contact and non-contact forces"                          # AC9S7U02 (provisional)
+    strand: "Forces"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -57,6 +59,7 @@ concepts:
 
   - id: au7_science_mixtures
     label: "Pure substances and mixtures"                            # AC9S7U03 (provisional)
+    strand: "Mixtures"
     prereqs: []
     grounding: {}
     transfer_seeds:

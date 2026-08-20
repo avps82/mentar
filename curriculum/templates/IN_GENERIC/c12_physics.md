@@ -68,6 +68,51 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: in_c12_gravity_fields
+    label: "Gravity and orbits"
+    strand: "Gravity"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which statement is true of WEIGHT (the force on a mass in a field)? A) it points toward the mass creating it  B) its strength falls off with the square of the distance  C) a satellite is continually falling toward Earth while moving sideways fast enough to keep missing it  D) it equals mass times gravitational field strength (W = mg). Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: in_c12_wave_properties
+    label: "Wave properties"
+    strand: "Waves"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a property of wave AMPLITUDE? A) the distance from one crest to the next  B) measured in metres  C) the number of complete waves passing a point each second  D) the maximum displacement from the middle position. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: in_c12_quantum_ideas
+    label: "Quantum ideas"
+    strand: "Quantum"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is evidence that light behaves as a WAVE? A) the photoelectric effect — dim blue light frees electrons where bright red cannot  B) atoms emitting light at only certain exact colours  C) the double-slit experiment producing an interference pattern  D) electrons occupying only fixed energy levels. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: in_c12_relativity_ideas
+    label: "Special relativity"
+    strand: "Special relativity"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is everyday evidence that relativity is REAL? A) the speed of light in a vacuum is the same for every observer  B) GPS satellite clocks needing correction to stay accurate  C) a fast-moving clock ticks more slowly as seen from the ground  D) a fast-moving object is measured shorter along its direction of travel. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+
 ---
 
 # India — Class 12 Physics (senior)

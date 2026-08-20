@@ -30,6 +30,7 @@ concepts:
 
   - id: aue8_connotation
     label: "Word connotation (positive/negative)"           # AC9E8A alignment
+    strand: "Text analysis"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -41,6 +42,7 @@ concepts:
 
   - id: aue8_clauses
     label: "Main and subordinate clauses"                   # AC9E8A alignment
+    strand: "Grammar"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -52,6 +54,7 @@ concepts:
 
   - id: aue8_adverbial_phrases
     label: "Adverbial phrases"                              # AC9E8A alignment
+    strand: "Grammar"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -63,6 +66,7 @@ concepts:
 
   - id: aue8_onomatopoeia
     label: "Onomatopoeia"                                   # AC9E8A alignment
+    strand: "Creative writing"
     prereqs: []
     grounding: {}
     transfer_seeds:

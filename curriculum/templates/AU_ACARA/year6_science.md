@@ -35,6 +35,7 @@ concepts:
 
   - id: au6_science_vertebrates
     label: "Vertebrates and invertebrates"                           # AC9S6U01 (provisional)
+    strand: "Classification"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -46,6 +47,7 @@ concepts:
 
   - id: au6_science_circuits
     label: "Electrical conductors and insulators"                    # AC9S6U02 (provisional)
+    strand: "Electricity"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -57,6 +59,7 @@ concepts:
 
   - id: au6_science_reversible_change
     label: "Reversible and irreversible changes"                     # AC9S6U03 (provisional)
+    strand: "Chemical changes"
     prereqs: []
     grounding: {}
     transfer_seeds:

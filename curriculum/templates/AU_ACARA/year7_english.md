@@ -30,6 +30,7 @@ concepts:
 
   - id: aue7_idioms
     label: "Idioms"                                        # AC9E7A alignment
+    strand: "Vocabulary"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -41,6 +42,7 @@ concepts:
 
   - id: aue7_formal_informal
     label: "Formal and informal language"                  # AC9E7A alignment
+    strand: "Writing"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -52,6 +54,7 @@ concepts:
 
   - id: aue7_active_passive
     label: "Active and passive voice"                       # AC9E7A alignment
+    strand: "Grammar"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -63,6 +66,7 @@ concepts:
 
   - id: aue7_personification
     label: "Personification"                                # AC9E7A alignment
+    strand: "Literature"
     prereqs: []
     grounding: {}
     transfer_seeds:

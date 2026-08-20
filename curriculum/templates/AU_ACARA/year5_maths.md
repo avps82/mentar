@@ -35,6 +35,7 @@ concepts:
 
   - id: au5_decimal_place_value
     label: "Decimal place value (tenths)"                # AC9M5N01
+    strand: "Fractions and decimals"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -46,6 +47,7 @@ concepts:
 
   - id: au5_add_sub_decimals
     label: "Adding and subtracting decimals"             # AC9M5N02
+    strand: "Fractions and decimals"
     prereqs: [au5_decimal_place_value]
     grounding: {}
     transfer_seeds:
@@ -57,6 +59,7 @@ concepts:
 
   - id: au5_mult_fraction_whole
     label: "Multiplying a fraction by a whole number"    # AC9M5N06
+    strand: "Fractions and decimals"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -68,6 +71,7 @@ concepts:
 
   - id: au5_percentage_of_quantity
     label: "Percentages of a quantity (10%, 25%, 50%, 75%)"  # AC9M5N02
+    strand: "Number"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -79,6 +83,7 @@ concepts:
 
   - id: au5_negative_numbers
     label: "Negative numbers (temperature contexts)"     # AC9M5N01
+    strand: "Number"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -90,6 +95,7 @@ concepts:
 
   - id: au5_division_remainder_as_fraction
     label: "Division with a remainder, as a mixed number"  # AC9M5N05
+    strand: "Number"
     prereqs: [au5_mult_fraction_whole]
     grounding: {}
     transfer_seeds:
@@ -101,6 +107,7 @@ concepts:
 
   - id: au5_division_remainder_as_decimal
     label: "Division with a remainder, as a decimal"     # AC9M5N05
+    strand: "Number"
     prereqs: [au5_add_sub_decimals]
     grounding: {}
     transfer_seeds:

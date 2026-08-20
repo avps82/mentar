@@ -33,6 +33,7 @@ concepts:
 
   - id: au2_science_sound
     label: "How sound is made (vibration)"                          # AC9S2U02
+    strand: "Sound"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -44,6 +45,7 @@ concepts:
 
   - id: au2_science_solar_system
     label: "Earth is a planet in the solar system"                  # AC9S2U01
+    strand: "Space"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -55,6 +57,7 @@ concepts:
 
   - id: au2_science_materials
     label: "Changing a material's shape (bend, twist, stretch)"     # AC9S2U03
+    strand: "Materials"
     prereqs: []
     grounding: {}
     transfer_seeds:

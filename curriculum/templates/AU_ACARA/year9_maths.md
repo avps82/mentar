@@ -38,6 +38,7 @@ concepts:
 
   - id: au9_word_to_expression
     label: "Writing algebraic expressions from words"     # AC9M9A02 alignment
+    strand: "Algebra"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -49,6 +50,7 @@ concepts:
 
   - id: au9_combine_expressions
     label: "Combining algebraic expressions"               # AC9M9A02 alignment
+    strand: "Algebra"
     prereqs: [au9_word_to_expression]
     grounding: {}
     transfer_seeds:
@@ -60,6 +62,7 @@ concepts:
 
   - id: au9_rectangle_perimeter_expression
     label: "Perimeter as an algebraic expression"          # AC9M9A02 alignment
+    strand: "Measurement"
     prereqs: [au9_combine_expressions]
     grounding: {}
     transfer_seeds:
@@ -71,6 +74,7 @@ concepts:
 
   - id: au9_rectangle_area_expression
     label: "Area as an algebraic expression"               # AC9M9A02 alignment
+    strand: "Measurement"
     prereqs: [au9_rectangle_perimeter_expression]
     grounding: {}
     transfer_seeds:

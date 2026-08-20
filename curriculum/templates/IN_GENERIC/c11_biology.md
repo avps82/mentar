@@ -68,6 +68,40 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: in_c11_ecosystem_roles
+    label: "Roles in an ecosystem"
+    strand: "Ecosystems"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a PRODUCER? A) soil bacteria recycling dead leaves  B) fungi breaking down a fallen log  C) phytoplankton in the ocean  D) a shark hunting fish. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: in_c11_adaptation_types
+    label: "Types of adaptation"
+    strand: "Adaptations"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a PHYSIOLOGICAL adaptation (an internal process)? A) a polar bear's layer of blubber  B) kidneys concentrating urine in desert mammals  C) a cactus storing water in a thick stem  D) birds migrating before winter. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: in_c11_transport_systems
+    label: "Transport systems"
+    strand: "Transport systems"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is part of a PLANT's transport system? A) xylem carrying water up from the roots  B) arteries carrying blood away from the heart  C) carbon dioxide leaving the blood to be breathed out  D) capillaries exchanging materials with tissues. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+
 ---
 
 # India — Class 11 Biology (senior)

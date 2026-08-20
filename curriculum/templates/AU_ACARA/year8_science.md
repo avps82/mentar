@@ -35,6 +35,7 @@ concepts:
 
   - id: au8_science_cell_structures
     label: "Plant and animal cell structures"                        # AC9S8U01 (provisional)
+    strand: "Cells"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -46,6 +47,7 @@ concepts:
 
   - id: au8_science_energy_sources
     label: "Renewable and non-renewable energy"                      # AC9S8U02 (provisional)
+    strand: "Energy"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -57,6 +59,7 @@ concepts:
 
   - id: au8_science_elements_compounds
     label: "Elements and compounds"                                  # AC9S8U03 (provisional)
+    strand: "Elements and compounds"
     prereqs: []
     grounding: {}
     transfer_seeds:

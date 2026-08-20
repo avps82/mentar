@@ -32,6 +32,7 @@ concepts:
 
   - id: au2_place_value
     label: "Place value to 99"                          # AC9M2N01
+    strand: "Number"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -43,6 +44,7 @@ concepts:
 
   - id: au2_addition
     label: "Adding numbers to 100"                     # AC9M2N02
+    strand: "Number"
     prereqs: [au2_place_value]
     grounding: {}
     transfer_seeds:
@@ -54,6 +56,7 @@ concepts:
 
   - id: au2_subtraction
     label: "Subtracting numbers to 100"                # AC9M2N02
+    strand: "Number"
     prereqs: [au2_addition]
     grounding: {}
     transfer_seeds:
@@ -65,6 +68,7 @@ concepts:
 
   - id: au2_mult_facts_2_5_10
     label: "Times tables: 2, 5 and 10"                 # AC9M2N03
+    strand: "Number"
     prereqs: [au2_addition]
     grounding: {}
     transfer_seeds:
@@ -76,6 +80,7 @@ concepts:
 
   - id: au2_halves_quarters
     label: "Halves and quarters"                       # AC9M2N04
+    strand: "Fractions"
     prereqs: [au2_place_value]
     grounding: {}
     transfer_seeds:

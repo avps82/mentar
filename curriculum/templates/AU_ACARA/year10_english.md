@@ -36,6 +36,7 @@ concepts:
 
   - id: aue10_tone
     label: "Identifying tone"
+    strand: "Text analysis"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -47,6 +48,7 @@ concepts:
 
   - id: aue10_irony_satire
     label: "Irony and satire"
+    strand: "Aesthetic writing"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -58,6 +60,7 @@ concepts:
 
   - id: aue10_evaluative_language
     label: "Evaluative and neutral language"
+    strand: "Media analysis"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -69,6 +72,7 @@ concepts:
 
   - id: aue10_cohesion
     label: "Cohesive devices between sentences"
+    strand: "Persuasive and analytical writing"
     prereqs: []
     grounding: {}
     transfer_seeds:

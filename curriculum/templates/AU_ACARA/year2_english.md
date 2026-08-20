@@ -34,6 +34,7 @@ concepts:
 
   - id: aue2_word_classes
     label: "Naming, doing and describing words"          # AC9E2A alignment
+    strand: "Vocabulary"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -45,6 +46,7 @@ concepts:
 
   - id: aue2_synonyms
     label: "Simple synonyms"                              # AC9E2A alignment
+    strand: "Vocabulary"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -56,6 +58,7 @@ concepts:
 
   - id: aue2_plurals
     label: "Plural forms"                                 # AC9E2A alignment
+    strand: "Phonics and spelling"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -67,6 +70,7 @@ concepts:
 
   - id: aue2_rhyming
     label: "Rhyming words"                                # AC9E2A alignment
+    strand: "Reading"
     prereqs: []
     grounding: {}
     transfer_seeds:

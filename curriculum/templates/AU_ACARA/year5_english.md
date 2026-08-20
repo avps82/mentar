@@ -31,6 +31,7 @@ concepts:
 
   - id: aue5_synonyms_advanced
     label: "Synonyms (richer vocabulary)"                 # AC9E5A alignment
+    strand: "Vocabulary"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -42,6 +43,7 @@ concepts:
 
   - id: aue5_antonyms_advanced
     label: "Antonyms (richer vocabulary)"                 # AC9E5A alignment
+    strand: "Vocabulary"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -53,6 +55,7 @@ concepts:
 
   - id: aue5_word_classes_advanced
     label: "Adverbs, pronouns and verbs"                  # AC9E5A alignment
+    strand: "Grammar"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -64,6 +67,7 @@ concepts:
 
   - id: aue5_compound_words
     label: "Compound words"                               # AC9E5A alignment
+    strand: "Spelling"
     prereqs: []
     grounding: {}
     transfer_seeds:
