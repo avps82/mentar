@@ -1,0 +1,370 @@
+{
+ "_meta": "Maintainer-supplied AU curriculum reference (2026-08-20) — the expected strand structure per year. Source: maintainer research compiled from public curriculum summaries; used by tools/audit_curriculum_coverage.py to report gaps honestly. Strand names are the audit vocabulary, not a licence claim. Second pass 2026-08-20: full senior structure (4 maths courses, 4 science subjects incl. Earth & Environmental, 3 English courses).",
+ "mathematics": {
+  "Year 1": [
+   "Number",
+   "Algebra",
+   "Measurement",
+   "Space",
+   "Statistics"
+  ],
+  "Year 2": [
+   "Number",
+   "Fractions",
+   "Money and time",
+   "Measurement",
+   "Space and location"
+  ],
+  "Year 3": [
+   "Number",
+   "Algebra",
+   "Fractions",
+   "Measurement and time",
+   "Space",
+   "Statistics"
+  ],
+  "Year 4": [
+   "Number",
+   "Fractions and decimals",
+   "Money",
+   "Measurement",
+   "Space",
+   "Statistics and probability"
+  ],
+  "Year 5": [
+   "Number",
+   "Fractions and decimals",
+   "Measurement",
+   "Space",
+   "Statistics"
+  ],
+  "Year 6": [
+   "Number",
+   "Fractions and decimals",
+   "Algebra",
+   "Measurement",
+   "Space",
+   "Statistics and probability"
+  ],
+  "Year 7": [
+   "Number",
+   "Algebra",
+   "Measurement",
+   "Space",
+   "Statistics and probability"
+  ],
+  "Year 8": [
+   "Number",
+   "Algebra",
+   "Measurement",
+   "Space",
+   "Statistics"
+  ],
+  "Year 9": [
+   "Number and finance",
+   "Algebra",
+   "Measurement",
+   "Space",
+   "Statistics"
+  ],
+  "Year 10": [
+   "Number and finance",
+   "Algebra",
+   "Measurement and space",
+   "Probability",
+   "Statistics"
+  ],
+  "Year 11 (Essential)": [
+   "Consumer arithmetic",
+   "Algebraic formulas",
+   "Matrices",
+   "Measurement",
+   "Univariate data"
+  ],
+  "Year 11 (General)": [
+   "Consumer arithmetic",
+   "Linear and non-linear relationships",
+   "Sequences",
+   "Matrices",
+   "Trigonometry"
+  ],
+  "Year 11 (Methods)": [
+   "Functions and graphs",
+   "Trigonometric functions",
+   "Differential calculus",
+   "Discrete probability"
+  ],
+  "Year 11 (Specialist)": [
+   "Combinatorics",
+   "Vectors",
+   "Complex numbers",
+   "Circle geometry",
+   "Proof"
+  ],
+  "Year 12 (Essential)": [
+   "Financial mathematics",
+   "Bivariate data",
+   "Networks",
+   "Spherical geometry"
+  ],
+  "Year 12 (General)": [
+   "Bivariate data",
+   "Time series",
+   "Loans and annuities",
+   "Networks and decision",
+   "Design problems"
+  ],
+  "Year 12 (Methods)": [
+   "Further differentiation",
+   "Integral calculus",
+   "Random variables",
+   "Statistical inference"
+  ],
+  "Year 12 (Specialist)": [
+   "Vectors in 3D",
+   "Complex numbers polar",
+   "Advanced calculus",
+   "Mechanics",
+   "Sampling distributions"
+  ]
+ },
+ "science": {
+  "Year 1": [
+   "Living things",
+   "Environments",
+   "Materials",
+   "Earth and sky",
+   "Forces"
+  ],
+  "Year 2": [
+   "Life cycles",
+   "Resources",
+   "Materials",
+   "Forces and motion"
+  ],
+  "Year 3": [
+   "Grouping living things",
+   "Grouping materials",
+   "Earth's surface",
+   "Heat"
+  ],
+  "Year 4": [
+   "Life in environments",
+   "Materials and rocks",
+   "Earth and space",
+   "Forces and friction"
+  ],
+  "Year 5": [
+   "Adaptations",
+   "Matter",
+   "Earth's place",
+   "Light"
+  ],
+  "Year 6": [
+   "Extreme environments",
+   "Chemical changes",
+   "Geological changes",
+   "Electricity"
+  ],
+  "Year 7": [
+   "Classification",
+   "Ecosystems",
+   "Mixtures",
+   "Earth Moon and Sun",
+   "Water and resources",
+   "Forces"
+  ],
+  "Year 8": [
+   "Cells",
+   "Body systems",
+   "Elements and compounds",
+   "Chemical reactions",
+   "Rock cycle",
+   "Energy"
+  ],
+  "Year 9": [
+   "Body control",
+   "Ecosystems",
+   "Atoms and radiation",
+   "Chemical reactions",
+   "Plate tectonics",
+   "Waves"
+  ],
+  "Year 10": [
+   "Genetics",
+   "Evolution",
+   "Periodic table",
+   "Chemical bonding",
+   "Global systems",
+   "Universe",
+   "Motion"
+  ]
+ },
+ "english": {
+  "Year 1": [
+   "Phonics",
+   "Reading",
+   "Writing",
+   "Handwriting",
+   "Speaking"
+  ],
+  "Year 2": [
+   "Phonics and spelling",
+   "Reading",
+   "Writing",
+   "Vocabulary",
+   "Punctuation"
+  ],
+  "Year 3": [
+   "Reading fluency",
+   "Comprehension",
+   "Text structure",
+   "Grammar",
+   "Punctuation"
+  ],
+  "Year 4": [
+   "Comprehension",
+   "Writing",
+   "Visual literacy",
+   "Vocabulary",
+   "Speaking and listening"
+  ],
+  "Year 5": [
+   "Reading",
+   "Persuasive writing",
+   "Grammar",
+   "Punctuation",
+   "Spelling"
+  ],
+  "Year 6": [
+   "Text analysis",
+   "Writing style",
+   "Media literacy",
+   "Editing",
+   "Speaking and listening"
+  ],
+  "Year 7": [
+   "Literature",
+   "Writing",
+   "Grammar",
+   "Punctuation",
+   "Vocabulary"
+  ],
+  "Year 8": [
+   "Text analysis",
+   "Persuasive writing",
+   "Creative writing",
+   "Digital literacy",
+   "Speaking"
+  ],
+  "Year 9": [
+   "Critical literacy",
+   "Comparative reading",
+   "Essay writing",
+   "Poetry and Shakespeare",
+   "Language devices"
+  ],
+  "Year 10": [
+   "Text analysis",
+   "Persuasive and analytical writing",
+   "Aesthetic writing",
+   "Media analysis",
+   "Reviewing and refining"
+  ],
+  "Year 11 (Essential English)": [
+   "Workplace texts",
+   "Advertising and media",
+   "Instructional texts"
+  ],
+  "Year 12 (Essential English)": [
+   "News media perspectives",
+   "Persuasive arguments",
+   "Professional communication"
+  ],
+  "Year 11 (English)": [
+   "Perspectives and values",
+   "Text structures",
+   "Analytical essays",
+   "Imaginative texts"
+  ],
+  "Year 12 (English)": [
+   "Comparative contexts",
+   "Media bias",
+   "Comparative essays",
+   "Persuasive essays"
+  ],
+  "Year 11 (Literature)": [
+   "Canonical literature",
+   "Poetry",
+   "Genre over time"
+  ],
+  "Year 12 (Literature)": [
+   "Literary theories",
+   "Complex novels and plays",
+   "Critical interpretation"
+  ]
+ },
+ "physics": {
+  "Year 11": [
+   "Heating processes",
+   "Nuclear physics",
+   "Electrical circuits",
+   "Linear motion",
+   "Forces"
+  ],
+  "Year 12": [
+   "Gravity",
+   "Electromagnetism",
+   "Waves",
+   "Quantum",
+   "Special relativity"
+  ]
+ },
+ "chemistry": {
+  "Year 11": [
+   "Atomic structure",
+   "Periodic trends",
+   "Bonding",
+   "Gas laws",
+   "Chemical reactions",
+   "Stoichiometry",
+   "Organic basics"
+  ],
+  "Year 12": [
+   "Equilibrium",
+   "Acids and bases",
+   "Redox",
+   "Electrochemistry",
+   "Organic synthesis"
+  ]
+ },
+ "biology": {
+  "Year 11": [
+   "Cells",
+   "Ecosystems",
+   "Adaptations",
+   "Transport systems"
+  ],
+  "Year 12": [
+   "DNA and protein synthesis",
+   "Inheritance",
+   "Evolution",
+   "Diseases"
+  ]
+ },
+ "earth_environmental": {
+  "Year 11": [
+   "Earth structure",
+   "Minerals",
+   "Rock cycle",
+   "Atmosphere",
+   "Human impact"
+  ],
+  "Year 12": [
+   "Hazards",
+   "Climate systems",
+   "Resource management",
+   "Sustainability"
+  ]
+ }
+}

@@ -18,8 +18,8 @@ mode for every part.. this is common for all countries."*
 
 > **STATUS 2026-08-15 — this problem is largely solved; the diagnosis below is kept as the
 > original statement of it.** Phases 0/1/3/3a shipped, and English cards followed on
-> 2026-08-15. Measured with `tools/audit_explain_paths.py` over the current corpus (561 nodes,
-> 142 templates): **72 always show a step grid, 423 always show a computed method card, 66 are
+> 2026-08-15. Measured with `tools/audit_explain_paths.py` over the corpus as of 2026-08-15 (561 nodes,
+> 142 templates as of 2026-08-15): **72 always show a step grid, 423 always show a computed method card, 66 are
 > still LLM prose only** — and those 66 are the quadratic-algebra generators deferred on
 > 2026-08-13, replicated across the senior packs. The numbers in the diagnosis below are the
 > corpus as it stood when this design was written, not today's.
