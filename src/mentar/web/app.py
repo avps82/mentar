@@ -887,12 +887,16 @@ def topics():
     pct = {}
     if store and db_id is not None:
         pct = {r["skill_id"]: int(r["p_mastery"] * 100) for r in store.all_skill_states(db_id)}
-    topic_rows = [
-        {"id": nid, "label": _display_name(nid), "pct": pct.get(nid)}
-        for nid in _SUBJECT_CURRICULA[subject]
-    ]
+    # Group by strand (the sub-topic split the maintainer asked for,
+    # 2026-08-20), preserving first-appearance order. Templates without
+    # strands (pilot/practice) yield one anonymous group = the old flat list.
+    groups: dict[str | None, list[dict]] = {}
+    for nid, node in _SUBJECT_CURRICULA[subject].items():
+        row = {"id": nid, "label": _display_name(nid), "pct": pct.get(nid)}
+        groups.setdefault(node.get("strand"), []).append(row)
     return render_template(
-        "topics.html", subject=subject, s=SUBJECTS[subject], topics=topic_rows,
+        "topics.html", subject=subject, s=SUBJECTS[subject],
+        topic_groups=list(groups.items()),
     )
 
 

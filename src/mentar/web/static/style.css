@@ -671,6 +671,11 @@ th { background: var(--bg); }
 /* /topics list: generous tap targets (young children on tablets). */
 .topic-list { max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; gap: 8px; }
 .topic-list > form { display: flex; }
+/* Strand headings split the topic list into the curriculum's own sub-topics. */
+.strand-heading {
+  margin: 10px 0 0; font-size: 0.85rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted);
+}
 .topic-row {
   flex: 1; display: flex; justify-content: space-between; align-items: center;
   gap: 12px; padding: 14px 16px; min-height: 48px;

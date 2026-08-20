@@ -105,6 +105,10 @@ def load_curriculum(path: Path) -> dict:
             # a human; every human-facing surface renders display_name,
             # sourced once here, never re-derived in a template.
             "label": node.get("label", nid),
+            # Strand = the curriculum's own topic grouping (display + audit
+            # metadata; the engine stays per-concept). None for templates that
+            # predate strands — the topics page falls back to a flat list.
+            "strand": node.get("strand"),
             "answer_type": verifier.get("answer_type", "free_text"),
             "checker": verifier.get("checker", "none"),
             "expected_answer": seeds[0] if seeds else "",

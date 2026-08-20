@@ -140,7 +140,7 @@ concepts:
     bkt_priors: { guess: 0.2, slip: 0.1, learns: 0.2, forgets: 0 }
   - id: au12_revenue_expression
     label: "Revenue as a quadratic expression"              # AC9M12A02 alignment
-    strand: \"Algebra foundations\"
+    strand: "Algebra foundations"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -151,7 +151,7 @@ concepts:
     bkt_priors: { guess: 0.05, slip: 0.1, learns: 0.2, forgets: 0 }
   - id: au12_combine_two_quadratics
     label: "Combining two quadratic expressions"            # AC9M12A02 alignment
-    strand: \"Algebra foundations\"
+    strand: "Algebra foundations"
     prereqs: [au12_revenue_expression]
     grounding: {}
     transfer_seeds:
@@ -162,7 +162,7 @@ concepts:
     bkt_priors: { guess: 0.05, slip: 0.1, learns: 0.2, forgets: 0 }
   - id: au12_compound_shape_area
     label: "Compound-shape area as an algebraic expression"  # AC9M12A02 alignment
-    strand: \"Algebra foundations\"
+    strand: "Algebra foundations"
     prereqs: [au12_combine_two_quadratics]
     grounding: {}
     transfer_seeds:

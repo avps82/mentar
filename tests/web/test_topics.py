@@ -186,3 +186,29 @@ def test_guided_subject_card_tap_after_done_also_starts_fresh():
     c.post("/choose", data={"subject": "fractions"})
     assert c.get("/learn").status_code == 200, "card tap after done still bounced to /done"
     assert app_mod._controllers[_uuid(c)] is not ctrl
+
+
+def test_topics_page_groups_by_strand_with_flat_fallback():
+    """The strand grouping (maintainer, 2026-08-20: "split the topics and
+    subtopics"): a strand-tagged subject renders its curriculum's own strand
+    headings above the topic rows, in template order; a template WITHOUT
+    strands (the pilot) still renders the old flat list — zero headings, all
+    rows. Driven through the real request path."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+    import re
+
+    app_mod, c = _client()   # all packs on: AU year 3 maths is available
+    body = c.get("/topics?subject=au_acara_year3_maths").get_data(as_text=True)
+    headings = re.findall(r'strand-heading">([^<]+)<', body)
+    assert headings[:2] == ["Number", "Fractions"], headings
+    assert set(headings) >= {"Algebra", "Space", "Statistics"}, headings
+    # every node still gets a row — grouping must never drop topics
+    assert body.count('name="topic"') == len(app_mod._SUBJECT_CURRICULA["au_acara_year3_maths"])
+
+    flat = c.get("/topics?subject=fractions").get_data(as_text=True)
+    assert "strand-heading" not in flat
+    assert flat.count('name="topic"') == len(_pilot_nodes(app_mod))

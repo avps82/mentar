@@ -140,7 +140,7 @@ concepts:
     bkt_priors: { guess: 0.05, slip: 0.1, learns: 0.2, forgets: 0 }
   - id: au11_binomial_product_area
     label: "Area as an algebraic expression (binomial sides)"  # AC9M11A02 alignment
-    strand: \"Algebra foundations\"
+    strand: "Algebra foundations"
     prereqs: []
     grounding: {}
     transfer_seeds:
@@ -151,7 +151,7 @@ concepts:
     bkt_priors: { guess: 0.05, slip: 0.1, learns: 0.2, forgets: 0 }
   - id: au11_word_to_quadratic_expression
     label: "Writing quadratic expressions from words"       # AC9M11A02 alignment
-    strand: \"Algebra foundations\"
+    strand: "Algebra foundations"
     prereqs: [au11_binomial_product_area]
     grounding: {}
     transfer_seeds:
@@ -162,7 +162,7 @@ concepts:
     bkt_priors: { guess: 0.05, slip: 0.1, learns: 0.2, forgets: 0 }
   - id: au11_combine_quadratic_linear
     label: "Combining a quadratic and a linear expression"  # AC9M11A02 alignment
-    strand: \"Algebra foundations\"
+    strand: "Algebra foundations"
     prereqs: [au11_word_to_quadratic_expression]
     grounding: {}
     transfer_seeds:
@@ -173,7 +173,7 @@ concepts:
     bkt_priors: { guess: 0.05, slip: 0.1, learns: 0.2, forgets: 0 }
   - id: au11_difference_of_expressions
     label: "Difference of two related expressions"          # AC9M11A02 alignment
-    strand: \"Algebra foundations\"
+    strand: "Algebra foundations"
     prereqs: [au11_combine_quadratic_linear]
     grounding: {}
     transfer_seeds:
