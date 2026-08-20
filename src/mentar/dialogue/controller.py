@@ -185,6 +185,14 @@ _LATEX_SUBS = [
 ]
 
 
+# Paired inline-math delimiters: "$2 × 10 × 3 = 60$". Only strips the pair when
+# the CONTENT carries a maths operator, so money survives: "$130 increases by
+# 20%" has no closing pair, and "between $5 and $8" pairs around "5 and ",
+# which has no operator (maintainer, 2026-08-20: the stray "$" read as a
+# broken unit symbol next to "60 Joules").
+_DOLLAR_MATH_RE = re.compile(r"\$([^$\n]{1,80}?)\$")
+
+
 def _normalise_llm_math(text: str) -> str:
     """Replace the LaTeX tokens models emit ("force $\\rightarrow$ a VECTOR")
     with the plain characters a child can read. Substring replacement on a
@@ -192,7 +200,10 @@ def _normalise_llm_math(text: str) -> str:
     for src, dst in _LATEX_SUBS:
         if src in text:
             text = text.replace(src, dst)
-    return text
+    def _unwrap(m):
+        inner = m.group(1)
+        return inner if re.search(r"[=×÷+^/−]|\d\s*-\s*\d", inner) else m.group(0)
+    return _DOLLAR_MATH_RE.sub(_unwrap, text)
 
 
 # An explicit reveal formula: "Final Answer: A", "the answer is C", "Answer - 42".

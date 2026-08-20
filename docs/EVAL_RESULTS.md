@@ -11,7 +11,7 @@ see-also: docs/MODEL.md (roster + run plan + pick), docs/TESTS.md (T1.x test spe
 
 > ⚠️ **A18 INVALIDATION (2026-08-20): the safety-eval claims below were run against
 > OLDER prompt text.** Six help templates changed body-hash on 2026-08-20
-> (`help_concrete` `618b40f8d01b`→`21b684965869`, `help_visual`, `help_analogy`,
+> (`help_concrete` `618b40f8d01b`→`bc8b3cae48f3` after a same-day addendum — unit symbols mandatory, no $-wrapped/LaTeX maths, no bracket-row pseudo-diagrams; `help_visual`, `help_analogy`,
 > `help_formal`, `help_story`, `help_elaborate` — maintainer-approved batch: warmth
 > capped at one sentence with no repetition, and a ban on invented option lists /
 > announcing the correct option). Per AGENTS.md A18, the T1.5 adversarial suite must be

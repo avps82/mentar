@@ -582,3 +582,25 @@ def test_sibling_choices_must_be_disjoint_from_the_live_items():
     assert ctrl._worked_example_for("bond") == "", (
         "an overlapping-choices sibling was served as the worked example"
     )
+
+
+def test_dollar_math_delimiters_are_stripped_but_money_survives():
+    """Maintainer, 2026-08-20 (screenshot): "$2 × 10 × 3 = 60$" reached a child
+    -- LaTeX inline-math delimiters left behind after the \\times fix, reading
+    as a broken currency symbol beside "60 Joules". The pair is unwrapped only
+    when its CONTENT carries a maths operator, so money is untouched."""
+    class _Llm:
+        def __call__(self, messages):
+            return ("Use the formula. $2 × 10 × 3 = 60$ so we get 60 J. "
+                    "A snack costs $5 and a book costs $8 at the shop.")
+
+    ctrl = SessionController(
+        llm_call=_Llm(), prompt_dir=PROMPTS, grounding_cfg={},
+        curriculum=_PERCENTAGE_CURRICULUM, db_store=_FakeStore(), learner_id="L",
+        item_bank=_percentage_bank(), rng_seed=7,
+    )
+    ctrl.step(None)
+    r = ctrl.step("?")
+    assert "$2" not in r.text and "60$" not in r.text, r.text
+    assert "2 × 10 × 3 = 60" in r.text
+    assert "$5" in r.text and "$8" in r.text, "money must never be unwrapped"
