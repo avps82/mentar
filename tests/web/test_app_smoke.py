@@ -448,7 +448,10 @@ def test_feedback_block_has_read_aloud_button():
     frag = c.post("/answer", data={"answer": "help"},
                   headers={"HX-Request": "true"}).get_data(as_text=True)
 
-    fb_block = frag.split('<div class="feedback')[1].split('<div class="question')[0]
+    # 2026-08-20: the bubble moved BELOW the question/answer form (maintainer
+    # layout change), so it runs to the end of the fragment rather than up to
+    # the question div.
+    fb_block = frag.split('<div class="feedback')[1]
     assert 'class="tts-btn"' in fb_block                 # the explanation's own 🔊
     assert 'class="msg-text"' in fb_block                # tts.js reads this wrapper
     # The question block keeps its own button too (two independent buttons).
@@ -1658,3 +1661,25 @@ if __name__ == "__main__":
     print("  ✓ test_curriculum_pack_uninstall_removes_directory")
     test_curriculum_pack_uninstall_rejects_not_installed()
     print("  ✓ test_curriculum_pack_uninstall_rejects_not_installed")
+
+
+def test_explanation_renders_below_the_question_and_answer_box():
+    """2026-08-20 (maintainer): the explanation bubble moved BELOW the question
+    and answer form -- the child reads and answers first; the explanation and
+    worked card sit underneath, directly above the quick-action buttons (which
+    live outside the swap target, so fragment order IS page order)."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+
+    app_mod, c = _client()
+    c.post("/choose", data={"subject": "fractions"})
+    c.get("/learn")
+    frag = c.post("/answer", data={"answer": "help"},
+                  headers={"HX-Request": "true"}).get_data(as_text=True)
+    q = frag.find('class="question')
+    a = frag.find('class="answer-form')
+    f = frag.find('<div class="feedback')
+    assert -1 < q < a < f, f"order broke: question@{q} answer@{a} feedback@{f}"

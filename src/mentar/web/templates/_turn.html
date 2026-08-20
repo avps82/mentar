@@ -17,49 +17,6 @@
   {% if session_progress %}<span class="session-progress">· Question {{ session_progress.n }} of {{ session_progress.total }}</span>{% endif %}
 </div>
 {% endif %}
-{% if message_html or message_tail_html %}<div class="feedback{% if is_first_turn %} first-turn{% endif %}">
-  {# R12.1: explanations must be read-aloud-able too, not just the question. #}
-  <button class="tts-btn" type="button" aria-label="Read this aloud" title="Read aloud">🔊</button>
-  {# class deliberately NOT "feedback-*": tests split fragments on '<div class="feedback'. #}
-  {% if message_html %}<div class="msg-text">{{ message_html | safe }}</div>{% endif %}
-  {# The worked example belongs INSIDE this bubble (maintainer 2026-08-15: "the
-     explain more should be inside the top card box and have an audio in it").
-     It used to render as a separate box BELOW, so two consecutive Explain-more
-     presses produced two unrelated-looking panels for the same explanation, and
-     the card had no read-aloud button at all -- the one thing on screen a child
-     who struggles to read most needs spoken. The bubble's 🔊 above now covers
-     both, because tts.js reads .msg-text and .steps-pre inside .feedback.
-     Still bypasses _render_markdown_lite: it is computed, never model output. #}
-  {% if steps_lines %}{% include "_arithmetic_steps.html" %}{% endif %}
-  {# The closing "Now you try it! ✏️" sits BELOW the card (maintainer 2026-08-16):
-     the card is how it's solved, so the call to action has to follow it, not come
-     before it. Split in _split_message_around_card on the RECHECK_PROMPT constant,
-     so a reword cannot silently reorder this. Same .msg-text styling; .msg-tail
-     only forces its own row in the flex bubble. #}
-  {% if message_tail_html %}<div class="msg-text msg-tail">{{ message_tail_html | safe }}</div>{% endif %}
-  {% if can_elaborate %}
-  {# R12.5: unpack the same explanation further — posts the deterministic
-     ELABORATE word the FSM understands; capped server-side (ELABORATE_CAP).
-     R12-fix2: the word rides a HIDDEN input (the Help/Stop quick-action
-     pattern), NOT the submit button's name/value — a button's value reaches
-     the server only where event.submitter is supported, and when it was
-     dropped the POST arrived empty and the child just got the "give it a
-     try" nudge (the reported "Explain more does nothing" bug). #}
-  <form method="POST" action="/answer" class="elaborate-form"
-        hx-post="/answer" hx-target="#turn-area" hx-swap="innerHTML" hx-indicator="#thinking, find button" hx-disabled-elt="find button">
-    <input type="hidden" name="answer" value="more">
-    {# "Show me the working", not "Explain more" (maintainer, 2026-08-19):
-       every node now answers this press with a WORKED SOLUTION ending in
-       "Answer: ..." -- a card or a step grid -- so "Explain more" promised
-       another explanation and under-described what actually appears. UI label
-       only: the hidden answer value ("more") and the FSM are unchanged. #}
-    <button class="btn" type="submit">✏️ Show me the working</button>
-  </form>
-  {% endif %}
-</div>{% endif %}
-{# A card with no accompanying message (rare, but a 4-tuple generator path can
-   do it) still has to render somewhere -- outside the bubble that isn't there. #}
-{% if steps_lines and not message_html %}{% include "_arithmetic_steps.html" %}{% endif %}
 <div class="question{% if is_first_turn and not message_html %} first-turn{% endif %}">
   <button class="tts-btn" type="button" aria-label="Read the question aloud" title="Read aloud">🔊</button>
   <div class="question-text">{{ question_html | safe }}</div>
@@ -107,3 +64,52 @@
   <button class="btn" type="submit">Send ✓</button>
   {% endif %}
 </form>
+{# 2026-08-20 (maintainer): the explanation moved BELOW the question + answer
+   box -- the child reads the question and answers first; the explanation and
+   worked card sit underneath, above the 💡/🛑 quick-action buttons (which live
+   outside this swap target in learner.html, so ending the fragment with the
+   bubble puts it exactly above them). Bubble-internal order (lead-in -> card ->
+   "Now you try it" -> Show-me-the-working) is unchanged and browser-tested. #}
+{% if message_html or message_tail_html %}<div class="feedback{% if is_first_turn %} first-turn{% endif %}">
+  {# R12.1: explanations must be read-aloud-able too, not just the question. #}
+  <button class="tts-btn" type="button" aria-label="Read this aloud" title="Read aloud">🔊</button>
+  {# class deliberately NOT "feedback-*": tests split fragments on '<div class="feedback'. #}
+  {% if message_html %}<div class="msg-text">{{ message_html | safe }}</div>{% endif %}
+  {# The worked example belongs INSIDE this bubble (maintainer 2026-08-15: "the
+     explain more should be inside the top card box and have an audio in it").
+     It used to render as a separate box BELOW, so two consecutive Explain-more
+     presses produced two unrelated-looking panels for the same explanation, and
+     the card had no read-aloud button at all -- the one thing on screen a child
+     who struggles to read most needs spoken. The bubble's 🔊 above now covers
+     both, because tts.js reads .msg-text and .steps-pre inside .feedback.
+     Still bypasses _render_markdown_lite: it is computed, never model output. #}
+  {% if steps_lines %}{% include "_arithmetic_steps.html" %}{% endif %}
+  {# The closing "Now you try it! ✏️" sits BELOW the card (maintainer 2026-08-16):
+     the card is how it's solved, so the call to action has to follow it, not come
+     before it. Split in _split_message_around_card on the RECHECK_PROMPT constant,
+     so a reword cannot silently reorder this. Same .msg-text styling; .msg-tail
+     only forces its own row in the flex bubble. #}
+  {% if message_tail_html %}<div class="msg-text msg-tail">{{ message_tail_html | safe }}</div>{% endif %}
+  {% if can_elaborate %}
+  {# R12.5: unpack the same explanation further — posts the deterministic
+     ELABORATE word the FSM understands; capped server-side (ELABORATE_CAP).
+     R12-fix2: the word rides a HIDDEN input (the Help/Stop quick-action
+     pattern), NOT the submit button's name/value — a button's value reaches
+     the server only where event.submitter is supported, and when it was
+     dropped the POST arrived empty and the child just got the "give it a
+     try" nudge (the reported "Explain more does nothing" bug). #}
+  <form method="POST" action="/answer" class="elaborate-form"
+        hx-post="/answer" hx-target="#turn-area" hx-swap="innerHTML" hx-indicator="#thinking, find button" hx-disabled-elt="find button">
+    <input type="hidden" name="answer" value="more">
+    {# "Show me the working", not "Explain more" (maintainer, 2026-08-19):
+       every node now answers this press with a WORKED SOLUTION ending in
+       "Answer: ..." -- a card or a step grid -- so "Explain more" promised
+       another explanation and under-described what actually appears. UI label
+       only: the hidden answer value ("more") and the FSM are unchanged. #}
+    <button class="btn" type="submit">✏️ Show me the working</button>
+  </form>
+  {% endif %}
+</div>{% endif %}
+{# A card with no accompanying message (rare, but a 4-tuple generator path can
+   do it) still has to render somewhere -- outside the bubble that isn't there. #}
+{% if steps_lines and not message_html %}{% include "_arithmetic_steps.html" %}{% endif %}

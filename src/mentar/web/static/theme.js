@@ -35,10 +35,12 @@
 
   var saved = null;
   try { saved = localStorage.getItem(KEY); } catch (e) { /* storage unavailable */ }
-  var prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
   // An unknown saved value (hand-edited storage, or a theme removed in a later
   // version) must not leave the page unstyled -- fall back as if nothing were saved.
-  var theme = (saved && isKnown(saved)) ? saved : (prefersDark ? "dark" : "light");
+  // Default = Sunshine (maintainer, 2026-08-20: "set desert theme colours as
+  // default"). Deliberately unconditional -- a dark-OS machine still opens in
+  // the warm desert look; Midnight stays one tap away in Settings.
+  var theme = (saved && isKnown(saved)) ? saved : "sunshine";
   document.documentElement.setAttribute("data-theme", theme);
 
   function apply(name) {
