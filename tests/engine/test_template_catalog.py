@@ -83,12 +83,6 @@ _EXPECTED = {
     "curriculum/templates/AU_ACARA/year10_maths.md": {
         "key": "au_acara_year10_maths", "label": "Maths — Year 10 🇦🇺", "item_source": "au_year10",
     },
-    "curriculum/templates/AU_ACARA/year11_maths.md": {
-        "key": "au_acara_year11_maths", "label": "Maths — Year 11 🇦🇺", "item_source": "au_year11",
-    },
-    "curriculum/templates/AU_ACARA/year12_maths.md": {
-        "key": "au_acara_year12_maths", "label": "Maths — Year 12 🇦🇺", "item_source": "au_year12",
-    },
     "curriculum/templates/AU_ACARA/year11_maths_essential.md": {
         "key": "au_acara_year11_maths_essential", "label": "Essential Maths — Year 11 🇦🇺", "item_source": "au11_essential",
     },
@@ -100,6 +94,18 @@ _EXPECTED = {
     },
     "curriculum/templates/AU_ACARA/year12_maths_general.md": {
         "key": "au_acara_year12_maths_general", "label": "General Maths — Year 12 🇦🇺", "item_source": "au12_general",
+    },
+    "curriculum/templates/AU_ACARA/year11_maths_methods.md": {
+        "key": "au_acara_year11_maths_methods", "label": "Maths Methods — Year 11 🇦🇺", "item_source": "au11_methods",
+    },
+    "curriculum/templates/AU_ACARA/year11_maths_specialist.md": {
+        "key": "au_acara_year11_maths_specialist", "label": "Specialist Maths — Year 11 🇦🇺", "item_source": "au11_specialist",
+    },
+    "curriculum/templates/AU_ACARA/year12_maths_methods.md": {
+        "key": "au_acara_year12_maths_methods", "label": "Maths Methods — Year 12 🇦🇺", "item_source": "au12_methods",
+    },
+    "curriculum/templates/AU_ACARA/year12_maths_specialist.md": {
+        "key": "au_acara_year12_maths_specialist", "label": "Specialist Maths — Year 12 🇦🇺", "item_source": "au12_specialist",
     },
     "curriculum/templates/AU_ACARA/year7_english.md": {
         "key": "au_acara_year7_english", "label": "English — Year 7 🇦🇺", "item_source": "au_english_year7",

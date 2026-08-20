@@ -42,14 +42,18 @@ from mentar.engine.au_items import (
     AU_YEAR8_GENERATORS,
     AU_YEAR9_GENERATORS,
     AU_YEAR10_GENERATORS,
-    AU_YEAR11_GENERATORS,
-    AU_YEAR12_GENERATORS,
 )
 from mentar.engine.au_senior_maths_items import (
     AU_ESSENTIAL_Y11_GENERATORS,
     AU_ESSENTIAL_Y12_GENERATORS,
     AU_GENERAL_Y11_GENERATORS,
     AU_GENERAL_Y12_GENERATORS,
+)
+from mentar.engine.au_senior_maths_ms_items import (
+    AU_METHODS_Y11_GENERATORS,
+    AU_METHODS_Y12_GENERATORS,
+    AU_SPECIALIST_Y11_GENERATORS,
+    AU_SPECIALIST_Y12_GENERATORS,
 )
 from mentar.engine.generic_english_items import GENERIC_ENGLISH_ITEM_SOURCES
 from mentar.engine.generic_items import GENERIC_ITEM_SOURCES
@@ -107,8 +111,10 @@ def build_registry(pilot_itembank_path: Path) -> dict[str, dict]:
         "au_year8": {"generators": AU_YEAR8_GENERATORS, "itembank": None},
         "au_year9": {"generators": AU_YEAR9_GENERATORS, "itembank": None},
         "au_year10": {"generators": AU_YEAR10_GENERATORS, "itembank": None},
-        "au_year11": {"generators": AU_YEAR11_GENERATORS, "itembank": None},
-        "au_year12": {"generators": AU_YEAR12_GENERATORS, "itembank": None},
+        "au11_methods": {"generators": AU_METHODS_Y11_GENERATORS, "itembank": None},
+        "au12_methods": {"generators": AU_METHODS_Y12_GENERATORS, "itembank": None},
+        "au11_specialist": {"generators": AU_SPECIALIST_Y11_GENERATORS, "itembank": None},
+        "au12_specialist": {"generators": AU_SPECIALIST_Y12_GENERATORS, "itembank": None},
         "au_english_year2": {"generators": AU_ENGLISH_YEAR2_GENERATORS, "itembank": None},
         "au_english_year3": {"generators": AU_ENGLISH_YEAR3_GENERATORS, "itembank": None},
         "au_english_year4": {"generators": AU_ENGLISH_YEAR4_GENERATORS, "itembank": None},

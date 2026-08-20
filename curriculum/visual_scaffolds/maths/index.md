@@ -47,6 +47,43 @@ Visual scaffold hints for mathematics topics.
 * [senior_fuel](senior_fuel.md) — Visual scaffold for fuel needed from distance and a litres-per-100-km rate
 * [senior_finishing_time](senior_finishing_time.md) — Visual scaffold for adding a duration to a start time on a clock or time line
 * [senior_mean](senior_mean.md) — Visual scaffold for the mean as the total shared equally across the count
+* [senior_function_value](senior_function_value.md) — Visual scaffold for evaluating f(x) by substituting the given x-value
+* [senior_line_gradient](senior_line_gradient.md) — Visual scaffold for the gradient of a line through two known points
+* [senior_parabola_vertex](senior_parabola_vertex.md) — Visual scaffold for locating the turning point of y = x² + bx + c
+* [senior_exact_trig](senior_exact_trig.md) — Visual scaffold for the exact-value table of sin, cos and tan at special angles
+* [senior_sine_period](senior_sine_period.md) — Visual scaffold for the period of y = sin(kx°)
+* [senior_derivative_power](senior_derivative_power.md) — Visual scaffold for the power rule of differentiation
+* [senior_curve_gradient](senior_curve_gradient.md) — Visual scaffold for the gradient of a curve at a point via the derivative
+* [senior_increasing_decreasing](senior_increasing_decreasing.md) — Visual scaffold for reading a curve's direction from the sign of its derivative
+* [senior_expected_value](senior_expected_value.md) — Visual scaffold for the expected value of a discrete random variable
+* [senior_permutations](senior_permutations.md) — Visual scaffold for counting ordered selections
+* [senior_combinations](senior_combinations.md) — Visual scaffold for counting unordered selections
+* [senior_vector_add](senior_vector_add.md) — Visual scaffold for adding vectors component by component
+* [senior_vector_magnitude](senior_vector_magnitude.md) — Visual scaffold for the length of a 2D vector
+* [senior_complex_add](senior_complex_add.md) — Visual scaffold for adding complex numbers by matching parts
+* [senior_complex_multiply](senior_complex_multiply.md) — Visual scaffold for multiplying complex numbers with i² = −1
+* [senior_circle_angle](senior_circle_angle.md) — Visual scaffold for the circle theorem linking centre and circumference angles
+* [senior_circle_radius](senior_circle_radius.md) — Visual scaffold for reading the radius off x² + y² = r²
+* [senior_parity_proof](senior_parity_proof.md) — Visual scaffold for even/odd proofs using 2k and 2k + 1
+* [senior_counterexample](senior_counterexample.md) — Visual scaffold for disproving a universal claim with one counterexample
+* [senior_stationary_point](senior_stationary_point.md) — Visual scaffold for finding stationary points by solving dy/dx = 0
+* [senior_integral_2x](senior_integral_2x.md) — Visual scaffold for the definite integral of 2x via the antiderivative x²
+* [senior_integral_x_squared](senior_integral_x_squared.md) — Visual scaffold for the definite integral of x² via the antiderivative x³ ÷ 3
+* [senior_area_under_line](senior_area_under_line.md) — Visual scaffold for the area under y = mx as a triangle
+* [senior_binomial_mean](senior_binomial_mean.md) — Visual scaffold for the mean of a binomial random variable
+* [senior_die_expected](senior_die_expected.md) — Visual scaffold for the expected value of a fair 1-to-n die
+* [senior_standard_error](senior_standard_error.md) — Visual scaffold for the standard error of a sample mean
+* [senior_ci_concept](senior_ci_concept.md) — Visual scaffold for how confidence intervals respond to n and confidence level
+* [senior_vector3_magnitude](senior_vector3_magnitude.md) — Visual scaffold for the length of a 3D vector
+* [senior_dot_product](senior_dot_product.md) — Visual scaffold for the dot product as matched-component products summed
+* [senior_complex_modulus](senior_complex_modulus.md) — Visual scaffold for |a + bi| as a distance on the Argand diagram
+* [senior_complex_argument](senior_complex_argument.md) — Visual scaffold for the argument as an anticlockwise angle from the positive real axis
+* [senior_second_derivative](senior_second_derivative.md) — Visual scaffold for differentiating twice
+* [senior_integral_3x_squared](senior_integral_3x_squared.md) — Visual scaffold for the definite integral of 3x² via the antiderivative x³
+* [senior_force_ma](senior_force_ma.md) — Visual scaffold for Newton's second law F = ma
+* [senior_momentum](senior_momentum.md) — Visual scaffold for momentum p = mv
+* [senior_sampling_mean](senior_sampling_mean.md) — Visual scaffold for the centre of the sampling distribution of the mean
+* [senior_se_sampling](senior_se_sampling.md) — Visual scaffold for the standard error as the sampling distribution's spread
 
 <!-- One topic per file: visual_scaffold.first_diagram() shows a scaffold's
      FIRST fenced block to a child, so a file holding two topics hands the

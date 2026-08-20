@@ -33,7 +33,7 @@ coverage.
 | Phase | Scope | Status |
 |---|---|---|
 | W1 | Senior maths: **Essential + General**, Y11+Y12 — 40 topics, formula-first cards, strands | ✅ shipped 2026-08-20 (gaps the auditor still names are wave-2 targets: Essential algebra/matrices/bivariate/spherical; General consumer/non-linear/trig/time-series/annuities) |
-| W2 | Senior maths: **Methods + Specialist**, Y11+Y12 (~40 topics; calculus, functions, vectors, complex, combinatorics). Absorb the old merged year11/12_maths quadratic nodes into Methods (same node ids — mastery survives) and retire the merged subjects | 🔭 next |
+| W2 | Senior maths: **Methods + Specialist**, Y11+Y12 — 40 new topics; the retired merged year11/12_maths quadratics absorbed into Methods VERBATIM (same node ids, mastery survives) under an 'Algebra foundations' strand | ✅ shipped 2026-08-21, auditor reads all four course-years COMPLETE vs reference; the W1 Essential/General strand gaps are W2b, next |
 | W3 | Senior science depth: physics/chemistry/biology to the reference strands (now 3 topics each vs 4–7 expected) + **Earth & Environmental Science** (new subject, Y11+Y12) | 🔭 |
 | W4 | Senior English split: **Essential English / English / Literature** (current single senior English retires into the mainstream course) | 🔭 |
 | W5 | F–10 depth, maths: every year to its reference strands (Year 1 template MISSING entirely; Y2–10 hold 4–7 untagged topics vs 5–6 strands) | 🔭 |
