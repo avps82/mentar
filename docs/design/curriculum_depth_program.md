@@ -41,6 +41,18 @@ coverage.
 | W7 | Retro-tag all existing F–10 topics with `strand:` so "untagged" stops masking real coverage; consider promoting the auditor to a CI gate once waves land | 🔭 |
 | W8 | Mirror the depth into IN/SG/US generic packs (their own reference lists needed first) | 🔭 |
 
+## AU is the benchmark for every other country (maintainer, 2026-08-20)
+
+The generic IN/SG/US packs were built by mirroring AU's then-thin structure, so
+they inherit its gaps at best. Rule: the auditor's CROSS-COUNTRY BENCHMARK
+section compares each country's per-subject topic totals against AU. A country
+showing FEWER topics than AU is either a genuinely lighter national curriculum
+or a coverage miss — the report cannot tell which, so every "BELOW — verify"
+row needs a human check against that country's own syllabus before it is
+accepted as legitimately smaller. Stage-structure differences are real
+(SG has fewer year levels; US ships no Grade 12 science by decision), which is
+why template counts print beside topic counts — normalise before concluding.
+
 ## Rules learned building W1 (bake into every wave)
 
 - Cards must never show approximations as equalities — the claim-checker sweep

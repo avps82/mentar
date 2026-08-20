@@ -76,6 +76,33 @@ def audit() -> list[dict]:
     return rows
 
 
+ALL_TEMPLATES = TEMPLATES.parent
+
+
+def benchmark() -> dict:
+    """Per-country, per-subject topic totals. AU is the benchmark (maintainer,
+    2026-08-20): the generic packs were built by mirroring AU's THEN-thin
+    structure, so a country showing fewer topics than AU is either a genuinely
+    lighter national curriculum or an inherited gap -- the report cannot tell
+    which, a human must. Template counts are shown too, because stage-structure
+    differences (SG has fewer year levels; US ships no Grade 12 science by
+    decision) legitimately lower totals."""
+    out: dict = {}
+    for country in sorted(d for d in ALL_TEMPLATES.iterdir() if d.is_dir()):
+        if country.name.startswith("_") or country.name == "practice":
+            continue
+        subj: dict = {}
+        for path in sorted(country.glob("*.md")):
+            if path.name in ("index.md", "log.md"):
+                continue
+            fm = yaml.safe_load(path.read_text(encoding="utf-8").split("\n---\n")[0])
+            e = subj.setdefault(fm.get("subject", "?"), {"topics": 0, "templates": 0})
+            e["topics"] += len(fm.get("concepts") or [])
+            e["templates"] += 1
+        out[country.name] = subj
+    return out
+
+
 def main() -> int:
     rows = audit()
     print(f"{'subject':12} {'year':22} {'topics':>6}  strand coverage")
@@ -98,6 +125,23 @@ def main() -> int:
     print("-" * 100)
     print(f"{gaps} year/subject entries with gaps against the reference. "
           "This report IS the coverage claim — cite nothing stronger.")
+
+    bench = benchmark()
+    au = bench.get("AU_ACARA", {})
+    print()
+    print("CROSS-COUNTRY BENCHMARK — AU is the benchmark. A shortfall means either a")
+    print("genuinely lighter national curriculum or a coverage miss: VERIFY, never assume.")
+    print(f"{'country':12} {'subject':12} {'topics':>6} {'tmpls':>5} {'AU topics':>9}  vs AU")
+    print("-" * 72)
+    for country, subjects in bench.items():
+        if country == "AU_ACARA":
+            continue
+        for subject in sorted(au.keys() | subjects.keys()):
+            have = subjects.get(subject, {"topics": 0, "templates": 0})
+            want = au.get(subject, {"topics": 0})["topics"]
+            delta = have["topics"] - want
+            flag = "at/above benchmark" if delta >= 0 else f"{delta} BELOW — verify"
+            print(f"{country:12} {subject:12} {have['topics']:>6} {have['templates']:>5} {want:>9}  {flag}")
     return 0
 
 
