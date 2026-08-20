@@ -165,16 +165,22 @@ def test_link_back_never_calls_the_llm():
     assert len(calls) == before, "LINK_BACK generated a new explanation via the LLM"
 
 
-def test_link_back_hands_off_and_moves_on():
-    """The child must be pointed at a grown-up and the session must continue --
-    not dead-end. Regression guard on both halves."""
+def test_link_back_reveals_the_answer_and_moves_on():
+    """SUPERSEDED DESIGN (maintainer, 2026-08-20): after the retry cap the child
+    gets the ANSWER directly -- "ask your teacher" outsourced the resolution a
+    child who genuinely tried had earned. The message must (a) reveal the
+    answer, (b) name it as the PREVIOUS question (it renders above the next
+    one, and read as if it referred to it), (c) continue the session."""
     ctrl = _make()
     ctrl.step(None)
     ctrl._ctx.state = FSMState.LINK_BACK
     text, _ = ctrl._do_link_back()
     assert text.strip(), "LINK_BACK produced no message for the child"
-    lowered = text.lower()
-    assert any(w in lowered for w in ("grown-up", "teacher")), text
+    item = ctrl._ctx.current_item
+    answer = str(item.answer) if item is not None else str(
+        ctrl._curriculum[ctrl._ctx.current_node_id]["expected_answer"])
+    assert answer in text, f"the answer {answer!r} was not revealed: {text!r}"
+    assert "last one" in text.lower(), "must name the PREVIOUS question explicitly"
     assert ctrl._ctx.state == FSMState.BRANCH_DECISION, ctrl._ctx.state
 
 
@@ -187,7 +193,11 @@ def test_link_back_degrades_gracefully_without_grounding():
     ctrl._ctx.state = FSMState.LINK_BACK
     text, _ = ctrl._do_link_back()
     assert text.strip()
-    assert not text.rstrip().endswith(":"), f"dangling lead-in with no content: {text!r}"
+    # The message may END with "Here's a different one:" -- the next question
+    # follows in the SAME composed turn, so that colon is a lead-in, not a
+    # dangling reference to absent grounding. What must never dangle is the
+    # old "here's something to look at:" with an empty snippet after it.
+    assert "look at with a grown-up:\n\n\n" not in text
 
 
 if __name__ == "__main__":

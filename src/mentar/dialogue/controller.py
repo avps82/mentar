@@ -1739,19 +1739,34 @@ class SessionController:
 
     def _do_link_back(self) -> tuple[str, bool]:
         ctx = self._ctx
+        # 2026-08-20 (maintainer): after the retry cap, REVEAL the answer
+        # directly instead of "ask your teacher" -- a child who has genuinely
+        # tried deserves the resolution, and outsourcing it taught nothing. The
+        # wording names it as the PREVIOUS question explicitly, because this
+        # message renders above the NEXT question and read as if it referred to
+        # it (the maintainer's own confusion, reported before a child hit it).
+        item = ctx.current_item
         node = self._curriculum[ctx.current_node_id]
-        passage = resolve_grounding(node.get("grounding", {}), self._grounding_cfg)
-        snippet = passage[:300].strip() if passage else ""
-        if snippet:
-            text = (
-                f"This is a tricky one. Here's something to look at with a grown-up:\n\n{snippet}\n\n"
-                "Let's move on for now and come back to this one."
-            )
-        else:
-            text = (
-                "This one is tricky — let's move on and come back to it later. "
-                "You might want to ask your teacher about it too."
-            )
+        reveal = ""
+        if item is not None and getattr(item, "checker", "none") != "none":
+            ans = str(item.answer)
+            if item.answer_type == "mc4" and item.choices:
+                idx = "ABCD".find(ans.strip().upper())
+                if 0 <= idx < len(item.choices):
+                    ans = f"{ans}) {item.choices[idx]}"
+            why = ""
+            steps = getattr(item, "method_steps", None)
+            if steps and len(steps) > 2:
+                why = " " + str(steps[2]).strip()
+            reveal = f"The answer to that last one was: {ans}.{why}\n\n"
+        elif node.get("expected_answer") and node.get("checker", "none") != "none":
+            # Legacy bank-less nodes carry the truth on the node itself.
+            reveal = f"The answer to that last one was: {node['expected_answer']}.\n\n"
+        text = (
+            f"That was a tough one — good on you for sticking with it! "
+            f"{reveal}"
+            "We'll practise that idea again another time. Here's a different one:"
+        )
         ctx.state = FSMState.BRANCH_DECISION
         return (text, True)
 

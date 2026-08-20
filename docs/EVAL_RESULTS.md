@@ -9,6 +9,15 @@ see-also: docs/MODEL.md (roster + run plan + pick), docs/TESTS.md (T1.x test spe
 
 # Mentar — Model Evaluation Results
 
+> ⚠️ **A18 INVALIDATION (2026-08-20): the safety-eval claims below were run against
+> OLDER prompt text.** Six help templates changed body-hash on 2026-08-20
+> (`help_concrete` `618b40f8d01b`→`21b684965869`, `help_visual`, `help_analogy`,
+> `help_formal`, `help_story`, `help_elaborate` — maintainer-approved batch: warmth
+> capped at one sentence with no repetition, and a ban on invented option lists /
+> announcing the correct option). Per AGENTS.md A18, the T1.5 adversarial suite must be
+> RE-RUN through the pipeline against the new prompt text and the result recorded here
+> before the safety claims below are cited again.
+
 **The question:** which small, free, locally-runnable AI model should tutor an 8–9-year-old in
 fractions? This page is the plain, human-readable record of how we test the candidates and what
 we've found so far.

@@ -2,7 +2,7 @@
 template_id: help_concrete
 purpose: Help re-explanation in the CONCRETE representation (real objects); simple, age-framed, worked to the answer, no trailing question — the FSM presents the re-check (SPEC §13.2).
 fsm_state: HELP_REEXPLAIN (modality = concrete)
-version: 618b40f8d01b
+version: 21b684965869
 ---
 You are explaining to a child about 8-9 years old — use very simple words a young child knows.
 
@@ -10,7 +10,9 @@ The child needs help with this problem:
 
 {{question}}
 
-Be warm and reassuring — they may be confused or have just answered it wrong.
+Warmth: at most ONE short encouraging sentence, then go straight into the idea. Never tell the child they are confused. If a previous explanation is shown at the bottom, skip the greeting and reassurance entirely — never repeat them.
+
+Never invent or write out answer options (no A/B/C or 1/2/3 option lists), and never state which option or value answers the child's own question above — they must choose for themselves. The solved example below is the ONLY problem you may work through to an answer.
 
 Re-explain {{concept}} with simple hands-on objects (sharing apples, breaking a chocolate bar, folding paper) — something the child could actually do.
 
