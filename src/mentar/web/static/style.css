@@ -434,6 +434,10 @@ input[type=text], input[type=number] {
 .question ul, .feedback ul { margin: 8px 0; padding-left: 22px; }
 
 .feedback {
+  /* 20px top gap (maintainer screenshot, 2026-08-20: "spacing needs to be
+     done") -- below the Send button the bubble sat nearly flush, reading as
+     part of the form. */
+  margin-top: 20px;
   background: var(--bg);
   border: 1px solid var(--border);
   border-left: 4px solid var(--learning);
@@ -476,6 +480,13 @@ input[type=text], input[type=number] {
    feeding the SAME monospace-box convention -- one look, not two. */
 .steps-pre, .ascii-art {
   font-family: var(--font-mono);
+  /* 0.95em, deliberately SMALLER than the surrounding prose (maintainer,
+     2026-08-20: "text needs to be a bit smaller to match the first explain").
+     Supersedes the 2026-08-15 equal-size rule: that fix was about two presses
+     rendering at INCONSISTENT sizes; monospace at equal px still reads larger
+     than the prose face, so visual parity needs a slightly smaller em. The
+     browser test asserts smaller-but-close now, not equality. */
+  font-size: 0.95em;
   line-height: 1.3;
   background: var(--bg);
   border: 1px solid var(--border);

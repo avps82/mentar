@@ -39,10 +39,12 @@ def test_every_science_generator_produces_a_method_card_every_draw():
             item = ig.sample(node_id)
             assert item is not None
             assert item.method_steps is not None, node_id
-            # 5 since 2026-08-16: every card now closes with an explicit
-            # "Answer: ..." line (maintainer -- it was unclear which of
-            # several sentence-shaped options was the answer).
-            assert len(item.method_steps) == 5, (node_id, item.method_steps)
+            # 4 fixed lines + one line PER distractor + the Answer line
+            # (2026-08-20: "The others" became one line per option -- the
+            # single joined line ran them together on screen).
+            n_distractors = len(item.choices) - 1
+            assert len(item.method_steps) == 4 + n_distractors + 1, (
+                node_id, item.method_steps)
 
 
 def test_card_names_the_concept_and_states_the_real_answer():
@@ -50,7 +52,8 @@ def test_card_names_the_concept_and_states_the_real_answer():
     for node_id in SCIENCE_GENERATORS:
         for _ in range(30):
             item = ig.sample(node_id)
-            concept, question_line, answer_line, others_line, final = item.method_steps
+            concept, question_line, answer_line = item.method_steps[:3]
+            final = item.method_steps[-1]
             # rule: name the concept -- an all-caps textbook term, non-empty,
             # never just repeating the generic word "science".
             assert concept == concept.upper() and len(concept) > 3, (node_id, concept)
@@ -72,14 +75,13 @@ def test_every_distractor_appears_in_the_others_line_exactly_once():
             item = ig.sample(node_id)
             correct_text = item.choices[_LETTERS.index(item.answer)]
             distractors = [c for c in item.choices if c != correct_text]
-            others_line = item.method_steps[3]
-            assert others_line.startswith("  The others:"), (node_id, others_line)
-            members_listed = [
-                seg.split(" → ", 1)[0].strip()
-                for seg in others_line[len("  The others:"):].split(" · ")
-            ]
-            assert sorted(members_listed) == sorted(distractors), (node_id, others_line, distractors)
-            assert correct_text not in members_listed, (node_id, others_line)
+            # 2026-08-20 (maintainer): one line PER distractor -- the old
+            # single "a · b · c" line ran the options together on screen.
+            assert item.method_steps[3].strip() == "The others:", (node_id, item.method_steps[3])
+            other_lines = item.method_steps[4:4 + len(distractors)]
+            members_listed = [ln.split(" → ", 1)[0].strip() for ln in other_lines]
+            assert sorted(members_listed) == sorted(distractors), (node_id, other_lines, distractors)
+            assert correct_text not in members_listed, (node_id, other_lines)
 
 
 def test_gloss_present_for_every_target_label_reached_over_many_draws():

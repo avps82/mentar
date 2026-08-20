@@ -508,3 +508,77 @@ def test_look_again_matches_whether_the_card_was_actually_seen():
         assert said_again == (answering_id == shown_id), (
             f"'again'={said_again} but seen-before={answering_id == shown_id}"
         )
+
+
+def _mc_controller(llm, seed=7):
+    from mentar.engine.itemgen import ItemGenerator
+
+    def mc_gen(rng):
+        # VARYING stem, FIXED choices (correct is "methane", letter A). The stem
+        # must vary or the sibling-content check alone rejects every draw and
+        # the choice-DISJOINTNESS rule is never exercised -- which is exactly
+        # how its first mutation test was silently vacuous.
+        stem = rng.choice(["Which of these is a COVALENT substance?",
+                           "Which one is COVALENT (non-metals sharing electrons)?"])
+        return ("mc4", "mc_choice", stem,
+                "A", ("methane", "iron", "sodium chloride", "magnesium oxide"))
+
+    curriculum = {"bond": {"label": "bonding", "answer_type": "mc4", "checker": "mc_choice",
+                           "expected_answer": "A", "grounding": {}, "prerequisites": []}}
+    return SessionController(
+        llm_call=llm, prompt_dir=PROMPTS, grounding_cfg={},
+        curriculum=curriculum, db_store=_FakeStore(), learner_id="L",
+        item_bank=ItemGenerator(generators={"bond": mc_gen}), rng_seed=seed,
+    )
+
+
+def test_help_prose_naming_the_correct_choice_is_discarded():
+    """Maintainer, CRITICAL (2026-08-20): the sibling example classified
+    "methane -> COVALENT" while methane was the live correct choice -- the
+    answer handed over on the first Help press. Prose that names the LIVE
+    CORRECT choice text is discarded and retried; naming a DISTRACTOR stays
+    allowed (an explanation of connectives must be able to say "between")."""
+    class _Llm:
+        def __init__(self): self.n = 0
+        def __call__(self, messages):
+            self.n += 1
+            if self.n == 1:
+                return "Methane is made of non-metals sharing electrons. It is COVALENT."
+            return "Iron is a metal with a sea of electrons; sodium chloride is ionic."
+
+    llm = _Llm()
+    ctrl = _mc_controller(llm)
+    ctrl.step(None)
+    r = ctrl.step("?")
+    # Assert on the EXPLANATION (r.message) -- r.text also carries the question
+    # display, whose inline options legitimately name every choice.
+    assert "methane" not in r.message.lower(), "the correct choice reached the child"
+    assert "iron" in r.message.lower(), "distractor-naming teaching must survive"
+
+
+def test_example_answer_headings_are_relabelled():
+    """Maintainer (2026-08-20): "the answer says iron.. when it is not" -- the
+    sibling's "Final Answer:" heading reads as the answer to the child's OWN
+    question. Relabelled to "The example's answer:" in help prose."""
+    class _Llm:
+        def __call__(self, messages):
+            return ("Example: which is METALLIC? Iron has a sea of electrons.\n"
+                    "Final Answer:\niron is the metallic one.")
+
+    ctrl = _mc_controller(_Llm())
+    ctrl.step(None)
+    r = ctrl.step("?")
+    assert "Final Answer" not in r.text
+    assert "The example's answer:" in r.text
+
+
+def test_sibling_choices_must_be_disjoint_from_the_live_items():
+    """The leak's root: a sibling QUESTION can differ while its OPTIONS overlap
+    the live ones, and a worked sibling that classifies an overlapping option
+    has answered the live question. On a fixed-choices generator every draw
+    overlaps, so the sibling must be dropped entirely."""
+    ctrl = _mc_controller(_PromptCapturingLlm())
+    ctrl.step(None)
+    assert ctrl._worked_example_for("bond") == "", (
+        "an overlapping-choices sibling was served as the worked example"
+    )

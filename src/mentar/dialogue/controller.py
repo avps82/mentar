@@ -242,6 +242,40 @@ def _scrub_answer_reveal(text: str, answer_type: str, truth: str) -> str:
     return kept if len(kept) >= 40 else ""
 
 
+# "Final Answer:" / "Answer:" as a heading (start of line) in HELP PROSE.
+_EXAMPLE_ANSWER_HEADING_RE = re.compile(
+    r"(?m)^[ \t]*(?:final\s+answer|answer)\s*[:：]", re.IGNORECASE
+)
+
+
+def _names_a_live_choice(text: str, item) -> bool:
+    """True when *text* mentions the live mc4 item's CORRECT choice string.
+
+    The correct choice only, deliberately (maintainer, 2026-08-20): naming a
+    DISTRACTOR is legitimate teaching -- an explanation of connectives that may
+    not say "between" while "between" sits among the options would collapse
+    every English help into the canned fallback. Naming the CORRECT text
+    ("methane is covalent" under "which is covalent?") is answering, whether
+    the model saw the options or merely picked the canonical example.
+
+    Word-boundary, case-insensitive; skipped when shorter than 3 characters or
+    already present in the STEM (the stem is deliberately given to the model,
+    so a word it contains cannot be treated as a leak).
+    """
+    if item is None or getattr(item, "answer_type", "") != "mc4":
+        return False
+    choices = getattr(item, "choices", None) or ()
+    letter = str(getattr(item, "answer", "")).strip().upper()
+    idx = "ABCD".find(letter)
+    if idx < 0 or idx >= len(choices):
+        return False
+    c = str(choices[idx]).strip().lower()
+    stem = (getattr(item, "stem", None) or "").lower()
+    if len(c) < 3 or c in stem:
+        return False
+    return re.search(r"(?<![\w])" + re.escape(c) + r"(?![\w])", text.lower()) is not None
+
+
 def _is_stale_mastery(updated_at: str | None, now: datetime | None = None) -> bool:
     """True if a skill's mastery timestamp is older than STALE_MASTERY_DAYS.
 
@@ -1548,6 +1582,27 @@ class SessionController:
                 self._ctx.current_item.answer_type if self._ctx.current_item else "",
                 str(self._ctx.current_item.answer) if self._ctx.current_item else "",
             )
+            # Choice-name guard (maintainer, CRITICAL, 2026-08-20): for a choice
+            # question, prose that NAMES any live option is classifying it --
+            # "methane is covalent" answers "which is covalent?" whether the
+            # model saw the options or merely picked the canonical example.
+            # Deterministic: WE know the live choices even though the model does
+            # not. Reject and retry; the existing fallback hint catches
+            # exhaustion. Only for mc4 -- numeric answers appear legitimately
+            # throughout worked arithmetic.
+            # Relabel (maintainer, 2026-08-20: "the answer says iron.. when it
+            # is not... maybe example's answer is a better wording"): the model
+            # works the SIBLING example to its answer, and a bare
+            # "Final Answer:" / "Answer:" heading reads as the answer to the
+            # child's own question. Deterministic rewording, prose path only --
+            # the live item's own card keeps its true "Answer:" line.
+            candidate = _EXAMPLE_ANSWER_HEADING_RE.sub("The example's answer:", candidate)
+            if candidate and _names_a_live_choice(candidate, self._ctx.current_item):
+                logger.warning(
+                    "help explanation: discarded -- names a live answer choice (attempt %d)",
+                    attempt + 1,
+                )
+                continue
             if not (candidate and candidate.strip()):
                 break  # empty/unavailable — no point retrying, go to fallback
             # A14 / SAFETY §6.2 Level 2: verify arithmetic claims in the explanation
@@ -1981,12 +2036,27 @@ class SessionController:
             # before the reveal. Retry for different CONTENT; a domain so small
             # that every draw collides gets NO worked example rather than a
             # solved copy of the live question.
-            for _ in range(6):
+            live_choices = {
+                str(c).strip().lower() for c in (getattr(live, "choices", None) or ())
+            }
+            for _ in range(8):
                 ex = self._item_bank.example(node_id, exclude_id=cur_id)
                 if ex is None:
                     break
                 ex_text = getattr(ex, "stem", None) or ex.problem
                 if live_text and ex_text == live_text:
+                    continue
+                # A different QUESTION is not enough (maintainer, CRITICAL,
+                # 2026-08-20): on a small mc domain the sibling's options
+                # overlap the live ones, and a worked sibling that classifies
+                # "methane -> COVALENT" has answered a live question whose
+                # correct choice is methane. The sibling's choice set must be
+                # DISJOINT from the live one; a pool too small to allow that
+                # gets NO worked example rather than a keyed one.
+                ex_choices = {
+                    str(c).strip().lower() for c in (getattr(ex, "choices", None) or ())
+                }
+                if live_choices and ex_choices and (live_choices & ex_choices):
                     continue
                 if getattr(ex, "method_steps", None):
                     return "\n".join(ex.method_steps)

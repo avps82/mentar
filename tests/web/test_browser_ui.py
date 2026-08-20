@@ -630,9 +630,18 @@ def test_the_worked_example_sits_inside_the_bubble_and_matches_its_text_size():
         assert shape["nested"], "the card must render INSIDE .feedback, not as a separate box"
         assert shape["hasSpeaker"], "the bubble holding the card must offer read-aloud"
         if shape["wrap"]:   # a method card; a step GRID keeps its large digits
-            assert shape["cardPx"] == shape["prosePx"], (
+            # 2026-08-20 (maintainer): the card is now DELIBERATELY a touch
+            # smaller than the prose (0.95em) -- monospace at equal px reads
+            # larger, so visual parity needs a smaller em. The 2026-08-15 rule
+            # this supersedes was about INCONSISTENCY between presses; the
+            # invariant kept from it is "close and stable", now as a band.
+            assert shape["cardPx"] < shape["prosePx"], (
                 f"card {shape['cardPx']}px vs prose {shape['prosePx']}px -- "
-                "the size mismatch the maintainer screenshotted"
+                "the card should render slightly smaller than the prose"
+            )
+            assert shape["cardPx"] >= 0.9 * shape["prosePx"], (
+                f"card {shape['cardPx']}px vs prose {shape['prosePx']}px -- "
+                "smaller, but this is a different-looking panel again"
             )
     finally:
         if browser:

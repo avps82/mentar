@@ -82,12 +82,16 @@ def mc_which_is(
         member_label = {m: lbl for lbl, members in classes.items() for m in members}
         gloss = glosses.get(target, "")
         why = f" ({gloss})" if gloss else ""
-        others = " · ".join(f"{d} → {member_label[d]}" for d in distractors)
+        # One line PER distractor (maintainer, 2026-08-20: "bit more space or
+        # divider btw each option because it's not clear if they're together
+        # or not") -- the old single "a · b · c" line ran the options together.
+        other_lines = tuple(f"    {d} → {member_label[d]}" for d in distractors)
         method_steps = (
             concept_name,
             f"{stem} → {correct}",
             f"  {correct} → {target}{why}",
-            f"  The others: {others}",
+            "  The others:",
+            *other_lines,
             # Every explain card ends by naming the answer (maintainer,
             # 2026-08-16). The numeric families already did; this "fact in
             # category" shape carried the answer only on the stem line, after a
