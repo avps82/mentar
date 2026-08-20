@@ -1,14 +1,14 @@
 ---
 type: Mentar Design Doc
 title: "Logo candidates — Minator"
-description: "PARKED 2026-08-20, no candidate adopted; the 🍕 header emoji stays. Best candidate (moon-badge silhouette, round 4 of 4) preserved as logo_minator_moon.svg beside this note."
+description: "PARKED 2026-08-20, no candidate adopted; header emoji is now 🧒📖 (maintainer, 2026-08-20 — interim, replacing the 🍕). Best candidate (moon-badge silhouette, round 4 of 4) preserved as logo_minator_moon.svg beside this note."
 tags: [design, ui, logo, parked]
 timestamp: "2026-08-20T00:00:00Z"
 ---
 
 # Logo candidates — Minator
 
-**Status: PARKED, nothing adopted.** The maintainer explored replacing the 🍕
+**Status: PARKED, nothing adopted.** The maintainer explored replacing the pizza
 header mark with a "Minator" (Mentar → Minotaur) reading/teaching figure, across
 four rendered rounds (flat two-tone reading bull; crescent silhouette; teaching-
 at-the-board; reading-together pair; moon-badge silhouette). None clicked enough
