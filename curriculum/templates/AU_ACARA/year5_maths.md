@@ -116,6 +116,39 @@ concepts:
       answer_type: decimal
       checker: decimal_exact
     bkt_priors: { guess: 0.05, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au5_perimeter_rectangle
+    label: "Perimeter of a rectangle"
+    strand: "Measurement"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "A rectangle has length 9 m and width 6 m. What is its perimeter, in metres?"
+    verifier:
+      answer_type: int
+      checker: int_exact
+    bkt_priors: { guess: 0.1, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au5_grid_move
+    label: "Moving on a grid"
+    strand: "Space"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "A point starts at (3, 2) on a grid. It moves 3 squares to the right. What is its new first (across) number?"
+    verifier:
+      answer_type: int
+      checker: int_exact
+    bkt_priors: { guess: 0.1, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au5_mean_small
+    label: "Finding the average"
+    strand: "Statistics"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Three scores are 3, 5 and 7. What is their average (mean)?"
+    verifier:
+      answer_type: int
+      checker: int_exact
+    bkt_priors: { guess: 0.1, slip: 0.1, learns: 0.2, forgets: 0 }
 
 ---
 

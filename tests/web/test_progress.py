@@ -310,14 +310,17 @@ def test_r6_2_display_name_unified_across_all_four_surfaces():
         pytest.skip("flask not installed (web extra)")
 
     app_mod, c = _client()
-    c.post("/choose", data={"subject": "au_acara_year3_maths"})
+    # Pin the topic through the real jump-to-topic path: Year 3 maths is
+    # multi-root since the W5 depth fill, so select_next's first pick is no
+    # longer deterministically au3_place_value (the R11 lesson — never assume
+    # the first root). The pin bypasses select_next by design.
+    c.post("/choose", data={"subject": "au_acara_year3_maths", "topic": "au3_place_value"})
     r = c.get("/learn")
     learn_html = r.get_data(as_text=True)
 
     with c.session_transaction() as sess:
         learner_uuid = sess["learner_uuid"]
     ctrl = app_mod._controllers[learner_uuid]
-    ctrl._ctx.current_node_id = "au3_place_value"
 
     # 1. learner.html's per-skill mastery bar.
     learn_html = c.get("/learn").get_data(as_text=True)

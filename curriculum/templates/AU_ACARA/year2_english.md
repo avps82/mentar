@@ -79,6 +79,28 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: aue2_end_marks
+    label: "Ending a sentence"
+    strand: "Punctuation"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these should end with a FULL STOP? A) Watch out for that car  B) The dog is asleep  C) Where is my hat  D) What time is lunch. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: aue2_sentence_order
+    label: "Building a sentence"
+    strand: "Writing"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is NOT a full sentence? A) The cat sat on the mat  B) the big red  C) My dad cooked dinner tonight  D) mat the sat cat the on. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
 
 ---
 

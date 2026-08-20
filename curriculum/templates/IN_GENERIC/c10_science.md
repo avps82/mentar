@@ -69,6 +69,61 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: in_c10_bond_kinds
+    label: "Kinds of chemical bond"
+    strand: "Chemical bonding"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is where METALLIC bonding happens? A) in a metal: a lattice in a sea of free electrons  B) between non-metals, sharing electron pairs  C) between a metal and a non-metal, swapping electrons  D) in table salt, where sodium hands chlorine an electron. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: in_c10_global_systems
+    label: "Global systems"
+    strand: "Global systems"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is the ENHANCED greenhouse effect? A) extra fossil-fuel gases trapping extra heat  B) forests absorbing carbon dioxide as they grow  C) the sea soaking up most of the trapped extra heat  D) burning coal returning ancient carbon to the air. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: in_c10_motion
+    label: "Describing motion"
+    strand: "Motion"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is an object DECELERATING? A) a dropped stone falling faster and faster  B) a train braking smoothly into a station  C) a sprinter pulling away from the blocks  D) a car cruising with the speedo needle steady. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: in_c10_periodic_table
+    label: "Reading the periodic table"
+    strand: "Periodic table"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is true of the NOBLE gases? A) across it, elements shift from metal to non-metal  B) lithium, sodium and potassium all sit in it together  C) helium and neon are among them  D) its elements share similar chemical behaviour. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: in_c10_universe
+    label: "The universe"
+    strand: "Universe"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is true of a LIGHT-YEAR? A) faint leftover heat filling the whole sky  B) billions of stars held together by gravity  C) our Sun sits in one called the Milky Way  D) it measures distance — how far light travels in a year. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
 
 ---
 

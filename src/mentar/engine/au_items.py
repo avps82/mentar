@@ -1313,3 +1313,15 @@ AU_YEAR12_GENERATORS = {
     "au12_combine_two_quadratics": gen_combine_two_quadratics,  # AC9M12A02
     "au12_compound_shape_area": gen_compound_shape_area,        # AC9M12A02
 }
+
+
+# ── W5 depth fill (docs/design/curriculum_depth_program.md) ──────────────────
+# One topic per reference strand the auditor named MISSING after W7 tagging.
+# Lives in its own module; merged here so every AU_YEARn dict stays the single
+# source its item_source entry claims to be.
+from mentar.engine.au_junior_maths_fill_items import AU_JUNIOR_MATHS_FILL  # noqa: E402
+
+for _year, _fills in AU_JUNIOR_MATHS_FILL.items():
+    _target = globals()[f"AU_YEAR{_year}_GENERATORS"]
+    for _nid, (_fn, _strand, _label) in _fills.items():
+        _target[_nid] = _fn

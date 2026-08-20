@@ -89,6 +89,39 @@ concepts:
       answer_type: decimal
       checker: decimal_exact
     bkt_priors: { guess: 0.05, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au6_sequence_rule
+    label: "Sequence rules"
+    strand: "Algebra"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "A sequence follows the rule 'multiply by 2': 3, 6, 12, ... What number comes next?"
+    verifier:
+      answer_type: int
+      checker: int_exact
+    bkt_priors: { guess: 0.1, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au6_quadrant
+    label: "Cartesian quadrants"
+    strand: "Space"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "On the Cartesian plane, in which quadrant is the point (-2, -1)? A) first quadrant  B) second quadrant  C) third quadrant  D) fourth quadrant. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au6_probability_decimal
+    label: "Probability as a decimal"
+    strand: "Statistics and probability"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "A bag holds 10 marbles and 1 of them are red. What is the probability of picking a red marble? Give a decimal."
+    verifier:
+      answer_type: decimal
+      checker: decimal_exact
+    bkt_priors: { guess: 0.1, slip: 0.1, learns: 0.2, forgets: 0 }
 
 ---
 

@@ -76,6 +76,39 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: aue5_persuasive_starters
+    label: "Persuasive writing moves"
+    strand: "Persuasive writing"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is an INFORMATIVE (not persuasive) line? A) “furthermore”, linking one argument to the next  B) “The school has 400 students and 12 classrooms.”  C) “on the other hand”, admitting the other side before answering it  D) “Every student deserves a safe ride to school — here is why.”. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: aue5_commas
+    label: "Commas"
+    strand: "Punctuation"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a comma used CORRECTLY after an opener? A) We packed hats snacks water and a map.  B) After the storm, the street was covered in leaves.  C) The stall sold apples, pears, plums and grapes.  D) We packed hats, snacks, water and a map.. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: aue5_skimming_scanning
+    label: "Ways of reading"
+    strand: "Reading"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is SKIMMING a text? A) running your eyes over headings to get the gist  B) reading every sentence carefully to study the meaning  C) running a finger down a timetable for the 3 o'clock bus  D) hunting for one date or name without reading everything. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
 
 ---
 

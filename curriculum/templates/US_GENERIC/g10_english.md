@@ -79,6 +79,18 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: us_g10_reviewing_refining
+    label: "Reviewing and refining"
+    strand: "Reviewing and refining"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is useful FEEDBACK to act on? A) moving the strongest point from the middle to the front  B) replacing a vague 'very good' with a precise word  C) cutting a paragraph that repeats an earlier one  D) “your evidence is strong but I lost your thread in paragraph three”. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+
 ---
 
 # the United States — Grade 10 English (generic, senior)

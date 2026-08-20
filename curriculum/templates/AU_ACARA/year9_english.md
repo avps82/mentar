@@ -81,6 +81,29 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: aue9_comparing_texts
+    label: "Comparing texts"
+    strand: "Comparative reading"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a CONTRAST between two texts? A) noting that both speeches lean on the same appeal to fear  B) “both poems treat the war as a betrayal of the young”  C) observing that the play opens with a storm  D) showing one poem celebrates what the other mourns. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: aue9_shakespeare_poetry
+    label: "Shakespeare and poetry"
+    strand: "Poetry and Shakespeare"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is true of IAMBIC rhythm? A) fourteen lines ending in a rhyming couplet  B) three quatrains that build to a final two-line turn  C) plays staged in daylight at the open-roofed Globe  D) an unstressed beat then a stressed one, five times a line. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+
 ---
 
 # Australia — Year 9 English

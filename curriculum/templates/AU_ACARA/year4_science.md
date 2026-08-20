@@ -68,6 +68,17 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au4_science_sun_moon_earth
+    label: "Sun, Earth and Moon"
+    strand: "Earth and space"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is true of ALL THREE? A) it circles the Earth about once a month  B) it spins around once every day  C) each one is shaped like a ball  D) it is a star that gives us light and heat. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
 
 ---
 

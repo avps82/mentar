@@ -79,6 +79,29 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: us_g9_comparing_texts
+    label: "Comparing texts"
+    strand: "Comparative reading"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a CONTRAST between two texts? A) “where the film ends in rescue, the novel refuses one”  B) “the novel's narrator hides the truth until the last page”  C) observing that the play opens with a storm  D) “both poems treat the war as a betrayal of the young”. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: us_g9_shakespeare_poetry
+    label: "Shakespeare and poetry"
+    strand: "Poetry and Shakespeare"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is true of Shakespeare's THEATRE? A) ten syllables to a line: da-DUM da-DUM da-DUM da-DUM da-DUM  B) plays staged in daylight at the open-roofed Globe  C) an unstressed beat then a stressed one, five times a line  D) fourteen lines ending in a rhyming couplet. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+
 ---
 
 # the United States — Grade 9 English (generic, senior)

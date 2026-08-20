@@ -69,6 +69,19 @@ Visual scaffold hints for science topics.
 * [year1_materials](year1_materials.md) — Visual scaffold for wood, metal and glass
 * [year1_day_night](year1_day_night.md) — Visual scaffold for what we see in the day and night sky
 * [year1_push_pull](year1_push_pull.md) — Visual scaffold for push, pull and twist forces
+* [j_how_things_move](j_how_things_move.md) — Visual scaffold for how things move
+* [j_saving_water](j_saving_water.md) — Visual scaffold for caring for water
+* [j_sun_moon_earth](j_sun_moon_earth.md) — Visual scaffold for sun, earth and moon
+* [j_extreme_environments](j_extreme_environments.md) — Visual scaffold for life in extreme places
+* [j_geological_change](j_geological_change.md) — Visual scaffold for changing landscapes
+* [j_sky_patterns](j_sky_patterns.md) — Visual scaffold for patterns in the sky
+* [j_water_cycle](j_water_cycle.md) — Visual scaffold for water on the move
+* [j_rock_types](j_rock_types.md) — Visual scaffold for how rocks form
+* [j_body_control](j_body_control.md) — Visual scaffold for nerves and hormones
+* [j_ecosystem_flows](j_ecosystem_flows.md) — Visual scaffold for energy and nutrient flows
+* [j_global_systems](j_global_systems.md) — Visual scaffold for global systems
+* [j_motion_desc](j_motion_desc.md) — Visual scaffold for describing motion
+* [j_universe](j_universe.md) — Visual scaffold for the universe
 
 <!-- One topic per file: visual_scaffold.first_diagram() shows a scaffold's
      FIRST fenced block to a child, so a file holding two topics hands the

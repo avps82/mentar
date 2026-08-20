@@ -69,6 +69,40 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au9_science_body_control
+    label: "Nerves and hormones"
+    strand: "Body control"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is true of a REFLEX? A) a growth spurt through the teenage years  B) adrenaline keeping you alert after a fright  C) it happens before you have time to think  D) pulling your hand off a hot pan. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au9_science_energy_in_reactions
+    label: "Energy in reactions"
+    strand: "Chemical reactions"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is evidence a NEW substance formed? A) a campfire burning  B) photosynthesis storing the Sun's energy  C) a solid appearing when two clear liquids mix  D) an instant cold pack turning icy. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au9_science_ecosystem_flows
+    label: "Energy and nutrient flows"
+    strand: "Ecosystems"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is how ENERGY moves in an ecosystem? A) a new predator arriving with no natural enemies  B) cycling round and round via decomposers  C) flowing one way: sun → plants → animals  D) its food source failing in a drought. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+
 ---
 
 # Australia — Year 9 Science

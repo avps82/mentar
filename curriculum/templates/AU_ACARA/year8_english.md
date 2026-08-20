@@ -75,6 +75,39 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: aue8_digital_literacy
+    label: "Judging online sources"
+    strand: "Digital literacy"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a sign to be SUSPICIOUS? A) opening a second source to compare the claim  B) a well-known institution stands behind it  C) it names its author and cites its sources  D) no author, no date, no sources anywhere. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: aue8_persuasive_structure
+    label: "Shape of a persuasive text"
+    strand: "Persuasive writing"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a strong persuasive MIDDLE? A) a hook that makes the reader care in the first line  B) a bold statement of position with the stakes made plain  C) leaving the reader with one line they will remember  D) answering the other side's best objection head-on. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: aue8_speech_delivery
+    label: "Delivering a speech"
+    strand: "Speaking"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is strong speech DELIVERY? A) the rule of three: 'cheaper, cleaner, fairer'  B) a rhetorical question that pulls listeners in  C) reading every word off the page in a monotone  D) making eye contact around the whole room. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
 
 ---
 

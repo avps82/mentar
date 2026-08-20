@@ -89,6 +89,50 @@ concepts:
       answer_type: fraction
       checker: fraction_equiv
     bkt_priors: { guess: 0.1, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au2_length_compare
+    label: "Comparing lengths"
+    strand: "Measurement"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "A pencil is 18 cm long. A crayon is 4 cm long. How many centimetres longer is the pencil?"
+    verifier:
+      answer_type: int
+      checker: int_exact
+    bkt_priors: { guess: 0.1, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au2_money_coins
+    label: "Counting money"
+    strand: "Money and time"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "You have these coins: $2 and $2 and $1. How many dollars altogether?"
+    verifier:
+      answer_type: int
+      checker: int_exact
+    bkt_priors: { guess: 0.1, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au2_time_oclock
+    label: "Reading o'clock time"
+    strand: "Money and time"
+    prereqs: [au2_money_coins]
+    grounding: {}
+    transfer_seeds:
+      - "On the clock, the little hand points at 5 and the big hand points straight up at 12. What o'clock is it?"
+    verifier:
+      answer_type: int
+      checker: int_exact
+    bkt_priors: { guess: 0.1, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au2_position_words
+    label: "Position words"
+    strand: "Space and location"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these shows something BETWEEN another thing? A) the tree hiding the cat so you cannot see it  B) the bed with slippers below it  C) the cheese in the middle of two slices of bread  D) the box that the ball rolled out of sight of. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
 
 ---
 

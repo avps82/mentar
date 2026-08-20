@@ -936,3 +936,12 @@ AU_ENGLISH_YEAR12_GENERATORS: dict[str, GenFn] = {
     "aue12_syntax_for_effect": gen_syntax_for_effect_y12,
     "aue12_language_change": gen_language_change_y12,
 }
+
+
+# ── W6 depth fill (docs/design/curriculum_depth_program.md) ──────────────────
+from mentar.engine.au_junior_english_fill_items import AU_JUNIOR_ENGLISH_FILL  # noqa: E402
+
+for _year, _fills in AU_JUNIOR_ENGLISH_FILL.items():
+    _target = globals()[f"AU_ENGLISH_YEAR{_year}_GENERATORS"]
+    for _nid, (_fn, _strand, _label) in _fills.items():
+        _target[_nid] = _fn

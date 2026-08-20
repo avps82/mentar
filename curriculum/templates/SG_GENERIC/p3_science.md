@@ -69,6 +69,39 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: sg_p3_landforms
+    label: "Landforms"
+    strand: "Earth's surface"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a BEACH? A) a high rocky peak with steep sides  B) fresh water flowing along a channel to the sea  C) land with water all the way around it  D) a sandy shore where waves wash in. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: sg_p3_animal_groups
+    label: "Grouping animals"
+    strand: "Grouping living things"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is an INSECT (six legs)? A) a kangaroo  B) a beetle  C) a magpie  D) an emu. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: sg_p3_material_groups
+    label: "Grouping materials"
+    strand: "Grouping materials"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a NATURAL material? A) plastic made in a factory  B) concrete mixed for a path  C) wool from sheep  D) empty cans collected for melting down. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
 
 ---
 

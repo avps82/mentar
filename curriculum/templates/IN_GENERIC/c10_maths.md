@@ -79,6 +79,40 @@ concepts:
       answer_type: expression
       checker: expression_equiv
     bkt_priors: { guess: 0.1, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: in_c10_compound_two_years
+    label: "Compound interest — two years"
+    strand: "Number and finance"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "$200 is invested at 20% compound interest per year. What is the balance, in dollars, after two years?"
+    verifier:
+      answer_type: int
+      checker: int_exact
+    bkt_priors: { guess: 0.1, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: in_c10_two_stage_probability
+    label: "Two-stage probability"
+    strand: "Probability"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "A fair coin is tossed twice. What is the probability of two heads from two coin tosses? Give a decimal."
+    verifier:
+      answer_type: decimal
+      checker: decimal_exact
+    bkt_priors: { guess: 0.1, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: in_c10_compare_means
+    label: "Comparing two data sets"
+    strand: "Statistics"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Class A scored 15, 20, 25. Class B scored 20, 25, 30. How much higher is Class B's mean than Class A's?"
+    verifier:
+      answer_type: int
+      checker: int_exact
+    bkt_priors: { guess: 0.1, slip: 0.1, learns: 0.2, forgets: 0 }
+
 ---
 
 # India — Class 10 Maths (generic, senior)

@@ -69,6 +69,28 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: us_g6_extreme_environments
+    label: "Life in extreme places"
+    strand: "Extreme environments"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is an adaptation for the DEEP SEA? A) storing water in a thick stem  B) coping with crushing water pressure  C) being active only in the cool night  D) a thick layer of blubber. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: us_g6_geological_change
+    label: "Changing landscapes"
+    strand: "Geological changes"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a change to the land made by PEOPLE? A) wind wearing away a rock arch  B) an earthquake cracking the ground  C) a river carving its valley deeper  D) digging a quarry for stone. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
 
 ---
 

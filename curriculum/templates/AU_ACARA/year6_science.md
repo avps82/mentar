@@ -68,6 +68,28 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au6_science_extreme_environments
+    label: "Life in extreme places"
+    strand: "Extreme environments"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is an adaptation for the DEEP SEA? A) storing water in a thick stem  B) huddling in groups to keep warm  C) coping with crushing water pressure  D) a thick layer of blubber. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au6_science_geological_change
+    label: "Changing landscapes"
+    strand: "Geological changes"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a SUDDEN change to the land? A) clearing a hillside of trees  B) a river carving its valley deeper  C) an earthquake cracking the ground  D) digging a quarry for stone. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
 
 ---
 

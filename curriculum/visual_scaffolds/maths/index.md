@@ -99,6 +99,18 @@ Visual scaffold hints for mathematics topics.
 * [year1_comparing](year1_comparing.md) — Visual scaffold for comparing length and weight
 * [year1_shapes](year1_shapes.md) — Visual scaffold for counting the sides of flat shapes
 * [year1_tally](year1_tally.md) — Visual scaffold for comparing counts in a simple tally
+* [j_time_oclock](j_time_oclock.md) — Visual scaffold for reading o'clock time
+* [j_position_words](j_position_words.md) — Visual scaffold for position words
+* [j_picture_graph](j_picture_graph.md) — Visual scaffold for picture graphs
+* [j_money_change](j_money_change.md) — Visual scaffold for giving change
+* [j_angle_degrees](j_angle_degrees.md) — Visual scaffold for angles in degrees
+* [j_quadrant](j_quadrant.md) — Visual scaffold for cartesian quadrants
+* [j_angles_line](j_angles_line.md) — Visual scaffold for angles on a straight line
+* [j_median](j_median.md) — Visual scaffold for finding the median
+* [j_volume_prism](j_volume_prism.md) — Visual scaffold for volume of a rectangular prism
+* [j_transformations](j_transformations.md) — Visual scaffold for transformations
+* [j_range](j_range.md) — Visual scaffold for range of a data set
+* [j_compare_means](j_compare_means.md) — Visual scaffold for comparing two data sets
 
 <!-- One topic per file: visual_scaffold.first_diagram() shows a scaffold's
      FIRST fenced block to a child, so a file holding two topics hands the

@@ -69,6 +69,28 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: sg_p6_extreme_environments
+    label: "Life in extreme places"
+    strand: "Extreme environments"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is an adaptation for the DEEP SEA? A) making your own light in the darkness  B) huddling in groups to keep warm  C) a thick layer of blubber  D) storing water in a thick stem. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: sg_p6_geological_change
+    label: "Changing landscapes"
+    strand: "Geological changes"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a change to the land made by PEOPLE? A) digging a quarry for stone  B) an earthquake cracking the ground  C) wind wearing away a rock arch  D) a river carving its valley deeper. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
 
 ---
 

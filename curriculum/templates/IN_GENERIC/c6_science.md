@@ -69,6 +69,28 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: in_c6_extreme_environments
+    label: "Life in extreme places"
+    strand: "Extreme environments"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is an adaptation for the DEEP SEA? A) making your own light in the darkness  B) huddling in groups to keep warm  C) storing water in a thick stem  D) being active only in the cool night. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: in_c6_geological_change
+    label: "Changing landscapes"
+    strand: "Geological changes"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a SLOW change to the land? A) a landslide after heavy rain  B) a river carving its valley deeper  C) an earthquake cracking the ground  D) digging a quarry for stone. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
 
 ---
 

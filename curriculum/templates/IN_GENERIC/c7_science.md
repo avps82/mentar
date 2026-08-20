@@ -69,6 +69,50 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: in_c7_vertebrate_groups
+    label: "Vertebrate groups"
+    strand: "Classification"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a FISH? A) it breathes through gills its whole life  B) it starts life in water and moves onto land as an adult  C) the platypus  D) it has dry scales and lays leathery eggs on land. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: in_c7_sky_patterns
+    label: "Patterns in the sky"
+    strand: "Earth Moon and Sun"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a PHASE of the Moon? A) the stars seeming to wheel across the night sky  B) day turning into night  C) summer changing to winter  D) a thin crescent growing to a full moon over two weeks. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: in_c7_ecosystem_relationships
+    label: "Ecosystem relationships"
+    strand: "Ecosystems"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is COMPETITION between organisms? A) a spider trapping flies in its web  B) a bee feeding while pollinating the flower  C) two magpies squabbling over the same territory  D) a cleaner fish eating parasites off a larger fish. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: in_c7_water_cycle
+    label: "Water on the move"
+    strand: "Water and resources"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is part of the WATER CYCLE? A) rain falling from cooling clouds  B) a rainwater tank by a shed  C) a dam across a river valley  D) watering gardens at dusk so less evaporates. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
 
 ---
 

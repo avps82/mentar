@@ -88,6 +88,39 @@ concepts:
       answer_type: decimal
       checker: decimal_exact
     bkt_priors: { guess: 0.05, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au8_volume_prism
+    label: "Volume of a rectangular prism"
+    strand: "Measurement"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "A rectangular prism is 4 cm long, 3 cm wide and 3 cm high. What is its volume, in cubic centimetres?"
+    verifier:
+      answer_type: int
+      checker: int_exact
+    bkt_priors: { guess: 0.1, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au8_transformations
+    label: "Transformations"
+    strand: "Space"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a ROTATION (a turn)? A) a letter b becoming a letter d  B) a shape flipped over a mirror line  C) a shape moved 3 squares right without turning  D) a shape turned a quarter-turn about its corner. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au8_range
+    label: "Range of a data set"
+    strand: "Statistics"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "A data set is: 10, 8, 17, 14. What is the range?"
+    verifier:
+      answer_type: int
+      checker: int_exact
+    bkt_priors: { guess: 0.1, slip: 0.1, learns: 0.2, forgets: 0 }
 
 ---
 

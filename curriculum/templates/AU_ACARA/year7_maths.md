@@ -90,6 +90,39 @@ concepts:
       answer_type: decimal
       checker: decimal_exact
     bkt_priors: { guess: 0.05, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au7_area_triangle
+    label: "Area of a triangle"
+    strand: "Measurement"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "A triangle has base 10 cm and height 5 cm. What is its area, in square centimetres?"
+    verifier:
+      answer_type: int
+      checker: int_exact
+    bkt_priors: { guess: 0.1, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au7_angles_straight_line
+    label: "Angles on a straight line"
+    strand: "Space"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Two angles sit together on a straight line. One is 125°. How many degrees is the other?"
+    verifier:
+      answer_type: int
+      checker: int_exact
+    bkt_priors: { guess: 0.1, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au7_median
+    label: "Finding the median"
+    strand: "Statistics and probability"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Find the median of these five numbers: 6, 2, 10, 5, 7."
+    verifier:
+      answer_type: int
+      checker: int_exact
+    bkt_priors: { guess: 0.1, slip: 0.1, learns: 0.2, forgets: 0 }
 
 ---
 

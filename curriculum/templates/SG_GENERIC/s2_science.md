@@ -69,6 +69,39 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: sg_s2_organ_systems
+    label: "Organ systems and their jobs"
+    strand: "Body systems"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is the job of the DIGESTIVE system? A) breaking food down so it can be absorbed  B) getting oxygen in and carbon dioxide out  C) pulling on bones so the body can move  D) holding the body up and protecting organs. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: sg_s2_reaction_signs
+    label: "Signs of chemical reactions"
+    strand: "Chemical reactions"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a SIGN a chemical reaction happened? A) ice melting into water  B) sugar disappearing into tea  C) gas bubbles forming in the mixture  D) iron slowly rusting. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: sg_s2_rock_types
+    label: "How rocks form"
+    strand: "Rock cycle"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is how METAMORPHIC rock forms? A) molten rock cooling and hardening  B) an existing rock changed by heat and pressure underground  C) lava from an eruption setting solid  D) mud and sand on a sea floor slowly cementing. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
 
 ---
 

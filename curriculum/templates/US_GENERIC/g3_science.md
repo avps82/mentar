@@ -69,6 +69,39 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: us_g3_landforms
+    label: "Landforms"
+    strand: "Earth's surface"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a BEACH? A) a sandy shore where waves wash in  B) a high rocky peak with steep sides  C) land with water all the way around it  D) fresh water flowing along a channel to the sea. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: us_g3_animal_groups
+    label: "Grouping animals"
+    strand: "Grouping living things"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is an INSECT (six legs)? A) a dog  B) a beetle  C) an emu  D) a magpie. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: us_g3_material_groups
+    label: "Grouping materials"
+    strand: "Grouping materials"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is something sorted for RECYCLING? A) wood from trees  B) paper in the recycling bin  C) plastic made in a factory  D) wool from sheep. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
 
 ---
 

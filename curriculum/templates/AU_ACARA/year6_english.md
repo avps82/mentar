@@ -77,6 +77,50 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: aue6_editing
+    label: "Editing your writing"
+    strand: "Editing"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is an EDITING fix (meaning and flow)? A) correcting a spelling mistake  B) adding the missing capital to a name  C) swapping a tired word for a sharper one  D) reordering paragraphs so the argument builds. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: aue6_media_literacy
+    label: "Reading the media"
+    strand: "Media literacy"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a sign an ad is at WORK on you? A) to make you want to buy or do something  B) to answer who, what, when, where and why  C) to tell you what happened, when and where  D) “hurry — offer ends today!” pressure. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: aue6_discussion_skills
+    label: "Class discussion skills"
+    strand: "Speaking and listening"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is BUILDING on another's idea? A) bringing up the weekend in a discussion about the novel  B) “Adding to what Priya said, we could also...”  C) “I see it differently, because...”  D) talking over the speaker to change the subject. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: aue6_writing_style
+    label: "Writing style"
+    strand: "Writing style"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a TELLING sentence? A) “He checked the clock for the third time in a minute.”  B) opening one sentence with a verb and the next with a place  C) “Her hands trembled as she reached for the letter.”  D) “She was nervous.”. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
 
 ---
 

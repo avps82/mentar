@@ -79,6 +79,29 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: in_c9_comparing_texts
+    label: "Comparing texts"
+    strand: "Comparative reading"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a claim about ONE text only? A) “where the film ends in rescue, the novel refuses one”  B) observing that the play opens with a storm  C) showing one poem celebrates what the other mourns  D) noting that both speeches lean on the same appeal to fear. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: in_c9_shakespeare_poetry
+    label: "Shakespeare and poetry"
+    strand: "Poetry and Shakespeare"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is true of IAMBIC rhythm? A) audiences standing in the yard around the stage  B) fourteen lines ending in a rhyming couplet  C) ten syllables to a line: da-DUM da-DUM da-DUM da-DUM da-DUM  D) three quatrains that build to a final two-line turn. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+
 ---
 
 # India — Class 9 English (generic, senior)

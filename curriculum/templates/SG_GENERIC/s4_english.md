@@ -79,6 +79,18 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: sg_s4_reviewing_refining
+    label: "Reviewing and refining"
+    strand: "Reviewing and refining"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a REVISION that sharpens an argument? A) replacing a vague 'very good' with a precise word  B) “your evidence is strong but I lost your thread in paragraph three”  C) moving the strongest point from the middle to the front  D) cutting 'in my opinion I think that' down to one claim. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+
 ---
 
 # Singapore — Secondary 4 English (generic, senior)

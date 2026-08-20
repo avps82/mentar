@@ -100,6 +100,50 @@ concepts:
       answer_type: fraction
       checker: fraction_equiv
     bkt_priors: { guess: 0.1, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au3_number_pattern
+    label: "Number patterns"
+    strand: "Algebra"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "The pattern goes 5, 8, 11, ... What number comes next?"
+    verifier:
+      answer_type: int
+      checker: int_exact
+    bkt_priors: { guess: 0.1, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au3_perimeter_count
+    label: "Perimeter — walk around"
+    strand: "Measurement and time"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "A rectangle is 4 cm long and 2 cm wide. Walk all the way around it: what is its perimeter, in centimetres?"
+    verifier:
+      answer_type: int
+      checker: int_exact
+    bkt_priors: { guess: 0.1, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au3_shape_3d
+    label: "3D shapes"
+    strand: "Space"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "How many faces does a triangular prism have?"
+    verifier:
+      answer_type: int
+      checker: int_exact
+    bkt_priors: { guess: 0.1, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au3_picture_graph
+    label: "Picture graphs"
+    strand: "Statistics"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "In a picture graph, each ● stands for 5 apples. Monday's row shows ●●●. How many apples is that?"
+    verifier:
+      answer_type: int
+      checker: int_exact
+    bkt_priors: { guess: 0.1, slip: 0.1, learns: 0.2, forgets: 0 }
 
 ---
 

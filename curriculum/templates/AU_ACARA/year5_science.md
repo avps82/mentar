@@ -68,6 +68,17 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au5_science_solar_system
+    label: "The solar system"
+    strand: "Earth's place"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a MOON (natural satellite)? A) Venus  B) a point of light burning its own fuel  C) one of Jupiter's many orbiting companions  D) the Sun. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
 
 ---
 

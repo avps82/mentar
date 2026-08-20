@@ -79,6 +79,40 @@ concepts:
       answer_type: expression
       checker: expression_equiv
     bkt_priors: { guess: 0.1, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: in_c9_simple_interest
+    label: "Simple interest"
+    strand: "Number and finance"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "$500 is invested at 5% simple interest per year for 3 years. How many dollars of interest does it earn?"
+    verifier:
+      answer_type: int
+      checker: int_exact
+    bkt_priors: { guess: 0.1, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: in_c9_scale_factor
+    label: "Similar shapes and scale factor"
+    strand: "Space"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Two triangles are similar with scale factor 4. A side of the small triangle is 3 cm. How long is the matching side of the large one?"
+    verifier:
+      answer_type: int
+      checker: int_exact
+    bkt_priors: { guess: 0.1, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: in_c9_scatter_trend
+    label: "Reading a scatterplot trend"
+    strand: "Statistics"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "A scatterplot shows that older cars tended to sell for less. What association is this? A) positive  B) negative  C) no association  D) it cannot be told. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+
 ---
 
 # India — Class 9 Maths (generic, senior)

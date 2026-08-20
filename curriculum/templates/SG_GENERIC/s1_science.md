@@ -69,6 +69,50 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: sg_s1_vertebrate_groups
+    label: "Vertebrate groups"
+    strand: "Classification"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a REPTILE? A) it has dry scales and lays leathery eggs on land  B) it starts life in water and moves onto land as an adult  C) the platypus  D) it breathes through gills its whole life. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: sg_s1_sky_patterns
+    label: "Patterns in the sky"
+    strand: "Earth Moon and Sun"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a PHASE of the Moon? A) day turning into night  B) a half-lit Moon a week after new moon  C) the stars seeming to wheel across the night sky  D) summer changing to winter. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: sg_s1_ecosystem_relationships
+    label: "Ecosystem relationships"
+    strand: "Ecosystems"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a PREDATOR-and-prey relationship? A) a spider trapping flies in its web  B) two seedlings racing each other for light  C) a cleaner fish eating parasites off a larger fish  D) a bee feeding while pollinating the flower. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: sg_s1_water_cycle
+    label: "Water on the move"
+    strand: "Water and resources"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a way to use water WISELY? A) watering gardens at dusk so less evaporates  B) a rainwater tank by a shed  C) rain falling from cooling clouds  D) water evaporating from the sea. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
 
 ---
 

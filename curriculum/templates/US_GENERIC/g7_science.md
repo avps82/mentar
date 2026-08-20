@@ -69,6 +69,50 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: us_g7_vertebrate_groups
+    label: "Vertebrate groups"
+    strand: "Classification"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a special case: it lays eggs but feeds MILK? A) it starts life in water and moves onto land as an adult  B) the platypus  C) it has dry scales and lays leathery eggs on land  D) it breathes through gills its whole life. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: us_g7_sky_patterns
+    label: "Patterns in the sky"
+    strand: "Earth Moon and Sun"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is caused by Earth ORBITING the Sun with a tilt? A) the stars seeming to wheel across the night sky  B) a thin crescent growing to a full moon over two weeks  C) a half-lit Moon a week after new moon  D) longer days in summer and shorter days in winter. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: us_g7_ecosystem_relationships
+    label: "Ecosystem relationships"
+    strand: "Ecosystems"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a PREDATOR-and-prey relationship? A) a cleaner fish eating parasites off a larger fish  B) two seedlings racing each other for light  C) a bee feeding while pollinating the flower  D) a spider trapping flies in its web. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: us_g7_water_cycle
+    label: "Water on the move"
+    strand: "Water and resources"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is part of the WATER CYCLE? A) a dam across a river valley  B) watering gardens at dusk so less evaporates  C) water evaporating from the sea  D) a rainwater tank by a shed. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
 
 ---
 

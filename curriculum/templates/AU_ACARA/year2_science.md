@@ -66,6 +66,39 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au2_science_how_things_move
+    label: "How things move"
+    strand: "Forces and motion"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is something that BOUNCES? A) a ball on a slope  B) a sled on snow  C) an orange nudged across a table  D) a tennis ball dropped on concrete. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au2_science_young_animals
+    label: "Animals and their young"
+    strand: "Life cycles"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is the young of a CHICKEN? A) a chick hatching from its egg  B) a caterpillar munching a leaf  C) a tadpole swimming in a pond  D) a joey in its mother's pouch. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au2_science_saving_water
+    label: "Caring for water"
+    strand: "Resources"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a way to SAVE water? A) hosing the path instead of sweeping it  B) watering the vegetable garden  C) a dripping tap left unfixed  D) a short shower instead of a long one. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
 
 ---
 

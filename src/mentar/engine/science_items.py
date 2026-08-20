@@ -609,3 +609,13 @@ AU_SCIENCE_YEAR10_GENERATORS: dict[str, GenFn] = {
     "au10_science_evolution_evidence": _gen_evolution_evidence,
     "au10_science_reaction_types": _gen_reaction_types,
 }
+
+
+# ── W6 depth fill (docs/design/curriculum_depth_program.md) ──────────────────
+from mentar.engine.au_junior_science_fill_items import AU_JUNIOR_SCIENCE_FILL  # noqa: E402
+
+for _year, _fills in AU_JUNIOR_SCIENCE_FILL.items():
+    # Year 2's source predates the per-year dicts: it is SCIENCE_GENERATORS.
+    _target = SCIENCE_GENERATORS if _year == 2 else globals()[f"AU_SCIENCE_YEAR{_year}_GENERATORS"]
+    for _nid, (_fn, _strand, _label) in _fills.items():
+        _target[_nid] = _fn

@@ -75,6 +75,17 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: aue7_apostrophes
+    label: "Apostrophes"
+    strand: "Punctuation"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is an apostrophe in a CONTRACTION? A) the dog's collar (one dog)  B) its' — never a correct form  C) apple's for sale (just a plural, no apostrophe needed)  D) don't, standing for 'do not'. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
 
 ---
 

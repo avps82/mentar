@@ -68,6 +68,50 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au7_science_vertebrate_groups
+    label: "Vertebrate groups"
+    strand: "Classification"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is an AMPHIBIAN? A) it starts life in water and moves onto land as an adult  B) the platypus  C) it breathes through gills its whole life  D) it has dry scales and lays leathery eggs on land. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au7_science_sky_patterns
+    label: "Patterns in the sky"
+    strand: "Earth Moon and Sun"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is caused by Earth SPINNING once a day? A) a thin crescent growing to a full moon over two weeks  B) day turning into night  C) a half-lit Moon a week after new moon  D) summer changing to winter. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au7_science_ecosystem_relationships
+    label: "Ecosystem relationships"
+    strand: "Ecosystems"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a PREDATOR-and-prey relationship? A) two magpies squabbling over the same territory  B) a cleaner fish eating parasites off a larger fish  C) two seedlings racing each other for light  D) a spider trapping flies in its web. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au7_science_water_cycle
+    label: "Water on the move"
+    strand: "Water and resources"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a way people STORE water? A) a dam across a river valley  B) water evaporating from the sea  C) watering gardens at dusk so less evaporates  D) rain falling from cooling clouds. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
 
 ---
 

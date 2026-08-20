@@ -36,8 +36,8 @@ coverage.
 | W2 | Senior maths: **Methods + Specialist**, Y11+Y12 — 40 new topics; the retired merged year11/12_maths quadratics absorbed into Methods VERBATIM (same node ids, mastery survives) under an 'Algebra foundations' strand | ✅ shipped 2026-08-21, auditor reads all four course-years COMPLETE vs reference; the W1 Essential/General strand gaps are W2b, next |
 | W3 | Senior science depth: physics/chemistry/biology to the reference strands + **Earth & Environmental Science** (new subject, AU-only until other countries' shapes are verified). 20 shared depth generators land in `STAGE_CONCEPTS`, so IN/SG/US packs can draw them — their template extensions are W8 | ✅ shipped 2026-08-22: all 8 AU senior science subject-years COMPLETE vs reference |
 | W4 | Senior English split: **Essential English / English / Literature** — 20 new fact-table topics; the merged year11/12_english retires with its 7 nodes absorbed VERBATIM into mainstream English ('Language and analysis' strand, mastery survives). Auditor course keys are subject-relative now (essential → 'Essential English' under english) | ✅ shipped 2026-08-23: all 6 senior English course-years COMPLETE vs reference |
-| W5 | F–10 depth, maths: Year 1 SHIPPED (6 topics, all strands); Y2–10 strand fill in progress — the auditor now names TRUE gaps (post-W7 tagging): ~30 missing strands | 🔨 Year 1 done 2026-08-21; Y2–10 fill next |
-| W6 | F–10 depth, science + English: Year 1 SHIPPED both (5 topics each, all strands); Y2–10 fill next (~25 science + ~25 English strands) | 🔨 Year 1 done 2026-08-21 |
+| W5 | F–10 depth, maths | ✅ shipped 2026-08-21: Year 1 (6 topics) + 30 strand-fill topics Y2–10 — every year COMPLETE vs reference |
+| W6 | F–10 depth, science + English | ✅ shipped 2026-08-21: Year 1 both + 25 science + 24 English strand-fill topics — every year COMPLETE vs reference |
 | W7 | Retro-tag all existing F–10 topics with `strand:` | ✅ shipped 2026-08-21 — 110 concepts tagged across 27 templates; auditor now reports real gaps instead of 'untagged' |
 | W8 | Mirror the depth into IN/SG/US generic packs (their own reference lists needed first) | 🔭 |
 

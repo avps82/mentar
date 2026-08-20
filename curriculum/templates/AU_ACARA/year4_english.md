@@ -78,6 +78,50 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: aue4_main_idea
+    label: "Main idea and details"
+    strand: "Comprehension"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is an OFF-TOPIC sentence? A) what you would keep if you could keep only one sentence  B) the one big point the whole paragraph keeps coming back to  C) a line about lunch in a paragraph about volcanoes  D) one example or fact that backs the big point up. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: aue4_presenting
+    label: "Presenting and listening"
+    strand: "Speaking and listening"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is GOOD presenting to the class? A) using pauses so listeners can keep up  B) mumbling at the floor  C) watching the speaker and saving questions for the end  D) reading in a flat rush to finish. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: aue4_visual_literacy
+    label: "Pictures that carry meaning"
+    strand: "Visual literacy"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is what a MAP adds? A) showing exactly what the subject looks like  B) naming each part and where it belongs  C) showing where places sit compared to each other  D) proof that the event really happened. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: aue4_paragraphs
+    label: "Paragraphs"
+    strand: "Writing"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is when to START a new paragraph? A) a first sentence that tells what the paragraph is about  B) when the topic changes  C) one giant paragraph holding five different topics  D) a new speaker's words buried mid-paragraph. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
 
 ---
 

@@ -99,6 +99,50 @@ concepts:
       answer_type: fraction
       checker: fraction_equiv
     bkt_priors: { guess: 0.1, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au4_area_count_squares
+    label: "Area by counting squares"
+    strand: "Measurement"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "A rectangle is covered by centimetre squares: 4 squares along, 4 rows. What is its area in square centimetres?"
+    verifier:
+      answer_type: int
+      checker: int_exact
+    bkt_priors: { guess: 0.1, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au4_money_change
+    label: "Giving change"
+    strand: "Money"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "A toy costs $7. You pay with a $20 note. How many dollars change do you get?"
+    verifier:
+      answer_type: int
+      checker: int_exact
+    bkt_priors: { guess: 0.1, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au4_angle_degrees
+    label: "Angles in degrees"
+    strand: "Space"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "How many degrees are in a right angle?"
+    verifier:
+      answer_type: int
+      checker: int_exact
+    bkt_priors: { guess: 0.1, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au4_chance_words
+    label: "Chance words"
+    strand: "Statistics and probability"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is IMPOSSIBLE? A) rolling a 7 on a normal six-sided die  B) a tossed coin landing on heads  C) picking a blue marble from a bag of 2 blue and 2 green  D) picking a red marble from a bag of only red marbles. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
 
 ---
 

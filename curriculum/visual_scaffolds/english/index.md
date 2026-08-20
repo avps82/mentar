@@ -55,6 +55,21 @@ Visual scaffold hints for English topics including vocabulary, grammar, and writ
 * [year1_first_sounds](year1_first_sounds.md) — Visual scaffold for hearing the first sound of a word
 * [year1_letter_case](year1_letter_case.md) — Visual scaffold for matching uppercase and lowercase letters
 * [year1_speaking](year1_speaking.md) — Visual scaffold for taking turns and listening well
+* [j_comprehension](j_comprehension.md) — Visual scaffold for reading for meaning
+* [j_speech_marks](j_speech_marks.md) — Visual scaffold for speech marks
+* [j_reading_fluency](j_reading_fluency.md) — Visual scaffold for reading fluency
+* [j_text_purpose](j_text_purpose.md) — Visual scaffold for how texts are built
+* [j_main_idea](j_main_idea.md) — Visual scaffold for main idea and details
+* [j_visual_literacy](j_visual_literacy.md) — Visual scaffold for pictures that carry meaning
+* [j_paragraphs](j_paragraphs.md) — Visual scaffold for paragraphs
+* [j_ways_of_reading](j_ways_of_reading.md) — Visual scaffold for ways of reading
+* [j_editing](j_editing.md) — Visual scaffold for editing your writing
+* [j_discussion](j_discussion.md) — Visual scaffold for class discussion skills
+* [j_writing_style](j_writing_style.md) — Visual scaffold for writing style
+* [j_speech_delivery](j_speech_delivery.md) — Visual scaffold for delivering a speech
+* [j_comparing_texts](j_comparing_texts.md) — Visual scaffold for comparing texts
+* [j_shakespeare](j_shakespeare.md) — Visual scaffold for shakespeare and poetry
+* [j_reviewing](j_reviewing.md) — Visual scaffold for reviewing and refining
 
 <!-- One topic per file: visual_scaffold.first_diagram() shows a scaffold's
      FIRST fenced block to a child, so a file holding two topics hands the

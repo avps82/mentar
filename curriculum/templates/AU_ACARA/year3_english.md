@@ -78,6 +78,50 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: aue3_comprehension_clue
+    label: "Reading for meaning"
+    strand: "Comprehension"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a fact stated RIGHT THERE in the text? A) thinking the story would be better with a dragon in it  B) the report gives the date of the flood in its first line  C) the empty bowl and happy dog suggest who ate the dinner  D) feeling that the ending was too sad. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: aue3_speech_marks
+    label: "Speech marks"
+    strand: "Punctuation"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is MISSING its speech marks? A) Mia said, “It's my turn now.”  B) “Wait for me,” called Ben.  C) Ben ran to catch the bus.  D) Wait for me, called Ben.. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: aue3_reading_fluency
+    label: "Reading fluency"
+    strand: "Reading fluency"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a way to IMPROVE fluency? A) re-reading a favourite page until it flows  B) pausing at the commas and stopping at the full stops  C) reading smoothly, in phrases, with expression  D) rushing past every full stop without a break. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: aue3_text_purpose
+    label: "How texts are built"
+    strand: "Text structure"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is how a STORY usually begins? A) setting the scene before any trouble starts  B) an opening definition, then grouped information  C) facts sorted under headings  D) a list of what you need, then numbered steps. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
 
 ---
 

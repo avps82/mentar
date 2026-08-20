@@ -69,6 +69,62 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au10_science_bond_kinds
+    label: "Kinds of chemical bond"
+    strand: "Chemical bonding"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is where COVALENT bonding happens? A) between a metal and a non-metal, swapping electrons  B) in a water molecule, where hydrogen and oxygen share  C) in a metal: a lattice in a sea of free electrons  D) in copper wire, where drifting electrons carry the current. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au10_science_global_systems
+    label: "Global systems"
+    strand: "Global systems"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is the ENHANCED greenhouse effect? A) forests absorbing carbon dioxide as they grow  B) currents carrying heat from the tropics toward the poles  C) burning coal returning ancient carbon to the air  D) rising carbon dioxide thickening the natural heat blanket. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au10_science_motion
+    label: "Describing motion"
+    strand: "Motion"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is an object DECELERATING? A) a dropped stone falling faster and faster  B) a train braking smoothly into a station  C) a sprinter pulling away from the blocks  D) a walker covering the same distance every minute. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au10_science_periodic_table
+    label: "Reading the periodic table"
+    strand: "Periodic table"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is true of a GROUP (column)? A) each step along it adds one proton  B) its elements share similar chemical behaviour  C) across it, elements shift from metal to non-metal  D) they barely react with anything at all. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au10_science_universe
+    label: "The universe"
+    strand: "Universe"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is true of a GALAXY? A) our Sun sits in one called the Milky Way  B) the nearest star beyond the Sun is about four of them away  C) faint leftover heat filling the whole sky  D) distant galaxies all rushing away from us. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+
 ---
 
 # Australia — Year 10 Science

@@ -69,6 +69,39 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: in_c8_organ_systems
+    label: "Organ systems and their jobs"
+    strand: "Body systems"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is the job of the SKELETAL system? A) getting oxygen in and carbon dioxide out  B) pulling on bones so the body can move  C) holding the body up and protecting organs  D) breaking food down so it can be absorbed. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: in_c8_reaction_signs
+    label: "Signs of chemical reactions"
+    strand: "Chemical reactions"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a PHYSICAL change, not a reaction? A) a cake rising as it bakes  B) an unexpected colour change  C) iron slowly rusting  D) ice melting into water. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: in_c8_rock_types
+    label: "How rocks form"
+    strand: "Rock cycle"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is how SEDIMENTARY rock forms? A) an existing rock changed by heat and pressure underground  B) limestone baked deep underground until it becomes marble  C) mud and sand on a sea floor slowly cementing  D) lava from an eruption setting solid. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
 
 ---
 

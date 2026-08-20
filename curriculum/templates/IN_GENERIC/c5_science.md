@@ -69,6 +69,17 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: in_c5_solar_system
+    label: "The solar system"
+    strand: "Earth's place"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a STAR? A) one of Jupiter's many orbiting companions  B) Venus  C) a point of light burning its own fuel  D) Mars. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
 
 ---
 

@@ -81,6 +81,18 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: aue10_reviewing_refining
+    label: "Reviewing and refining"
+    strand: "Reviewing and refining"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a REVISION that sharpens an argument? A) cutting a paragraph that repeats an earlier one  B) replacing a vague 'very good' with a precise word  C) “your evidence is strong but I lost your thread in paragraph three”  D) cutting 'in my opinion I think that' down to one claim. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+
 ---
 
 # Australia — Year 10 English

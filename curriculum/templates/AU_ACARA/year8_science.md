@@ -68,6 +68,39 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au8_science_organ_systems
+    label: "Organ systems and their jobs"
+    strand: "Body systems"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is the job of the SKELETAL system? A) pulling on bones so the body can move  B) getting oxygen in and carbon dioxide out  C) breaking food down so it can be absorbed  D) holding the body up and protecting organs. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au8_science_reaction_signs
+    label: "Signs of chemical reactions"
+    strand: "Chemical reactions"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a SIGN a chemical reaction happened? A) sugar disappearing into tea  B) the mixture getting hot by itself  C) iron slowly rusting  D) ice melting into water. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: au8_science_rock_types
+    label: "How rocks form"
+    strand: "Rock cycle"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is how SEDIMENTARY rock forms? A) limestone baked deep underground until it becomes marble  B) lava from an eruption setting solid  C) mud and sand on a sea floor slowly cementing  D) an existing rock changed by heat and pressure underground. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
 
 ---
 

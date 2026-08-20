@@ -69,6 +69,39 @@ concepts:
       answer_type: mc4
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: in_c9_body_control
+    label: "Nerves and hormones"
+    strand: "Body control"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is controlled by HORMONES (slow messages)? A) adrenaline keeping you alert after a fright  B) pulling your hand off a hot pan  C) blinking as something flies at your eye  D) it happens before you have time to think. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: in_c9_energy_in_reactions
+    label: "Energy in reactions"
+    strand: "Chemical reactions"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is evidence a NEW substance formed? A) photosynthesis storing the Sun's energy  B) a solid appearing when two clear liquids mix  C) hand-warmers heating up when activated  D) a campfire burning. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
+  - id: in_c9_ecosystem_flows
+    label: "Energy and nutrient flows"
+    strand: "Ecosystems"
+    prereqs: []
+    grounding: {}
+    transfer_seeds:
+      - "Which of these is a reason a POPULATION might crash? A) flowing one way: sun → plants → animals  B) about 90% lost as heat at each step  C) a new predator arriving with no natural enemies  D) a fallen log rotting back into the soil that feeds new trees. Answer with the letter."
+    verifier:
+      answer_type: mc4
+      checker: mc_choice
+    bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
 
 ---
 
