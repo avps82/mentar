@@ -31,6 +31,12 @@ BUNDLE_ROOTS = [
     REPO_ROOT / "curriculum" / "visual_scaffolds",
 ]
 RESERVED = {"index.md", "log.md"}
+# docs/design/country_references/ holds raw, verbatim-pasted maintainer research
+# (external curriculum syllabi for future W8 content work) -- not OKF concept
+# documents describing Mentar's own concepts/scaffolds/templates. Forcing a
+# `type:` field onto them would be structure invented to satisfy the scanner,
+# not structure the files actually have.
+EXCLUDED_DIRS = {REPO_ROOT / "docs" / "design" / "country_references"}
 DECLARED_VERSION = "0.2"
 
 
@@ -47,8 +53,11 @@ def _frontmatter(text: str) -> dict | None:
 def _concept_docs():
     for root in BUNDLE_ROOTS:
         for path in sorted(root.rglob("*.md")):
-            if path.name not in RESERVED:
-                yield path
+            if path.name in RESERVED:
+                continue
+            if any(excluded in path.parents for excluded in EXCLUDED_DIRS):
+                continue
+            yield path
 
 
 def test_each_bundle_root_declares_the_okf_version():

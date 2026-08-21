@@ -41,6 +41,81 @@ coverage.
 | W7 | Retro-tag all existing F–10 topics with `strand:` | ✅ shipped 2026-08-21 — 110 concepts tagged across 27 templates; auditor now reports real gaps instead of 'untagged' |
 | W8 | Mirror the depth into IN/SG/US generic packs (their own reference lists needed first) | 🔭 |
 
+### SG reference lists — RECEIVED, not wired (2026-08-21)
+
+`docs/design/country_references/sg_{maths,science,english}_reference.md`
+hold the maintainer-supplied full SG reference (Years 1-12/Primary-to-Pre-U),
+saved verbatim on request ("Note it for now") — **content authoring has not
+started.** Structural notes that change how W8 must be scoped for SG, not
+generic mirroring of AU:
+
+- SG science starts at Year 3 (Primary 3), not Year 1/2 — a real structural
+  absence, not a gap. Do not add SG Year 1/2 science pages.
+- SG maths' "Year 10 (Secondary 10)" heading in the source is almost
+  certainly "Secondary 4" — flagged in the saved file, not silently corrected.
+- SG science splits Physics/Chemistry/Biology at Secondary 3 (Year 9), one
+  stage earlier than AU's Year 11 split — `senior_science_items.py`'s
+  `SENIOR_LEVELS["SG_GENERIC"]` already encodes exactly this (Sec 3/4 = stages
+  1/2), so the shared depth generators should slot in without a new mapping.
+- SG English's Year 9-10 secondary content was supplied as ONE combined
+  block (not split by year) and its Pre-U years are GP/KI, not an
+  English-course-split analogous to AU's Essential/Mainstream/Literature —
+  mapping GP/KI onto that shape would misrepresent the subject.
+- No Earth & Environmental Science named for SG at any level — recorded, not
+  assumed as absent-by-decision the way US Grade 12 science is.
+
+**IN reference set COMPLETE** (`in_{english,maths,science}_reference.md`):
+CBSE Classes 1-12, NCERT-guided.
+- English: no Y11/12 course split (unlike AU/SG) — one continuous English
+  Core through senior secondary; do not invent a split.
+- Maths: senior secondary (11-12) splits Mathematics (041, science/eng track)
+  vs Applied Mathematics (241, commerce/social science track) — only 041 was
+  supplied; do not infer 241 from it.
+- Science: Classes 1-2 have NO dedicated science subject at all (folded into
+  language/maths) — a real structural absence, do not add IN Class 1/2
+  science pages. Classes 3-5 teach it as combined Environmental Studies
+  (EVS), not separable into pure-science strands. Classes 6-10 unified
+  (Physics+Chemistry+Biology integrated, no split). Senior secondary splits
+  medical (PCB) vs non-medical (PCM) — Physics+Chemistry common to both,
+  Biology is PCB-only, Maths(non-medical) is already in the maths reference.
+  No Earth & Environmental Science named at any IN level.
+
+**US reference set also COMPLETE** (`us_{english,maths,science}_reference.md`):
+CCSS (English + maths) / NGSS (science).
+- English: high school is TWO BANDS (9-10, 11-12), not four grades — CCSS
+  itself doesn't split further; don't invent a per-grade split.
+- Maths: high school uses named COURSES (Algebra 1/Geometry/Algebra 2/
+  Pre-Calc-Calc), "typically Grade N" is a mapping convenience only — some
+  US schools use an Integrated Pathway (Math 1/2/3) instead, not covered
+  here.
+- Science: middle school (6-8) supplied as ONE combined block of NGSS
+  mastery targets "by end of Grade 8", not per-grade; matches the existing
+  Integrated Science model some US schools use.
+- **Grade 12 flag INVESTIGATED, 2026-08-21 (WebSearch: NGSS grade bands,
+  CCSS math pathways, NCES/PACE enrollment data).** Verdict: `NO_SCIENCE_LEVELS
+  = {"us_g12"}` is well-founded, not contradicted. Real enrollment data shows
+  G12 maths has the SAME "no dominant course" shape as G12 science — only
+  ~40% of grads complete precalculus, calculus enrollment is lower and
+  declining, AP Statistics ~8% and rising (PACE/NCES). No single Grade 12
+  maths course has a majority either.
+  The actual finding is an ASYMMETRY ALREADY IN SHIPPED CODE, not a new
+  contradiction: `US_GENERIC/g12_maths.md` (and IN Class 12 / SG Sec 4,
+  same pattern) ships generic quadratic-algebra content derived from AU's
+  retired Year 12 dict — content that predates and is unrelated to any of
+  Grade 12's real elective menu, and the template's own header already
+  disclaims it as "a display label, not a claim about what the United
+  States teaches at Grade 12." So maths ships SOMETHING generic and
+  non-claiming; science ships NOTHING. Both postures are internally
+  consistent (neither claims curriculum accuracy for G12), so this is a
+  maintainer PREFERENCE call — align them or leave as-is — not a bug to
+  silently fix. NGSS/CCSS content in the saved references verified accurate
+  against nextgenscience.org's own topic arrangement and CCSS pathway
+  descriptions — not fabricated.
+
+**All three country reference sets (SG, IN, US) are now complete.** W8 can
+be scoped as a whole; go/no-go and ordering (which country's content work
+starts first) is the maintainer's call, not decided here.
+
 ## AU is the benchmark for every other country (maintainer, 2026-08-20)
 
 The generic IN/SG/US packs were built by mirroring AU's then-thin structure, so
