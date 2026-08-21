@@ -437,6 +437,25 @@ Note the shape: findings 3 and 4 were tie-break bugs, this one is an
 over-broad-keyword bug that wins outright. Both produce the same symptom, so
 finding it needed the routing table, not the tie-break code.
 
+### 6. "Square numbers" was illustrated with a rectangle's area
+
+Third instance of the register mismatch, found by sweeping every label for one
+served a scaffold sharing no word with the file's own name or title.
+`squares_roots.md` claimed `squaring` and `perfect square` but not `square
+number`, so it scored **zero** on the label "Square numbers" and the node fell to
+`area_perimeter.md` on the bare word `square` — as in *area of a square*. A
+question about 4, 9, 16, 25 got a rectangle's area and perimeter, in the US, IN
+and SG packs.
+
+Worth noting where this had been hiding: `test_senior_nodes_route_to_their_own_diagram`
+**pinned** the node to `+──────────────+`, the area rectangle. A test whose name
+says nodes must route to their own topic had recorded the opposite as expected.
+Pin tables lock in whatever was true when they were written, including the bugs.
+
+Routing was recomputed for all 934 nodes before and after: exactly 3 changed, all
+of them this label, and the legitimate area labels ("Area of a square", "Perimeter
+of a square", "Surface area of a cube") keep `area_perimeter.md`.
+
 ### Still decided by alphabetical order — maintainer's call, not guessed
 
 16 labels remain where two files tie and neither keyword contains the other. Most
@@ -449,6 +468,7 @@ does not exist, so no tie-break can find it:
 | Product rule for derivatives | primary "equal groups" | no product-rule diagram exists |
 | Scalar multiple of a matrix | primary "equal groups" | no scalar-multiple diagram exists |
 | Reducing-balance loan (one month) | an authoring instruction, not a diagram | no loan diagram exists |
+| Similar shapes and scale factor | multiplication's area model (on `factor`) | no scale-factor diagram exists |
 
 Recorded rather than invented: authoring three senior diagrams is content work with
 a pedagogical choice in it, not a bug fix.

@@ -159,3 +159,25 @@ def test_the_periodic_table_does_not_claim_the_word_group():
     for label in ("Groups of the periodic table", "Alkali metals", "Noble gases"):
         body = load_visual_scaffold(_ROOT, "chemistry", label)
         assert body.strip(), f"{label} lost its periodic-table scaffold"
+
+
+def test_square_numbers_is_not_a_question_about_area():
+    """Third instance of the same shape (2026-08-21): the right file exists but
+    its keywords are written in a different register than the curriculum label.
+
+    squares_roots.md claimed 'squaring' and 'perfect square' but not 'square
+    number', so it scored ZERO on the label "Square numbers" and the node fell
+    to area_perimeter.md on the bare word 'square' -- as in *area of a square*.
+    A question about 4, 9, 16, 25 was illustrated with a rectangle's area and
+    perimeter, in the US, IN and SG packs.
+
+    The area labels are asserted too: 'square' legitimately belongs to
+    area_perimeter.md for "Area of a square", and a fix that steals those is not
+    a fix.
+    """
+    for label in ("Square numbers", "Squaring numbers", "Square roots"):
+        body = load_visual_scaffold(_ROOT, "mathematics", label)
+        assert "√" in body or "root" in body.lower(), f"{label}: {body[:160]}"
+    for label in ("Area of a square", "Perimeter of a square", "Area of a rectangle"):
+        body = load_visual_scaffold(_ROOT, "mathematics", label)
+        assert "perimeter" in body.lower(), f"{label} lost the area/perimeter scaffold"

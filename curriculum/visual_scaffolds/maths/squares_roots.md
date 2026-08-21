@@ -4,7 +4,7 @@ title: Squares and Square Roots
 description: Visual scaffold hints for squaring numbers and square roots using area models.
 tags: [mathematics, squares, square-roots, powers, visual-scaffold, area-model]
 subject: mathematics
-topic_keywords: [squaring, squared, square root, power of 2, perfect square, exponent, ², √]
+topic_keywords: [squaring, squared, square number, square numbers, square root, power of 2, perfect square, exponent, ², √]
 timestamp: "2026-07-22T00:00:00Z"
 ---
 

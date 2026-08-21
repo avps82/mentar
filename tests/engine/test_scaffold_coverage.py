@@ -256,7 +256,11 @@ _SENIOR_ROUTING = {
     ('mathematics', 'Skip counting and number patterns'): 'Count by 3s:',
     ('mathematics', 'Solving one-step equations'): 'x + 5        = 12',
     ('mathematics', 'Solving two-step equations'): 'x + 5        = 12',
-    ('mathematics', 'Square numbers'): '+──────────────+',
+    # Was pinned to '+──────────────+' -- area_perimeter.md's rectangle box --
+    # which is precisely what this test's NAME says must not happen. The pin
+    # had recorded the bug: squares_roots.md claimed 'squaring' but not
+    # 'square number', so it scored zero on this label (fixed 2026-08-21).
+    ('mathematics', 'Square numbers'): '4² = 4 × 4 = 16',
     ('mathematics', 'Squared expressions (area of a square)'): 'width  = x',
     ('mathematics', 'Squaring numbers'): '4² = 4 × 4 = 16',
     ('mathematics', 'Subtracting fractions with equal denominators'): '|████|████|    |    |',
