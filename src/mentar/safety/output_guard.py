@@ -99,11 +99,42 @@ _VIOLENT_OR_HARMFUL_PATTERNS: list[re.Pattern[str]] = [
     # own best score" is exactly the encouragement this tutor should be giving,
     # and it was the one false positive the probe turned up.
     re.compile(r"\b(teach|show)\s+(you\s+)?(how\s+)?to\s+(hit|hurt|punch|stab)\b", re.IGNORECASE),
+    # Added 2026-08-21 (probe round 3). The 2026-08-12 note above says the frame
+    # requirement ("how to ...") let a bare imperative through, and dropped it
+    # FOR SELF-DIRECTED HARM ONLY. The identical defect was still live in every
+    # other class, so a probe walked straight past this module:
+    #
+    #   "To make a pipe bomb you need a metal tube and gunpowder."  -> allowed
+    #   "You should hit your brother back as hard as you can."      -> allowed
+    #   "You should meet me alone after school and not tell your parents." -> allowed
+    #
+    # Instruction-to-the-reader framing for a weapon. NOT bare "building bombs":
+    # "the Allies were building bombs" is legitimate WWII history.
+    re.compile(r"\bto (make|build|assemble) (a |an )?(pipe |nail |petrol |home.?made )?"
+               r"(bomb|explosive|grenade|molotov)\b", re.IGNORECASE),
+    # Violence aimed at a PERSON, imperative. A person-object is required so
+    # "you should hit the ball harder" and "kick the football" stay legitimate.
+    re.compile(r"\byou should (hit|punch|kick|hurt|attack|stab)\s+"
+               r"(him|her|them|your|his|their|the other)\b", re.IGNORECASE),
+    # GROOMING / LURING — previously uncovered by ANY class, and the single most
+    # dangerous thing a tutor could emit. Over-blocking is deliberate: none of
+    # these has a legitimate use in a children's tutor, in any framing.
+    re.compile(r"\bmeet (me|up with me)\b[^.?!]{0,40}"
+               r"\b(alone|in person|after school|without telling|don'?t tell)\b", re.IGNORECASE),
+    re.compile(r"\b(don'?t|do not|never) tell your (parents?|mum|mom|dad|carer|teacher)\b", re.IGNORECASE),
+    re.compile(r"\b(keep|this is|it'?s) (this |our )?(a )?secret between (us|you and me)\b", re.IGNORECASE),
+    # Self-harm METHOD, which needs no "how to" frame to be lethal advice.
+    re.compile(r"\btake (all|the whole|a whole)\b[^.?!]{0,25}"
+               r"\b(pills|tablets|bottle|packet|medication)\b", re.IGNORECASE),
 ]
 
 _ADULT_CONTENT_PATTERNS: list[re.Pattern[str]] = [
     re.compile(r"\b(explicit|graphic) sex(ual)? (content|scene|act)\b", re.IGNORECASE),
     re.compile(r"how to (get|buy|use) (cocaine|heroin|meth|drugs)\b", re.IGNORECASE),
+    # 2026-08-21: the pattern above missed MANUFACTURE, and "\bmeth\b" never
+    # matched the spelled-out drug ("how to make methamphetamine at home").
+    re.compile(r"\b(how to|to) (make|cook|produce|synthesi[sz]e)\b[^.?!]{0,25}"
+               r"\b(meth|methamphetamine|cocaine|heroin|fentanyl|ecstasy)\b", re.IGNORECASE),
 ]
 
 _HARD_BLOCKS: list[tuple[BlockClass, list[re.Pattern[str]]]] = [
@@ -125,7 +156,17 @@ _HARD_BLOCKS: list[tuple[BlockClass, list[re.Pattern[str]]]] = [
 _OFF_TOPIC_PATTERNS: list[re.Pattern[str]] = [
     re.compile(r"\b(election|politic(s|ian)?|vote for)\b", re.IGNORECASE),
     re.compile(r"\b(dating|boyfriend|girlfriend) advice\b", re.IGNORECASE),
-    re.compile(r"\b(alcohol|beer|wine|cigarette|vaping)\b", re.IGNORECASE),
+    # "alcohol" is DRINK-SENSE ONLY (fixed 2026-08-21). The bare keyword also
+    # matched the organic-chemistry sense, and off_scope DISCARDS the text — so
+    # every tutor explanation of the shipped senior "Organic families /
+    # ALCOHOLS (contains an -OH group)" topic was thrown away and replaced with
+    # a redirect. Found by screening the guard against the whole shipped corpus:
+    # 4 authored seeds and a scaffold flagged their own curriculum. The
+    # neighbouring gambling comment ("no shipped curriculum discusses these")
+    # was true when written and had silently stopped being true here.
+    re.compile(r"\b(drink(ing|s)?|drunk|abusing|abuse of|underage)\s+alcohol\b", re.IGNORECASE),
+    re.compile(r"\balcohol(ic)?\s+(drink|beverage|abuse|addiction)\b", re.IGNORECASE),
+    re.compile(r"\b(beer|wine|cigarette|vaping)\b", re.IGNORECASE),
     # Gambling: promoted from "known v0 limit" after a live T2.5 pipeline run (2026-08-12)
     # caught the model OFFERING to teach "the math of poker" to a child — a real miss, not a
     # hypothetical. Deliberately over-blocking: no shipped curriculum discusses these.
