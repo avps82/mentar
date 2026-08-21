@@ -31,6 +31,7 @@ from mentar.engine.itemgen import (
     _gen_unit_fractions,
     _gen_whole_number_division,
 )
+from mentar.engine.visuals import array_of
 
 _LETTERS = "ABCD"
 
@@ -242,12 +243,20 @@ def gen_sub_within_100(rng: random.Random):
 
 
 def gen_mult_facts_2_5_10(rng: random.Random):
-    """AC9M2N03-aligned: multiplication facts for 2, 5 and 10."""
+    """AC9M2N03-aligned: multiplication facts for 2, 5 and 10.
+
+    Shows the ARRAY (visual-first, 2026-08-21): at Year 2 multiplication is
+    still equal groups you can see and count, not a fact to recall, so the rows
+    and columns are drawn beside the symbols.
+    """
     a = rng.choice([2, 5, 10])
     b = rng.randint(2, 10)
     if rng.random() < 0.5:
         a, b = b, a
-    return ("int", "int_exact", f"What is {a} × {b}?", str(a * b))
+    # rows x cols, kept within the renderer's 10x12 cap
+    rows, cols = (a, b) if a <= 10 and b <= 12 else (b, a)
+    return ("int", "int_exact", f"What is {a} × {b}?", str(a * b),
+            None, None, None, array_of(rows, cols))
 
 
 def gen_halves_quarters(rng: random.Random):

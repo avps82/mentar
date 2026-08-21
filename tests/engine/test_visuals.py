@@ -26,7 +26,9 @@ import sys
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
+from mentar.engine.au_items import AU_YEAR2_GENERATORS  # noqa: E402
 from mentar.engine.au_junior_maths_fill_items import AU_JUNIOR_MATHS_FILL  # noqa: E402
+from mentar.engine.au_year1_items import AU_YEAR1_MATHS_GENERATORS  # noqa: E402
 from mentar.engine.itemgen import (  # noqa: E402
     DEFAULT_GENERATORS,
     ItemGenerator,
@@ -42,6 +44,8 @@ _VISUAL_NODES = {
     "unit_fractions": DEFAULT_GENERATORS["unit_fractions"],
     "au4_area_count_squares": AU_JUNIOR_MATHS_FILL[4]["au4_area_count_squares"][0],
     "au2_time_oclock": AU_JUNIOR_MATHS_FILL[2]["au2_time_oclock"][0],
+    "au2_mult_facts_2_5_10": AU_YEAR2_GENERATORS["au2_mult_facts_2_5_10"],
+    "au1_skip_count_2s": AU_YEAR1_MATHS_GENERATORS["au1_skip_count_2s"],
 }
 
 

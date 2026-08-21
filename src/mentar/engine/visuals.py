@@ -113,3 +113,53 @@ def clock_face(hour: int, minute: int, radius: int = 6) -> tuple[str, ...]:
     grid[cy][cx] = "o"
     return tuple("  " + "".join(row).rstrip()
                  for row in grid if "".join(row).strip())
+
+
+# ── arrays ───────────────────────────────────────────────────────────────────
+
+def array_of(rows: int, cols: int, glyph: str = "*") -> tuple[str, ...]:
+    """`rows` x `cols` countable marks -- the picture behind times tables,
+    division as sharing, and "how many altogether".
+
+    Max width: 2*cols + 2 characters, so cols <= 12 fits a phone.
+    Carries no total: counting (or multiplying) them is the question.
+    """
+    if not 1 <= rows <= 10 or not 1 <= cols <= 12 or len(glyph) != 1:
+        return ()
+    row = "  " + " ".join(glyph for _ in range(cols))
+    return tuple(row for _ in range(rows))
+
+
+# ── number lines ─────────────────────────────────────────────────────────────
+
+def number_line(start: int, stop: int, step: int = 1,
+                mark: int | None = None,
+                jumps: tuple[tuple[int, int], ...] = ()) -> tuple[str, ...]:
+    """A labelled line from `start` to `stop`, optionally with a caret under one
+    value and underscored arcs spanning jumps.
+
+    Handles negatives, so it is also the thermometer/integer picture.
+    Max width: about (len(longest label) + 2) * number of ticks.
+    Carries no answer: which value the caret sits on is the question.
+    """
+    if step <= 0 or stop <= start:
+        return ()
+    values = list(range(start, stop + 1, step))
+    if not 2 <= len(values) <= 12:
+        return ()
+    cell = max(len(str(v)) for v in values) + 2
+    labels = ("  " + "".join(f"{v:<{cell}}" for v in values)).rstrip()
+    rule = "  " + ("+" + "-" * (cell - 1)) * (len(values) - 1) + "+"
+    out = [labels, rule]
+    if mark is not None and mark in values:
+        out.append(("  " + " " * (cell * values.index(mark)) + "^").rstrip())
+    if jumps:
+        span = [" "] * (cell * (len(values) - 1) + 1)
+        for a, b in jumps:
+            if a in values and b in values and a < b:
+                for i in range(cell * values.index(a) + 1, cell * values.index(b)):
+                    span[i] = "_"
+        arc = ("  " + "".join(span)).rstrip()
+        if arc.strip():
+            out.append(arc)
+    return tuple(out)
