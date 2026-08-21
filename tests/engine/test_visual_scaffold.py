@@ -22,8 +22,15 @@ def test_matches_real_vocabulary_scaffold_by_keyword():
     word-box, which was true only because vocabulary.md also claimed the keyword
     "synonym". Keyword ownership is unique now (test_scaffold_hygiene.py), and a
     synonym question gets the synonyms/antonyms diagram -- which is the better
-    answer, not a regression. The general vocabulary box is still reachable for
-    the labels it actually owns."""
+    answer, not a regression.
+
+    2026-08-21 correction: this docstring used to add "the general vocabulary box
+    is still reachable for the labels it actually owns". Measured -- it is not.
+    Of 258 scaffolds, vocabulary.md is the only one NO curriculum label reaches:
+    the four labels brushing its keywords are all synonym/antonym nodes that win
+    on count elsewhere, and nothing shipped owns 'spelling', 'phonics', 'root
+    word' or 'decode'. It is dead content awaiting curriculum, not a routing bug
+    -- but the claim was wrong and worth not repeating."""
     synonyms = load_visual_scaffold(_ROOT, "english", "Vocabulary — synonym pairs")
     assert "SYNONYMS (same)" in synonyms, synonyms[:120]
 

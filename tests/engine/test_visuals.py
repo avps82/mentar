@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import pathlib
 import random
+import re
 import sys
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -166,3 +167,48 @@ def test_every_question_picture_fits_a_phone_without_scrolling():
                 f"{PHONE_COLUMNS} the widest shipped picture needs. Only 29 fit "
                 f"a 360px phone unscrolled, so this one is well past a swipe"
             )
+
+
+def test_a_picture_says_the_same_thing_its_answer_does():
+    """The severest failure this feature could have, and the one no other guard
+    catches: a picture drawn from different numbers than the answer marks a child
+    WRONG for reading it correctly.
+
+    test_a_question_picture_never_asserts_its_own_answer proves the picture does
+    not GIVE the answer away. This is the opposite direction -- that the picture
+    genuinely ENCODES it. Both are needed: a bar showing 8 cells under the answer
+    1/6 passes the give-away guard and is still a broken question.
+
+    Decoded per shape rather than by trusting the renderer, so the assertion is
+    independent of the code it checks.
+    """
+    for seed in range(60):
+        item = _draw("unit_fractions", DEFAULT_GENERATORS["unit_fractions"], seed)
+        bar = item.visual[0]
+        denominator = int(item.answer.split("/")[1])
+        assert bar.count("|") - 1 == denominator, f"seed={seed} {item.answer} {bar}"
+        assert bar.count("██") == 1, f"seed={seed} not a UNIT fraction: {bar}"
+
+        area = _draw("au4_area_count_squares",
+                     AU_JUNIOR_MATHS_FILL[4]["au4_area_count_squares"][0], seed)
+        cells = sum(len(re.findall("###", line)) for line in area.visual)
+        assert str(cells) == str(area.answer), (
+            f"seed={seed} answer is {area.answer} but the grid shows {cells} shaded squares"
+        )
+
+        mult = _draw("au2_mult_facts_2_5_10",
+                     AU_YEAR2_GENERATORS["au2_mult_facts_2_5_10"], seed)
+        rows = [line for line in mult.visual if "*" in line]
+        if rows:
+            widths = {line.count("*") for line in rows}
+            assert len(widths) == 1, f"seed={seed} ragged array: {widths}"
+            assert str(len(rows) * widths.pop()) == str(mult.answer), (
+                f"seed={seed} answer is {mult.answer} but the array is {len(rows)} rows"
+            )
+
+        skip = _draw("au1_skip_count_2s",
+                     AU_YEAR1_MATHS_GENERATORS["au1_skip_count_2s"], seed)
+        marks = [int(n) for n in re.findall(r"\d+", skip.visual[0])]
+        assert all(b - a == 2 for a, b in zip(marks, marks[1:])), (
+            f"seed={seed} a COUNT-BY-2s number line that does not step by 2: {marks}"
+        )
