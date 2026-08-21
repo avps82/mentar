@@ -32,6 +32,7 @@ what a child would actually see.
 from __future__ import annotations
 
 import pathlib
+import re
 import sys
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -54,12 +55,22 @@ _BENIGN = {
 
 
 def _fact_tables():
+    # Every module holding mc_which_is tables. The list was written when four
+    # existed and was never extended, so the content added on 2026-08-21 was
+    # invisible to this sweep -- which is part of why the overlaps that day had
+    # to be found by reading draws instead.
     import mentar.engine.au_english_items as english
+    import mentar.engine.au_junior_english_fill_items as junior_english
+    import mentar.engine.au_junior_science_fill_items as junior_science
+    import mentar.engine.au_senior_english_items as senior_english
+    import mentar.engine.au_year1_items as year1
     import mentar.engine.practice_items as practice
     import mentar.engine.science_items as science
+    import mentar.engine.senior_science_depth_items as depth
     import mentar.engine.senior_science_items as senior
 
-    for mod in (english, practice, science, senior):
+    for mod in (english, practice, science, senior, year1, junior_science,
+                junior_english, senior_english, depth):
         for name in dir(mod):
             table = getattr(mod, name)
             if not isinstance(table, dict) or not table:
@@ -120,3 +131,44 @@ def test_year1_comparison_never_mixes_length_with_weight():
         if asks_weight != (correct in weight):
             problems.append(f"seed {seed}: {item.stem!r} answered by {correct!r}")
     assert not problems, "\n".join(problems[:5])
+
+
+# A universal quantifier in a category label ("true of ALL THREE", "true of
+# BOTH kinds of cell") means that category's members are ALSO true of the
+# sibling categories -- so asked about a sibling, a child picking the shared
+# fact is right and marked wrong. Seen three times on 2026-08-21 alone: Year 4
+# sun/earth/moon, senior electrochemistry, and (as an overlap of MEMBERS rather
+# than labels) Year 1 length-vs-weight.
+#
+# The pattern is only safe when the sibling labels name the exclusion, as
+# electrochemistry now does ("true of a galvanic cell but NOT an electrolytic
+# one"). That is exactly what this test requires.
+_UNIVERSAL = ("all ", "both ", "any ", "every ", "either ")
+
+
+def test_no_category_is_a_superset_of_its_siblings():
+    problems = []
+    for where, table in _fact_tables():
+        labels = [str(k) for k in table]
+        if len(labels) < 2:
+            continue
+        # Parentheses hold DEFINITIONS, not claims about the siblings: Newton's
+        # THIRD law is glossed "(every action has an equal and opposite
+        # reaction)" — that "every" quantifies actions, not categories.
+        bare = {c: re.sub(r"\([^)]*\)", "", c).casefold() for c in labels}
+        quantified = [c for c in labels
+                      if any(u in bare[c] for u in _UNIVERSAL)]
+        if not quantified:
+            continue
+        unguarded = [c for c in labels
+                     if c not in quantified and "not" not in c.casefold()]
+        if unguarded:
+            problems.append(
+                f"{where}: {quantified[0]!r} covers its siblings, but "
+                f"{unguarded[0]!r} does not exclude it"
+            )
+    assert not problems, (
+        "a category that is true of the others makes a correct answer wrong — "
+        "delete it, or name the exclusion in every sibling label:\n  "
+        + "\n  ".join(problems)
+    )

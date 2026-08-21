@@ -62,7 +62,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "Which of these is seen in the NIGHT sky? A) the Sun  B) the stars  C) the Sun seeming to rise and set  D) day turning into night. Answer with the letter."
+      - "Which of these is a DAILY pattern (it happens again and again)? A) day turning into night  B) white clouds  C) the stars  D) the Moon shining brightly. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice

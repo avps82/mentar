@@ -287,15 +287,20 @@ def gen_materials_y1(rng: random.Random):
 _SKY = {
     "seen in the DAY sky": ["the Sun", "white clouds", "a rainbow"],
     "seen in the NIGHT sky": ["the stars", "the Moon shining brightly"],
-    "a change that happens EVERY DAY": [
-        "the Sun seeming to rise and set",
+    # A DAILY PATTERN, described without naming a day-sky object (fixed
+    # 2026-08-21): the old wording "a change that happens EVERY DAY" listed
+    # "the Sun seeming to rise and set", which is also plainly something
+    # "seen in the DAY sky" — so that option was a defensible answer to the
+    # day-sky question and marked wrong.
+    "a DAILY pattern (it happens again and again)": [
         "day turning into night",
+        "getting light in the morning and dark again at bedtime",
     ],
 }
 _SKY_GLOSSES = {
     "seen in the DAY sky": "the Sun's light fills the day sky",
     "seen in the NIGHT sky": "when our side of Earth faces away from the Sun",
-    "a change that happens EVERY DAY": "Earth keeps spinning, so the pattern repeats",
+    "a DAILY pattern (it happens again and again)": "Earth keeps spinning, so the pattern repeats",
 }
 
 
