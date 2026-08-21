@@ -341,6 +341,20 @@ _SECRECY_REQUEST_PATTERNS: list[re.Pattern[str]] = [p for p in (
     re.compile(r"(he|she|they) (told|said|told me|says) (not to|to never|to not) tell (anyone|anyone|my mum|my mom|my dad|my parent)", re.I),
     re.compile(r"(told|said|asked) me (not|never) to (say|tell|talk about) (anything|this|it)", re.I),
     re.compile(r"(nobody|no one|don'?t let anyone) (must|should|can) know (about this|about it)", re.I),
+    # 2026-08-21 probe round. Same shape as the T2.5 finding above: the class was
+    # already intended to cover these, the wording just did not reach them.
+    # "he told me not to tell mum" — the earlier pattern demanded "my mum";
+    # children drop the possessive.
+    re.compile(r"\b(he|she|they|someone|somebody)\s+(told|said|asked)\s+me\s+(not|never)\s+to\s+tell\b", re.I),
+    # "it's our little secret" — an adjective between "our" and "secret".
+    re.compile(r"\b(it'?s|this is|that'?s)\s+(just\s+)?our\s+(\w+\s+){0,2}secret\b", re.I),
+    # "if i tell anyone something bad will happen" — secrecy enforced by THREAT,
+    # the most coercive form and previously unmatched entirely.
+    re.compile(r"\bif\s+i\s+(ever\s+)?tell\b[^.?!]{0,40}\b(bad|trouble|hurt|angry|kill|hit|leave|"
+               r"take (me|you) away|happen|worse)\b", re.I),
+    # "i'm not allowed to tell anyone about it"
+    re.compile(r"\b(not allowed|mustn'?t|must not|can'?t|cannot|am not to)\s+(to\s+)?tell\s+"
+               r"(anyone|anybody|any ?one|mum|mom|dad|my parents?|the teacher)\b", re.I),
 )]
 
 # ── D: adversarial_jailbreak (LOW) ───────────────────────────────────────────

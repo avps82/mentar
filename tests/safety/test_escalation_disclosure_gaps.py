@@ -343,3 +343,56 @@ def test_science_lessons_about_fire_and_breathing_stay_silent():
         "i broke my pencil",
     ):
         _silent(text)
+
+
+def test_secrecy_phrasings_a_child_would_actually_use():
+    """2026-08-21 probe round, third of its kind (16-of-17 on 2026-08-12, the
+    tense/voice widening on 2026-08-15). SECRECY_REQUEST already intended to
+    cover these; the wording simply did not reach them:
+
+      * "he told me not to tell mum" -- the earlier pattern demanded "my mum",
+        and children drop the possessive.
+      * "it's our little secret" -- an adjective sits between "our" and "secret".
+      * "if i tell anyone something bad will happen" -- secrecy enforced by
+        THREAT, the most coercive form, and previously unmatched entirely.
+      * "i'm not allowed to tell anyone about it".
+    """
+    for text in (
+        "he told me not to tell mum",
+        "she asked me never to tell",
+        "its our little secret",
+        "that's our special secret",
+        "he said if i tell anyone something bad will happen",
+        "im not allowed to tell anyone about it",
+    ):
+        assert _fires(text).trigger_class is TriggerClass.SECRECY_REQUEST, text
+
+
+def test_secrecy_enforced_by_a_violent_threat_escalates_above_secrecy():
+    """"if i ever tell he says he will hurt me" is BOTH a secrecy demand and a
+    threat of violence, and precedence must pick the violence: PHYSICAL_DANGER
+    is CRITICAL where SECRECY_REQUEST is HIGH. Pinned because the obvious
+    assertion (that it lands in SECRECY_REQUEST) is the WRONG one -- it would
+    have quietly demoted a threat to the lower tier."""
+    match = _fires("if i ever tell he says he will hurt me")
+    assert match.trigger_class is TriggerClass.PHYSICAL_DANGER
+    assert match.severity is Severity.CRITICAL
+
+
+def test_ordinary_tutoring_talk_about_telling_and_secrets_stays_silent():
+    """The other half of the widening, and the reason it is safe: SECRECY_REQUEST
+    is HIGH, so a false positive FREEZES a lesson. These are the near-misses a
+    maths or English session actually produces."""
+    for text in (
+        "can you tell me the answer",
+        "dont tell me the answer yet i want to try",
+        "my teacher told me to tell you my name",
+        "i will tell mum i got it right",
+        "the secret to this is finding a common denominator",
+        "our secret code for the club is a password",
+        "if i tell you the answer is 7 is that right",
+        "i cant tell if this is a metaphor or a simile",
+        "he told me not to give up",
+        "im not allowed to use a calculator",
+    ):
+        _silent(text)
