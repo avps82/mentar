@@ -45,8 +45,9 @@ def gen_add_within_10(rng: random.Random):
 
 
 def gen_skip_count_2s(rng: random.Random):
-    """Shows the number line with the jumps drawn (visual-first, 2026-08-21):
-    skip counting is a picture of equal hops before it is a sequence of digits."""
+    """Shows the number line with a `?` where the next number goes (visual-first,
+    2026-08-21): skip counting is a picture of equal hops before it is a sequence
+    of digits, and the hop the child has to make needs to be visible."""
     start = rng.choice([2, 4, 6, 8, 10])
     p = f"Counting by 2s: {start}, {start + 2}, {start + 4}, ... What number comes next?"
     card = _card("COUNTING BY 2s", p, start + 6,
@@ -54,8 +55,7 @@ def gen_skip_count_2s(rng: random.Random):
                  f"  1. {start + 4} + 2 = {start + 6}.")
     return ("int", "int_exact", p, str(start + 6), None, card,
             "(Add 2 each time)",
-            number_line(start, start + 4, 2,
-                        jumps=((start, start + 2), (start + 2, start + 4))))
+            number_line(start, start + 4, 2, unknown_next=True))
 
 
 def gen_shape_sides(rng: random.Random):
