@@ -894,3 +894,63 @@ def test_a_question_picture_is_monospaced_above_the_text_and_never_clipped():
         if browser:
             browser.close()
         server.stop()
+
+
+def test_a_question_picture_gets_a_usable_width_on_a_real_phone():
+    """Found 2026-08-21. Every "phone width" check in this file until now
+    squeezed a CONTAINER (`main{max-width:360px}`) and left the viewport wide,
+    so `@media` rules never fired and the numbers were fiction. This one sets
+    real device metrics.
+
+    At 360px the picture box gets ~270px of text at ~9.1px a character -- 29
+    characters. It was 25 before .ascii-art's 18px side padding was cut to 8px
+    on narrow screens: four characters, bought back from margin nobody needed,
+    which is the difference between a 29-column clock face fitting and not.
+
+    Asserts the BUDGET, not the padding, so any future way of finding the room
+    is fine and only losing it fails.
+    """
+    _skip_unless_browser()
+    server, browser = _Server(), None
+    try:
+        browser = _Browser()
+        browser.send("Emulation.setDeviceMetricsOverride",
+                     width=360, height=740, deviceScaleFactor=1, mobile=True)
+        browser.goto(server.url + "/topics?subject=fractions")
+        browser.js("""(() => {const f = [...document.querySelectorAll('form')]
+            .find(f => f.querySelector('[value=unit_fractions]'));
+            f.querySelector('button').click();})()""")
+        browser.wait_for("document.getElementById('help-btn')")
+        r = browser.js("""
+            (() => {
+              const pre = document.querySelector('.question-visual');
+              if (!pre) return {err: 'no .question-visual rendered'};
+              const cs = getComputedStyle(pre);
+              const text = pre.clientWidth - parseFloat(cs.paddingLeft)
+                                           - parseFloat(cs.paddingRight);
+              const probe = document.createElement('span');
+              probe.style.cssText =
+                'position:absolute;visibility:hidden;white-space:pre;left:-9999px';
+              probe.style.font = cs.font;
+              document.body.appendChild(probe);
+              probe.textContent = 'M'.repeat(50);
+              const per = probe.getBoundingClientRect().width / 50;
+              probe.remove();
+              return {err: null, innerWidth: window.innerWidth,
+                      fits: Math.floor(text / per)};
+            })()
+        """)
+        assert not r["err"], r["err"]
+        assert r["innerWidth"] == 360, (
+            f"device metrics did not apply — measured at {r['innerWidth']}px, so "
+            f"this test would be the same fiction it was written to replace"
+        )
+        assert r["fits"] >= 29, (
+            f"only {r['fits']} monospace characters fit the question picture on a "
+            f"360px phone (was 29). A clock face is 30 columns and a two-way "
+            f"table 35; losing width here starts them scrolling"
+        )
+    finally:
+        if browser:
+            browser.close()
+        server.stop()

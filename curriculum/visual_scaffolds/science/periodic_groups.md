@@ -4,7 +4,7 @@ title: Groups of the Periodic Table
 description: Visual scaffold hints for Group 1, Group 17 and Group 18 behaviour.
 tags: [science, chemistry, periodic-table, visual-scaffold]
 subject: science
-topic_keywords: [periodic table, group, groups, alkali metal, halogen, noble gas, outer electron, reactivity]
+topic_keywords: [periodic table, periodic group, periodic groups, alkali metal, halogen, noble gas, outer electron, reactivity]
 timestamp: "2026-08-15T00:00:00Z"
 ---
 

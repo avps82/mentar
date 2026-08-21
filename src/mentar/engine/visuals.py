@@ -205,22 +205,25 @@ def two_way_table(row_labels: tuple[str, str], col_labels: tuple[str, str],
     """
     if len(row_labels) != 2 or len(col_labels) != 2 or len(cells) != 2:
         return ()
-    lw = max(len(r) for r in row_labels) + 2
-    cw = max(max(len(c) for c in col_labels), 5) + 2
+    # +1 padding, not +2, and a tight total column: measured in chromium, only
+    # ~35 monospace characters fit a 360px screen, and the roomier version came
+    # out at 40 and scrolled sideways.
+    lw = max(len(r) for r in row_labels) + 1
+    cw = max(max(len(c) for c in col_labels), 4) + 1
     head = "  " + " " * lw + "".join(f"{c:<{cw}}" for c in col_labels)
     if row_totals is not None:
-        head += "| total"
+        head += "|total"
     out = [head.rstrip()]
     for i, label in enumerate(row_labels):
         line = "  " + f"{label:<{lw}}" + "".join(f"{str(v):<{cw}}" for v in cells[i])
         if row_totals is not None:
-            line += f"| {row_totals[i]}"
+            line += f"|{row_totals[i]}"
         out.append(line.rstrip())
     if col_totals is not None:
-        out.append("  " + "-" * (lw + 2 * cw + 8))
+        out.append("  " + "-" * (lw + 2 * cw + 6))
         line = "  " + f"{'total':<{lw}}" + "".join(f"{str(v):<{cw}}" for v in col_totals)
         if grand_total is not None:
-            line += f"| {grand_total}"
+            line += f"|{grand_total}"
         out.append(line.rstrip())
     return tuple(out)
 

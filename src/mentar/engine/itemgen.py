@@ -179,8 +179,15 @@ def _fraction_bar(numerator: int, denominator: int, summary: bool = True) -> tup
     THIS fraction.
 
     maths/fractions.md carries this shape with 1/2 and 2/4 baked in, a different
-    fraction from whatever the item drew. Denominators here run to 10, which
-    stays inside a phone's monospace width at 5 characters a cell.
+    fraction from whatever the item drew.
+
+    TWO characters a cell, not four (fixed 2026-08-21). The old width claimed in
+    this docstring to "stay inside a phone's monospace width" was measured and
+    did not: at 15.2px monospace only ~35 characters fit a 360px screen, and a
+    4-wide cell put d=8 at 41 and d=10 at 51. The bar then scrolled sideways --
+    and a fraction bar you cannot see all of at once is exactly the picture that
+    stops working, because comparing the parts IS the point. At 2 wide, d=10 is
+    31 characters and fits. Verified in chromium, not asserted.
 
     `summary=False` drops the trailing "... = 1/3" line. That line is right on
     the CARD (shown after an attempt) and fatal on the QUESTION (shown while the
@@ -190,7 +197,7 @@ def _fraction_bar(numerator: int, denominator: int, summary: bool = True) -> tup
     """
     if denominator < 1 or denominator > 12 or not 0 <= numerator <= denominator:
         return ()
-    cells = "|" + "|".join("████" if i < numerator else "    " for i in range(denominator)) + "|"
+    cells = "|" + "|".join("██" if i < numerator else "  " for i in range(denominator)) + "|"
     if not summary:
         return (cells,)
     return (cells, f"{numerator} of {denominator} equal parts shaded = {numerator}/{denominator}")

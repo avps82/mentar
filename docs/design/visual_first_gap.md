@@ -331,3 +331,132 @@ of 5 parts shaded" IS 1/5). The app's own read-aloud is silent on it structurall
 So: **a constitutive visual question is not screen-reader answerable.** That is a
 property of the pedagogy, not a bug to be clevered away, and it is the honest
 counterweight to the gap this work closes.
+
+## Bug-hunt pass, 2026-08-21 (post-ship)
+
+Three defects, all found by measuring rather than reading. Each is mutation-proved.
+
+### 1. Every earlier "phone width" measurement was fiction
+
+The first probes squeezed a **container** (`main{max-width:360px}`) and left the
+viewport wide, so `@media` rules never fired. They reported "no problems" and the
+number they produced was 6 characters too generous. Real device metrics
+(`Emulation.setDeviceMetricsOverride`) tell a different story:
+
+| Viewport | Characters that fit `.ascii-art` | Effect on the 8 shipped pictures |
+|---|---|---|
+| 360px | 29 | 4 scroll (by 1–6 columns) |
+| 390px | 32 | 1 scrolls (the two-way table) |
+| 414px | 35 | all fit |
+| 768px | 69 | all fit |
+
+`.ascii-art` side padding was cut 18px → 8px below 420px, worth **4 characters** —
+the difference between a 30-column clock face fitting a 390px phone and not.
+Shrinking the font was rejected: this is a picture a six-year-old has to read.
+Pictures still over budget scroll, which is what `overflow-x: auto` is for.
+Pinned by `test_a_question_picture_gets_a_usable_width_on_a_real_phone`, which
+asserts the *budget* (≥29 chars) and that the metrics actually applied — a test
+that silently measures a 1280px window is the fiction it replaces.
+
+### 2. The fraction bar was 51 columns while claiming to fit a phone
+
+`_fraction_bar` drew 4-wide cells, so d=8 was 41 columns and d=10 was 51 — its own
+docstring said denominators to 10 "stays inside a phone's monospace width". Cells
+are now 2 wide (d=10 = 31). The two-way table went 40 → 35 the same way.
+`PHONE_COLUMNS = 35` now caps every generator across a 40-seed sweep.
+
+### 3. A skip-counting question was shown the count-by-ones picture
+
+Checking whether a question picture and an explain-mode scaffold diagram can
+contradict each other turned up a routing bug instead. "Counting by 2s" matched
+`year1_counting.md` on `counting` and `year1_skip_counting.md` on `counting by 2s`
+— one keyword each, so the alphabetical tie-break gave the generic file the win. A
+child asked to count 2, 4, 6, 8 got ★ ★ ★ ★ ★ / "touch each one once": not a
+different example, the **wrong method**.
+
+`load_visual_scaffold` now breaks ties on **containment** — a keyword that strictly
+contains a rival's is a refinement of it. Keyword *length* was tried first and is
+wrong: `vocabulary` is longer than `synonym` but more generic, and length sent a
+synonym question to the generic Frayer box. Both directions are pinned.
+
+This is the tie-break half of the defect class in `one-scaffold-file-per-concept`.
+
+**The tie-break change is global, so its blast radius was measured, not assumed:**
+routing was recomputed for all **934 curriculum labels** under both rules. Nine
+changed, across three concepts — and the two that were not the target were both
+worse under the old rule:
+
+| Label | Was shown | Now shown |
+|---|---|---|
+| Counting by 2s | count-the-stars one-by-one | skip-count number line |
+| Electrochemical cells (4 packs) | **plant-cell vs animal-cell diagram** | galvanic/electrolytic cell |
+| Compound interest — two years (4 packs) | flat-percentage hundred grid | year-on-year growth factor |
+
+The chemistry one is the costliest and nobody was looking for it: `cell_structures.md`
+matched `cell` + `cells` and `senior_electrochemistry.md` matched `electrochemical` +
+`electrochemical cells` — two keywords each, so alphabetical order handed a senior
+chemistry question a **biology** picture, in four country packs. Diffing every label
+found it; reading the code would not have.
+
+### 4. Two scaffolds never matched the node they were written for
+
+Listing every label whose scaffold is *still* decided by alphabetical order (18 of
+934) turned up two files that existed for exactly the node they never reached,
+because their keywords were written in a different register than the label:
+
+* `senior_matrix_addition.md` claimed `[adding matrices, matrices]` — **plural** —
+  against the label "Matrix addition". Zero hits on its own node, so a Year-11
+  matrix question was shown the **primary number-line jump strategy**.
+* `senior_organic_families.md` claimed `[organic families, organic]` and tied with
+  a reaction-**rates** file on `reaction`, losing on filename order — so an
+  organic-families question was illustrated with collision theory.
+
+Both fixed by giving the right file a compound keyword containing its rival's,
+which is the steering the containment tie-break exists to enable.
+
+### 5. The periodic table had claimed the word "group"
+
+`periodic_groups.md` listed the bare keywords `group` **and** `groups`. That is two
+hits on any label containing the word, which beat `vertebrates.md`'s single
+`vertebrate` on **count** — so no tie-break could have rescued it:
+
+* "Vertebrate groups" (fish / bird / mammal) → the periodic table
+* "Grouping materials" (Year-3 natural vs manufactured) → the periodic table
+
+Narrowed to `periodic group` / `periodic groups`. "Vertebrate groups" now reaches
+`vertebrates.md`, and the real chemistry labels keep theirs.
+
+"Grouping materials" had no correct file at all — `materials_change.md` is about
+bending and stretching, a different concept — so removing the wrong picture left it
+bare and tripped `test_every_concept_node_has_a_scaffold`, which is that invariant
+doing its job. A `grouping_materials.md` was authored for it (natural vs
+manufactured, with paper and steel called out as the hard cases, since "starts from
+something natural but needs people to make it" IS the concept).
+
+Note the shape: findings 3 and 4 were tie-break bugs, this one is an
+over-broad-keyword bug that wins outright. Both produce the same symptom, so
+finding it needed the routing table, not the tie-break code.
+
+### Still decided by alphabetical order — maintainer's call, not guessed
+
+16 labels remain where two files tie and neither keyword contains the other. Most
+are defensible (`Halves and quarters` → bar model, `Perimeter formula` → labelled
+rectangle). Three are **content gaps rather than routing bugs** — the right picture
+does not exist, so no tie-break can find it:
+
+| Label | Currently served | Gap |
+|---|---|---|
+| Product rule for derivatives | primary "equal groups" | no product-rule diagram exists |
+| Scalar multiple of a matrix | primary "equal groups" | no scalar-multiple diagram exists |
+| Reducing-balance loan (one month) | an authoring instruction, not a diagram | no loan diagram exists |
+
+Recorded rather than invented: authoring three senior diagrams is content work with
+a pedagogical choice in it, not a bug fix.
+
+### Checked and clean
+
+The question picture correctly survives the whole Help round (`HELP_RECHECK_AWAIT`
+is in `_QUESTION_AWAIT`), so a child re-answering still has the picture. When the
+method card appears alongside it, both are drawn from the **same item**, so the two
+pictures agree — the risk-5 contradiction does not occur. The card is only reached
+via an explicit "Show me how" press, never a plain wrong answer.

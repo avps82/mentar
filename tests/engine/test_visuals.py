@@ -133,3 +133,36 @@ def test_sample_still_varies_when_only_the_picture_differs():
     gen = ItemGenerator(dict(_VISUAL_NODES), rng=random.Random(11))
     pictures = {tuple(gen.sample("unit_fractions").visual) for _ in range(24)}
     assert len(pictures) >= 4, f"only {len(pictures)} distinct pictures in 24 draws"
+
+
+# Measured 2026-08-21 in headless chromium at a REAL 360px mobile viewport
+# (Emulation.setDeviceMetricsOverride -- squeezing a container instead leaves the
+# viewport wide, so @media never fires and every number is a fake; that mistake
+# was made first and produced a budget 6 characters too generous).
+#
+# At that width .ascii-art gets a 270px text area at 9.11px a character, so
+# exactly 29 CHARACTERS FIT without scrolling. This cap is NOT 29, because the
+# shapes that need more are shapes, not sloppiness: a readable clock face is 30
+# and a two-way table 35. Those scroll, which is precisely what .ascii-art's
+# overflow-x:auto is for, and the alternative -- shrinking the font -- is a bad
+# trade for a picture a six-year-old has to read.
+#
+# So the cap pins the widest shipped picture and catches the absurd. It earned
+# its place immediately: the fraction bar was 51 characters at d=10 (four-wide
+# cells) while its own docstring claimed it "stays inside a phone's monospace
+# width", and the two-way table was 40.
+PHONE_COLUMNS = 35
+
+
+def test_every_question_picture_fits_a_phone_without_scrolling():
+    for node, gen in _VISUAL_NODES.items():
+        for seed in range(40):
+            item = _draw(node, gen, seed)
+            if item is None or not item.visual:
+                continue
+            widest = max(len(line) for line in item.visual)
+            assert widest <= PHONE_COLUMNS, (
+                f"{node} seed={seed} draws {widest} columns, past the "
+                f"{PHONE_COLUMNS} the widest shipped picture needs. Only 29 fit "
+                f"a 360px phone unscrolled, so this one is well past a swipe"
+            )

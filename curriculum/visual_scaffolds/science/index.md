@@ -25,6 +25,7 @@ Visual scaffold hints for science topics.
 * [genotype_phenotype](genotype_phenotype.md) — Visual scaffold hints for alleles, genotypes and the characteristics they produce
 * [habitats](habitats.md) — Visual scaffold hints for classifying where an animal mainly lives (water vs. land)
 * [heat_energy](heat_energy.md) — Visual scaffold hints for identifying heat sources and how heat moves between objects
+* [grouping_materials](grouping_materials.md) — Visual scaffold hints for sorting materials by where they come from (natural, from living things or the earth) versus manufactured (made or heavily processed by people)
 * [homeostasis](homeostasis.md) — Visual scaffold hints for how the body holds a condition steady
 * [life_cycles](life_cycles.md) — Visual scaffold hints for identifying life-cycle stages of living things
 * [light_materials](light_materials.md) — Visual scaffold hints for identifying whether a material is transparent (lets light through) or opaque (blocks it)

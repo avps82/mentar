@@ -545,6 +545,15 @@ input[type=text], input[type=number] {
   overflow-x: auto;
   font-size: 0.95rem;
 }
+@media (max-width: 420px) {
+  /* Measured 2026-08-21 in chromium at a 360px viewport: the box came out
+     270px, and 18px of padding each side left only ~234px of text -- about 25
+     monospace characters, while a clock face is 30 and a two-way table 35.
+     Padding is the cheapest 20px to give back. The alternative, shrinking the
+     font, was rejected: this is a picture a six-year-old has to read.
+     Anything still wider scrolls, which is what overflow-x:auto is for. */
+  .ascii-art { padding: 14px 8px; }
+}
 
 /* Question block internals: read-aloud button + text side by side */
 /* flex-wrap (2026-08-21): .question is a flex ROW, so a question picture added

@@ -124,19 +124,42 @@ def load_visual_scaffold(scaffold_root: Path, subject: str, label: str) -> str:
     3 ("fraction", "fractions", "denominator") — the more subject-specific
     scaffold matches more of the label, so counting is the tie-break the old
     first-match scan lacked (it always returned addition_subtraction.md purely
-    because 'a' sorts before 'f'). Equal counts keep alphabetical order (stable,
-    deterministic)."""
+    because 'a' sorts before 'f'). Equal counts break on CONTAINMENT, and only then on
+    alphabetical order (2026-08-21). Counting alone was not enough: "Counting by
+    2s" matched year1_counting.md on 'counting' and year1_skip_counting.md on
+    'counting by 2s' -- one hit each, so the alphabetical tie-break handed a
+    skip-counting question the count-by-ones diagram, a picture teaching the
+    wrong method for the question on screen.
+
+    The tie-break is containment, NOT keyword length. Length was tried first and
+    is wrong: 'vocabulary' is LONGER than 'synonym' but far more generic, and
+    ranking by length sent "Vocabulary -- synonym pairs" to the generic Frayer
+    box instead of the synonyms/antonyms diagram. A keyword that strictly
+    CONTAINS a rival's keyword is a refinement of it ('counting by 2s' refines
+    'counting'), so the file claiming the refinement wins. Where neither
+    contains the other the two are merely different, and alphabetical order
+    stands exactly as before."""
     subdir = _SUBJECT_TO_SCAFFOLD_DIR.get(subject)
     if subdir is None:
         return ""
     label_lower = label.lower()
     scaffold_dir = str(Path(scaffold_root) / subdir)
-    best_body, best_count = "", 0
+    scored = []
     for keywords, body in _scan_scaffold_dir(scaffold_dir):
-        count = sum(1 for kw in keywords if _kw_matches(kw, label_lower))
-        if count > best_count:
-            best_body, best_count = body, count
-    return best_body
+        matched = [kw for kw in keywords if _kw_matches(kw, label_lower)]
+        if matched:
+            scored.append((len(matched), matched, body))
+    if not scored:
+        return ""
+    best = max(s[0] for s in scored)
+    tied = [s for s in scored if s[0] == best]
+    for _count, matched, body in tied:
+        others = [kw for c, m, b in tied if b is not body for kw in m]
+        if others and all(
+            any(other != kw and other in kw for kw in matched) for other in others
+        ):
+            return body
+    return tied[0][2]
 
 
 def first_diagram(scaffold_body: str) -> str | None:

@@ -4,7 +4,7 @@ title: "Organic Families"
 description: "Visual scaffold for alkanes, alkenes and alcohols by their defining feature."
 tags: [science, senior, visual-scaffold]
 subject: science
-topic_keywords: [organic families, organic]
+topic_keywords: [organic families, organic, organic reaction]
 timestamp: "2026-08-22T00:00:00Z"
 ---
 

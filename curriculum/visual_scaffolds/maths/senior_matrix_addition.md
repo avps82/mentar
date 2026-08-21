@@ -4,7 +4,7 @@ title: "Adding Matrices"
 description: "Visual scaffold for adding matrices entry by entry."
 tags: [mathematics, senior, visual-scaffold]
 subject: mathematics
-topic_keywords: [adding matrices, matrices]
+topic_keywords: [adding matrices, matrices, matrix addition]
 timestamp: "2026-08-21T00:00:00Z"
 ---
 
