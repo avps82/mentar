@@ -85,7 +85,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "Which of these is true of an ELECTROLYTIC cell? A) reduction happens at the cathode  B) a spontaneous reaction generates an electric current  C) used to electroplate metals and split molten salts  D) chemical energy is converted into electrical energy. Answer with the letter."
+      - "Which of these is true of an electrolytic cell but NOT a galvanic one? A) a spontaneous reaction generates an electric current  B) an external power supply forces a non-spontaneous reaction  C) oxidation happens at the anode  D) reduction happens at the cathode. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice

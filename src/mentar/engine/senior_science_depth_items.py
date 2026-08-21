@@ -244,7 +244,10 @@ _GAS_LAWS = {
         "its pressure rises as particles hit the walls harder and more often",
     ],
     "what happens when a gas is COMPRESSED at fixed temperature": [
-        "its pressure rises because the same particles hit the walls more often",
+        # Must name the SQUEEZE (fixed 2026-08-21): "the same particles hit the
+        # walls more often" is equally true of heating at fixed volume, so it was
+        # a defensible answer to the heating question while being marked wrong.
+        "its pressure rises because the same particles are squeezed into a smaller space",
         "its volume falls while pressure × volume stays constant",
     ],
     "what happens when a gas is HEATED at fixed pressure": [
@@ -335,24 +338,30 @@ def gen_equilibrium(rng: random.Random):
                        glosses=_EQUILIBRIUM_GLOSSES, concept_name="CHEMICAL EQUILIBRIUM")
 
 
+# Categories say ONLY / BOTH explicitly (fixed 2026-08-21): a bare "true of the
+# ELECTRODES" category was a SUPERSET -- "reduction happens at the cathode" holds
+# in galvanic cells too, so it was a correct answer to "true of a galvanic cell?"
+# and marked wrong. Naming the exclusion makes the three genuinely disjoint.
 _ELECTROCHEM = {
-    "true of a galvanic (voltaic) CELL": [
+    "true of a galvanic (voltaic) cell but NOT an electrolytic one": [
         "a spontaneous reaction generates an electric current",
         "chemical energy is converted into electrical energy",
     ],
-    "true of an ELECTROLYTIC cell": [
+    "true of an electrolytic cell but NOT a galvanic one": [
         "an external power supply forces a non-spontaneous reaction",
         "used to electroplate metals and split molten salts",
     ],
-    "true of the ELECTRODES": [
+    "true of BOTH kinds of cell": [
         "oxidation happens at the anode",
         "reduction happens at the cathode",
     ],
 }
 _ELECTROCHEM_GLOSSES = {
-    "true of a galvanic (voltaic) CELL": "a battery: the reaction wants to run, and you harvest the electrons",
-    "true of an ELECTROLYTIC cell": "electrolysis: you pay energy to drive the reaction backwards",
-    "true of the ELECTRODES": "AN-OX and RED-CAT hold in both kinds of cell",
+    "true of a galvanic (voltaic) cell but NOT an electrolytic one":
+        "a battery: the reaction wants to run, and you harvest the electrons",
+    "true of an electrolytic cell but NOT a galvanic one":
+        "electrolysis: you pay energy to drive the reaction backwards",
+    "true of BOTH kinds of cell": "AN-OX and RED-CAT hold whichever cell you are looking at",
 }
 
 
@@ -667,7 +676,10 @@ _HAZARDS = {
     ],
     "true of VOLCANOES": [
         "they form where magma reaches the surface",
-        "the Pacific Ring of Fire holds most of the active ones",
+        # Names volcanoes explicitly (fixed 2026-08-21): "most of the active
+        # ones" was ambiguous, and the Ring of Fire holds most of the world's
+        # earthquakes too -- so it was defensible for the earthquake question.
+        "the Pacific Ring of Fire holds most of the world's active volcanoes",
     ],
     "true of CYCLONES (hurricanes/typhoons)": [
         "they form over warm tropical oceans",

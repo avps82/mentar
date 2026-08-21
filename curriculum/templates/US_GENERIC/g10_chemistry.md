@@ -122,7 +122,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "Which of these is what happens when a gas is HEATED at fixed volume? A) a balloon in the sun swelling up  B) it expands, taking up more volume  C) its pressure rises as particles hit the walls harder and more often  D) its pressure rises because the same particles hit the walls more often. Answer with the letter."
+      - "Which of these is what happens when a gas is HEATED at fixed pressure? A) its pressure rises as particles hit the walls harder and more often  B) its pressure rises because the same particles are squeezed into a smaller space  C) its volume falls while pressure × volume stays constant  D) a balloon in the sun swelling up. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice
@@ -166,7 +166,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "Which of these is true of an ELECTROLYTIC cell? A) an external power supply forces a non-spontaneous reaction  B) chemical energy is converted into electrical energy  C) oxidation happens at the anode  D) a spontaneous reaction generates an electric current. Answer with the letter."
+      - "Which of these is true of BOTH kinds of cell? A) reduction happens at the cathode  B) used to electroplate metals and split molten salts  C) a spontaneous reaction generates an electric current  D) an external power supply forces a non-spontaneous reaction. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice

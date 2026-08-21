@@ -85,7 +85,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "Which of these is true of an ELECTROLYTIC cell? A) chemical energy is converted into electrical energy  B) reduction happens at the cathode  C) an external power supply forces a non-spontaneous reaction  D) oxidation happens at the anode. Answer with the letter."
+      - "Which of these is true of a galvanic (voltaic) cell but NOT an electrolytic one? A) an external power supply forces a non-spontaneous reaction  B) a spontaneous reaction generates an electric current  C) oxidation happens at the anode  D) reduction happens at the cathode. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice

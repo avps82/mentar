@@ -88,7 +88,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "Which of these is what happens when a gas is COMPRESSED at fixed temperature? A) its pressure rises because the same particles hit the walls more often  B) it expands, taking up more volume  C) its pressure rises as particles hit the walls harder and more often  D) a balloon in the sun swelling up. Answer with the letter."
+      - "Which of these is what happens when a gas is HEATED at fixed volume? A) a balloon in the sun swelling up  B) it expands, taking up more volume  C) its pressure rises as particles hit the walls harder and more often  D) its volume falls while pressure × volume stays constant. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice

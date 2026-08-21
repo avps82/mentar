@@ -85,7 +85,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "Which of these is what happens when a gas is HEATED at fixed pressure? A) its pressure rises because the same particles hit the walls more often  B) it expands, taking up more volume  C) its volume falls while pressure × volume stays constant  D) its pressure rises as particles hit the walls harder and more often. Answer with the letter."
+      - "Which of these is what happens when a gas is HEATED at fixed volume? A) its pressure rises as particles hit the walls harder and more often  B) its pressure rises because the same particles are squeezed into a smaller space  C) a balloon in the sun swelling up  D) its volume falls while pressure × volume stays constant. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice

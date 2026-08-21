@@ -88,7 +88,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "Which of these is true of the ELECTRODES? A) reduction happens at the cathode  B) chemical energy is converted into electrical energy  C) used to electroplate metals and split molten salts  D) a spontaneous reaction generates an electric current. Answer with the letter."
+      - "Which of these is true of BOTH kinds of cell? A) chemical energy is converted into electrical energy  B) reduction happens at the cathode  C) a spontaneous reaction generates an electric current  D) used to electroplate metals and split molten salts. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice
