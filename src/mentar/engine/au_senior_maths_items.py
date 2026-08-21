@@ -23,6 +23,8 @@ of the generic type hint.
 
 from __future__ import annotations
 
+from mentar.engine.visuals import network_square, scatterplot, two_way_table
+
 __all__ = [
     "AU_ESSENTIAL_Y11_GENERATORS", "AU_ESSENTIAL_Y12_GENERATORS",
     "AU_GENERAL_Y11_GENERATORS", "AU_GENERAL_Y12_GENERATORS",
@@ -301,18 +303,31 @@ def gen_network_edges(rng):
 
 
 def gen_shortest_path(rng):
-    a1, a2 = rng.choice([(5, 7), (6, 9), (4, 8)])
-    b1, b2, b3 = rng.choice([(3, 4, 4), (2, 5, 4), (3, 3, 5)])
-    best = min(a1 + a2, b1 + b2 + b3)
-    p = (f"Route 1 from home to school: two roads of {a1} km and {a2} km. "
-         f"Route 2: three roads of {b1} km, {b2} km and {b3} km. "
-         "How long is the SHORTER route, in km?")
-    card = _card("SHORTEST PATH", p, best,
-                 "  Compare the total length of every route; the smallest total wins",
-                 f"  1. Route 1: {a1} + {a2} = {a1 + a2}.",
-                 f"  2. Route 2: {b1} + {b2} + {b3} = {b1 + b2 + b3}.",
+    """The network is DRAWN (visual-first, 2026-08-21).
+
+    It used to describe two routes in prose -- "Route 1: two roads of 5 km and
+    7 km. Route 2: three roads of 2, 5 and 4 km" -- which reduces a graph
+    question to "add 12 vs add 11". With the network shown, the child has to
+    find the routes through it first, which is the actual skill.
+    """
+    ab = rng.choice([4, 5, 6, 7, 8])
+    bd = rng.choice([3, 4, 5, 6])
+    ac = rng.choice([2, 3, 4])
+    cd = rng.choice([2, 3, 4, 5])
+    via_b, via_c = ab + bd, ac + cd
+    if via_b == via_c:                      # keep one route strictly shorter
+        cd += 1
+        via_c = ac + cd
+    best = min(via_b, via_c)
+    p = "Travel from A to D along the roads. How long is the SHORTEST route, in km?"
+    card = _card("SHORTEST PATH", p, f"{best} km",
+                 "  Add the weights along each route, then take the smaller total",
+                 f"  1. Route A-B-D: {ab} + {bd} = {via_b}.",
+                 f"  2. Route A-C-D: {ac} + {cd} = {via_c}.",
                  f"  3. The shorter is {best} km.")
-    return ("int", "int_exact", p, str(best), None, card)
+    return ("int", "int_exact", p, str(best), None, card,
+            "(Add along each route; take the smaller total)",
+            network_square({"ab": ab, "ac": ac, "bd": bd, "cd": cd}))
 
 
 def gen_relative_frequency(rng):
@@ -492,38 +507,50 @@ def gen_circle_circumference(rng):
 
 
 def gen_two_way_table(rng):
-    a, b, c = rng.randint(5, 15), rng.randint(5, 15), rng.randint(5, 15)
-    total = rng.randint(a + b + c + 3, a + b + c + 15)
-    d = total - a - b - c
-    p = (f"A two-way table of {total} students: plays sport AND music {a}; sport only {b}; "
-         f"music only {c}. How many play NEITHER?")
-    card = _card("TWO-WAY TABLE — THE MISSING CELL", p, d,
-                 "  The four cells must add to the total",
-                 f"  1. Accounted for: {a} + {b} + {c} = {a + b + c}.",
-                 f"  2. {total} − {a + b + c} = {d}.")
-    return ("int", "int_exact", p, str(d), None, card)
+    """The table is DRAWN (visual-first, 2026-08-21) -- reading a two-way table
+    is the skill, and the old prose form ("plays sport AND music 8; sport only
+    9; music only 6") did the reading for the child."""
+    both = rng.choice([6, 8, 10, 12])
+    sport_only = rng.choice([7, 9, 11, 14])
+    music_only = rng.choice([5, 6, 13])
+    neither = rng.choice([4, 6, 8, 9])
+    total = both + sport_only + music_only + neither
+    p = "In this two-way table, how many students play NEITHER sport nor music?"
+    card = _card("TWO-WAY TABLE", p, neither,
+                 "  Every student sits in exactly one cell, so the four cells add to the total",
+                 f"  1. Known cells: {both} + {sport_only} + {music_only} = "
+                 f"{both + sport_only + music_only}.",
+                 f"  2. {total} − {both + sport_only + music_only} = {neither}.")
+    return ("int", "int_exact", p, str(neither), None, card,
+            "(The four cells add to the total)",
+            two_way_table(("music", "no music"), ("sport", "no sport"),
+                          ((both, music_only), (sport_only, "?")),
+                          (both + music_only, sport_only + neither),
+                          (both + sport_only, music_only + neither), total))
 
 
 def gen_correlation_direction(rng):
-    stem_pairs = [
-        ("hours of study and test scores rise together", "positive"),
-        ("as daily temperature rises, heater use falls", "negative"),
-        ("shoe size and favourite colour show no pattern", "no correlation"),
-        ("as car age goes up, resale price goes down", "negative"),
-        ("height and arm span rise together", "positive"),
-    ]
-    desc, kind = rng.choice(stem_pairs)
-    stem = f"In a scatter plot, {desc}. What correlation is this?"
-    kinds = ["positive", "negative", "no correlation"]
-    others = [k for k in kinds if k != kind]
-    choices = [kind, others[0], others[1], "perfect correlation"]
-    rng.shuffle(choices)
-    letter = "ABCD"[choices.index(kind)]
+    """The points are PLOTTED (visual-first, 2026-08-21). The prose form stated
+    the relationship outright -- "as daily temperature rises, heater use falls" --
+    which is exactly what reading a scatterplot is supposed to teach."""
+    kind = rng.choice(["positive", "negative", "no correlation"])
+    xs = list(range(0, 12, 2))
+    if kind == "positive":
+        pts = tuple((x, min(5, x // 2)) for x in xs)
+    elif kind == "negative":
+        pts = tuple((x, max(0, 5 - x // 2)) for x in xs)
+    else:
+        pts = tuple((x, rng.choice([0, 2, 5, 1, 4, 3])) for x in xs)
+    choices = ("positive", "negative", "no correlation", "perfect correlation")
+    letter = "ABCD"["positive negative".split().index(kind)
+                    if kind in ("positive", "negative") else 2]
+    stem = "What correlation does this scatter plot show?"
     card = _card("CORRELATION DIRECTION", stem, kind,
-                 "  Rising together = positive · one rises, one falls = negative · no pattern = none",
-                 f"  1. Here: {desc}.",
-                 f"  2. That is a {kind} correlation.")
-    return ("mc4", "mc_choice", stem, letter, tuple(choices), card)
+                 "  Points rising left-to-right → positive; falling → negative; "
+                 "no pattern → none",
+                 f"  1. Reading the plot: {kind}.")
+    return ("mc4", "mc_choice", stem, letter, choices, card, None,
+            scatterplot(pts))
 
 
 AU_GENERAL_Y11_GENERATORS = {

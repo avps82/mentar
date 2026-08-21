@@ -107,7 +107,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "A scatterplot shows that older cars tended to sell for less. What association is this? A) positive  B) negative  C) no association  D) it cannot be told. Answer with the letter."
+      - "A scatterplot shows that shoe size showed no pattern against test score. What association is this? A) positive  B) negative  C) no association  D) it cannot be told. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice

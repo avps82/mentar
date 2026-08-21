@@ -163,3 +163,120 @@ def number_line(start: int, stop: int, step: int = 1,
         if arc.strip():
             out.append(arc)
     return tuple(out)
+
+
+# ── data displays ────────────────────────────────────────────────────────────
+
+def scatterplot(points: tuple[tuple[int, int], ...],
+                width: int = 12, height: int = 6) -> tuple[str, ...]:
+    """A scatter of plotted points with bare x/y axes.
+
+    The senior topics that use this ("what correlation is this?") currently STATE
+    the relationship in prose -- "as temperature rises, heater use falls" -- which
+    is the whole skill. Plotting the points hands the child the same job a real
+    scatterplot does.
+
+    Points are (x, y) in 0..width-1 / 0..height-1. Max width: width + 5.
+    Deliberately unlabelled beyond the axes: naming the trend is the question.
+    """
+    if not 4 <= width <= 20 or not 3 <= height <= 10 or not points:
+        return ()
+    if any(not (0 <= x < width and 0 <= y < height) for x, y in points):
+        return ()
+    out = []
+    for row in range(height - 1, -1, -1):
+        cells = "".join("*" if (c, row) in points else " " for c in range(width))
+        axis = "  y|" if row == height - 1 else "   |"
+        out.append((axis + cells).rstrip())
+    out.append("   +" + "-" * width + " x")
+    return tuple(out)
+
+
+def two_way_table(row_labels: tuple[str, str], col_labels: tuple[str, str],
+                  cells: tuple[tuple[object, object], ...],
+                  row_totals: tuple[object, object] | None = None,
+                  col_totals: tuple[object, object] | None = None,
+                  grand_total: object | None = None) -> tuple[str, ...]:
+    """A two-way table, drawn. Cell values may be numbers or "?" for the unknown.
+
+    Reading a two-way table IS the skill, and describing one in a sentence
+    ("plays sport AND music 8; sport only 9; ...") does the reading for the child.
+    Max width: about 4 label widths + 8.
+    """
+    if len(row_labels) != 2 or len(col_labels) != 2 or len(cells) != 2:
+        return ()
+    lw = max(len(r) for r in row_labels) + 2
+    cw = max(max(len(c) for c in col_labels), 5) + 2
+    head = "  " + " " * lw + "".join(f"{c:<{cw}}" for c in col_labels)
+    if row_totals is not None:
+        head += "| total"
+    out = [head.rstrip()]
+    for i, label in enumerate(row_labels):
+        line = "  " + f"{label:<{lw}}" + "".join(f"{str(v):<{cw}}" for v in cells[i])
+        if row_totals is not None:
+            line += f"| {row_totals[i]}"
+        out.append(line.rstrip())
+    if col_totals is not None:
+        out.append("  " + "-" * (lw + 2 * cw + 8))
+        line = "  " + f"{'total':<{lw}}" + "".join(f"{str(v):<{cw}}" for v in col_totals)
+        if grand_total is not None:
+            line += f"| {grand_total}"
+        out.append(line.rstrip())
+    return tuple(out)
+
+
+# ── networks ─────────────────────────────────────────────────────────────────
+
+# Hand-laid layout with weights substituted -- deliberately NOT a graph-layout
+# engine. Four vertices in a square is enough for shortest-path and for counting
+# odd-degree vertices, and a fixed shape is legible where an auto-layout is not.
+# Positions are COMPUTED rather than written as fixed-width strings, because a
+# two-digit weight would otherwise slide B sideways and leave the uprights
+# pointing at nothing (caught on the first render).
+
+
+def network_square(weights: dict[str, object],
+                   diagonal: object | None = None) -> tuple[str, ...]:
+    """A 4-vertex network A-B-D-C with an optional A-D diagonal.
+
+    `weights` supplies ab/ac/bd/cd (edge labels, usually distances). With a
+    diagonal the vertex degrees change, which is what an Eulerian-trail question
+    turns on -- and counting those degrees off the PICTURE is the skill the prose
+    version ("a network's vertices have 4 of ODD degree") gives away.
+
+    Max width: about 12 + the widest horizontal weight. Carries no route totals:
+    finding the short way through IS the question.
+    """
+    need = {"ab", "ac", "bd", "cd"}
+    if not need <= set(weights):
+        return ()
+    ab, ac, bd, cd = (str(weights[k]) for k in ("ab", "ac", "bd", "cd"))
+    top = f"A --{ab}-- B"
+    bottom = f"C --{cd}-- D"
+    span = max(len(top), len(bottom))
+    top = top.ljust(span)
+    bottom = bottom.ljust(span)
+    right = span - 1                       # column of B / D
+    def upright(label: str = "") -> str:
+        row = [" "] * span
+        row[0] = label[:1] if label else "|"
+        row[right] = label[1:2] if len(label) > 1 else ("|" if not label else " ")
+        return "".join(row).rstrip()
+    side = [" "] * span
+    side[0], side[right] = "|", "|"
+    bar = "".join(side)
+    labels = [" "] * span
+    labels[0], labels[right] = ac[0], bd[0]
+    if len(ac) > 1 or len(bd) > 1:         # multi-digit weights sit beside the upright
+        labels = [" "] * span
+        for i, ch in enumerate(ac):
+            if i < span:
+                labels[i] = ch
+        for i, ch in enumerate(bd):
+            if right + i - len(bd) + 1 >= 0:
+                labels[right + i - len(bd) + 1] = ch
+    out = ["  " + top, "  " + bar, "  " + "".join(labels).rstrip(),
+           "  " + bar, "  " + bottom]
+    if diagonal is not None:
+        out.append(f"  (A to D directly: {diagonal})")
+    return tuple(out)

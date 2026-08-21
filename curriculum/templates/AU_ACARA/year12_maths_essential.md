@@ -102,7 +102,7 @@ concepts:
     prereqs: [au12e_network_edges]
     grounding: {}
     transfer_seeds:
-      - "Route 1 from home to school: two roads of 6 km and 9 km. Route 2: three roads of 3 km, 3 km and 5 km. How long is the SHORTER route, in km?"
+      - "Travel from A to D along the roads. How long is the SHORTEST route, in km?"
     verifier:
       answer_type: int
       checker: int_exact
@@ -146,7 +146,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "A scatterplot of two variables shows that as the hours of practice increase, the scores also increase. What association does the plot show?"
+      - "A scatterplot of two variables shows that as the temperature rises, ice-cream sales also rise. What association does the plot show? A) positive  B) negative  C) no association  D) it cannot be told. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice

@@ -124,7 +124,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "A two-way table of 32 students: plays sport AND music 5; sport only 6; music only 9. How many play NEITHER?"
+      - "In this two-way table, how many students play NEITHER sport nor music?"
     verifier:
       answer_type: int
       checker: int_exact
@@ -135,7 +135,7 @@ concepts:
     prereqs: [au11g_two_way_table]
     grounding: {}
     transfer_seeds:
-      - "In a scatter plot, hours of study and test scores rise together. What correlation is this?"
+      - "What correlation does this scatter plot show? A) positive  B) negative  C) no correlation  D) perfect correlation. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice

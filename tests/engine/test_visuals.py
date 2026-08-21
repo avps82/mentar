@@ -28,6 +28,11 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from mentar.engine.au_items import AU_YEAR2_GENERATORS  # noqa: E402
 from mentar.engine.au_junior_maths_fill_items import AU_JUNIOR_MATHS_FILL  # noqa: E402
+from mentar.engine.au_senior_maths_items import (  # noqa: E402
+    gen_correlation_direction,
+    gen_shortest_path,
+    gen_two_way_table,
+)
 from mentar.engine.au_year1_items import AU_YEAR1_MATHS_GENERATORS  # noqa: E402
 from mentar.engine.itemgen import (  # noqa: E402
     DEFAULT_GENERATORS,
@@ -46,6 +51,11 @@ _VISUAL_NODES = {
     "au2_time_oclock": AU_JUNIOR_MATHS_FILL[2]["au2_time_oclock"][0],
     "au2_mult_facts_2_5_10": AU_YEAR2_GENERATORS["au2_mult_facts_2_5_10"],
     "au1_skip_count_2s": AU_YEAR1_MATHS_GENERATORS["au1_skip_count_2s"],
+    # senior constitutive — these are the ones whose PROSE used to hand over the
+    # skill (shortest path was "add 12 vs add 11"; correlation stated the trend)
+    "au12e_shortest_path": gen_shortest_path,
+    "au11g_two_way_table": gen_two_way_table,
+    "au11g_correlation_direction": gen_correlation_direction,
 }
 
 
