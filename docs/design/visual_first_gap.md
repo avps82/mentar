@@ -480,3 +480,47 @@ is in `_QUESTION_AWAIT`), so a child re-answering still has the picture. When th
 method card appears alongside it, both are drawn from the **same item**, so the two
 pictures agree — the risk-5 contradiction does not occur. The card is only reached
 via an explicit "Show me how" press, never a plain wrong answer.
+
+## Year 2 length comparison — a SUPPORTIVE picture, 2026-08-21
+
+`au2_length_compare` ("A pencil is 18 cm long. A crayon is 9 cm long...") now draws
+the two objects. Maintainer's framing: *"this is a great example for draw size for
+pencil or pen."*
+
+```
+Pencil: [─────────────] 18 cm
+Crayon: [──────] 9 cm
+```
+
+**Proportional, not literal.** The first draft used one cell per centimetre, on the
+theory that a child measuring the drawing with a real ruler should get the stated
+answer. The maintainer rejected the premise: *"No need to be exact. Scale it
+properly... Are you draw car or truck exactly?"* — and was right twice over.
+
+1. A literal bar is honest right up until it scrolls: at one cell per cm the width
+   tracks the numbers, so a 100 cm object leaves the phone. Scaled, every draw is
+   **29 columns** whatever the lengths.
+2. It removes a pedagogical trap rather than dodging it. In countable centimetre
+   cells a child can read the gap straight off the picture and never subtract — the
+   node would still score, and **BKT would record subtraction mastery for counting**.
+   A scaled bar has no unit to count, so the numbers must come from the prose.
+   `10 vs 6` and `15 vs 9` draw **identically** (same ratio), which is the proof the
+   picture cannot give the answer away.
+
+This makes it the first **supportive** visual to ship — the picture helps, but the
+child could answer from the text alone. That is the right call for a node testing
+subtraction. A genuinely *constitutive* length question ("two objects on a ruler, no
+numbers given") tests measuring instead, and belongs in its own node rather than
+retrofitted here.
+
+**Bar length is derived from the budget, not fixed.** Sizing it at 13 happened to fit
+2-digit centimetres and would have silently overflowed the first 3-digit one.
+
+**Same picture on the card.** The Explain-more card was prose-only, so a child who
+pressed it lost the drawing at the exact moment they admitted being stuck.
+
+Rounding may distort the ratio; it may never distort the ORDER. Pinned, with the
+one-cell-per-cm version as the mutation. `─` was measured single-width in chromium
+(ratio 1.000 against `M`) before being trusted — the renderer contract bans non-ASCII
+precisely because a double-width glyph destroys the alignment the picture depends on.
+

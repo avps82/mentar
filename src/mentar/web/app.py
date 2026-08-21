@@ -643,6 +643,14 @@ def _get_or_create_controller(learner_uuid: str, subject: str) -> SessionControl
         # curriculum membership keeps that behaviour identical across a restart: a
         # frozen Maths session resumes frozen when Maths is reopened, but doesn't
         # block a family from opening English.
+        # Jump-to-topic: only ever honour a pin belonging to THIS subject; a stale
+        # cookie pin from another subject degrades to a guided session (the
+        # constructor would rightly raise on it otherwise).
+        pinned_node = (
+            session.get("pinned_node")
+            if session.get("pinned_node") in _SUBJECT_CURRICULA[subject]
+            else None
+        )
         resume_session_id, resume_checkpoint = None, None
         open_session = store.get_open_session(db_id)
         if open_session is not None and open_session["checkpoint_state"]:
@@ -650,7 +658,21 @@ def _get_or_create_controller(learner_uuid: str, subject: str) -> SessionControl
                 cp = json.loads(open_session["checkpoint_state"])
             except (ValueError, TypeError):
                 cp = None
-            if cp and cp.get("current_node_id") in _SUBJECT_CURRICULA[subject]:
+            # An explicit topic jump BEATS a resume checkpoint (2026-08-21). The
+            # membership test below is what made this subtle: jumping to another
+            # topic in the SAME subject leaves the previous session open
+            # (ended_at IS NULL) with a checkpoint whose node is, of course, also
+            # in this subject's curriculum -- so resume fired and restored the OLD
+            # question while the new pin sat there ignored. The child tapped a
+            # different topic and got the one they had just left.
+            #
+            # It looked subject-specific from outside, which is why it survived:
+            # switching subject first made the checkpoint fail the membership test,
+            # and pressing Stop set ended_at so there was nothing to resume. Only
+            # same-subject re-jumps hit it. Same reasoning as /choose's terminal
+            # case: tapping a topic is an explicit "start THIS" intent.
+            same_topic = pinned_node is None or cp and cp.get("current_node_id") == pinned_node
+            if cp and same_topic and cp.get("current_node_id") in _SUBJECT_CURRICULA[subject]:
                 resume_session_id, resume_checkpoint = open_session["id"], cp
         _controllers[learner_uuid] = SessionController(
             llm_call=_llm_call,
@@ -665,14 +687,7 @@ def _get_or_create_controller(learner_uuid: str, subject: str) -> SessionControl
             max_items=SESSION_ITEMS or None,
             session_id=resume_session_id,
             resume_checkpoint=resume_checkpoint,
-            # Jump-to-topic: only ever pass a pin belonging to THIS subject; a
-            # stale cookie pin from another subject degrades to a guided session
-            # (the constructor would rightly raise on it otherwise).
-            pinned_node=(
-                session.get("pinned_node")
-                if session.get("pinned_node") in _SUBJECT_CURRICULA[subject]
-                else None
-            ),
+            pinned_node=pinned_node,
         )
         _turn_logs[learner_uuid] = []
     return _controllers[learner_uuid]

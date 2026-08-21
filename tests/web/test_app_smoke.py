@@ -1730,3 +1730,73 @@ def test_a_question_picture_reaches_the_page_escaped_and_outside_the_text():
     body2 = c.get("/learn").get_data(as_text=True)
     assert "&lt;b&gt;&amp;&lt;/b&gt;" in body2, "picture was not autoescaped"
     assert "<b>&</b>" not in body2
+
+
+def test_jumping_to_another_topic_in_the_same_subject_actually_changes_the_question():
+    """Maintainer, 2026-08-21: "If I have opened a question for a subject -> go to
+    main page -> jump to another topic for the same grade and subject, the
+    question is still stuck in the old question."
+
+    Cause: the previous topic's session is still OPEN (ended_at IS NULL) with a
+    checkpoint, and R-RES only gated resume on the checkpoint node belonging to
+    THIS subject's curriculum. Jumping within one subject satisfies that trivially,
+    so resume fired and restored the old question while the new pin was ignored.
+
+    The report's own shape is what pinned the cause down: pressing Stop first
+    worked (it sets ended_at, so there is nothing to resume) and going via another
+    subject worked (the checkpoint fails the membership test). Only a same-subject
+    re-jump hit it -- which is exactly the path a child takes to change topic.
+    """
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+
+    app_mod, c = _client()
+    nodes = list(app_mod._SUBJECT_CURRICULA["fractions"])
+    first, second = nodes[0], nodes[3]
+
+    c.post("/choose", data={"subject": "fractions", "topic": first})
+    c.get("/learn")
+    with c.session_transaction() as sess:
+        learner_uuid = sess["learner_uuid"]
+    assert app_mod._controllers[learner_uuid].current_node_id == first
+
+    c.get("/")                                    # back to the main page
+    c.post("/choose", data={"subject": "fractions", "topic": second})
+    c.get("/learn")
+    assert app_mod._controllers[learner_uuid].current_node_id == second, (
+        "jumping to another topic in the same subject left the child on the old one"
+    )
+
+
+def test_rejumping_to_the_topic_you_left_still_resumes_it():
+    """The other half of the fix, and the reason it is a pin COMPARISON rather
+    than "a pin disables resume": tapping the topic you were already on must pick
+    it back up, not restart it. Only a jump to a DIFFERENT topic overrides the
+    checkpoint."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+
+    app_mod, c = _client()
+    nodes = list(app_mod._SUBJECT_CURRICULA["fractions"])
+    topic = nodes[0]
+
+    c.post("/choose", data={"subject": "fractions", "topic": topic})
+    c.get("/learn")
+    with c.session_transaction() as sess:
+        learner_uuid = sess["learner_uuid"]
+    session_id_before = app_mod._controllers[learner_uuid].session_id
+
+    app_mod._controllers.pop(learner_uuid)        # as a restart would
+    c.post("/choose", data={"subject": "fractions", "topic": topic})
+    c.get("/learn")
+    ctrl = app_mod._controllers[learner_uuid]
+    assert ctrl.current_node_id == topic
+    assert ctrl.session_id == session_id_before, (
+        "re-tapping the SAME topic must resume its session, not open a new one"
+    )
