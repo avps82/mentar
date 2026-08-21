@@ -75,7 +75,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "Which of these is true of the SUN? A) it circles the Earth about once a month  B) it is a star that gives us light and heat  C) each one is shaped like a ball  D) it spins around once every day. Answer with the letter."
+      - "Which of these is true of the SUN? A) it spins around once every day, giving us day and night  B) it shines only by reflecting sunlight  C) it is a star that makes its own light and heat  D) it is the only one of the three with life on it. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice

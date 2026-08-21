@@ -51,7 +51,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "Which word means the SAME as 'happy'? A) glad  B) run  C) box  D) tree. Answer with the letter."
+      - "Which word means the SAME as 'cold'? A) large  B) giant  C) icy  D) little. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice
@@ -62,7 +62,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "What is the plural of 'child'? A) childs  B) children  C) childes  D) child. Answer with the letter."
+      - "What is the plural of 'child'? A) children  B) books  C) boxes  D) mice. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice
@@ -73,7 +73,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "Which word rhymes with 'pig'? A) big  B) cat  C) run  D) sun. Answer with the letter."
+      - "Which word rhymes with 'bell'? A) goat  B) ring  C) dig  D) shell. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice

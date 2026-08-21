@@ -47,7 +47,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "Which word means the OPPOSITE of 'hot'? A) cold  B) big  C) run  D) happy. Answer with the letter."
+      - "Which word means the OPPOSITE of 'day'? A) full  B) slow  C) dry  D) night. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice
@@ -80,7 +80,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "Which of these is a comparative adjective (comparing TWO things)? A) bigger  B) biggest  C) big  D) run. Answer with the letter."
+      - "Which of these is a comparative adjective (comparing TWO things)? A) biggest  B) bigger  C) smallest  D) tallest. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice

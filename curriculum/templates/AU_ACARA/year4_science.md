@@ -74,7 +74,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "Which of these is true of ALL THREE? A) it circles the Earth about once a month  B) it spins around once every day  C) each one is shaped like a ball  D) it is a star that gives us light and heat. Answer with the letter."
+      - "Which of these is true of the MOON? A) it spins around once every day, giving us day and night  B) it is the only one of the three with life on it  C) it is a star that makes its own light and heat  D) it shines only by reflecting sunlight. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice

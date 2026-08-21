@@ -97,7 +97,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "Which of these is an object DECELERATING? A) a dropped stone falling faster and faster  B) a train braking smoothly into a station  C) a sprinter pulling away from the blocks  D) a car cruising with the speedo needle steady. Answer with the letter."
+      - "Which of these is an object SLOWING DOWN? A) a car cruising with the speedo needle steady  B) a train braking smoothly into a station  C) a walker covering the same distance every minute  D) a sprinter pulling away from the blocks. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice

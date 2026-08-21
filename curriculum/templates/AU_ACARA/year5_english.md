@@ -35,7 +35,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "Which word means the SAME as 'enormous'? A) huge  B) tiny  C) quiet  D) fast. Answer with the letter."
+      - "Which word means the SAME as 'exhausted'? A) odd  B) thrilled  C) enraged  D) tired. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice
@@ -47,7 +47,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "Which word means the OPPOSITE of 'generous'? A) stingy  B) kind  C) rich  D) happy. Answer with the letter."
+      - "Which word means the OPPOSITE of 'ancient'? A) scarce  B) stingy  C) modern  D) fake. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice
@@ -59,7 +59,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "Which of these is an adverb (describes HOW something is done)? A) quickly  B) she  C) walk  D) happy. Answer with the letter."
+      - "Which of these is a verb? A) walk  B) she  C) quietly  D) it. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice

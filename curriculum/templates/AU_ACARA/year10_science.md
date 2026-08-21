@@ -97,7 +97,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "Which of these is an object DECELERATING? A) a dropped stone falling faster and faster  B) a train braking smoothly into a station  C) a sprinter pulling away from the blocks  D) a walker covering the same distance every minute. Answer with the letter."
+      - "Which of these is an object SPEEDING UP? A) a rolling ball slowed by grass until it stops  B) a car cruising with the speedo needle steady  C) a walker covering the same distance every minute  D) a dropped stone falling faster and faster. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice

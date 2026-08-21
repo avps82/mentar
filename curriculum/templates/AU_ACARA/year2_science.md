@@ -72,7 +72,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "Which of these is something that BOUNCES? A) a ball on a slope  B) a sled on snow  C) an orange nudged across a table  D) a tennis ball dropped on concrete. Answer with the letter."
+      - "Which of these is something that ROLLS? A) a log rolling down a hill  B) a coin skidding across ice  C) a ball dropped straight down onto concrete  D) a basketball dribbled on the spot. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice

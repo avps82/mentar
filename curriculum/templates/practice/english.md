@@ -34,7 +34,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "Which word means the SAME as 'happy'? A) glad  B) sad  C) tiny  D) fast. Answer with the letter."
+      - "Which word means the SAME as 'smart'? A) tiny  B) wise  C) little  D) gloomy. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice
@@ -45,7 +45,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "Which word rhymes with 'cat'? A) hat  B) dog  C) sun  D) tree. Answer with the letter."
+      - "Which word rhymes with 'dog'? A) hat  B) fog  C) fun  D) mat. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice
@@ -67,7 +67,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "What is the plural of 'child'? A) childs  B) children  C) childes  D) child. Answer with the letter."
+      - "What is the plural of 'woman'? A) women  B) feet  C) geese  D) men. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice

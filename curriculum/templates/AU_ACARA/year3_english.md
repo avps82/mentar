@@ -37,7 +37,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "Which word means the OPPOSITE of 'hot'? A) cold  B) big  C) run  D) happy. Answer with the letter."
+      - "Which word means the OPPOSITE of 'hot'? A) closed  B) cold  C) slow  D) night. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice
@@ -73,7 +73,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "Which of these is a comparative adjective (comparing TWO things)? A) bigger  B) biggest  C) big  D) run. Answer with the letter."
+      - "Which of these is a superlative adjective (comparing THREE OR MORE things)? A) faster  B) taller  C) smaller  D) fastest. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice

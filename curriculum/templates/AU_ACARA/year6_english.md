@@ -48,7 +48,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "Which word means the SAME as 'reluctant'? A) hesitant  B) eager  C) angry  D) calm. Answer with the letter."
+      - "Which word means the SAME as 'resilient'? A) precise  B) tough  C) thorough  D) unwilling. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice
@@ -60,7 +60,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "Which word means the OPPOSITE of 'transparent'? A) opaque  B) clear  C) bright  D) thin. Answer with the letter."
+      - "Which word means the OPPOSITE of 'concise'? A) opaque  B) rigid  C) verbose  D) compulsory. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice
@@ -72,7 +72,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "Which of these is a conjunction (joins two ideas)? A) because  B) under  C) quickly  D) she. Answer with the letter."
+      - "Which of these is a conjunction (joins two ideas)? A) under  B) during  C) between  D) because. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice

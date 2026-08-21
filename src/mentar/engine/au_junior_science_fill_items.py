@@ -17,10 +17,18 @@ def _mc(table, glosses, concept):
 
 # ── Year 2 ───────────────────────────────────────────────────────────────────
 
+# Framed by the ACTION, not the object (bug found 2026-08-21): a basketball
+# both rolls AND bounces, so "a basketball on a court" was a defensible answer
+# to "which ROLLS?" while filed under BOUNCES. Each option now describes motion
+# that can only be one of the three.
 gen_how_things_move = _mc({
-    "something that ROLLS": ["a ball on a slope", "an orange nudged across a table"],
-    "something that SLIDES": ["a book pushed across a desk", "a sled on snow"],
-    "something that BOUNCES": ["a tennis ball dropped on concrete", "a basketball on a court"],
+    "something that ROLLS": ["an orange nudged across a table",
+                             "a log rolling down a hill",
+                             "a wheel turning along the road"],
+    "something that SLIDES": ["a book pushed across a desk", "a sled on snow",
+                              "a coin skidding across ice"],
+    "something that BOUNCES": ["a ball dropped straight down onto concrete",
+                               "a basketball dribbled on the spot"],
 }, {
     "something that ROLLS": "round things turn over and over as they move",
     "something that SLIDES": "flat things skim along without turning",
@@ -87,16 +95,20 @@ gen_material_groups = _mc({
 
 # ── Year 4 ───────────────────────────────────────────────────────────────────
 
+# No "true of ALL THREE" category (bug found 2026-08-21): it was a SUPERSET of
+# the other three, so "each one is shaped like a ball" was true of the Moon
+# while being the wrong answer to "which is true of the MOON?".
 gen_sun_moon_earth = _mc({
-    "true of the SUN": ["it is a star that gives us light and heat"],
-    "true of the MOON": ["it circles the Earth about once a month"],
-    "true of the EARTH": ["it spins around once every day"],
-    "true of ALL THREE": ["each one is shaped like a ball"],
+    "true of the SUN": ["it is a star that makes its own light and heat",
+                        "it is far bigger than the other two"],
+    "true of the MOON": ["it circles the Earth about once a month",
+                         "it shines only by reflecting sunlight"],
+    "true of the EARTH": ["it spins around once every day, giving us day and night",
+                          "it is the only one of the three with life on it"],
 }, {
     "true of the SUN": "our nearest star — never look straight at it",
-    "true of the MOON": "it shines by reflecting the Sun's light",
+    "true of the MOON": "it makes no light of its own",
     "true of the EARTH": "its spin gives us day and night",
-    "true of ALL THREE": "sphere-shaped, like almost everything big in space",
 }, "SUN, EARTH AND MOON")
 
 # ── Year 5 ───────────────────────────────────────────────────────────────────
@@ -281,15 +293,20 @@ gen_global_systems = _mc({
     "the ENHANCED greenhouse effect": "the natural blanket, thickened by us",
 }, "GLOBAL SYSTEMS")
 
+# "SPEEDING UP" / "SLOWING DOWN", not "ACCELERATING" / "DECELERATING"
+# (tightened 2026-08-21): by Year 10 a student has learned that deceleration IS
+# acceleration with a negative sign, so a braking train was a defensible answer
+# to "which is ACCELERATING?" while being marked wrong. The physics vocabulary
+# is kept in the labels; the question no longer turns on it.
 gen_motion_y10 = _mc({
     "an object at CONSTANT speed": ["a car cruising with the speedo needle steady", "a walker covering the same distance every minute"],
-    "an object ACCELERATING": ["a sprinter pulling away from the blocks",
-                               "a dropped stone falling faster and faster"],
-    "an object DECELERATING": ["a train braking smoothly into a station", "a rolling ball slowed by grass until it stops"],
+    "an object SPEEDING UP": ["a sprinter pulling away from the blocks",
+                              "a dropped stone falling faster and faster"],
+    "an object SLOWING DOWN": ["a train braking smoothly into a station", "a rolling ball slowed by grass until it stops"],
 }, {
     "an object at CONSTANT speed": "no change per second — zero acceleration",
-    "an object ACCELERATING": "speeding up: velocity grows each second",
-    "an object DECELERATING": "slowing down: acceleration points backwards",
+    "an object SPEEDING UP": "positive acceleration: velocity grows each second",
+    "an object SLOWING DOWN": "negative acceleration — still acceleration, pointing backwards",
 }, "DESCRIBING MOTION")
 
 gen_periodic_table_y10 = _mc({

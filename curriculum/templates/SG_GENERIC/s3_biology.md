@@ -63,7 +63,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "Which of these is a REACTANT of photosynthesis? A) ATP energy  B) oxygen  C) glucose  D) carbon dioxide. Answer with the letter."
+      - "Which of these is a PRODUCT of photosynthesis? A) carbon dioxide taken in by the leaf  B) light energy from the Sun  C) water drawn up from the roots  D) glucose stored as the plant's food. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice

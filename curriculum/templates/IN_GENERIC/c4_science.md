@@ -75,7 +75,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "Which of these is true of ALL THREE? A) it spins around once every day  B) it circles the Earth about once a month  C) it is a star that gives us light and heat  D) each one is shaped like a ball. Answer with the letter."
+      - "Which of these is true of the EARTH? A) it spins around once every day, giving us day and night  B) it is a star that makes its own light and heat  C) it is far bigger than the other two  D) it shines only by reflecting sunlight. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice

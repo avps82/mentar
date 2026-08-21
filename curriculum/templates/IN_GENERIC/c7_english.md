@@ -73,7 +73,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "Which of these is personification (giving human qualities to something non-human)? A) the wind whispered through the trees  B) the wind blew through the trees  C) the sun shone down on us  D) time passed by quickly. Answer with the letter."
+      - "Which of these is personification (giving human qualities to something non-human)? A) the thunder rumbled loudly  B) the sun smiled down on us  C) the wind blew through the trees  D) the old car started slowly. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice
