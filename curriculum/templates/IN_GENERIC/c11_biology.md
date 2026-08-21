@@ -41,7 +41,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "Which of these is DIFFUSION (particles spread from high to low concentration, no energy needed)? A) the gut absorbing glucose when blood glucose is already higher  B) a raisin swelling in pure water  C) water entering a root hair cell  D) oxygen moving from the alveoli into the blood. Answer with the letter."
+      - "Which of these is DIFFUSION of a gas or solute (not water — water is osmosis)? A) the gut absorbing glucose when blood glucose is already higher  B) a root absorbing minerals from dilute soil water  C) a scent spreading across a room  D) water entering a root hair cell. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice

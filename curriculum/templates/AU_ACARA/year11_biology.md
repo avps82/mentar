@@ -42,7 +42,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "Which of these is DIFFUSION (particles spread from high to low concentration, no energy needed)? A) the gut absorbing glucose when blood glucose is already higher  B) a raisin swelling in pure water  C) water entering a root hair cell  D) oxygen moving from the alveoli into the blood. Answer with the letter."
+      - "Which of these is OSMOSIS (water moving across a partially permeable membrane)? A) water entering a root hair cell  B) oxygen moving from the alveoli into the blood  C) a scent spreading across a room  D) a root absorbing minerals from dilute soil water. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice

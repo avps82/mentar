@@ -45,7 +45,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "Which of these is DIFFUSION (particles spread from high to low concentration, no energy needed)? A) the gut absorbing glucose when blood glucose is already higher  B) a raisin swelling in pure water  C) water entering a root hair cell  D) oxygen moving from the alveoli into the blood. Answer with the letter."
+      - "Which of these is ACTIVE TRANSPORT (moves against the gradient and needs energy)? A) water entering a root hair cell  B) a root absorbing minerals from dilute soil water  C) oxygen moving from the alveoli into the blood  D) a raisin swelling in pure water. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice
@@ -67,7 +67,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "Which of these is a REACTANT of photosynthesis? A) water given off as the cell releases energy  B) light energy from the Sun  C) carbon dioxide breathed out  D) glucose stored as the plant's food. Answer with the letter."
+      - "Which of these is an INPUT photosynthesis needs? A) carbon dioxide breathed out  B) ATP energy the cell can use  C) light energy from the Sun  D) glucose stored as the plant's food. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice

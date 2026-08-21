@@ -265,8 +265,13 @@ def gen_reaction_rates(rng: random.Random):
 
 # ── Biology ──────────────────────────────────────────────────────────────────
 
+# The DIFFUSION label EXCLUDES water (fixed 2026-08-21): osmosis IS diffusion --
+# this file's own gloss says so ("diffusion, but specifically of WATER through a
+# membrane") -- so a bare "DIFFUSION" category was a SUPERSET of OSMOSIS, and a
+# student who knew that was marked wrong for picking an osmosis option. Naming
+# the exclusion keeps the relationship teachable while making the draw sound.
 _TRANSPORT = {
-    "DIFFUSION (particles spread from high to low concentration, no energy needed)": [
+    "DIFFUSION of a gas or solute (not water — water is osmosis)": [
         "oxygen moving from the alveoli into the blood", "a scent spreading across a room",
     ],
     "OSMOSIS (water moving across a partially permeable membrane)": [
@@ -278,7 +283,8 @@ _TRANSPORT = {
     ],
 }
 _TRANSPORT_GLOSSES = {
-    "DIFFUSION (particles spread from high to low concentration, no energy needed)": "down the gradient, so it happens on its own",
+    "DIFFUSION of a gas or solute (not water — water is osmosis)":
+        "down the gradient, so it happens on its own; osmosis is the water-only case",
     "OSMOSIS (water moving across a partially permeable membrane)": "diffusion, but specifically of WATER through a membrane",
     "ACTIVE TRANSPORT (moves against the gradient and needs energy)": "uphill against the gradient, so it costs the cell ATP",
 }
@@ -306,7 +312,12 @@ _ENZYMES_GLOSSES = {
 # The qualifiers make each option unambiguous and turn the overlap itself into
 # the thing being taught: the two processes run opposite ways.
 _PHOTO_RESP = {
-    "a REACTANT of photosynthesis": [
+    # "INPUT", not "REACTANT" (fixed 2026-08-21): light energy is written ABOVE
+    # the arrow in the photosynthesis equation, not among the reactants
+    # (CO2 + H2O). Calling it a reactant is the kind of near-miss a teacher
+    # marks against the child later, so the label now covers all three inputs
+    # honestly instead of stretching a chemical term to fit.
+    "an INPUT photosynthesis needs": [
         "carbon dioxide taken in by the leaf",
         "water drawn up from the roots",
         "light energy from the Sun",
@@ -322,7 +333,7 @@ _PHOTO_RESP = {
     ],
 }
 _PHOTO_RESP_GLOSSES = {
-    "a REACTANT of photosynthesis": "what goes IN when a plant builds glucose using light",
+    "an INPUT photosynthesis needs": "what goes IN when a plant builds glucose using light",
     "a PRODUCT of photosynthesis": "what comes OUT of that reaction",
     "a PRODUCT of aerobic respiration": "respiration runs the other way -- glucose and oxygen in, these out",
 }
