@@ -117,7 +117,7 @@ concepts:
     prereqs: [au2_money_coins]
     grounding: {}
     transfer_seeds:
-      - "On the clock, the little hand points at 5 and the big hand points straight up at 12. What o'clock is it?"
+      - "What o'clock is it on this clock?"
     verifier:
       answer_type: int
       checker: int_exact

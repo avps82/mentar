@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from mentar.engine.au_senior_maths_items import _card
 from mentar.engine.itemgen import GenFn, mc_which_is
+from mentar.engine.visuals import clock_face, grid_shape
 
 # ── Year 2 ───────────────────────────────────────────────────────────────────
 
@@ -38,14 +39,22 @@ def gen_money_coins(rng):
 
 
 def gen_time_oclock(rng):
+    """The clock is SHOWN (visual-first, 2026-08-21).
+
+    It used to read "the little hand points at 4 and the big hand points straight
+    up at 12" -- which hands the child the whole skill. Reading where the hands
+    point IS the question, so the face is drawn and the prose says nothing about
+    the hands.
+    """
     h = rng.choice([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
-    p = (f"On the clock, the little hand points at {h} and the big hand points "
-         "straight up at 12. What o'clock is it?")
+    p = "What o'clock is it on this clock?"
     card = _card("READING O'CLOCK TIME", p, h,
-                 "  Big hand at 12 means an o'clock time; the little hand names the hour",
-                 f"  1. Little hand at {h} → it is {h} o'clock.")
+                 "  Big hand straight up at 12 means an o'clock time; "
+                 "the little hand names the hour",
+                 f"  1. The little hand points at {h}, so it is {h} o'clock.")
     return ("int", "int_exact", p, str(h), None, card,
-            "(Big hand at 12 = o'clock; little hand tells the hour)")
+            "(Answer with the hour number)",
+            clock_face(h, 0))
 
 
 _POSITIONS = {
@@ -123,15 +132,31 @@ def gen_picture_graph(rng):
 # ── Year 4 ───────────────────────────────────────────────────────────────────
 
 def gen_area_count_squares(rng):
+    """The shape is SHOWN on squared paper (visual-first, 2026-08-21).
+
+    It used to read "a rectangle is covered by centimetre squares: 7 squares
+    along, 4 rows" -- which is a multiplication question wearing an area costume.
+    Reading a shape off a grid is a different skill, and it is the one the Year-2
+    worksheets actually test, so the shape is drawn and sometimes has a corner or
+    a hole removed: then the child must COUNT rather than multiply.
+    """
     l_side = rng.choice([4, 5, 6, 7])
     w = rng.choice([2, 3, 4])
-    p = (f"A rectangle is covered by centimetre squares: {l_side} squares along, "
-         f"{w} rows. What is its area in square centimetres?")
-    card = _card("AREA BY COUNTING SQUARES", p, f"{l_side * w} cm²",
-                 "  Area = squares in a row × number of rows",
-                 f"  1. {l_side} × {w} = {l_side * w}, so {l_side * w} cm².")
-    return ("int", "int_exact", p, str(l_side * w), None, card,
-            "(Squares per row × rows)")
+    cells = {(x, y) for x in range(l_side) for y in range(w)}
+    shape = rng.choice(("rectangle", "corner", "hole"))
+    if shape == "corner" and l_side >= 3 and w >= 2:
+        # bite a 2x1 corner out, so counting beats multiplying
+        cells -= {(l_side - 1, 0), (l_side - 1, 1)} if w >= 2 else set()
+    elif shape == "hole" and l_side >= 3 and w >= 3:
+        cells -= {(1, 1)}
+    area = len(cells)
+    p = "What is the area of the shaded shape, in squares?"
+    card = _card("AREA BY COUNTING SQUARES", p, f"{area} squares",
+                 "  Area = how many whole squares are shaded",
+                 f"  1. Count the shaded squares row by row: {area}.")
+    return ("int", "int_exact", p, str(area), None, card,
+            "(Count the shaded squares)",
+            grid_shape(cells, l_side, w))
 
 
 def gen_money_change(rng):

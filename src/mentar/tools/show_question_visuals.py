@@ -74,7 +74,9 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"    Q: {(item.stem or item.problem)}")
                 print(f"    A: {item.answer}")
                 # The one property a human should not have to check by eye.
-                if item.answer in "\n".join(item.visual):
+                # An ASSERTION is the leak ("... = 1/5"). The answer's digits merely
+                # APPEARING is not: a clock dial carries all twelve hour numbers.
+                if any("=" in ln or ln.strip() == str(item.answer) for ln in item.visual):
                     print("    !! PICTURE STATES THE ANSWER — question-side renderers "
                           "must withhold their summary line")
                 print()

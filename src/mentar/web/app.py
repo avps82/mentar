@@ -1043,9 +1043,16 @@ def gallery():
     # the engine cannot actually produce certifies a UI that does not exist --
     # the same defect test_seeds_match_their_generator exists to catch.
     from mentar.engine.itemgen import _fraction_bar
+    from mentar.engine.visuals import clock_face, grid_shape
+    _l_shape = {(x, y) for x in range(4) for y in range(3)} - {(3, 0), (3, 1)}
     question_visuals = [
         ("fraction bar — 1 of 5 (unit fractions)", _fraction_bar(1, 5, summary=False)),
-        ("fraction bar — 3 of 8", _fraction_bar(3, 8, summary=False)),
+        ("grid shape — count the shaded squares", grid_shape(_l_shape, 4, 3)),
+        # Clock A and C side by side: the dial size is a MAINTAINER CHOICE and it
+        # cannot be made from terminal output, only from a real render at real
+        # font size in a real theme. Both stay here until that call is made.
+        ("clock — style A (radius 6, compact)", clock_face(4, 30, 6)),
+        ("clock — style C (radius 7, larger dial)", clock_face(4, 30, 7)),
     ]
     return render_template("gallery.html", theme=theme, theme_names=_GALLERY_THEMES,
                            question_visuals=question_visuals)

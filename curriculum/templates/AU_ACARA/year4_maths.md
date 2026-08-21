@@ -105,7 +105,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "A rectangle is covered by centimetre squares: 4 squares along, 4 rows. What is its area in square centimetres?"
+      - "What is the area of the shaded shape, in squares?"
     verifier:
       answer_type: int
       checker: int_exact

@@ -66,7 +66,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "A cake is split into 4 equal parts. What fraction is ONE part?"
+      - "A chocolate bar 🍫 is split into 8 equal parts. What fraction is ONE part?"
     verifier:
       answer_type: fraction
       checker: fraction_equiv

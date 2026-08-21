@@ -100,7 +100,7 @@ concepts:
       anchor: "8be24f9a9aba585bac0b90bb413c8630"  # KA video: "Identifying unit fractions word problem"
       passage_hint: "Video transcript — identifying a unit fraction of a whole"
     transfer_seeds:
-      - "A glass is full of juice. You pour ONE of FIVE equal cups from it. What fraction of the juice did you pour?"
+      - "A pie 🥧 is split into 3 equal parts. What fraction is ONE part?"
       - "A garden is divided into 8 equal beds. One bed has tomatoes. What fraction of the garden is tomatoes?"
     verifier:
       answer_type: fraction

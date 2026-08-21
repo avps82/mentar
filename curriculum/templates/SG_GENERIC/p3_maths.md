@@ -79,7 +79,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "A pie is split into 4 equal parts. What fraction is ONE part?"
+      - "A pie 🥧 is split into 3 equal parts. What fraction is ONE part?"
     verifier:
       answer_type: fraction
       checker: fraction_equiv

@@ -26,6 +26,7 @@ import sys
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
+from mentar.engine.au_junior_maths_fill_items import AU_JUNIOR_MATHS_FILL  # noqa: E402
 from mentar.engine.itemgen import (  # noqa: E402
     DEFAULT_GENERATORS,
     ItemGenerator,
@@ -37,7 +38,11 @@ from mentar.engine.itemgen import (  # noqa: E402
 # pass on the wrong source: CompositeItemSource silently falls back to the
 # authored item bank for a node the generator does not cover, so the picture
 # would simply be absent with no error.
-_VISUAL_NODES = {"unit_fractions": DEFAULT_GENERATORS["unit_fractions"]}
+_VISUAL_NODES = {
+    "unit_fractions": DEFAULT_GENERATORS["unit_fractions"],
+    "au4_area_count_squares": AU_JUNIOR_MATHS_FILL[4]["au4_area_count_squares"][0],
+    "au2_time_oclock": AU_JUNIOR_MATHS_FILL[2]["au2_time_oclock"][0],
+}
 
 
 def _draw(node: str, gen, seed: int):
@@ -51,18 +56,32 @@ def test_named_visual_nodes_actually_draw_a_picture():
         assert all(isinstance(line, str) for line in item.visual)
 
 
-def test_a_question_picture_never_contains_its_own_answer():
-    """The give-away guard. Re-add a summary line to any question-side renderer
-    and this goes red."""
+def test_a_question_picture_never_asserts_its_own_answer():
+    """The give-away guard.
+
+    Tests the real failure mode, which is an ASSERTION -- the card-side summary
+    line "1 of 5 equal parts shaded = 1/5" copied onto the question. It is NOT a
+    bare substring check: a clock dial legitimately carries all twelve hour
+    numbers, so the answer's digits appearing somewhere in the art proves
+    nothing (that false positive was caught by the review tool on the first
+    clock render, which is what the review tool is for).
+
+    So the two properties are: no `=` anywhere in a question picture, and no
+    line that IS just the answer. Re-add a summary line to any question-side
+    renderer and this goes red."""
     leaks = []
     for node, gen in _VISUAL_NODES.items():
         for seed in range(60):
             item = _draw(node, gen, seed)
             if not (item and item.visual):
                 continue
-            if item.answer in "\n".join(item.visual):
-                leaks.append((node, item.answer, item.visual))
-                break
+            for line in item.visual:
+                if "=" in line:
+                    leaks.append((node, "asserts with '=':", line))
+                    break
+                if line.strip() == str(item.answer):
+                    leaks.append((node, "line is the answer:", line))
+                    break
     assert not leaks, f"picture states the answer: {leaks[:3]}"
 
 
