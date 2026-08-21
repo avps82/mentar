@@ -451,8 +451,59 @@ def test_picker_cards_in_a_row_are_the_same_height():
         server.stop()
 
 
+def test_topic_strand_headings_group_the_rows_beneath_them():
+    """The strand grouping shipped 2026-08-21 (maintainer: "Are we doing sub
+    topics in topic selection??"). Route tests prove the HTML contains headings;
+    only a browser proves each heading actually SITS ABOVE its own rows and that
+    none render blank or collapsed.
+
+    The pilot page in _PAGES has no strands, so the grouped path was never once
+    rendered in a browser -- this covers it. Failure classes borrowed from ones
+    this project shipped before: a heading repeating back-to-back (Singapore's
+    21-headings-for-31-rows bug) and zero-height text."""
+    _skip_unless_browser()
+    server, browser = _Server(), None
+    try:
+        browser = _Browser()
+        browser.goto(server.url + "/topics?subject=au_acara_year3_maths")
+        browser.wait_for("document.querySelectorAll('.strand-heading').length > 0")
+        r = browser.js("""
+            (() => {
+              const heads = [...document.querySelectorAll('.strand-heading')];
+              const rows  = [...document.querySelectorAll('.topic-row')];
+              const invisible = heads.filter(h => {
+                const b = h.getBoundingClientRect();
+                return b.height < 8 || !h.textContent.trim();
+              }).map(h => h.textContent.trim() || '(empty)');
+              // every heading must be followed by at least one row before the next heading
+              const tops = heads.map(h => h.getBoundingClientRect().top);
+              const rowTops = rows.map(r => r.getBoundingClientRect().top);
+              const barren = [];
+              heads.forEach((h, i) => {
+                const start = tops[i], end = (i + 1 < tops.length) ? tops[i + 1] : Infinity;
+                if (!rowTops.some(t => t > start && t < end)) barren.push(h.textContent.trim());
+              });
+              const texts = heads.map(h => h.textContent.trim());
+              const dup = texts.filter((t, i) => i && t === texts[i - 1]);
+              return {n: heads.length, rows: rows.length, invisible, barren, dup};
+            })()
+        """)
+        assert r["n"] >= 5, f"expected the year's strands, saw {r['n']} headings"
+        assert r["rows"] >= r["n"], f"{r['rows']} rows under {r['n']} headings"
+        assert not r["invisible"], f"headings that render blank/collapsed: {r['invisible']}"
+        assert not r["barren"], f"headings with no topic beneath them: {r['barren']}"
+        assert not r["dup"], f"a strand heading repeats back-to-back: {r['dup']}"
+    finally:
+        if browser:
+            browser.close()
+        server.stop()
+
+
 _PAGES = ("/choose", "/learn", "/progress", "/parent", "/settings", "/setup",
-          "/topics?subject=fractions")
+          "/topics?subject=fractions",
+          # a STRAND-GROUPED topics page: the pilot one above has no strands,
+          # so without this the grouped layout escapes the viewport sweep.
+          "/topics?subject=au_acara_year3_maths")
 
 _PAGE_PROBE = """(() => {
   const out = {overflowX: document.documentElement.scrollWidth > window.innerWidth + 1,
