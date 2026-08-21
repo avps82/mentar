@@ -547,8 +547,13 @@ input[type=text], input[type=number] {
 }
 
 /* Question block internals: read-aloud button + text side by side */
-.question { display: flex; gap: 10px; align-items: flex-start; }
+/* flex-wrap (2026-08-21): .question is a flex ROW, so a question picture added
+   as a third item would land BESIDE the text -- the same bug already recorded
+   for .msg-text in .feedback. flex-basis:100% puts the picture on its own full
+   row, above the text, and lets the button+text keep sharing the row below. */
+.question { display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap; }
 .question-text { flex: 1; white-space: pre-wrap; }
+.question-visual { flex-basis: 100%; margin: 0 0 4px; }
 .tts-btn {
   background: none;
   border: 2px solid var(--border);

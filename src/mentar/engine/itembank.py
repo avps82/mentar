@@ -58,6 +58,17 @@ class Item:
     # this is the "card" the controller prefers over the bare sibling-answer
     # fallback, and what any future LLM narration is held to.
     method_steps: tuple[str, ...] | None = None
+    # visual-first (2026-08-21): the picture that belongs to THIS question, drawn
+    # from this item's own exact numbers -- shown ABOVE the question, not in the
+    # explanation. Primary maths is taught concrete->pictorial->abstract, so for
+    # a "constitutive" topic (grid area, clock face, fraction bar, scatterplot)
+    # the picture IS the question; describing it in prose hands the child the
+    # skill being tested. See docs/design/visual_first_gap.md.
+    #
+    # It must NEVER contain the answer: unlike method_steps (which is shown only
+    # AFTER an attempt and rightly ends "= 1/3"), this is on screen while the
+    # child is still thinking. tests/engine/test_visuals.py pins that.
+    visual: tuple[str, ...] | None = None
 
 
 class ItemBank:

@@ -20,6 +20,7 @@
 {% if is_first_turn %}{% include "_feedback_bubble.html" %}{% endif %}
 <div class="question{% if is_first_turn and not message_html %} first-turn{% endif %}">
   <button class="tts-btn" type="button" aria-label="Read the question aloud" title="Read aloud">🔊</button>
+  {% include "_question_visual.html" %}
   <div class="question-text">{{ question_html | safe }}</div>
 </div>
 <!-- R2.3: the widget switch is driven by web/answer_modes.py's registry

@@ -1694,3 +1694,39 @@ def test_explanation_renders_below_the_question_and_answer_box():
     a = frag.find('class="answer-form')
     f = frag.find('<div class="feedback')
     assert -1 < q < a < f, f"order broke: question@{q} answer@{a} feedback@{f}"
+
+
+def test_a_question_picture_reaches_the_page_escaped_and_outside_the_text():
+    """Visual-first (2026-08-21): the picture is COMPUTED content, so it takes the
+    deterministic trust path — Jinja autoescape, never `| safe`, never through
+    _render_markdown_lite (which would also let _display_expr_text rewrite `*`
+    into ` × ` and corrupt any picture using `*` as a marker).
+
+    Add `| safe` to _question_visual.html and the escaping half goes red."""
+    try:
+        import flask  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("flask not installed (web extra)")
+    import re
+
+    app_mod, c = _client()
+    c.post("/choose", data={"subject": "fractions", "topic": "unit_fractions"},
+           follow_redirects=True)
+    body = c.get("/learn").get_data(as_text=True)
+
+    assert '<pre class="ascii-art question-visual">' in body, "no question picture rendered"
+    question_text = re.search(r'<div class="question-text">(.*?)</div>', body, re.S)
+    assert question_text, "question-text block missing"
+    assert "ascii-art" not in question_text.group(1), (
+        "picture rendered INSIDE .question-text — proportional font, and read-aloud "
+        "would speak it"
+    )
+
+    # Autoescape proof: feed a renderer output containing HTML metacharacters and
+    # confirm it arrives escaped rather than as live markup.
+    ctrl = app_mod._controllers[next(iter(app_mod._controllers))]
+    object.__setattr__(ctrl._ctx.current_item, "visual", ("<b>&</b>",))
+    body2 = c.get("/learn").get_data(as_text=True)
+    assert "&lt;b&gt;&amp;&lt;/b&gt;" in body2, "picture was not autoescaped"
+    assert "<b>&</b>" not in body2

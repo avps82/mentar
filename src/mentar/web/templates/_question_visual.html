@@ -1,0 +1,28 @@
+{# The picture that BELONGS to the live question (visual-first, 2026-08-21).
+
+   Sits as a SIBLING of .question-text, never inside it, for two reasons:
+     * tts.js reads .question-text's textContent, so the app's own read-aloud can
+       never try to speak ASCII art -- that silence is structural, not a filter
+       that can rot;
+     * .question-text is pre-wrap but a PROPORTIONAL font (measured in chromium:
+       rows break, columns do NOT align), which is exactly what this <pre> fixes.
+
+   Uses .ascii-art, NOT .steps-pre: .steps-pre is overflow-x:hidden, safe only
+   because the step grid's width is computed to fit. A question picture has no
+   such guarantee, and silently CLIPPING a picture the question depends on is the
+   worst available failure. Both classes already share one diagram-box surface.
+
+   Deliberately NO aria-hidden and NO aria-label. aria-hidden would declare the
+   picture DECORATIVE, which is false -- it is the question. An aria-label would
+   have to describe it, and any accurate description states the answer ("a bar
+   with 1 of 5 parts shaded" IS 1/5). So a constitutive visual question is not
+   screen-reader answerable, and that is recorded as a real limitation in
+   docs/design/visual_first_gap.md rather than papered over with markup that
+   claims otherwise.
+
+   Autoescaped by Jinja, no `| safe` -- computed content, same trust boundary as
+   the mc4 radios and the step grid. #}
+{% if visual_lines %}
+<pre class="ascii-art question-visual">{% for line in visual_lines %}{{ line }}
+{% endfor %}</pre>
+{% endif %}

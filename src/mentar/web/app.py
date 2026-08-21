@@ -1038,7 +1038,17 @@ def gallery():
     theme = request.args.get("theme", "light")
     if theme not in _GALLERY_THEMES:
         theme = "light"
-    return render_template("gallery.html", theme=theme, theme_names=_GALLERY_THEMES)
+    # Question pictures are fed from the REAL renderers (visual-first,
+    # 2026-08-21), never hand-typed into the template: a review page showing art
+    # the engine cannot actually produce certifies a UI that does not exist --
+    # the same defect test_seeds_match_their_generator exists to catch.
+    from mentar.engine.itemgen import _fraction_bar
+    question_visuals = [
+        ("fraction bar — 1 of 5 (unit fractions)", _fraction_bar(1, 5, summary=False)),
+        ("fraction bar — 3 of 8", _fraction_bar(3, 8, summary=False)),
+    ]
+    return render_template("gallery.html", theme=theme, theme_names=_GALLERY_THEMES,
+                           question_visuals=question_visuals)
 
 
 @app.route("/settings/llm-status")
@@ -1833,6 +1843,12 @@ def _turn_context(learner_uuid: str, ctrl: SessionController, is_first_turn: boo
         # is_annotation tag per line so long "Middle Step"/scale-explanation
         # sentences render at a smaller font (fits on one line, no wrap/scroll)
         # while the numeric rows stay at the normal size.
+        # Visual-first (2026-08-21). Deliberately NOT through _render_markdown_lite
+        # or _display_expr_text: this is computed content, and _display_expr_text
+        # rewrites `*` -> ` × ` (app.py's _DISPLAY_MUL_RE), which would corrupt any
+        # picture using `*` as a marker. Same trust class as `choices`/`steps_lines`
+        # -- Jinja autoescape, never `| safe`.
+        "visual_lines": ctrl.current_visual,
         "steps_lines": _elaborate_display_lines(ctrl),
         # Step grids must never wrap (column alignment IS the meaning); method
         # cards must, or long sentences get clipped. See _elaborate_display_lines.

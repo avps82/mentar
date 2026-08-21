@@ -831,3 +831,66 @@ def test_read_aloud_never_speaks_the_diagram_ornament():
         if browser:
             browser.close()
         server.stop()
+
+
+def test_a_question_picture_is_monospaced_above_the_text_and_never_clipped():
+    """Visual-first (2026-08-21). Route tests prove the <pre> is in the HTML;
+    only a browser proves the thing that matters — that its COLUMNS LINE UP.
+
+    Deliberately does not assert font-family contains "mono": style.css records
+    that the --font-mono token was once unset and the app silently ran on the
+    browser's bare `monospace` fallback, so the name proves nothing. Rendering
+    'iiii' and 'MMMM' and comparing widths is the real property.
+
+    Also pins placement, because "tidy it inside .question-text" is a plausible
+    future edit that would (a) reintroduce the proportional font and (b) make
+    read-aloud start speaking ASCII art."""
+    _skip_unless_browser()
+    server, browser = _Server(), None
+    try:
+        browser = _Browser()
+        browser.goto(server.url + "/topics?subject=fractions")
+        browser.js("""(() => {const f = [...document.querySelectorAll('form')]
+            .find(f => f.querySelector('[value=unit_fractions]'));
+            f.querySelector('button').click();})()""")
+        browser.wait_for("document.getElementById('help-btn')")
+        r = browser.js("""
+            (() => {
+              const pre = document.querySelector('.question-visual');
+              if (!pre) return {err: 'no .question-visual rendered'};
+              const q = document.querySelector('.question-text');
+              const pr = pre.getBoundingClientRect(), qr = q.getBoundingClientRect();
+              const probe = document.createElement('pre');
+              probe.className = 'ascii-art';
+              probe.style.position = 'absolute'; probe.style.visibility = 'hidden';
+              document.body.appendChild(probe);
+              probe.textContent = 'iiii';
+              const narrow = probe.getBoundingClientRect().width;
+              probe.textContent = 'MMMM';
+              const wide = probe.getBoundingClientRect().width;
+              probe.remove();
+              return {
+                err: null,
+                monospace: Math.abs(narrow - wide) < 0.5,
+                above: pr.bottom <= qr.top + 1,
+                insideQuestionText: q.contains(pre),
+                clipped: pre.scrollWidth > pre.clientWidth + 1
+                         && getComputedStyle(pre).overflowX !== 'auto',
+                pageScrollsSideways:
+                  document.documentElement.scrollWidth > window.innerWidth + 1,
+              };
+            })()
+        """)
+        assert not r["err"], r["err"]
+        assert r["monospace"], "question picture is not monospaced — columns will not align"
+        assert r["above"], "picture is not above the question text"
+        assert not r["insideQuestionText"], (
+            "picture moved inside .question-text — proportional font, and tts.js "
+            "would start speaking the art"
+        )
+        assert not r["clipped"], "picture is clipped instead of scrollable"
+        assert not r["pageScrollsSideways"], "the picture pushed the page sideways"
+    finally:
+        if browser:
+            browser.close()
+        server.stop()

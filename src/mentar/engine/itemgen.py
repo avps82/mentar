@@ -174,17 +174,25 @@ def _gen_whole_number_division(rng: random.Random):
     return ("int", "int_exact", problem, str(q), None, card)
 
 
-def _fraction_bar(numerator: int, denominator: int) -> tuple[str, ...]:
+def _fraction_bar(numerator: int, denominator: int, summary: bool = True) -> tuple[str, ...]:
     """A bar of `denominator` cells with `numerator` shaded -- the picture for
     THIS fraction.
 
     maths/fractions.md carries this shape with 1/2 and 2/4 baked in, a different
     fraction from whatever the item drew. Denominators here run to 10, which
     stays inside a phone's monospace width at 5 characters a cell.
+
+    `summary=False` drops the trailing "... = 1/3" line. That line is right on
+    the CARD (shown after an attempt) and fatal on the QUESTION (shown while the
+    child is still thinking) -- it states the answer. Every renderer used
+    question-side must be able to withhold it; see docs/design/visual_first_gap.md
+    and the give-away guard in tests/engine/test_visuals.py.
     """
     if denominator < 1 or denominator > 12 or not 0 <= numerator <= denominator:
         return ()
     cells = "|" + "|".join("████" if i < numerator else "    " for i in range(denominator)) + "|"
+    if not summary:
+        return (cells,)
     return (cells, f"{numerator} of {denominator} equal parts shaded = {numerator}/{denominator}")
 
 
@@ -201,7 +209,11 @@ def _gen_unit_fractions(rng: random.Random):
         "",
         *_fraction_bar(1, d),
     )
-    return ("fraction", "fraction_equiv", problem, f"1/{d}", None, card)
+    # The picture goes on the QUESTION too (visual-first, 2026-08-21), without
+    # its summary line -- the bar shows one part of d shaded; naming that as a
+    # fraction is the skill, and "= 1/d" underneath would hand it over.
+    return ("fraction", "fraction_equiv", problem, f"1/{d}", None, card, None,
+            _fraction_bar(1, d, summary=False))
 
 
 def _gen_fraction_as_part_of_whole(rng: random.Random):
@@ -323,6 +335,32 @@ ARITHMETIC_GENERATORS: dict[str, GenFn] = {
 }
 
 
+def _dedup_key(item: Item) -> str:
+    """What sample()'s no-repeat window treats as "the same question".
+
+    Keyed on the STEM for mc4: the same question with reshuffled distractors is
+    still exactly the same question to the child.
+
+    The PICTURE is part of the identity (2026-08-21). A visual item's prose is
+    often identical across draws -- "What is the area of the shaded shape?" --
+    while only the picture changes, so keying on prose alone made every draw
+    look like a repeat: the window burned all 8 re-rolls, served the last roll
+    anyway, and the no-repeat guarantee was silently dead for exactly the
+    questions that most need variety (measured, not theorised).
+
+    Deliberately NOT "skip dedup when there is a picture": small-domain visual
+    generators genuinely repeat (a clock face has 12 hour positions), which is
+    the 2026-08-14 defect this window exists for. Two draws sharing prose AND
+    picture really are the same question, so the original guarantee is kept.
+
+    Accepted consequence: a scatterplot node may repeat its ANSWER ("positive")
+    across draws while the plotted points differ. That is correct -- reading a
+    NEW plot is the skill -- so it must not be "fixed" later.
+    """
+    base = item.stem or item.problem
+    return base if not item.visual else base + "\n" + "\n".join(item.visual)
+
+
 class ItemGenerator:
     """Generates fresh checkable items per node. Duck-types ItemBank (has/sample/example)."""
 
@@ -357,11 +395,19 @@ class ItemGenerator:
         # formula questions to put the FORMULA in the cue slot. Same
         # present-or-None positional rule as choices/method_steps above.
         format_hint = result[6] if len(result) > 6 and result[6] else None
+        # An 8th element (2026-08-21, visual-first): the picture for THIS item,
+        # shown above the question. Same present-or-None positional rule again.
+        # Item is frozen, so this must be a tuple, not the caller's list.
+        #
+        # EIGHT IS THE CEILING. This positional contract is readable at 8 slots
+        # and not at 9 -- if a 9th is ever wanted, that is the signal to move
+        # GenFn to a keyword builder rather than count commas one more time.
+        visual = tuple(result[7]) if len(result) > 7 and result[7] else None
         return Item(
             id=f"gen-{node_id}-{self._rng.randrange(10 ** 9)}",
             node=node_id, problem=problem, answer=answer,
             answer_type=answer_type, checker=checker, choices=choices, stem=stem,
-            method_steps=method_steps, format_hint=format_hint,
+            method_steps=method_steps, format_hint=format_hint, visual=visual,
         )
 
     _NO_REPEAT_WINDOW = 8  # remember this many recent problems per node
@@ -379,12 +425,10 @@ class ItemGenerator:
         item = None
         for _ in range(self._NO_REPEAT_WINDOW):
             item = self._make(node_id)
-            # Key on the STEM for mc4: same question with reshuffled distractors is
-            # still "exactly the same question" to the child.
-            if item is None or (item.stem or item.problem) not in recent:
+            if item is None or _dedup_key(item) not in recent:
                 break
         if item is not None:
-            recent.append(item.stem or item.problem)
+            recent.append(_dedup_key(item))
         return item
 
     def example(self, node_id: str, exclude_id: str | None = None) -> Item | None:

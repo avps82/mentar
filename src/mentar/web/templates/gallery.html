@@ -96,6 +96,20 @@
 <span class="steps-pre-line">  1. Find 20% of $160: 160 × 20 ÷ 100 = 32.</span>
 <span class="steps-pre-line">  2. "Increases by" means add that on: $160 + $32 = $192.</span>
 <span class="steps-pre-line">  Answer: $192</span></pre>
+<h2>Question pictures (visual-first)</h2>
+<p class="hint">The picture that belongs to a question, drawn from that item's own
+numbers. Markup is lifted verbatim from <code>_turn.html</code> and fed by the real
+renderers — if this page grew its own parallel art, a render review would certify a
+UI that does not exist.</p>
+{% for caption, lines in question_visuals or [] %}
+<div class="question">
+  <button class="tts-btn" type="button" aria-label="Read the question aloud" title="Read aloud">🔊</button>
+  <pre class="ascii-art question-visual">{% for line in lines %}{{ line }}
+{% endfor %}</pre>
+  <div class="question-text">{{ caption }}</div>
+</div>
+{% endfor %}
+
 <pre class="ascii-art">CONDUCTOR (lets electricity flow)   INSULATOR (blocks electricity)
   copper wire, a steel key            a rubber band, a plastic ruler
   aluminium foil, a silver spoon      a wooden spoon, a glass rod</pre>

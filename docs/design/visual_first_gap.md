@@ -283,3 +283,51 @@ Beyond the 13 primary patterns above:
 * One pattern is already proven in-tree (the ASCII matrix), and column
   arithmetic already has step grids — so the first implementation is smaller
   than the pattern count suggests.
+
+
+---
+
+# SLICE 1 SHIPPED (2026-08-21) — the channel exists
+
+Plan approved and the whole pipe is built, proved on `unit_fractions` (existing
+`_fraction_bar`, so zero new art):
+
+* **Generator → screen channel.** 8th positional slot on the generator tuple
+  (`itemgen._make`), `Item.visual`, `SessionController.current_visual`,
+  `TurnResult.visual` (so the CLI and the durable transcript carry the picture —
+  a constitutive question without it is unanswerable), `_turn_context`'s
+  `visual_lines`, and a `_question_visual.html` partial. **8 slots is recorded as
+  the ceiling**: a 9th means moving `GenFn` to a keyword builder.
+* **Rendered in `.ascii-art`, not `.steps-pre`** — the latter is `overflow-x:
+  hidden`, which would silently CLIP a picture the question depends on.
+  `.question` gained `flex-wrap` so the picture takes its own full row.
+* **Browser-verified** (the actual gate): picture above the text, full width,
+  **truly monospaced** — proved by rendering `iiii` vs `MMMM` at equal width, not
+  by string-matching a font name, because style.css records the mono token once
+  being silently unset.
+* **The no-repeat window is fixed.** `_dedup_key` now includes the picture;
+  previously a visual node burned all 8 re-rolls, "collided" every time and
+  served the last roll — the guarantee was dead for exactly the questions that
+  most need variety.
+* **The summary-line inversion is guarded.** Every existing renderer ends with an
+  answer-bearing line ("1 of 5 equal parts shaded = 1/5") — correct on the card,
+  fatal on the question. `_fraction_bar` gained `summary=False`; a test asserts no
+  question picture contains its own answer, mutation-proved by re-adding the line.
+* **Review, both surfaces:** `python3 -m mentar.tools.show_question_visuals`
+  (node-derived seeds so re-runs diff rather than scramble) and a `/gallery`
+  section fed by the **real renderers**, never hand-typed art.
+
+The fix propagated to all four country packs automatically — the generic packs
+derive from the same generator dicts, so 6 nodes now draw a picture from one change.
+
+## Accessibility limitation (recorded, not papered over)
+
+The picture carries **no `aria-hidden` and no `aria-label`**. `aria-hidden` would
+declare it decorative, which is false — it *is* the question. An `aria-label` would
+have to describe it, and any accurate description states the answer ("a bar with 1
+of 5 parts shaded" IS 1/5). The app's own read-aloud is silent on it structurally
+(the `<pre>` is a sibling of `.question-text`, which is what `tts.js` reads).
+
+So: **a constitutive visual question is not screen-reader answerable.** That is a
+property of the pedagogy, not a bug to be clevered away, and it is the honest
+counterweight to the gap this work closes.

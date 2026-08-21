@@ -413,6 +413,12 @@ class TurnResult:
     # the web view places each part in its own area instead of string-splitting text.
     message: str = ""            # transient prose: feedback, praise, explanation, nudges
     question: str | None = None  # the pending question display (incl. format hint), if awaiting one
+    # Visual-first (2026-08-21): the picture for the pending question, if any.
+    # Carried structurally like `question` -- and joined into `text` too, because
+    # a constitutive visual question WITHOUT its picture is unanswerable, so a
+    # CLI session or a durable transcript missing it records a question nobody
+    # could have answered. A terminal is monospace, so the CLI aligns for free.
+    visual: tuple[str, ...] | None = None
 
 
 @dataclass
@@ -756,7 +762,9 @@ class SessionController:
         and backward compatibility."""
         ctx = self._ctx
         question = ctx.question_display if ctx.state in _QUESTION_AWAIT else None
-        text = "\n\n".join(part for part in (message, question) if part)
+        visual = self.current_visual
+        picture = "\n".join(visual) if visual else None
+        text = "\n\n".join(part for part in (message, picture, question) if part)
         return TurnResult(
             state=ctx.state.value,
             text=text,
@@ -764,6 +772,7 @@ class SessionController:
             escalated=ctx.state is FSMState.ESCALATION_FREEZE,
             message=message,
             question=question,
+            visual=tuple(visual) if visual else None,
         )
 
     @property
@@ -819,6 +828,20 @@ class SessionController:
         item = self._ctx.current_item
         choices = getattr(item, "choices", None)
         return list(choices) if choices else None
+
+    @property
+    def current_visual(self) -> list[str] | None:
+        """The picture belonging to the live question, or None.
+
+        Visual-first (2026-08-21): for a "constitutive" topic the picture IS the
+        question, so it is drawn from the item's own numbers and shown ABOVE the
+        question text -- never folded into question_display, which goes through
+        the markdown-lite/expression-display path that would mangle ASCII art
+        (`*` -> ` × `). See docs/design/visual_first_gap.md."""
+        if self._ctx.state not in _QUESTION_AWAIT:
+            return None
+        visual = getattr(self._ctx.current_item, "visual", None)
+        return list(visual) if visual else None
 
     @property
     def current_question_stem(self) -> str | None:
