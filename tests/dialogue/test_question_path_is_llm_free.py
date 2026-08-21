@@ -118,3 +118,31 @@ def test_the_picture_never_states_the_answer_on_the_question_path():
         for line in visual:
             assert "=" not in line, f"picture asserts a result: {line!r}"
             assert line.strip() != str(item.answer), f"picture IS the answer: {line!r}"
+
+
+def test_the_cli_transcript_carries_the_picture_too():
+    """A constitutive question WITHOUT its picture is unanswerable, and the CLI
+    and durable transcript read `TurnResult.text`, not `current_visual`.
+
+    The web view pulls the picture from `current_visual` into its own <pre>, so
+    every browser test passes whether or not `text` carries it — a refactor that
+    tidied the picture out of `_compose_result` would leave the terminal asking
+    "What fraction is ONE part?" with nothing to look at, and nothing would go
+    red. Pinned here: the picture is in `text`, ABOVE the question, and exactly
+    the generator's lines.
+    """
+    ctrl = _controller(_CountingLLM())
+    ctrl.step(None)
+    ctrl.step("yes")
+    ctrl._ctx.current_node_id = "unit_fractions"
+    ctrl._do_present()
+    result = ctrl._compose_result("")
+
+    picture = "\n".join(ctrl.current_visual)
+    assert picture in result.text, (
+        f"the picture never reached the CLI transcript:\n{result.text!r}"
+    )
+    assert result.question, "no question was presented"
+    assert result.text.index(picture) < result.text.index(result.question), (
+        "the picture must come ABOVE the question it belongs to"
+    )
