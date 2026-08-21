@@ -188,3 +188,19 @@ def test_square_numbers_is_not_a_question_about_area():
     for label in ("Area of a square", "Perimeter of a square", "Area of a rectangle"):
         body = load_visual_scaffold(_ROOT, "mathematics", label)
         assert "perimeter" in body.lower(), f"{label} lost the area/perimeter scaffold"
+
+
+def test_a_scaffold_is_found_whichever_spelling_the_label_uses():
+    """Scaffolds are shared across every country pack; labels are not. The US
+    packs use American spelling, so renaming one US label "Disease and defence"
+    -> "Disease and defense" silently unrouted that node, because the scaffold
+    claims the keyword `defence` (caught by test_every_concept_node_has_a_scaffold
+    on 2026-08-21, one node, no other symptom).
+
+    Both spellings must reach the same scaffold, so a scaffold never has to list
+    both and a future locale change cannot quietly take a picture away.
+    """
+    british = load_visual_scaffold(_ROOT, "biology", "Disease and defence")
+    american = load_visual_scaffold(_ROOT, "biology", "Disease and defense")
+    assert british.strip(), "the British spelling lost its scaffold"
+    assert american == british, "the two spellings routed to different scaffolds"

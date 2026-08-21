@@ -13,6 +13,8 @@ from pathlib import Path
 
 import yaml
 
+from mentar.engine.locale_text import to_american
+
 # explain-mode (2026-08-13, Phase 3a — docs/design/explain_mode_design.md Tier 1
 # science visuals): the FIRST fenced ``` block in a scaffold body, verbatim.
 _FIRST_FENCE_RE = re.compile(r"```[^\n]*\n(.*?)\n```", re.S)
@@ -110,7 +112,26 @@ def _kw_pattern(keyword: str) -> re.Pattern[str]:
 
 
 def _kw_matches(keyword: str, label_lower: str) -> bool:
-    return bool(_kw_pattern(keyword).search(label_lower))
+    """Match a scaffold keyword against a node label, IGNORING British/American
+    spelling on both sides.
+
+    Scaffolds are shared across every country pack, but labels are not: the US
+    packs use American spelling (engine/locale_text.py). Renaming one US label
+    "Disease and defence" -> "Disease and defense" silently unrouted that node,
+    because the scaffold claims the keyword `defence` -- caught by
+    test_every_concept_node_has_a_scaffold, 2026-08-21.
+
+    Normalising BOTH sides to one spelling fixes the class rather than that node:
+    a US label reaches a British-keyworded scaffold and vice versa, so a scaffold
+    never has to list both spellings and a future locale change cannot quietly
+    take a picture away from a child.
+    """
+    if _kw_pattern(keyword).search(label_lower):
+        return True
+    normalised = to_american(keyword)
+    if normalised == keyword:
+        return False
+    return bool(_kw_pattern(normalised).search(to_american(label_lower)))
 
 
 def load_visual_scaffold(scaffold_root: Path, subject: str, label: str) -> str:
