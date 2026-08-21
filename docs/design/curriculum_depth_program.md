@@ -116,6 +116,33 @@ CCSS (English + maths) / NGSS (science).
 be scoped as a whole; go/no-go and ordering (which country's content work
 starts first) is the maintainer's call, not decided here.
 
+### W8 instrument SHIPPED 2026-08-21 (translator + per-country audit)
+
+Content authoring still has NOT started — this is the measuring stick only,
+the same "instruments first" order W1 used.
+
+- `mentar.tools.build_country_reference` translates the markdown references
+  into `curriculum_reference_{sg,in,us}.json` (auditor shape, keyed by the
+  same `year_level` strings the templates use). Strand names are lifted
+  verbatim; every normalisation rule is recorded in each file's `_meta`.
+- `mentar.tools.audit_curriculum_coverage` now reports **every pack against
+  its own reference**, not just AU. First honest per-strand numbers:
+  **AU 0 gaps · SG 34 · IN 34 · US 36 (104 total).**
+- `tests/tools/test_country_reference_sync.py` fails if a markdown reference
+  is edited without re-running the translator (stale-expectations guard) and
+  pins each pack's year-key naming convention.
+
+**Found immediately by the new instrument:** IN/SG/US have **no Year-1
+template at all** (their packs start at Class 2 / Primary 2 / Grade 2) while
+all three references define Year-1 content — AU got Year 1 on 2026-08-21, the
+generic packs never did.
+
+**Known limitation, left for a maintainer decision (not guessed at):** senior
+science is a SPLIT subject in the templates (physics/chemistry/biology) but
+the reference markdown lists those as bullets under one "science" year, so
+those templates audit as "(no reference entry)". Restructuring the blocks into
+three subjects would change what a strand *means* in the translated file.
+
 ## AU is the benchmark for every other country (maintainer, 2026-08-20)
 
 The generic IN/SG/US packs were built by mirroring AU's then-thin structure, so

@@ -1,0 +1,213 @@
+{
+  "_meta": {
+    "source": "docs/design/country_references/ (maintainer-supplied, 2026-08-21), translated by mentar.tools.build_country_reference",
+    "authority": "Strand names are the AUDIT VOCABULARY, taken verbatim from the reference markdown. Not a licence claim, not an alignment claim.",
+    "normalisation": [
+      "SG: the parenthetical level (Primary/Secondary/Pre-U N) is the key, matching what SG templates put in year_level.",
+      "Bands supplied as one block are assigned to BOTH years unchanged (SG English Sec 3&4, US English Grades 9&10) -- the source did not split them.",
+      "US maths high school is course-named; the parenthetical grade is the key and the course name is kept as a strand so the pathway stays visible.",
+      "US science grades 6-8 state mastery 'by end of Grade 8'; the pillar union is assigned to all three grades, as the source says."
+    ]
+  },
+  "mathematics": {
+    "Class 1": [
+      "Numbers",
+      "Operations",
+      "Shapes & Space",
+      "Measurement",
+      "Patterns & Time"
+    ],
+    "Class 2": [
+      "Numbers",
+      "Operations",
+      "Measurement",
+      "Geometry & Data"
+    ],
+    "Class 3": [
+      "Numbers & Money",
+      "Operations",
+      "Measurement",
+      "Geometry & Patterns"
+    ],
+    "Class 4": [
+      "Numbers",
+      "Operations",
+      "Fractions",
+      "Measurement & Geometry",
+      "Data"
+    ],
+    "Class 5": [
+      "Numbers",
+      "Operations",
+      "Fractions & Decimals",
+      "Measurement",
+      "Geometry"
+    ],
+    "Class 6": [
+      "Number System",
+      "Algebra",
+      "Geometry",
+      "Mensuration",
+      "Ratio & Proportion",
+      "Data Handling"
+    ],
+    "Class 7": [
+      "Number System",
+      "Algebra & Power",
+      "Geometry",
+      "Congruence & Symmetry",
+      "Mensuration",
+      "Data Handling"
+    ],
+    "Class 8": [
+      "Numbers",
+      "Algebra",
+      "Geometry",
+      "Mensuration",
+      "Graphs & Data"
+    ],
+    "Class 9": [
+      "Number Systems",
+      "Algebra",
+      "Coordinate Geometry",
+      "Geometry",
+      "Mensuration",
+      "Statistics"
+    ],
+    "Class 10": [
+      "Board Examination Readiness — strict alignment with the CBSE Class 10 blueprint"
+    ],
+    "Class 11": [
+      "Sets & Functions",
+      "Algebra",
+      "Coordinate Geometry",
+      "Calculus",
+      "Statistics & Probability"
+    ],
+    "Class 12": [
+      "AISSCE Prep — the final nationwide evaluation matrix"
+    ]
+  },
+  "science": {
+    "Class 3": [
+      "Family & Friends",
+      "Food & Water",
+      "Shelter & Travel",
+      "Sensory Awareness"
+    ],
+    "Class 4": [
+      "Ecosystems & Habitats",
+      "Water Resources",
+      "Food Production",
+      "Waste Management"
+    ],
+    "Class 5": [
+      "Super Senses",
+      "Natural Resources",
+      "Health & Disease",
+      "Earth & Space"
+    ],
+    "Class 6": [
+      "Food & Nutrition",
+      "Materials",
+      "Living World",
+      "Physics Essentials"
+    ],
+    "Class 7": [
+      "Nutrition & Life",
+      "Chemistry",
+      "Weather & Climate",
+      "Physics & Nature"
+    ],
+    "Class 8": [
+      "Microorganisms & Cells",
+      "Chemicals & Materials",
+      "Production & Conservation",
+      "Physics Concepts"
+    ],
+    "Class 9": [
+      "Matter",
+      "Biology (Foundations)",
+      "Physics (Mechanics)"
+    ],
+    "Class 10": [
+      "Board Examination Readiness — strict alignment with the national assessment blueprint"
+    ],
+    "Class 11": [
+      "Physics",
+      "Chemistry",
+      "Biology"
+    ],
+    "Class 12": [
+      "AISSCE / Board Prep"
+    ]
+  },
+  "english": {
+    "Class 1": [
+      "Reading & Phonics",
+      "Grammar Foundations",
+      "Writing",
+      "Speaking & Listening"
+    ],
+    "Class 2": [
+      "Reading",
+      "Grammar",
+      "Writing",
+      "Speaking"
+    ],
+    "Class 3": [
+      "Reading",
+      "Grammar",
+      "Writing",
+      "Speaking & Listening"
+    ],
+    "Class 4": [
+      "Reading Comprehension",
+      "Grammar",
+      "Writing",
+      "Speaking"
+    ],
+    "Class 5": [
+      "Reading",
+      "Grammar",
+      "Writing",
+      "Speaking & Listening"
+    ],
+    "Class 6": [
+      "Reading",
+      "Grammar",
+      "Writing",
+      "Literature"
+    ],
+    "Class 7": [
+      "Reading",
+      "Grammar",
+      "Writing",
+      "Literature"
+    ],
+    "Class 8": [
+      "Reading",
+      "Grammar",
+      "Writing",
+      "Literature"
+    ],
+    "Class 9": [
+      "Reading",
+      "Grammar",
+      "Writing",
+      "Literature (Beehive & Moments)"
+    ],
+    "Class 10": [
+      "Board Exam Readiness — strict adherence to the CBSE Class 10 Core English blueprint"
+    ],
+    "Class 11": [
+      "Reading Skills",
+      "Creative Writing Skills",
+      "Grammar",
+      "Literature"
+    ],
+    "Class 12": [
+      "AISSCE (All-India Senior School Certificate Examination) Prep — the final national evaluation matrix"
+    ]
+  }
+}

@@ -50,10 +50,25 @@ def _template_year_key(fm: dict, filename: str) -> str:
     return str(year)
 
 
-def audit() -> list[dict]:
-    ref = json.loads(REFERENCE.read_text(encoding="utf-8"))
+# Each pack audits against its OWN reference (2026-08-21). Before this, only AU
+# had one, so IN/SG/US could be compared on totals but never per strand -- the
+# same "counts, not claims" gap the AU reference closed, one level out.
+_PACK_REFERENCES = {
+    "AU_ACARA": REPO / "docs" / "design" / "curriculum_reference_au.json",
+    "SG_GENERIC": REPO / "docs" / "design" / "curriculum_reference_sg.json",
+    "IN_GENERIC": REPO / "docs" / "design" / "curriculum_reference_in.json",
+    "US_GENERIC": REPO / "docs" / "design" / "curriculum_reference_us.json",
+}
+
+
+def audit(pack: str = "AU_ACARA") -> list[dict]:
+    ref_path = _PACK_REFERENCES.get(pack)
+    if ref_path is None or not ref_path.exists():
+        return []
+    ref = json.loads(ref_path.read_text(encoding="utf-8"))
+    templates = REPO / "curriculum" / "templates" / pack
     rows = []
-    for path in sorted(TEMPLATES.glob("*.md")):
+    for path in sorted(templates.glob("*.md")):
         if path.name in ("index.md", "log.md"):
             continue
         fm = yaml.safe_load(path.read_text(encoding="utf-8").split("\n---\n")[0])
@@ -72,7 +87,7 @@ def audit() -> list[dict]:
     # Years in the reference with NO template at all — the loudest gap.
     covered = {(r["subject"], r["year"]) for r in rows}
     for subject, years in ref.items():
-        if subject == "_meta":
+        if subject == "_meta" or not isinstance(years, dict):
             continue
         for year in years:
             if (subject, year) not in covered:
@@ -109,8 +124,13 @@ def benchmark() -> dict:
     return out
 
 
-def main() -> int:
-    rows = audit()
+def _report(pack: str) -> int:
+    """One pack's per-strand table. Returns its gap count."""
+    rows = audit(pack)
+    if not rows:
+        return 0
+    print()
+    print(f"=== {pack} — per-strand coverage vs its own reference ===")
     print(f"{'subject':12} {'year':22} {'topics':>6}  strand coverage")
     print("-" * 100)
     gaps = 0
@@ -129,7 +149,16 @@ def main() -> int:
             status = " · ".join(parts)
         print(f"{r['subject']:12} {r['year']:22} {r['topics']:>6}  {status}")
     print("-" * 100)
-    print(f"{gaps} year/subject entries with gaps against the reference. "
+    print(f"{pack}: {gaps} year/subject entries with gaps against its reference.")
+    return gaps
+
+
+def main() -> int:
+    total = 0
+    for pack in _PACK_REFERENCES:
+        total += _report(pack)
+    print()
+    print(f"TOTAL: {total} year/subject entries with gaps across all packs. "
           "This report IS the coverage claim — cite nothing stronger.")
 
     bench = benchmark()

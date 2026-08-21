@@ -1,0 +1,243 @@
+{
+  "_meta": {
+    "source": "docs/design/country_references/ (maintainer-supplied, 2026-08-21), translated by mentar.tools.build_country_reference",
+    "authority": "Strand names are the AUDIT VOCABULARY, taken verbatim from the reference markdown. Not a licence claim, not an alignment claim.",
+    "normalisation": [
+      "SG: the parenthetical level (Primary/Secondary/Pre-U N) is the key, matching what SG templates put in year_level.",
+      "Bands supplied as one block are assigned to BOTH years unchanged (SG English Sec 3&4, US English Grades 9&10) -- the source did not split them.",
+      "US maths high school is course-named; the parenthetical grade is the key and the course name is kept as a strand so the pathway stays visible.",
+      "US science grades 6-8 state mastery 'by end of Grade 8'; the pillar union is assigned to all three grades, as the source says."
+    ]
+  },
+  "mathematics": {
+    "Grade 1": [
+      "Operations & Algebraic Thinking",
+      "Number & Operations in Base Ten",
+      "Measurement & Data",
+      "Geometry"
+    ],
+    "Grade 2": [
+      "Operations & Algebraic Thinking",
+      "Number & Operations in Base Ten",
+      "Measurement & Data",
+      "Geometry"
+    ],
+    "Grade 3": [
+      "Operations & Algebraic Thinking",
+      "Number & Operations in Base Ten",
+      "Number & Operations—Fractions",
+      "Measurement & Data"
+    ],
+    "Grade 4": [
+      "Operations & Algebraic Thinking",
+      "Number & Operations in Base Ten",
+      "Number & Operations—Fractions",
+      "Measurement & Data"
+    ],
+    "Grade 5": [
+      "Operations & Algebraic Thinking",
+      "Number & Operations in Base Ten",
+      "Number & Operations—Fractions",
+      "Measurement & Data / Geometry"
+    ],
+    "Grade 6": [
+      "Ratios & Proportional Relationships",
+      "The Number System",
+      "Expressions & Equations",
+      "Geometry & Statistics"
+    ],
+    "Grade 7": [
+      "Ratios & Proportional Relationships",
+      "The Number System",
+      "Expressions & Equations",
+      "Geometry & Statistics"
+    ],
+    "Grade 8": [
+      "The Number System & Functions",
+      "Expressions & Equations",
+      "Geometry",
+      "Statistics & Probability"
+    ],
+    "Grade 9": [
+      "Number & Quantity",
+      "Algebra (Expressions & Equations)",
+      "Functions",
+      "Statistics & Probability"
+    ],
+    "Grade 10": [
+      "Congruence & Similarity",
+      "Circles",
+      "Expressing Geometric Properties with Equations",
+      "Geometric Measurement & Dimension"
+    ],
+    "Grade 11": [
+      "The Complex Number System",
+      "Advanced Algebra",
+      "Advanced Functions",
+      "Inferences & Conclusions from Data"
+    ],
+    "Grade 12": [
+      "Pre-Calculus Elective",
+      "AP Calculus AB/BC",
+      "AP Statistics"
+    ]
+  },
+  "science": {
+    "Grade 1": [
+      "Physical Science",
+      "Life Science",
+      "Earth & Space Science"
+    ],
+    "Grade 2": [
+      "Physical Science",
+      "Life Science",
+      "Earth & Space Science"
+    ],
+    "Grade 3": [
+      "Physical Science",
+      "Life Science",
+      "Earth & Space Science"
+    ],
+    "Grade 4": [
+      "Physical Science",
+      "Life Science",
+      "Earth & Space Science"
+    ],
+    "Grade 5": [
+      "Physical Science",
+      "Life Science",
+      "Earth & Space Science"
+    ],
+    "Grade 9": [
+      "Biochemistry & Cells",
+      "Genetics & Heredity",
+      "Evolution & Ecology"
+    ],
+    "Grade 10": [
+      "Atomic Structure & Bonding",
+      "Stoichiometry & Reactions",
+      "Thermodynamics & Kinetics"
+    ],
+    "Grade 11": [
+      "Mechanics",
+      "Electricity & Magnetism",
+      "Modern Physics"
+    ],
+    "Grade 12": [
+      "Earth & Environmental Science",
+      "Advanced Placement (AP/IB) Courses"
+    ],
+    "Grade 6": [
+      "Structure of Matter",
+      "Chemical Reactions",
+      "Forces & Motion",
+      "Energy & Waves",
+      "Cells & Organisms",
+      "Ecosystem Dynamics",
+      "Heredity & Evolution",
+      "Earth's Systems",
+      "Weather & Climate",
+      "Space Systems"
+    ],
+    "Grade 7": [
+      "Structure of Matter",
+      "Chemical Reactions",
+      "Forces & Motion",
+      "Energy & Waves",
+      "Cells & Organisms",
+      "Ecosystem Dynamics",
+      "Heredity & Evolution",
+      "Earth's Systems",
+      "Weather & Climate",
+      "Space Systems"
+    ],
+    "Grade 8": [
+      "Structure of Matter",
+      "Chemical Reactions",
+      "Forces & Motion",
+      "Energy & Waves",
+      "Cells & Organisms",
+      "Ecosystem Dynamics",
+      "Heredity & Evolution",
+      "Earth's Systems",
+      "Weather & Climate",
+      "Space Systems"
+    ]
+  },
+  "english": {
+    "Grade 1": [
+      "Reading (Foundational Skills)",
+      "Reading (Literature & Informational)",
+      "Writing",
+      "Language & Grammar",
+      "Speaking & Listening"
+    ],
+    "Grade 2": [
+      "Reading (Foundational Skills)",
+      "Reading (Literature & Informational)",
+      "Writing",
+      "Language & Grammar",
+      "Speaking & Listening"
+    ],
+    "Grade 3": [
+      "Reading (Literature & Informational)",
+      "Writing",
+      "Language & Grammar",
+      "Speaking & Listening"
+    ],
+    "Grade 4": [
+      "Reading (Literature & Informational)",
+      "Writing",
+      "Language & Grammar",
+      "Speaking & Listening"
+    ],
+    "Grade 5": [
+      "Reading (Literature & Informational)",
+      "Writing",
+      "Language & Grammar",
+      "Speaking & Listening"
+    ],
+    "Grade 6": [
+      "Reading (Literature & Informational)",
+      "Writing",
+      "Language & Grammar",
+      "Speaking & Listening"
+    ],
+    "Grade 7": [
+      "Reading (Literature & Informational)",
+      "Writing",
+      "Language & Grammar",
+      "Speaking & Listening"
+    ],
+    "Grade 8": [
+      "Reading (Literature & Informational)",
+      "Writing",
+      "Language & Grammar",
+      "Speaking & Listening"
+    ],
+    "Grade 9": [
+      "Reading (Literature & Informational)",
+      "Writing",
+      "Language & Grammar",
+      "Speaking & Listening"
+    ],
+    "Grade 10": [
+      "Reading (Literature & Informational)",
+      "Writing",
+      "Language & Grammar",
+      "Speaking & Listening"
+    ],
+    "Grade 11": [
+      "Reading (Literature & Informational)",
+      "Writing",
+      "Language & Grammar",
+      "Speaking & Listening"
+    ],
+    "Grade 12": [
+      "Reading (Literature & Informational)",
+      "Writing",
+      "Language & Grammar",
+      "Speaking & Listening"
+    ]
+  }
+}
