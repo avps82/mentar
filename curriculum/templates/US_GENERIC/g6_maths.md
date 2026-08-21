@@ -68,7 +68,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "A rectangle is 12cm by 9cm. What is its area, in square centimetres?"
+      - "A rectangle is 12cm by 9cm. What is its area, in square centimeters?"
     verifier:
       answer_type: int
       checker: int_exact

@@ -61,6 +61,7 @@ from mentar.engine.au_english_items import (
 )
 from mentar.engine.generic_items import PACK_LEVELS
 from mentar.engine.itemgen import GenFn
+from mentar.engine.locale_text import localise
 
 # Difficulty STAGE -> {concept slug: generator}. Same stability rule as the
 # maths table: a renamed slug orphans that skill's mastery rows in the DB.
@@ -131,7 +132,10 @@ def build_generators(prefix: str, stage: int) -> dict[str, GenFn]:
     -> {"sg_p3_antonyms": gen_antonyms_basic_y3, ...}."""
     if stage not in STAGE_CONCEPTS:
         raise KeyError(f"no concept set for stage {stage!r} (have {sorted(STAGE_CONCEPTS)})")
-    return {f"{prefix}_{slug}": fn for slug, fn in STAGE_CONCEPTS[stage].items()}
+    # US packs get American spelling (maintainer, 2026-08-21: "use local std
+    # for the country pack"). localise() is a no-op for every other prefix.
+    return {f"{prefix}_{slug}": localise(fn, prefix)
+            for slug, fn in STAGE_CONCEPTS[stage].items()}
 
 
 # item_source name -> generators, for every generic pack level. The item_source

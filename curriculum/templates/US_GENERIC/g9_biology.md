@@ -89,7 +89,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "Which of these is an example of NEGATIVE feedback (the response reverses the change)? A) sweating when body temperature rises  B) growing taller over years  C) learning a new skill  D) hair turning grey with age. Answer with the letter."
+      - "Which of these is an example of NEGATIVE feedback (the response reverses the change)? A) sweating when body temperature rises  B) growing taller over years  C) learning a new skill  D) hair turning gray with age. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice
@@ -161,7 +161,7 @@ concepts:
       checker: mc_choice
     bkt_priors: { guess: 0.25, slip: 0.1, learns: 0.2, forgets: 0 }
   - id: us_g9_disease_types
-    label: "Disease and defence"
+    label: "Disease and defense"
     strand: "Diseases"
     prereqs: []
     grounding: {}

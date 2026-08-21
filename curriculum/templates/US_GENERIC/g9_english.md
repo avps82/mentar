@@ -96,7 +96,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "Which of these is true of Shakespeare's THEATRE? A) ten syllables to a line: da-DUM da-DUM da-DUM da-DUM da-DUM  B) plays staged in daylight at the open-roofed Globe  C) an unstressed beat then a stressed one, five times a line  D) fourteen lines ending in a rhyming couplet. Answer with the letter."
+      - "Which of these is true of Shakespeare's THEATER? A) ten syllables to a line: da-DUM da-DUM da-DUM da-DUM da-DUM  B) plays staged in daylight at the open-roofed Globe  C) an unstressed beat then a stressed one, five times a line  D) fourteen lines ending in a rhyming couplet. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice

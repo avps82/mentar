@@ -77,6 +77,7 @@ from mentar.engine.itemgen import (
     _gen_unit_fractions,
     _gen_whole_number_division,
 )
+from mentar.engine.locale_text import localise
 
 # Difficulty STAGE -> {concept slug: generator}. The slug becomes the node id's
 # suffix (prefix added per pack+level below), so slugs must stay stable once a
@@ -225,7 +226,10 @@ def build_generators(prefix: str, stage: int) -> dict[str, GenFn]:
     -> {"sg_p3_place_value": gen_place_value_3digit, ...}."""
     if stage not in STAGE_CONCEPTS:
         raise KeyError(f"no concept set for stage {stage!r} (have {sorted(STAGE_CONCEPTS)})")
-    return {f"{prefix}_{slug}": fn for slug, fn in STAGE_CONCEPTS[stage].items()}
+    # US packs get American spelling (maintainer, 2026-08-21: "use local std
+    # for the country pack"). localise() is a no-op for every other prefix.
+    return {f"{prefix}_{slug}": localise(fn, prefix)
+            for slug, fn in STAGE_CONCEPTS[stage].items()}
 
 
 # item_source name -> generators, for every generic pack level. The item_source

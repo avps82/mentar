@@ -53,7 +53,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "Which of these is a good conductor of electricity? A) a glass rod  B) a wooden spoon  C) aluminium foil  D) a rubber band. Answer with the letter."
+      - "Which of these is a good conductor of electricity? A) a glass rod  B) a wooden spoon  C) aluminum foil  D) a rubber band. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice

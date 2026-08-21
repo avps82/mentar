@@ -111,7 +111,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "Which of these is an example of heat transfer by CONVECTION (carried by a moving fluid)? A) a metal spoon handle warming in hot soup  B) feeling a campfire's warmth from metres away  C) the Sun warming your face across empty space  D) water circulating as it boils in a pot. Answer with the letter."
+      - "Which of these is an example of heat transfer by CONVECTION (carried by a moving fluid)? A) a metal spoon handle warming in hot soup  B) feeling a campfire's warmth from meters away  C) the Sun warming your face across empty space  D) water circulating as it boils in a pot. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice
@@ -122,7 +122,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "Which of these describes ALPHA radiation (helium nuclei — heavy, stopped by paper)? A) the radiation stopped by a few millimetres of aluminium  B) fast electrons ejected from a decaying nucleus  C) the most ionising but least penetrating type  D) the radiation that needs thick lead or concrete to block. Answer with the letter."
+      - "Which of these describes ALPHA radiation (helium nuclei — heavy, stopped by paper)? A) the radiation stopped by a few millimeters of aluminum  B) fast electrons ejected from a decaying nucleus  C) the most ionising but least penetrating type  D) the radiation that needs thick lead or concrete to block. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice
@@ -155,7 +155,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "Which of these is a property of WAVELENGTH? A) the maximum displacement from the middle position  B) measured in metres  C) measured in hertz  D) what determines how loud a sound or bright a light is. Answer with the letter."
+      - "Which of these is a property of WAVELENGTH? A) the maximum displacement from the middle position  B) measured in meters  C) measured in hertz  D) what determines how loud a sound or bright a light is. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice

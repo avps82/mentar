@@ -30,6 +30,7 @@ import re
 
 from mentar.engine.generic_items import PACK_LEVELS
 from mentar.engine.itemgen import GenFn
+from mentar.engine.locale_text import localise
 from mentar.engine.science_items import (
     AU_SCIENCE_YEAR3_GENERATORS,
     AU_SCIENCE_YEAR4_GENERATORS,
@@ -87,7 +88,10 @@ def build_generators(prefix: str, stage: int) -> dict[str, GenFn]:
     -> {"sg_p3_life_cycle": ..., "sg_p3_heat_sources": ..., ...}."""
     if stage not in STAGE_CONCEPTS:
         raise KeyError(f"no concept set for stage {stage!r} (have {sorted(STAGE_CONCEPTS)})")
-    return {f"{prefix}_{slug}": fn for slug, fn in STAGE_CONCEPTS[stage].items()}
+    # US packs get American spelling (maintainer, 2026-08-21: "use local std
+    # for the country pack"). localise() is a no-op for every other prefix.
+    return {f"{prefix}_{slug}": localise(fn, prefix)
+            for slug, fn in STAGE_CONCEPTS[stage].items()}
 
 
 # Levels where science is taught as SEPARATE subjects, so no combined pack is

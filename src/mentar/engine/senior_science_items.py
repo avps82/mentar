@@ -31,6 +31,7 @@ from __future__ import annotations
 import random
 
 from mentar.engine.itemgen import GenFn, mc_which_is
+from mentar.engine.locale_text import localise
 
 # ── Physics ──────────────────────────────────────────────────────────────────
 
@@ -485,7 +486,10 @@ NO_SCIENCE_LEVELS = {"us_g12"}
 def build_generators(prefix: str, subject: str, stage: int) -> dict[str, GenFn]:
     """One pack's node_id -> generator map, e.g. build_generators("sg_s3",
     "physics", 1) -> {"sg_s3_scalars_vectors": ..., ...}."""
-    return {f"{prefix}_{slug}": fn for slug, fn in STAGE_CONCEPTS[subject][stage].items()}
+    # US packs get American spelling (maintainer, 2026-08-21: "use local std
+    # for the country pack"). localise() is a no-op for every other prefix.
+    return {f"{prefix}_{slug}": localise(fn, prefix)
+            for slug, fn in STAGE_CONCEPTS[subject][stage].items()}
 
 
 # The US takes the same three subjects but ONE PER YEAR, in a sequence, rather

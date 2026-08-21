@@ -45,7 +45,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "Which of these is an IONIC compound (a metal with a non-metal, electrons transferred)? A) sodium chloride  B) iron  C) aluminium  D) copper. Answer with the letter."
+      - "Which of these is an IONIC compound (a metal with a non-metal, electrons transferred)? A) sodium chloride  B) iron  C) aluminum  D) copper. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice
@@ -67,7 +67,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "Which of these is a measure of the AMOUNT of substance? A) the mole  B) moles per litre  C) molarity  D) mol/L. Answer with the letter."
+      - "Which of these is a measure of the AMOUNT of substance? A) the mole  B) moles per liter  C) molarity  D) mol/L. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice
