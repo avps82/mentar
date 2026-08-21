@@ -764,7 +764,7 @@ class SessionController:
         question = ctx.question_display if ctx.state in _QUESTION_AWAIT else None
         visual = self.current_visual
         picture = "\n".join(visual) if visual else None
-        text = "\n\n".join(part for part in (message, picture, question) if part)
+        text = "\n\n".join(part for part in (message, question, picture) if part)
         return TurnResult(
             state=ctx.state.value,
             text=text,
@@ -834,8 +834,9 @@ class SessionController:
         """The picture belonging to the live question, or None.
 
         Visual-first (2026-08-21): for a "constitutive" topic the picture IS the
-        question, so it is drawn from the item's own numbers and shown ABOVE the
-        question text -- never folded into question_display, which goes through
+        question, so it is drawn from the item's own numbers and shown WITH the
+        question -- beneath its text since 2026-08-21, instruction before
+        material -- and never folded into question_display, which goes through
         the markdown-lite/expression-display path that would mangle ASCII art
         (`*` -> ` × `). See docs/design/visual_first_gap.md."""
         if self._ctx.state not in _QUESTION_AWAIT:

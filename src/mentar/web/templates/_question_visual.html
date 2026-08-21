@@ -1,5 +1,13 @@
 {# The picture that BELONGS to the live question (visual-first, 2026-08-21).
 
+   Sits BELOW the question text (maintainer, 2026-08-21: "Feel like the
+   question should be above the diagram?"). It read as a context-free block
+   of art at the top of the bubble -- a child's eye landed on four rows of
+   stars with no idea what they were for, and had to read DOWN to find out,
+   then look back up. Instruction first, then the material, is how a
+   worksheet reads. It also puts the picture next to the answer box, which is
+   where a child is looking while they count.
+
    Sits as a SIBLING of .question-text, never inside it, for two reasons:
      * tts.js reads .question-text's textContent, so the app's own read-aloud can
        never try to speak ASCII art -- that silence is structural, not a filter

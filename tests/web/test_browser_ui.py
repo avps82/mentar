@@ -833,7 +833,7 @@ def test_read_aloud_never_speaks_the_diagram_ornament():
         server.stop()
 
 
-def test_a_question_picture_is_monospaced_above_the_text_and_never_clipped():
+def test_a_question_picture_is_monospaced_below_the_text_and_never_clipped():
     """Visual-first (2026-08-21). Route tests prove the <pre> is in the HTML;
     only a browser proves the thing that matters — that its COLUMNS LINE UP.
 
@@ -844,7 +844,11 @@ def test_a_question_picture_is_monospaced_above_the_text_and_never_clipped():
 
     Also pins placement, because "tidy it inside .question-text" is a plausible
     future edit that would (a) reintroduce the proportional font and (b) make
-    read-aloud start speaking ASCII art."""
+    read-aloud start speaking ASCII art.
+
+    The picture sits BELOW the question as of 2026-08-21 -- instruction first,
+    then the material. Above, it was a context-free block of art at the top of
+    the bubble."""
     _skip_unless_browser()
     server, browser = _Server(), None
     try:
@@ -872,7 +876,7 @@ def test_a_question_picture_is_monospaced_above_the_text_and_never_clipped():
               return {
                 err: null,
                 monospace: Math.abs(narrow - wide) < 0.5,
-                above: pr.bottom <= qr.top + 1,
+                below: qr.bottom <= pr.top + 1,
                 insideQuestionText: q.contains(pre),
                 clipped: pre.scrollWidth > pre.clientWidth + 1
                          && getComputedStyle(pre).overflowX !== 'auto',
@@ -883,7 +887,7 @@ def test_a_question_picture_is_monospaced_above_the_text_and_never_clipped():
         """)
         assert not r["err"], r["err"]
         assert r["monospace"], "question picture is not monospaced — columns will not align"
-        assert r["above"], "picture is not above the question text"
+        assert r["below"], "picture is not below the question text"
         assert not r["insideQuestionText"], (
             "picture moved inside .question-text — proportional font, and tts.js "
             "would start speaking the art"

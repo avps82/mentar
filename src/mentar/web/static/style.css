@@ -562,7 +562,7 @@ input[type=text], input[type=number] {
    row, above the text, and lets the button+text keep sharing the row below. */
 .question { display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap; }
 .question-text { flex: 1; white-space: pre-wrap; }
-.question-visual { flex-basis: 100%; margin: 0 0 4px; }
+.question-visual { flex-basis: 100%; margin: 4px 0 0; }
 .tts-btn {
   background: none;
   border: 2px solid var(--border);

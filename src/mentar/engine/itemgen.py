@@ -403,7 +403,7 @@ class ItemGenerator:
         # present-or-None positional rule as choices/method_steps above.
         format_hint = result[6] if len(result) > 6 and result[6] else None
         # An 8th element (2026-08-21, visual-first): the picture for THIS item,
-        # shown above the question. Same present-or-None positional rule again.
+        # shown beneath the question text. Same present-or-None positional rule again.
         # Item is frozen, so this must be a tuple, not the caller's list.
         #
         # EIGHT IS THE CEILING. This positional contract is readable at 8 slots

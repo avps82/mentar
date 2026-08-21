@@ -143,6 +143,7 @@ def test_the_cli_transcript_carries_the_picture_too():
         f"the picture never reached the CLI transcript:\n{result.text!r}"
     )
     assert result.question, "no question was presented"
-    assert result.text.index(picture) < result.text.index(result.question), (
-        "the picture must come ABOVE the question it belongs to"
+    assert result.text.index(result.question) < result.text.index(picture), (
+        "the question must come ABOVE the picture it belongs to -- instruction "
+        "first, then the material (maintainer, 2026-08-21)"
     )

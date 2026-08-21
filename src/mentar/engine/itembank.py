@@ -59,7 +59,8 @@ class Item:
     # fallback, and what any future LLM narration is held to.
     method_steps: tuple[str, ...] | None = None
     # visual-first (2026-08-21): the picture that belongs to THIS question, drawn
-    # from this item's own exact numbers -- shown ABOVE the question, not in the
+    # from this item's own exact numbers -- shown WITH the question (below its
+    # text since 2026-08-21), not in the
     # explanation. Primary maths is taught concrete->pictorial->abstract, so for
     # a "constitutive" topic (grid area, clock face, fraction bar, scatterplot)
     # the picture IS the question; describing it in prose hands the child the
