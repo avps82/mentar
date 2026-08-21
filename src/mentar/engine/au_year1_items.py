@@ -64,23 +64,38 @@ def gen_shape_sides(rng: random.Random):
             "(Count each straight side once)")
 
 
+# LENGTH and WEIGHT are separate tables ON PURPOSE (bug found 2026-08-21 by
+# reading real draws). One combined table asked "which is the HEAVIER one?" and
+# offered "a bus (next to a pencil)" as a distractor because it was filed under
+# LONGER -- but a bus IS heavier than a pencil, so a child reasoning correctly
+# was marked wrong. The categories were disjoint as LABELS and overlapping in
+# MEANING; test_fact_table_disjointness matches substrings and cannot see that.
+# Drawing from one dimension at a time makes every distractor wrong on the same
+# axis the question asks about.
+_Y1_LENGTH = {
+    "the LONGER one": ["a bus (next to a pencil)", "a river (next to a puddle)",
+                       "a broom (next to a spoon)"],
+    "the SHORTER one": ["a pencil (next to a bus)", "an ant (next to a dog)",
+                        "a spoon (next to a broom)"],
+}
+_Y1_WEIGHT = {
+    "the HEAVIER one": ["an elephant (next to a cat)", "a brick (next to a feather)",
+                        "a rock (next to a leaf)"],
+    "the LIGHTER one": ["a feather (next to a brick)", "a leaf (next to a rock)",
+                        "a cat (next to an elephant)"],
+}
+_Y1_COMPARE_GLOSSES = {
+    "the LONGER one": "longer means it reaches further from end to end",
+    "the SHORTER one": "shorter means it reaches less far",
+    "the HEAVIER one": "heavier means it pulls down harder in your hands",
+    "the LIGHTER one": "lighter means it is easier to lift",
+}
+
+
 def gen_longer_shorter(rng: random.Random):
-    table = {
-        "the LONGER one": ["a bus (next to a pencil)", "a river (next to a puddle)",
-                           "a broom (next to a spoon)"],
-        "the SHORTER one": ["a pencil (next to a bus)", "an ant (next to a dog)",
-                            "a spoon (next to a broom)"],
-        "the HEAVIER one": ["an elephant (next to a cat)", "a brick (next to a feather)"],
-        "the LIGHTER one": ["a feather (next to a brick)", "a leaf (next to a rock)"],
-    }
-    glosses = {
-        "the LONGER one": "longer means it reaches further from end to end",
-        "the SHORTER one": "shorter means it reaches less far",
-        "the HEAVIER one": "heavier means it pulls down harder in your hands",
-        "the LIGHTER one": "lighter means it is easier to lift",
-    }
+    table = rng.choice([_Y1_LENGTH, _Y1_WEIGHT])
     return mc_which_is(rng, "Which of these is {label}?", table,
-                       glosses=glosses, concept_name="COMPARING THINGS")
+                       glosses=_Y1_COMPARE_GLOSSES, concept_name="COMPARING THINGS")
 
 
 def gen_simple_tally(rng: random.Random):

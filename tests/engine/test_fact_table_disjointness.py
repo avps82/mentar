@@ -17,6 +17,15 @@ the real defect showed up that way, and everything it flags is either a genuine
 overlap or a coincidence worth a one-line entry below. New content that trips it
 needs a decision, which is the point.
 
+SECOND failure mode, found 2026-08-21 by READING real draws rather than by any
+test: Year 1's "comparing things" table held LONGER/SHORTER *and*
+HEAVIER/LIGHTER, so "which is the HEAVIER one?" offered "a bus (next to a
+pencil)" as a distractor -- filed under LONGER, but a bus IS heavier than a
+pencil. Labels disjoint, MEANINGS overlapping, and invisible to a substring
+sweep. The fix is structural (one dimension per draw), and the lesson is that
+this file is a floor, not a ceiling: new fact tables still need someone to read
+what a child would actually see.
+
     python3 tests/engine/test_fact_table_disjointness.py
 """
 
@@ -83,3 +92,31 @@ def test_no_option_belongs_to_two_categories():
 if __name__ == "__main__":
     test_no_option_belongs_to_two_categories()
     print("  ✓ test_no_option_belongs_to_two_categories")
+
+
+def test_year1_comparison_never_mixes_length_with_weight():
+    """Regression, 2026-08-21: one table held LONGER/SHORTER and HEAVIER/LIGHTER,
+    so "which is the HEAVIER one?" could offer "a bus (next to a pencil)" -- filed
+    under LONGER, but genuinely heavier than a pencil. A child reasoning correctly
+    was marked wrong. Every draw must now stay on the axis its question asks about."""
+    import random
+
+    from mentar.engine.au_year1_items import _Y1_LENGTH, _Y1_WEIGHT, gen_longer_shorter
+    from mentar.engine.itemgen import ItemGenerator
+
+    length = {o for v in _Y1_LENGTH.values() for o in v}
+    weight = {o for v in _Y1_WEIGHT.values() for o in v}
+    assert not (length & weight), "an option appears on both axes"
+
+    problems = []
+    for seed in range(120):
+        item = ItemGenerator({"n": gen_longer_shorter}, rng=random.Random(seed))._make("n")
+        options = set(item.choices)
+        if not (options <= length or options <= weight):
+            problems.append(f"seed {seed}: options span both axes: {sorted(options)}")
+            continue
+        correct = item.choices["ABCD".index(str(item.answer))]
+        asks_weight = "HEAVIER" in item.stem or "LIGHTER" in item.stem
+        if asks_weight != (correct in weight):
+            problems.append(f"seed {seed}: {item.stem!r} answered by {correct!r}")
+    assert not problems, "\n".join(problems[:5])

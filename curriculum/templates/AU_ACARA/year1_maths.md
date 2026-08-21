@@ -62,7 +62,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "Which of these is the LIGHTER one? A) an elephant (next to a cat)  B) a feather (next to a brick)  C) a broom (next to a spoon)  D) a pencil (next to a bus). Answer with the letter."
+      - "Which of these is the SHORTER one? A) a river (next to a puddle)  B) an ant (next to a dog)  C) a bus (next to a pencil)  D) a broom (next to a spoon). Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice
