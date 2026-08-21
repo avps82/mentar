@@ -8,6 +8,13 @@ timestamp: "2026-08-20T00:00:00Z"
 
 # Curriculum depth program
 
+> **⚠ Read [`visual_first_gap.md`](visual_first_gap.md) before scheduling more breadth.**
+> Flagged 2026-08-21: primary maths is visual-first until ~Year 4, and 2 of 40
+> shipped Y1-Y4 topics show the child anything. This auditor reports AU at 0
+> gaps, but it measures STRANDS, not whether a topic is askable in the right
+> mode — so "0 gaps" reads honestly as "0 strand gaps". More years in the
+> wrong register do not help Years 1-3.
+
 **Why this exists, in the maintainer's words:** *"You guaranteed me that all is
 in and I thought it was done. I tested it and found it missing."* The README's
 year-range table and the changelog's "breadth COMPLETE" were technically true —
