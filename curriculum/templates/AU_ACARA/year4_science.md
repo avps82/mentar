@@ -39,7 +39,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "Which of these is a producer (makes its own food)? A) a tree  B) a lion  C) a shark  D) a rabbit. Answer with the letter."
+      - "Which of these is a producer (makes its own food, e.g. using sunlight)? A) a caterpillar  B) seaweed  C) a lion  D) a shark. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice

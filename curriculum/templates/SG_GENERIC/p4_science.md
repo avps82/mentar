@@ -42,7 +42,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "Which of these is a consumer (eats other living things for food)? A) seaweed  B) a sunflower  C) a tree  D) a lion. Answer with the letter."
+      - "Which of these is a consumer (eats other living things for food)? A) grass  B) a rabbit  C) a sunflower  D) seaweed. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice

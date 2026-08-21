@@ -52,7 +52,7 @@ concepts:
     prereqs: []
     grounding: {}
     transfer_seeds:
-      - "Which of these is appropriate only in a CASUAL message? A) emojis standing in for the actual request  B) a clear subject line naming the matter  C) “Yours sincerely” above a full name  D) “Dear Ms Chen, I am writing to apply for…”. Answer with the letter."
+      - "Which of these is appropriate only in a CASUAL message? A) emojis standing in for the actual request  B) referring to the position title exactly as advertised  C) “Dear Ms Chen, I am writing to apply for…”  D) sending it without checking how the reader spells their name. Answer with the letter."
     verifier:
       answer_type: mc4
       checker: mc_choice

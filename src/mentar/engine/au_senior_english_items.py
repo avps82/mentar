@@ -147,24 +147,36 @@ def gen_persuasive_arguments(rng: random.Random):
                        glosses=_PERSUASIVE_ARGS_GLOSSES, concept_name="PERSUASIVE ARGUMENTS")
 
 
+# Email and letter conventions are ONE category (fixed 2026-08-21): they were
+# split, so "Yours sincerely above a full name" sat under "formal LETTER" and
+# was a WRONG answer to "which is appropriate in a PROFESSIONAL email?" -- but
+# that sign-off is entirely appropriate in a professional email. The third
+# category is now habits that WEAKEN a professional message, which overlaps
+# neither of the others.
 _PROFESSIONAL = {
-    "appropriate in a PROFESSIONAL email": [
+    "appropriate in a PROFESSIONAL message (email or letter)": [
         "“Dear Ms Chen, I am writing to apply for…”",
         "a clear subject line naming the matter",
+        "“Yours sincerely” above a full name",
+        "referring to the position title exactly as advertised",
     ],
     "appropriate only in a CASUAL message": [
         "“hey!! can u cover my shift lol”",
         "emojis standing in for the actual request",
+        "“hiya — sorted?” as the whole opening line",
     ],
-    "a feature of a formal LETTER or application": [
-        "“Yours sincerely” above a full name",
-        "referring to the position title exactly as advertised",
+    "a habit that WEAKENS a professional message": [
+        "writing the entire message in capital letters",
+        "sending it without checking how the reader spells their name",
+        "burying the actual request in the very last line",
     ],
 }
 _PROFESSIONAL_GLOSSES = {
-    "appropriate in a PROFESSIONAL email": "greeting, purpose, request, sign-off — respect the reader's time",
+    "appropriate in a PROFESSIONAL message (email or letter)":
+        "greeting, purpose, request, sign-off — respect the reader's time",
     "appropriate only in a CASUAL message": "fine for friends; costly in a workplace",
-    "a feature of a formal LETTER or application": "conventions signal you know the game",
+    "a habit that WEAKENS a professional message":
+        "the reader has to work harder than they should to find what you want",
 }
 
 
