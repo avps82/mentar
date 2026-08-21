@@ -50,6 +50,7 @@ _VISUAL_NODES = {
     "unit_fractions": DEFAULT_GENERATORS["unit_fractions"],
     "au4_area_count_squares": AU_JUNIOR_MATHS_FILL[4]["au4_area_count_squares"][0],
     "au2_time_oclock": AU_JUNIOR_MATHS_FILL[2]["au2_time_oclock"][0],
+    "au2_length_compare": AU_JUNIOR_MATHS_FILL[2]["au2_length_compare"][0],
     "au2_mult_facts_2_5_10": AU_YEAR2_GENERATORS["au2_mult_facts_2_5_10"],
     "au1_skip_count_2s": AU_YEAR1_MATHS_GENERATORS["au1_skip_count_2s"],
     # senior constitutive — these are the ones whose PROSE used to hand over the
@@ -211,4 +212,83 @@ def test_a_picture_says_the_same_thing_its_answer_does():
         marks = [int(n) for n in re.findall(r"\d+", skip.visual[0])]
         assert all(b - a == 2 for a, b in zip(marks, marks[1:])), (
             f"seed={seed} a COUNT-BY-2s number line that does not step by 2: {marks}"
+        )
+
+
+def test_length_bars_never_lie_about_which_is_longer():
+    """Rounding is allowed to distort the RATIO -- the drawing is proportional,
+    not literal -- but never the ORDER. Two objects a centimetre apart still have
+    to read as different, or the picture contradicts the question.
+
+    Also pins the property that makes proportional scaling worth having: the
+    width is the same whether the objects are 5 cm or 100 cm, so no draw can
+    scroll off a phone.
+    """
+    from mentar.engine.visuals import length_bars
+
+    pairs = [(18, 4), (12, 8), (10, 6), (15, 9), (30, 25), (100, 95),
+             (21, 20), (7, 6), (5, 1), (2, 1), (99, 98)]
+    for longer, shorter in pairs:
+        out = length_bars("pencil", longer, "crayon", shorter)
+        assert out, f"{longer}/{shorter} drew nothing"
+        drawn_long, drawn_short = out[0].count("─"), out[1].count("─")
+        assert drawn_long > drawn_short, (
+            f"{longer} vs {shorter} drew {drawn_long} and {drawn_short} -- the "
+            f"longer object must be visibly longer"
+        )
+        assert max(len(line) for line in out) == 29, (
+            f"{longer}/{shorter} is {max(len(line) for line in out)} cols; the bar's\n"
+            f"length is DERIVED from the budget, so the row is 29 whatever the\n"
+            f"labels are and however many digits the lengths have"
+        )
+        # reversed arguments must reverse the picture, not just relabel it
+        rev = length_bars("crayon", shorter, "pencil", longer)
+        assert rev[1].count("─") > rev[0].count("─")
+
+
+def test_the_length_picture_deliberately_does_not_encode_its_answer():
+    """The opposite of test_a_picture_says_the_same_thing_its_answer_does, and
+    the reason that test names its nodes instead of sweeping all of them.
+
+    A fraction bar or an area grid IS the question, so it must encode the answer.
+    These bars are SUPPORTIVE: they show what "how much longer" means while the
+    numbers stay in the prose. Drawing them in countable centimetre cells would
+    let a child read the gap straight off the picture and never subtract -- the
+    node would still score, and BKT would record subtraction mastery for
+    counting. Proportional scaling removes the unit to count.
+
+    10-vs-6 and 15-vs-9 have the same ratio and so draw identically, which is the
+    proof: one picture, two different answers.
+    """
+    from mentar.engine.visuals import length_bars
+
+    ten_six = length_bars("Pencil", 10, "Crayon", 6)
+    fifteen_nine = length_bars("Pencil", 15, "Crayon", 9)
+    assert [l.count("─") for l in ten_six] == [l.count("─") for l in fifteen_nine], (
+        f"same ratio must draw the same bars: {ten_six} vs {fifteen_nine}"
+    )
+
+
+def test_a_what_comes_next_question_leaves_somewhere_for_the_answer_to_go():
+    """Maintainer, 2026-08-21: "This diagram makes no sense."
+
+    The skip-count line was drawn from the first KNOWN value to the last known
+    value, so a child asked what follows 6 was looking at a picture that stopped
+    at 6. The answer had nowhere to be. Under it sat a row of stray underscores
+    -- a `jumps` arc feature whose only caller was this broken draw.
+
+    The line now ends in a `?` cell: one more tick than there are known values,
+    and the `?` is never filled in.
+    """
+    for seed in range(30):
+        item = _draw("au1_skip_count_2s",
+                     AU_YEAR1_MATHS_GENERATORS["au1_skip_count_2s"], seed)
+        labels, rule = item.visual[0], item.visual[1]
+        assert labels.rstrip().endswith("?"), f"seed={seed} no slot for the answer: {labels!r}"
+        assert item.answer not in labels, f"seed={seed} the picture states the answer"
+        assert "_" not in "".join(item.visual), f"seed={seed} stray underscore row is back"
+        known = [n for n in re.findall(r"\d+", labels)]
+        assert rule.count("+") == len(known) + 1, (
+            f"seed={seed} the line has {rule.count('+') - 1} segments for "
+            f"{len(known)} known values plus the unknown: {rule!r}"
         )

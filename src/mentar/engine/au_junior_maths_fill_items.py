@@ -10,19 +10,34 @@ from __future__ import annotations
 
 from mentar.engine.au_senior_maths_items import _card
 from mentar.engine.itemgen import GenFn, mc_which_is
-from mentar.engine.visuals import clock_face, grid_shape
+from mentar.engine.visuals import clock_face, grid_shape, length_bars
 
 # ── Year 2 ───────────────────────────────────────────────────────────────────
 
 def gen_length_compare(rng):
+    """The two objects are DRAWN, to scale with each other (visual-first,
+    2026-08-21).
+
+    Length is a Year 2 measurement topic and "how much longer" is a comparison a
+    child of that age meets concretely -- two things laid side by side -- long
+    before it is a subtraction sum. The bars make the comparison visible while
+    the numbers stay in the prose, so the question still tests the subtraction it
+    claims to test. See length_bars() for why the drawing is proportional rather
+    than one cell per centimetre.
+    """
     a = rng.choice([10, 12, 15, 18])
     b = rng.choice([4, 6, 8, 9])
     p = f"A pencil is {a} cm long. A crayon is {b} cm long. How many centimetres longer is the pencil?"
+    bars = length_bars("Pencil", a, "Crayon", b)
+    # The SAME picture on the card as on the question (maintainer, 2026-08-21).
+    # The card was prose-only, so a child who pressed Explain-more lost the
+    # drawing at the exact moment they admitted they were stuck.
     card = _card("COMPARING LENGTHS", p, f"{a - b} cm",
+                 *(f"  {line}" for line in bars),
                  "  How much longer = long length − short length",
                  f"  1. {a} − {b} = {a - b}, so the pencil is {a - b} cm longer.")
     return ("int", "int_exact", p, str(a - b), None, card,
-            "(How much longer = big length − small length)")
+            "(How much longer = big length − small length)", bars)
 
 
 def gen_money_coins(rng):

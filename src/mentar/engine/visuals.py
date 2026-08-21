@@ -134,13 +134,26 @@ def array_of(rows: int, cols: int, glyph: str = "*") -> tuple[str, ...]:
 
 def number_line(start: int, stop: int, step: int = 1,
                 mark: int | None = None,
-                jumps: tuple[tuple[int, int], ...] = ()) -> tuple[str, ...]:
+                unknown_next: bool = False) -> tuple[str, ...]:
     """A labelled line from `start` to `stop`, optionally with a caret under one
-    value and underscored arcs spanning jumps.
+    value, and optionally with a `?` cell where the NEXT value would go.
+
+          2  4  6  ?
+          +--+--+--+
+
+    `unknown_next` exists because a "what comes next" question needs somewhere
+    for the answer to go (maintainer, 2026-08-21). Without it the line stopped at
+    the last KNOWN value, so a child was asked what follows 6 while looking at a
+    picture that ended at 6 -- the one place the answer belonged was missing.
+
+    The `jumps` parameter this replaced drew underscore arcs between values and
+    rendered as a row of stray `__ __` under the line. It had exactly one caller,
+    which is the draw that was broken, so it is gone rather than fixed: a hop arc
+    that has to be explained is not doing the job a picture is for.
 
     Handles negatives, so it is also the thermometer/integer picture.
     Max width: about (len(longest label) + 2) * number of ticks.
-    Carries no answer: which value the caret sits on is the question.
+    Carries no answer -- the `?` marks the gap, it never fills it.
     """
     if step <= 0 or stop <= start:
         return ()
@@ -148,20 +161,16 @@ def number_line(start: int, stop: int, step: int = 1,
     if not 2 <= len(values) <= 12:
         return ()
     cell = max(len(str(v)) for v in values) + 2
-    labels = ("  " + "".join(f"{v:<{cell}}" for v in values)).rstrip()
-    rule = "  " + ("+" + "-" * (cell - 1)) * (len(values) - 1) + "+"
-    out = [labels, rule]
+    if unknown_next:
+        cell = max(cell, 3)
+    labels = "  " + "".join(f"{v:<{cell}}" for v in values)
+    segments = len(values) - 1
+    if unknown_next:
+        labels += "?"
+        segments += 1
+    out = [labels.rstrip(), "  " + ("+" + "-" * (cell - 1)) * segments + "+"]
     if mark is not None and mark in values:
         out.append(("  " + " " * (cell * values.index(mark)) + "^").rstrip())
-    if jumps:
-        span = [" "] * (cell * (len(values) - 1) + 1)
-        for a, b in jumps:
-            if a in values and b in values and a < b:
-                for i in range(cell * values.index(a) + 1, cell * values.index(b)):
-                    span[i] = "_"
-        arc = ("  " + "".join(span)).rstrip()
-        if arc.strip():
-            out.append(arc)
     return tuple(out)
 
 
@@ -283,3 +292,57 @@ def network_square(weights: dict[str, object],
     if diagonal is not None:
         out.append(f"  (A to D directly: {diagonal})")
     return tuple(out)
+
+
+def length_bars(label_a: str, length_a: int, label_b: str, length_b: int,
+                unit: str = "cm", total_max: int = 29) -> tuple[str, ...]:
+    """Two objects drawn side by side so one visibly outreaches the other.
+
+        Pencil: [─────────────] 15 cm
+        Crayon: [────────] 9 cm
+
+    PROPORTIONAL, not literal (maintainer, 2026-08-21: "No need to be exact.
+    Scale it properly... Are you draw car or truck exactly?"). The longer object
+    fills the bar and the shorter is drawn to the same scale, so the picture is
+    the same width whether the pencil is 5 cm or 100 cm -- a literal one-cell-
+    per-centimetre bar would have been honest right up until it scrolled off a
+    phone.
+
+    That choice also settles a pedagogical problem rather than dodging it. In
+    countable centimetre cells a child can read the gap straight off the picture
+    and never subtract, which would quietly turn a subtraction node into a
+    counting node while BKT recorded subtraction. A scaled bar has no unit to
+    count, so the numbers must come from the question text. 10-vs-6 and 15-vs-9
+    draw IDENTICALLY here -- same ratio -- which is the proof that the picture
+    cannot give the answer away.
+
+    The bar length is DERIVED from `total_max` rather than fixed, so the row
+    fits the 29-column phone budget whatever the labels and however many digits
+    the lengths have. Fixing the bar at 13 happened to fit 2-digit centimetres
+    and would have silently overflowed the first 3-digit one.
+
+    The one thing rounding must never do is lie about the ORDER: if a is longer
+    than b, its bar is strictly longer, even where the two round to one cell.
+
+    Carries no difference and no answer -- working out how much longer IS the
+    question.
+    """
+    if length_a <= 0 or length_b <= 0 or not label_a or not label_b:
+        return ()
+    pad = max(len(label_a), len(label_b))
+    tail = f" {max(length_a, length_b)}" + (f" {unit}" if unit else "")
+    bar_max = total_max - (pad + 3) - (1 + len(tail))
+    if bar_max < 2:
+        return ()
+    scale = bar_max / max(length_a, length_b)
+    drawn_a = max(1, round(length_a * scale))
+    drawn_b = max(1, round(length_b * scale))
+    if length_a > length_b and drawn_a <= drawn_b:
+        drawn_b = drawn_a - 1
+    elif length_b > length_a and drawn_b <= drawn_a:
+        drawn_a = drawn_b - 1
+    if drawn_a < 1 or drawn_b < 1:
+        return ()
+    suffix = f" {unit}" if unit else ""
+    return (f"{label_a:<{pad}}: [{'─' * drawn_a}] {length_a}{suffix}",
+            f"{label_b:<{pad}}: [{'─' * drawn_b}] {length_b}{suffix}")
