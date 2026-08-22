@@ -604,3 +604,50 @@ def test_dollar_math_delimiters_are_stripped_but_money_survives():
     assert "$2" not in r.text and "60$" not in r.text, r.text
     assert "2 × 10 × 3 = 60" in r.text
     assert "$5" in r.text and "$8" in r.text, "money must never be unwrapped"
+
+
+def test_the_folded_in_diagram_is_marked_so_the_view_can_stop_wrapping_it():
+    """A card carries prose AND, for some nodes, an appended scaffold diagram.
+    They need OPPOSITE rendering: a sentence must wrap, a column-aligned picture
+    must not. Measured 2026-08-22 in chromium -- every row of an 85-column
+    comparison table wrapped into two visual lines on a 360px phone, interleaving
+    the columns the picture is made of, and 247 of 250 card-eligible scaffold
+    diagrams are wider than that budget.
+
+    The view cannot tell the two apart by looking at the text, so the controller
+    records how many TRAILING lines are the diagram. Pinned here because the
+    count is what the CSS class hangs off: get it wrong and either the prose
+    stops wrapping or the picture starts.
+    """
+    curriculum = {
+        "au4_science_magnetic_materials": {
+            "label": "Materials attracted to a magnet", "answer_type": "mc4",
+            "checker": "mc_choice", "expected_answer": "A", "grounding": {}, "prerequisites": [],
+        },
+    }
+    ctrl = SessionController(
+        llm_call=_PromptCapturingLlm(), prompt_dir=PROMPTS, grounding_cfg={},
+        curriculum=curriculum, db_store=_FakeStore(), learner_id="L",
+        item_bank=ItemGenerator(generators={
+            "au4_science_magnetic_materials": SCIENCE_GENERATORS["au4_science_magnetic_materials"],
+        }),
+        rng_seed=7, scaffold_dir=SCAFFOLDS, subject="science",
+    )
+    ctrl.step(None)
+    ctrl.step("?")
+    ctrl.step("more")
+    card = ctrl.elaborate_method_card
+    n = ctrl.elaborate_card_diagram_len
+    assert n > 0, "a diagram was folded in but the view was not told about it"
+    tail = card[len(card) - n:]
+    assert any("ATTRACTED TO A MAGNET" in line for line in tail), (
+        f"the marked lines are not the diagram: {tail}"
+    )
+    # the card's own prose must NOT be inside the marked run, or it stops wrapping
+    assert not any(line.startswith("MAGNETISM") for line in tail)
+
+    # a fresh question clears the card AND the count together -- a stale count
+    # would mark the wrong rows of the next card
+    ctrl.step("A")
+    if ctrl.elaborate_method_card is None:
+        assert ctrl.elaborate_card_diagram_len == 0

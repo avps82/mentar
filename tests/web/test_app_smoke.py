@@ -1585,7 +1585,16 @@ def test_method_card_wraps_but_step_grid_does_not():
 
     css = (pathlib.Path(app_mod.__file__).parent / "static" / "style.css").read_text()
     rule = css.split(".steps-pre-wrap {")[1].split("}")[0]  # IndexError if the class is gone
-    assert "white-space: pre-wrap" in rule and "overflow-x: visible" in rule
+    assert "white-space: pre-wrap" in rule
+    # `auto`, not `visible`, since 2026-08-22. A card can carry an appended
+    # scaffold DIAGRAM, and .steps-pre-diagram opts those rows out of wrapping
+    # (a column-aligned picture wrapped at 26 columns comes out interleaved).
+    # Un-wrapped rows have to be reachable, so the card scrolls. The prose half
+    # of this test's claim -- that a method card still WRAPS -- is unchanged and
+    # is the part that matters here.
+    assert "overflow-x: auto" in rule
+    diagram_rule = css.split(".steps-pre-diagram {")[1].split("}")[0]
+    assert "white-space: pre" in diagram_rule
 
 
 if __name__ == "__main__":

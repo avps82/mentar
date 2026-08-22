@@ -1814,9 +1814,19 @@ def _elaborate_display_lines(ctrl: SessionController) -> list[dict] | None:
     if ctrl.elaborate_steps_grid is not None:
         return [_display_mul(x) for x in render_steps_grid_lines(ctrl.elaborate_steps_grid)]
     if ctrl.elaborate_method_card is not None:
+        card = ctrl.elaborate_method_card
+        # The trailing lines are an appended scaffold DIAGRAM, not prose, and must
+        # not be wrapped: measured in chromium, every row of an 85-column
+        # comparison table wrapped into two visual lines on a 360px phone, which
+        # scrambles exactly the columns the picture is made of (2026-08-22).
+        # They get their own class and scroll instead. 247 of 250 card-eligible
+        # scaffold diagrams are wider than that budget, so this is the common
+        # case, not an edge one.
+        diagram_from = len(card) - ctrl.elaborate_card_diagram_len
         return [
-            _display_mul({"text": line, "is_annotation": False})
-            for line in ctrl.elaborate_method_card
+            dict(_display_mul({"text": line, "is_annotation": False}),
+                 is_diagram=(ctrl.elaborate_card_diagram_len > 0 and i >= diagram_from))
+            for i, line in enumerate(card)
         ]
     return None
 

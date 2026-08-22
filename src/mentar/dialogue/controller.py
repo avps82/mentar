@@ -451,6 +451,14 @@ class _SessionCtx:
     # item carries a computed method_steps card (Type 2/4) instead of a step
     # grid (Type 1) -- mutually exclusive with elaborate_steps_grid per node.
     elaborate_method_card: tuple | None = None
+    # How many TRAILING lines of elaborate_method_card are an appended scaffold
+    # DIAGRAM rather than the card's own prose (2026-08-22). The web view needs
+    # to tell them apart: prose must wrap, and a column-aligned diagram must not
+    # -- measured in chromium, every row of an 85-column comparison table wrapped
+    # into two visual lines on a 360px phone, which scrambles the columns the
+    # picture is made of. 247 of 250 card-eligible scaffold diagrams are wider
+    # than that budget. 0 when no diagram was appended.
+    elaborate_card_diagram_len: int = 0
     # Jump-to-answer honesty (maintainer, 2026-08-19): once the working -- which
     # ENDS IN THE ANSWER -- has been shown for this question, the button must not
     # be offered again for it. A plain "card is showing" check is not enough: a
@@ -894,6 +902,11 @@ class SessionController:
         return self._ctx.elaborate_method_card
 
     @property
+    def elaborate_card_diagram_len(self) -> int:
+        """How many trailing card lines are an appended scaffold diagram."""
+        return self._ctx.elaborate_card_diagram_len
+
+    @property
     def session_id(self) -> str:
         """The id of this controller's tutoring session (for durable-log reads)."""
         return self._session_id
@@ -1156,6 +1169,7 @@ class SessionController:
         ctx.elaborate_count = 0
         ctx.elaborate_steps_grid = None  # "show human working": stale grid must not linger
         ctx.elaborate_method_card = None  # explain-mode: stale card must not linger either
+        ctx.elaborate_card_diagram_len = 0
         ctx.working_shown = False         # new question -- the working may be offered again
         ctx.working_shown_item_id = None
         node = self._curriculum[ctx.current_node_id]
@@ -1350,6 +1364,7 @@ class SessionController:
                 # presses showed the SAME card two ways (proportional wrapped prose
                 # here, monospace box on the next press). One shape, one look.
                 self._ctx.elaborate_method_card = tuple(lines)
+                self._ctx.elaborate_card_diagram_len = 0
                 return "Let's take it one step at a time. Here's a similar one worked through 👇"
             return (
                 "Let's take it one step at a time. Here's a similar question and its "
@@ -1515,6 +1530,7 @@ class SessionController:
             # already answered or is deep in the Help loop, so nothing is
             # leaked that isn't already resolved.
             ctx.elaborate_method_card = getattr(ctx.current_item, "method_steps", None)
+            ctx.elaborate_card_diagram_len = 0
             if ctx.elaborate_method_card is not None:
                 # explain-mode Phase 3a (2026-08-13): fold in the concept's
                 # authored ASCII diagram, when one exists, so the bare card
@@ -1552,9 +1568,11 @@ class SessionController:
                         first_diagram_is_reference_key(scaffold)
                         or not _DIAGRAM_HAS_NUMBER_RE.search(diagram)
                     ):
+                        diagram_lines = diagram.splitlines()
                         ctx.elaborate_method_card = (
-                            *ctx.elaborate_method_card, "", *diagram.splitlines()
+                            *ctx.elaborate_method_card, "", *diagram_lines
                         )
+                        ctx.elaborate_card_diagram_len = len(diagram_lines)
                 live_id = getattr(ctx.current_item, "id", None)
                 repeat = ctx.working_shown and ctx.working_shown_item_id == live_id
                 ctx.working_shown = True
@@ -1567,6 +1585,7 @@ class SessionController:
         else:
             ctx.elaborate_steps_grid = None  # a fresh Help round -- clear any stale grid
             ctx.elaborate_method_card = None
+            ctx.elaborate_card_diagram_len = 0
         node = self._curriculum[ctx.current_node_id]
         passage = resolve_grounding(node.get("grounding", {}), self._grounding_cfg)
         system_text = self._render_system_prompt(node["label"], passage)

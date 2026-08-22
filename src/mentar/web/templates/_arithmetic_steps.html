@@ -8,5 +8,5 @@
    ONE line -- wrapping and horizontal-scroll were both tried and looked
    bad; this keeps every line pure single-line ASCII. Autoescaped by
    Jinja's default. #}
-<pre class="steps-pre{{ ' steps-pre-wrap' if steps_wrap else '' }}">{% for line in steps_lines %}<span class="{{ 'steps-pre-annotation' if line.is_annotation else 'steps-pre-line' }}">{{ line.text }}</span>
+<pre class="steps-pre{{ ' steps-pre-wrap' if steps_wrap else '' }}">{% for line in steps_lines %}<span class="{{ 'steps-pre-annotation' if line.is_annotation else 'steps-pre-diagram steps-pre-line' if line.is_diagram else 'steps-pre-line' }}">{{ line.text }}</span>
 {% endfor %}</pre>

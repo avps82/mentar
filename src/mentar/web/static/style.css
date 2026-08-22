@@ -509,7 +509,20 @@ input[type=text], input[type=number] {
      off long lines ("...What is the new pr"). Wrap instead: short diagram
      lines are untouched, long sentences stay readable. */
   white-space: pre-wrap;
-  overflow-x: visible;
+  /* auto, not visible (2026-08-22): a card can carry an appended scaffold
+     DIAGRAM, and .steps-pre-diagram below opts those rows out of wrapping. They
+     then need somewhere to go, or they would spill out of the bubble. */
+  overflow-x: auto;
+}
+.steps-pre-diagram {
+  /* A column-aligned picture must NOT wrap. Measured in chromium: every row of
+     an 85-column comparison table wrapped into two visual lines on a 360px
+     phone, so the columns the picture is made of ended up interleaved -- the
+     prose fix of 2026-08-15 (wrap instead of clip) is right for sentences and
+     wrong for tables. inline-block keeps each row on one line and lets the
+     parent scroll; prose rows around it keep wrapping as before. */
+  white-space: pre;
+  display: inline-block;
 }
 .steps-pre-line { font-size: 1.4rem; }
 .steps-pre-annotation { font-size: 0.75rem; color: var(--text-muted); }

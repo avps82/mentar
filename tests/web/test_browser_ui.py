@@ -958,3 +958,72 @@ def test_a_question_picture_gets_a_usable_width_on_a_real_phone():
         if browser:
             browser.close()
         server.stop()
+
+
+def test_a_card_diagram_keeps_its_columns_while_card_prose_still_wraps():
+    """A method card can carry BOTH kinds of line and they need opposite
+    treatment. Found 2026-08-22 by measuring, not by looking.
+
+    `.steps-pre-wrap` exists because clipping chopped long sentences mid-word
+    (2026-08-15), and wrapping is right for a sentence. It is wrong for a
+    picture: every row of an 85-column comparison table wrapped into TWO visual
+    lines on a 360px phone, so the columns the diagram is made of came out
+    interleaved. 247 of 250 card-eligible scaffold diagrams are wider than that
+    budget, so this was the common case.
+
+    Diagram rows now carry `.steps-pre-diagram` and do not wrap; the card scrolls
+    so they stay reachable. Prose rows are untouched. Both halves are asserted --
+    a fix that stopped the prose wrapping would be the 2015-08-15 bug returning.
+    """
+    _skip_unless_browser()
+    server, browser = _Server(), None
+    try:
+        browser = _Browser()
+        browser.send("Emulation.setDeviceMetricsOverride", width=360, height=740,
+                     deviceScaleFactor=1, mobile=True)
+        browser.goto(server.url + "/topics?subject=fractions")
+        r = browser.js("""
+            (() => {
+              const host = document.querySelector('main') || document.body;
+              const pre = document.createElement('pre');
+              pre.className = 'steps-pre steps-pre-wrap';
+              host.appendChild(pre);
+              const add = (txt, cls) => {
+                const s = document.createElement('span');
+                s.className = cls; s.textContent = txt;
+                pre.appendChild(s); pre.appendChild(document.createTextNode('\\n'));
+                return s;
+              };
+              const unit = add('X', 'steps-pre-line').getBoundingClientRect().height;
+              const wide = '"it\\'s raining cats and dogs"    animals falling    raining hard';
+              const diagram = add(wide, 'steps-pre-diagram steps-pre-line');
+              const prose = add('This is a long prose sentence of the kind a method card '
+                              + 'carries, which must still wrap rather than scroll.',
+                                'steps-pre-line');
+              const res = {
+                diagramLines: Math.round(diagram.getBoundingClientRect().height / unit),
+                proseLines: Math.round(prose.getBoundingClientRect().height / unit),
+                scrollable: pre.scrollWidth > pre.clientWidth + 1,
+                overflowX: getComputedStyle(pre).overflowX,
+                pageSideways: document.documentElement.scrollWidth > window.innerWidth + 1,
+              };
+              pre.remove();
+              return res;
+            })()
+        """)
+        assert r["diagramLines"] == 1, (
+            f"a diagram row wrapped onto {r['diagramLines']} lines — its columns "
+            f"are interleaved and the picture is unreadable"
+        )
+        assert r["proseLines"] > 1, (
+            "card prose stopped wrapping — that is the mid-word clipping bug of "
+            "2026-08-15 coming back"
+        )
+        assert r["scrollable"] and r["overflowX"] == "auto", (
+            "the un-wrapped diagram must be reachable by scrolling, not cut off"
+        )
+        assert not r["pageSideways"], "the card pushed the whole page sideways"
+    finally:
+        if browser:
+            browser.close()
+        server.stop()
