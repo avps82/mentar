@@ -4,7 +4,7 @@ title: "Moving Average"
 description: "Visual scaffold for a 3-point moving average as a sliding window."
 tags: [mathematics, senior, visual-scaffold]
 subject: mathematics
-topic_keywords: [moving average, moving]
+topic_keywords: [moving average]
 timestamp: "2026-08-21T00:00:00Z"
 ---
 

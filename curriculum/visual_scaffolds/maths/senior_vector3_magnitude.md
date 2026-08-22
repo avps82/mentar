@@ -4,7 +4,7 @@ title: "Magnitude of a 3D Vector"
 description: "Visual scaffold for the length of a 3D vector."
 tags: [mathematics, senior, visual-scaffold]
 subject: mathematics
-topic_keywords: [magnitude of a 3d, 3d vector, 3d]
+topic_keywords: [magnitude of a 3d, 3d vector]
 timestamp: "2026-08-21T00:00:00Z"
 ---
 

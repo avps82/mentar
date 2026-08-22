@@ -17,6 +17,7 @@ Visual scaffold hints for mathematics topics.
 * [order_of_operations](order_of_operations.md) — Visual scaffold hints for order of operations (brackets, indices, division/multiplication, addition/subtraction)
 * [percentages](percentages.md) — Visual scaffold hints for percentage concepts including converting between fractions, decimals, and percentages
 * [place_value](place_value.md) — Visual scaffold hints for whole-number place value — what each digit in a number is worth
+* [probability_tree](probability_tree.md) — Visual scaffold for two-stage probability: branches, multiplying along a path, adding across paths
 * [probability](probability.md) — Visual scaffold hints for probability concepts including likelihood scale and sample spaces
 * [squares_roots](squares_roots.md) — Visual scaffold hints for squaring numbers and square roots using area models
 * [senior_repeated_growth](senior_repeated_growth.md) — Visual scaffold for repeated percentage growth applied year after year
@@ -98,10 +99,14 @@ Visual scaffold hints for mathematics topics.
 * [year1_skip_counting](year1_skip_counting.md) — Visual scaffold for skip counting
 * [year1_comparing](year1_comparing.md) — Visual scaffold for comparing length and weight
 * [year1_shapes](year1_shapes.md) — Visual scaffold for counting the sides of flat shapes
+* [year3_shapes_3d](year3_shapes_3d.md) — Visual scaffold for counting the faces, edges and corners of 3D shapes
 * [year1_tally](year1_tally.md) — Visual scaffold for comparing counts in a simple tally
 * [j_time_oclock](j_time_oclock.md) — Visual scaffold for reading o'clock time
+* [j_multiplying_negatives](j_multiplying_negatives.md) — Visual scaffold for the sign rule when multiplying or dividing directed numbers
 * [j_position_words](j_position_words.md) — Visual scaffold for position words
+* [j_grid_move](j_grid_move.md) — Visual scaffold for moving a point across or up a coordinate grid
 * [j_picture_graph](j_picture_graph.md) — Visual scaffold for picture graphs
+* [j_length_compare](j_length_compare.md) — Visual scaffold for comparing two lengths and finding the difference between them
 * [j_money_change](j_money_change.md) — Visual scaffold for giving change
 * [j_angle_degrees](j_angle_degrees.md) — Visual scaffold for angles in degrees
 * [j_quadrant](j_quadrant.md) — Visual scaffold for cartesian quadrants

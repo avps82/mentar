@@ -233,7 +233,14 @@ _SENIOR_ROUTING = {
     ('mathematics', 'Multiplying a decimal by a decimal'): '| Ones | . | Tenths | Hundredths |',
     ('mathematics', 'Multiplying a fraction by a whole number'): '|████|████|    |    |',
     ('mathematics', 'Multiplying decimals'): '| Ones | . | Tenths | Hundredths |',
-    ('mathematics', 'Multiplying negative numbers'): '10°C',
+    # Was pinned to '10°C' -- negative_numbers.md's THERMOMETER. The pin was
+    # written from observed behaviour, so it froze the defect: a thermometer
+    # shows where a directed number sits (right for adding/subtracting) and
+    # says nothing about why two negatives multiply to a positive, which that
+    # file carried only as one line of prose. Split out 2026-08-22. Second
+    # time a pin here has recorded a bug as the expectation -- cf. 'Square
+    # numbers', pinned to an area rectangle.
+    ('mathematics', 'Multiplying negative numbers'): '(-) x (-) = (+)',
     ('mathematics', 'Multiplying whole numbers'): '(●●●)  (●●●)  (●●●)  (●●●)',
     ('mathematics', 'Negative numbers'): '10°C',
     ('mathematics', 'Negative numbers (temperature contexts)'): '10°C',
@@ -260,6 +267,13 @@ _SENIOR_ROUTING = {
     # which is precisely what this test's NAME says must not happen. The pin
     # had recorded the bug: squares_roots.md claimed 'squaring' but not
     # 'square number', so it scored zero on this label (fixed 2026-08-21).
+    # Added 2026-08-22 after three nodes were found mis-routed for months while
+    # test_every_concept_node_has_a_scaffold stayed green -- it asserts only that
+    # SOME scaffold matches, so it cannot tell "attached" from "attached to the
+    # right thing". "3D shapes" was being served a 3d-VECTOR magnitude formula.
+    ('mathematics', '3D shapes'): 'triangular prism',
+    ('mathematics', 'Moving on a grid'): '(3, 2) move 3 right',
+    ('mathematics', 'Comparing lengths'): 'the bit sticking out',
     ('mathematics', 'Square numbers'): '4² = 4 × 4 = 16',
     ('mathematics', 'Squared expressions (area of a square)'): 'width  = x',
     ('mathematics', 'Squaring numbers'): '4² = 4 × 4 = 16',

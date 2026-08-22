@@ -16,6 +16,7 @@ Start with the [project README](../README.md). This page maps everything under `
 | [REMAINDER_PLAN.md](REMAINDER_PLAN.md) | The post-G0 release-wave build plan (R2–R15, R-RES, R-MC). |
 | [DOC_AUDIT.md](DOC_AUDIT.md) | Documentation staleness audit register + fix log. |
 | [EXPLAIN_METHOD_AUDIT.md](EXPLAIN_METHOD_AUDIT.md) | Node-by-node audit of every curriculum concept's explain output (ASCII step-grid vs. LLM prose vs. LLM prose + visual scaffold) — subject × category × explain-type, with 5 real findings. |
+| [SCAFFOLD_ROUTING_AUDIT.md](SCAFFOLD_ROUTING_AUDIT.md) | Audit of visual-scaffold keyword routing — three mis-routed concept nodes fixed, five defects left open, and why the coverage test stayed green while they were broken. |
 
 ## Safety
 | Doc | What it is |
