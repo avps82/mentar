@@ -1127,3 +1127,86 @@ def test_every_page_is_laid_out_sanely_on_a_phone():
         if browser:
             browser.close()
         server.stop()
+
+
+def test_text_zoom_to_200_percent_does_not_push_the_page_sideways():
+    """WCAG 1.4.10 (reflow): text at 200% must not force two-dimensional
+    scrolling. Measured 2026-08-23 -- it did, on six of seven pages.
+
+    The mechanism is worth knowing, because it hides from every other check:
+    an overflowing row makes Chrome GROW the mobile layout viewport (360 -> 401,
+    and /learn to 535), so a scrollWidth-vs-innerWidth test then compares the
+    page against its already-widened self and passes. Asserting the viewport is
+    still the width we asked for is the only thing that sees it.
+
+    Cause was non-wrapping flex rows: .site-header (brand + settings needed 388px
+    in a 336px box), .brand, .fraction-input and the mastery row. All four now
+    wrap. A child who needs bigger type, or a parent with low vision, is the
+    person this is for.
+    """
+    _skip_unless_browser()
+    server, browser = _Server(), None
+    try:
+        browser = _Browser()
+        browser.send("Emulation.setDeviceMetricsOverride", width=360, height=740,
+                     deviceScaleFactor=1, mobile=True)
+        browser.goto(server.url + "/topics?subject=fractions")
+        browser.js("""(() => {const f = [...document.querySelectorAll('form')]
+            .find(f => f.querySelector('[value=unit_fractions]'));
+            f.querySelector('button').click();})()""")
+        browser.wait_for("document.getElementById('help-btn')")
+        problems = []
+        for path in ("/choose", "/learn", "/progress", "/parent", "/settings",
+                     "/topics?subject=fractions"):
+            for zoom in (150, 200):
+                browser.goto(server.url + path)
+                browser.js(f"document.documentElement.style.fontSize = '{zoom}%'")
+                browser.wait_for("true")
+                width = browser.js("window.innerWidth")
+                if width != 360:
+                    problems.append(
+                        f"{path} at {zoom}% text widened the viewport to {width}px — "
+                        f"the page scrolls sideways for anyone using text zoom"
+                    )
+        assert not problems, "\n".join(problems)
+    finally:
+        if browser:
+            browser.close()
+        server.stop()
+
+
+def test_an_unreachable_backend_message_does_not_push_the_page_sideways():
+    """The settings page reports backend failures like "Cannot reach
+    http://192.168.xx.xxx:4000/v1/chat/completions - connection refused". A URL is
+    one unbreakable word, and measured 2026-08-23 it pushed a 360px phone to
+    364px at NORMAL zoom and 693px at 200%.
+
+    That is the settings page scrolling sideways at exactly the moment a family's
+    model is unreachable and they are trying to read why -- the worst possible
+    time for the page to be hard to use. Found because this message appears only
+    when a backend check fails, so it never showed up in a sweep of the happy
+    path; the zoom test caught it as a cross-test state difference.
+    """
+    _skip_unless_browser()
+    long_error = ("Cannot reach http://192.168.xx.xxx:4000/v1/chat/completions"
+                  " - connection refused")
+    server, browser = _Server(), None
+    try:
+        browser = _Browser()
+        browser.send("Emulation.setDeviceMetricsOverride", width=360, height=740,
+                     deviceScaleFactor=1, mobile=True)
+        for zoom in (100, 200):
+            browser.goto(server.url + "/settings")
+            browser.js("document.getElementById('llm-status-line').textContent = "
+                       + json.dumps(long_error))
+            browser.js(f"document.documentElement.style.fontSize = '{zoom}%'")
+            browser.wait_for("true")
+            width = browser.js("window.innerWidth")
+            assert width == 360, (
+                f"a backend-error URL at {zoom}% text widened the viewport to "
+                f"{width}px — the page scrolls sideways when the model is down"
+            )
+    finally:
+        if browser:
+            browser.close()
+        server.stop()

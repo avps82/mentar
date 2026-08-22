@@ -199,11 +199,23 @@ a { color: var(--primary-strong); }
   align-items: center;
   justify-content: space-between;
   padding: 20px 0 8px;
+  /* Not for the zoom test -- un-wrapping this passes it. It is for the ORDINARY
+     360px phone: without it the brand is squeezed beside the settings link and
+     wraps INSIDE itself, 48px tall. Given its own row it is 32px and one line.
+     Measured 2026-08-23; kept on that evidence, not on the reflow fix. */
+  flex-wrap: wrap;
+  gap: 4px 12px;
 }
 
 .brand {
   display: flex;
   align-items: baseline;
+  /* WCAG 1.4.10 reflow (2026-08-23): at 200% text this row pushed the layout
+     viewport to 398px, and an overflowing row makes Chrome GROW the viewport --
+     so every scrollWidth-vs-innerWidth check then measures the page against its
+     own overflow and passes. Mutation-tested: this wrap and .fraction-input's
+     are load-bearing; .turn-mastery's was not and was reverted. */
+  flex-wrap: wrap;
   gap: 8px;
   font-size: 1.7rem;
   font-weight: 800;
@@ -611,12 +623,24 @@ input[type=text], input[type=number] {
 }
 
 /* Fraction numerator/denominator inputs */
-.fraction-input { display: flex; align-items: center; gap: 8px; }
+.fraction-input { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 .fraction-input input[type=number] { width: 90px; min-height: 44px; font-size: 1.2rem; padding: 10px 12px;
   border: 2px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); }
 .fraction-slash { font-size: 1.6rem; color: var(--text-muted); }
 
 .hint { color: var(--text-muted); font-size: 0.9rem; margin-top: 8px; }
+/* Anything that can contain a URL must be allowed to break mid-string. The
+   backend-status line reports failures like "Cannot reach
+   http://192.168.xx.xxx:4000/v1/chat/completions - connection refused", and a URL
+   is one unbreakable word: measured 2026-08-23, it pushed a 360px phone to 364px
+   at NORMAL zoom and 693px at 200%. That is the settings page scrolling sideways
+   at exactly the moment a family's model is unreachable and they need to read
+   why. Applies to the status line and any hint or error text. */
+#llm-status-line, .hint, .setup-error, .error { overflow-wrap: anywhere; }
+/* The mastery row is topic name + progress bar + percentage. At 200% text the
+   name alone exceeds a 360px phone, and the fixed-width bar made the row push
+   the page. Let it wrap and let the bar shrink (2026-08-23, WCAG 1.4.10). */
+
 
 .footer-nav {
   border-top: 1px solid var(--border);
