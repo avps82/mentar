@@ -1027,3 +1027,50 @@ def test_a_card_diagram_keeps_its_columns_while_card_prose_still_wraps():
         if browser:
             browser.close()
         server.stop()
+
+
+def test_every_page_is_laid_out_sanely_on_a_phone():
+    """The same sweep as test_every_page_is_laid_out_sanely, at a REAL 360px
+    mobile viewport.
+
+    That test runs at the default headless window, which is desktop-sized, so
+    until 2026-08-23 no page had ever been measured at the width a parent's
+    phone actually uses -- and phone width is where content escapes a viewport,
+    not desktop. The gap was invisible because squeezing a container is NOT the
+    same as a narrow viewport: `@media` rules do not fire, so a container-squeeze
+    check silently measures the desktop layout. Only device metrics change that.
+
+    Passes today. It is here as a ratchet: the sweep that would have caught the
+    card-diagram wrapping bug at 360px, had it been running.
+    """
+    _skip_unless_browser()
+    server, browser = _Server(), None
+    try:
+        browser = _Browser()
+        browser.send("Emulation.setDeviceMetricsOverride", width=360, height=740,
+                     deviceScaleFactor=1, mobile=True)
+        browser.goto(server.url + "/topics?subject=fractions")
+        browser.js("""(() => {const f = [...document.querySelectorAll('form')]
+            .find(f => f.querySelector('[value=unit_fractions]'));
+            f.querySelector('button').click();})()""")
+        browser.wait_for("document.getElementById('help-btn')")
+        problems = []
+        for path in _PAGES:
+            browser.goto(server.url + path)
+            width = browser.js("window.innerWidth")
+            assert width == 360, (
+                f"device metrics did not apply ({width}px) — this test would be "
+                f"measuring the desktop layout it exists to stop trusting"
+            )
+            r = browser.js(_PAGE_PROBE)
+            if r["overflowX"]:
+                problems.append(f"{path}: the page scrolls sideways on a phone")
+            if r["offenders"]:
+                problems.append(f"{path}: elements outside the viewport: {r['offenders'][:4]}")
+            if r["dupHeads"]:
+                problems.append(f"{path}: a heading repeats back-to-back: {r['dupHeads'][:2]}")
+        assert not problems, "\n".join(problems)
+    finally:
+        if browser:
+            browser.close()
+        server.stop()
