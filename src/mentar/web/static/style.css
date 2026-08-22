@@ -508,11 +508,18 @@ input[type=text], input[type=number] {
   white-space: pre;
 }
 .steps-pre {
-  /* The step grid's width is computed to fit without wrapping -- see its own
-     module docstring ("keep it ASCII", no wrap/scroll both tried and
-     rejected). Hiding overflow is safe ONLY because that width guarantee
-     holds; .ascii-art below has no such guarantee (free-form content). */
-  overflow-x: hidden;
+  /* Was overflow-x:hidden, on the stated assumption that "the step grid's width
+     is computed to fit" -- and that comment already flagged hiding overflow as
+     safe ONLY while the guarantee holds. Measured 2026-08-23: it does not hold
+     on a phone. At 360px the long-division grid for au4_division_facts is 475px
+     in a 293px box and the partial-products grid for multiplication is 598px --
+     so more than half the working was CUT OFF, with no way to reach it.
+
+     That is worse than the sideways scroll the module docstring rejected:
+     scrolled content is reachable, clipped content is gone, and this is the
+     feature whose entire purpose is showing a child the steps. `auto` shows no
+     scrollbar at all on a desktop where the grid does fit. */
+  overflow-x: auto;
 }
 .steps-pre-wrap {
   /* Explain-mode method cards are prose sentences (+ an optional appended

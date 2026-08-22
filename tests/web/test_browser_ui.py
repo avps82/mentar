@@ -1210,3 +1210,69 @@ def test_an_unreachable_backend_message_does_not_push_the_page_sideways():
         if browser:
             browser.close()
         server.stop()
+
+
+def test_a_long_division_grid_is_reachable_on_a_phone_not_cut_off():
+    """"Show human working" exists to show a child the standard algorithm. On a
+    360px phone it was showing them about half of it.
+
+    .steps-pre was overflow-x:hidden on the stated assumption that "the step
+    grid's width is computed to fit" -- true on a desktop, false on a phone.
+    Measured 2026-08-23: the long-division grid is 475px in a 293px box and the
+    partial-products multiplication grid is 598px, so the right-hand side of the
+    working was simply gone, with no way to reach it.
+
+    Clipping is worse than the sideways scroll the module docstring rejected:
+    scrolled content is reachable, clipped content is not. This asserts the child
+    can actually get to the right edge, and that a desktop still needs no
+    scrollbar at all.
+    """
+    _skip_unless_browser()
+    server, browser = _Server(), None
+    try:
+        browser = _Browser()
+        for width in (360, 1280):
+            browser.send("Emulation.setDeviceMetricsOverride", width=width, height=900,
+                         deviceScaleFactor=1, mobile=(width < 700))
+            browser.goto(server.url + "/")
+            browser.js(
+                "(async () => { await fetch('/choose', {method:'POST',"
+                " body:new URLSearchParams({subject:'au_acara_year4_maths',"
+                " topic:'au4_division_facts'}), credentials:'same-origin',"
+                " headers:{'Content-Type':'application/x-www-form-urlencoded'}}); })()")
+            for answer in ("999999", "help", "more", "more"):
+                browser.js(
+                    "(async () => { await fetch('/answer', {method:'POST',"
+                    " body:new URLSearchParams({answer: " + json.dumps(answer) + "}),"
+                    " credentials:'same-origin',"
+                    " headers:{'Content-Type':'application/x-www-form-urlencoded'}}); })()")
+            browser.goto(server.url + "/learn")
+            r = browser.js("""
+                (() => {
+                  const pre = document.querySelector('.steps-pre');
+                  if (!pre) return {err: 'no step grid rendered'};
+                  pre.scrollLeft = 99999;
+                  return {clientW: pre.clientWidth, scrollW: pre.scrollWidth,
+                          overflowX: getComputedStyle(pre).overflowX,
+                          reachedRightEdge: pre.scrollLeft > 0,
+                          pageSideways:
+                            document.documentElement.scrollWidth > window.innerWidth + 1};
+                })()
+            """)
+            assert not r.get("err"), f"{width}px: {r.get('err')}"
+            assert r["overflowX"] != "hidden", (
+                f"{width}px: the grid clips at {r['clientW']}px with "
+                f"{r['scrollW']}px of working — the rest is unreachable"
+            )
+            assert not r["pageSideways"], f"{width}px: the grid pushed the page sideways"
+            if r["scrollW"] > r["clientW"] + 1:
+                assert r["reachedRightEdge"], (
+                    f"{width}px: the grid overflows but will not scroll — a child "
+                    f"cannot see the end of the working"
+                )
+            else:
+                assert width > 700, f"{width}px: expected the grid to overflow a phone"
+    finally:
+        if browser:
+            browser.close()
+        server.stop()
