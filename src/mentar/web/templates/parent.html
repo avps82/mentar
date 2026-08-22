@@ -31,6 +31,7 @@
   {# CONCERN rows (severity "concern") did NOT freeze the lesson: they are
      "worth a conversation" notes, not emergencies, and need no acknowledgement.
      Everything else here froze the session and awaits/records an ack. #}
+  <div class="table-scroll">
   <table>
     <tr><th>When</th><th>Level</th><th>Type</th><th>What the child wrote</th><th>Acknowledged</th></tr>
     {% for e in escalations %}
@@ -41,6 +42,7 @@
         <td>{% if e.severity == 'concern' %}—{% else %}{{ 'yes' if e.parent_ack_at else 'no' }}{% endif %}</td></tr>
     {% endfor %}
   </table>
+  </div>
 </div>
 {% endif %}
 
@@ -64,6 +66,7 @@
 {% if skill_states %}
 <div class="card">
   <h2 style="margin-top:0;font-size:1.1rem">Mastery progress</h2>
+  <div class="table-scroll">
   <table>
     <tr><th>Skill</th><th>Mastery</th><th>%</th></tr>
     {% for s in skill_states %}
@@ -75,12 +78,14 @@
     </tr>
     {% endfor %}
   </table>
+  </div>
 </div>
 {% endif %}
 
 {% if answers %}
 <div class="card">
   <h2 style="margin-top:0;font-size:1.1rem">Answers</h2>
+  <div class="table-scroll">
   <table>
     <tr><th>#</th><th>Skill</th><th>Answer</th><th>Result</th><th>With help?</th></tr>
     {% for a in answers %}
@@ -93,17 +98,20 @@
     </tr>
     {% endfor %}
   </table>
+  </div>
 </div>
 {% endif %}
 
 <details class="card">
-  <summary style="cursor:pointer;font-weight:bold">Session log (full transcript)</summary>
+  <summary class="transcript-toggle">Session log (full transcript)</summary>
+  <div class="table-scroll">
   <table>
     <tr><th>Who</th><th>Text</th></tr>
     {% for t in turns %}
     <tr><td>{{ t.role }}</td><td>{{ t.text }}</td></tr>
     {% endfor %}
   </table>
+  </div>
 </details>
 {% endblock %}
 {% block footer %}

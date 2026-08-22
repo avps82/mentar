@@ -508,15 +508,29 @@ _PAGES = ("/choose", "/learn", "/progress", "/parent", "/settings", "/setup",
 _PAGE_PROBE = """(() => {
   const out = {overflowX: document.documentElement.scrollWidth > window.innerWidth + 1,
                offenders: [], tiny: [], dupHeads: []};
+  // An element inside a horizontally SCROLLABLE box legitimately has a rect wider
+  // than the viewport -- it is clipped by that box and reachable by scrolling,
+  // which is the whole point of .ascii-art / .steps-pre-wrap. Counting it as
+  // "escaped the viewport" is a false positive: measured 2026-08-23, a
+  // .steps-pre-diagram row reported right=608 on a 360px screen while its <pre>
+  // ended at 329 and clipped it, with the page not scrolling at all.
+  const containedByScroller = el => {
+    for (let a = el.parentElement; a; a = a.parentElement) {
+      const cs = getComputedStyle(a);
+      if (/(auto|scroll|hidden)/.test(cs.overflowX)
+          && a.getBoundingClientRect().right <= window.innerWidth + 1) return true;
+    }
+    return false;
+  };
   document.querySelectorAll('body *').forEach(el => {
     const r = el.getBoundingClientRect();
     if (!r.width && !r.height) return;
-    if (r.right > window.innerWidth + 1 || r.left < -1)
+    if ((r.right > window.innerWidth + 1 || r.left < -1) && !containedByScroller(el))
       out.offenders.push(el.tagName.toLowerCase() + '.' + (el.className || '').toString().split(' ')[0]);
   });
   // WCAG 2.5.8: 24x24 minimum. A control inside a <label> is targeted BY that
   // label (the mc4 radios are 17px inside a 720x50 label), so measure the label.
-  document.querySelectorAll('a, button, select, input:not([type=hidden])').forEach(el => {
+  document.querySelectorAll('a, button, select, summary, input:not([type=hidden])').forEach(el => {
     const r = el.getBoundingClientRect();
     if (!r.width || !r.height) return;
     const label = el.closest('label');
@@ -1055,12 +1069,51 @@ def test_every_page_is_laid_out_sanely_on_a_phone():
             f.querySelector('button').click();})()""")
         browser.wait_for("document.getElementById('help-btn')")
         problems = []
+        # The STATES a child passes through, not just the URLs. A wrong answer and
+        # an Explain-more press change the page more than any route does -- the
+        # card, its picture and the re-ask all appear only here.
+        # Driven by real POSTs, not by typing into the widget: this node renders
+        # numeric num/den inputs, so setting "more" on a number input leaves it
+        # empty and `required` silently blocks the submit -- the first version of
+        # this walk measured the plain question twice and the assertion below is
+        # what caught it.
+        for label, answer in (("after a wrong answer", "1/99"),
+                              ("help explanation", "help"),
+                              ("explain-more card", "more")):
+            browser.js(
+                "(async () => { await fetch('/answer', {method:'POST',"
+                " body:new URLSearchParams({answer: " + json.dumps(answer) + "}),"
+                " credentials:'same-origin',"
+                " headers:{'Content-Type':'application/x-www-form-urlencoded'}}); })()"
+            )
+            browser.wait_for("true")
+            browser.goto(server.url + "/learn")
+            r = browser.js(_PAGE_PROBE)
+            if r["overflowX"]:
+                problems.append(f"{label}: the page scrolls sideways on a phone")
+            if r["offenders"]:
+                problems.append(f"{label}: elements outside the viewport: {r['offenders'][:4]}")
+        # Prove the walk REACHED the card, or the two turns above are measuring
+        # the plain question twice and this loop is a silent no-op.
+        assert browser.js("!!document.querySelector('.steps-pre')"), (
+            "the explain-more card never rendered -- the state walk measured nothing"
+        )
         for path in _PAGES:
             browser.goto(server.url + path)
             width = browser.js("window.innerWidth")
+            # Two failures in one assertion, and the second is the subtle one:
+            #   * device metrics silently not applying -- then this whole test
+            #     measures the desktop layout it exists to stop trusting;
+            #   * the PAGE widening the layout viewport past the device. Chrome
+            #     grows innerWidth to fit overflowing content on a mobile
+            #     viewport, so every scrollWidth-vs-innerWidth check then compares
+            #     the page against its own overflow and passes. That is exactly
+            #     how /parent's five-column Answers table pushed a 360px phone to
+            #     370 while every sweep, including this file's, called it clean.
             assert width == 360, (
-                f"device metrics did not apply ({width}px) — this test would be "
-                f"measuring the desktop layout it exists to stop trusting"
+                f"viewport is {width}px, not 360 — either device metrics did not "
+                f"apply, or {path} widened the layout viewport to fit content that "
+                f"does not fit a phone (wrap it in an overflow-x:auto box)"
             )
             r = browser.js(_PAGE_PROBE)
             if r["overflowX"]:

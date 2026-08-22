@@ -638,6 +638,14 @@ select { min-width: 120px; }   /* an empty voice list must not collapse to 22px 
 .banner-warn { background: var(--warn-bg); border: 2px solid var(--warn-border); border-radius: var(--radius); padding: 14px 20px; margin-bottom: 20px; font-size: 0.95rem; }
 
 table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+/* A wide table must scroll inside its OWN box, never push the page (2026-08-23).
+   The parent dashboard's Answers table has five columns; on a 360px phone it
+   needed 358px inside a 336px card whose overflow was visible, so it widened the
+   LAYOUT VIEWPORT to 370 -- and every sweep called the page clean, because each
+   compared scrollWidth against window.innerWidth, which the overflow had already
+   pushed to 370. A page that measures itself against its own overflow always
+   passes. */
+.table-scroll { overflow-x: auto; }
 th, td { padding: 8px 12px; border: 1px solid var(--border); text-align: left; font-size: 0.95rem; }
 th { background: var(--bg); }
 
@@ -800,6 +808,17 @@ th { background: var(--bg); }
   box-shadow: var(--shadow);
   margin-bottom: 16px;
 }
+/* WCAG 2.5.8 wants a 24x24 target. A bare <summary> is only as tall as its text
+   -- /parent's "Session log (full transcript)" measured 288x18 in chromium at
+   every viewport (2026-08-23), and it is the control a PARENT taps to open the
+   transcript. The settings sections below set their own type scale and are
+   already comfortably over; this is the floor for every other one. */
+summary {
+  cursor: pointer;
+  min-height: 24px;
+  padding: 6px 0;
+}
+.transcript-toggle { font-weight: bold; }
 details.settings-section > summary {
   cursor: pointer;
   font-size: 1.1rem;
