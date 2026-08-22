@@ -17,6 +17,7 @@ import random
 from mentar.engine.au_senior_maths_items import _card
 from mentar.engine.itemgen import GenFn, mc_which_is
 from mentar.engine.visuals import number_line
+from mentar.engine.wording import count_noun
 
 # ── Maths ────────────────────────────────────────────────────────────────────
 
@@ -34,7 +35,9 @@ def gen_count_objects(rng: random.Random):
 def gen_add_within_10(rng: random.Random):
     a = rng.choice([1, 2, 3, 4, 5])
     b = rng.choice([1, 2, 3, 4])
-    p = f"You have {a} apples. You get {b} more. How many apples now?"
+    # count_noun, not "{a} apples": a can roll 1, and "You have 1 apples"
+    # is the text a six-year-old is being asked to read (2026-08-23).
+    p = f"You have {count_noun(a, 'apple')}. You get {b} more. How many apples now?"
     card = _card("ADDING SMALL NUMBERS", p, a + b,
                  "  Start at the first number and count on",
                  f"  1. Start at {a}.",
@@ -106,7 +109,9 @@ def gen_longer_shorter(rng: random.Random):
 def gen_simple_tally(rng: random.Random):
     red = rng.choice([4, 5, 6, 7])
     blue = rng.choice([1, 2, 3])
-    p = (f"The class voted for a colour. Red got {red} votes. Blue got {blue} votes. "
+    # blue rolls 1 a third of the time -- "Blue got 1 votes" (2026-08-23).
+    p = (f"The class voted for a colour. Red got {count_noun(red, 'vote')}. "
+         f"Blue got {count_noun(blue, 'vote')}. "
          "How many MORE votes did red get than blue?")
     card = _card("COMPARING VOTES", p, red - blue,
                  "  'How many more' means take the smaller from the bigger",

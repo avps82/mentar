@@ -32,6 +32,7 @@ from mentar.engine.itemgen import (
     _gen_whole_number_division,
 )
 from mentar.engine.visuals import array_of
+from mentar.engine.wording import count_noun
 
 _LETTERS = "ABCD"
 
@@ -293,8 +294,11 @@ def gen_decimal_place_value(rng: random.Random):
     whole = rng.randint(1, 9)
     tenths = rng.randint(1, 9)
     number = f"{whole}.{tenths}"
-    options = [f"{tenths} ones", f"{tenths} tenths", f"{tenths} hundredths", f"{tenths} tens"]
-    correct = f"{tenths} tenths"
+    # count_noun on every option: the digit can roll 1, and hardcoded plurals
+    # made ALL FOUR choices ungrammatical at once -- "1 ones", "1 tenths",
+    # "1 hundredths", "1 tens" -- in four country packs (2026-08-23).
+    options = [count_noun(tenths, w) for w in ("one", "tenth", "hundredth", "ten")]
+    correct = count_noun(tenths, "tenth")
     rng.shuffle(options)
     card = (
         "DECIMAL PLACE VALUE",
