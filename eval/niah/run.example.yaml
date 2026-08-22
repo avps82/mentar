@@ -8,7 +8,20 @@
 #   niah run eval/niah/run.example.yaml --model-dir eval/niah/models             # real run
 #
 # `model:` is resolved by FILENAME STEM under --model-dir (e.g. model: gemma2 -> models/gemma2.yaml,
-# whose request.model is the served id like gemma2:9b). Model configs live in models/ (gitignored).
+# whose request.model is the served id like gemma2:9b). Model configs live in models/ and ARE
+# tracked -- this line said "(gitignored)" until 2026-08-22, which was simply false and would
+# have told anyone trying to reproduce the run that the configs were missing. Only RESULTS are
+# gitignored (eval/responses/, eval/scores_*.csv, and the /tmp path below).
+#
+# REPRODUCIBILITY: everything needed to re-run this is in the repo -- the full haystack text,
+# the exact 3x3 sweep, temperature 0.0, and a `uuid` task scored by deterministic exact_match
+# with NO LLM judge, so there is no judge-model variance to control for. To test another model,
+# add models/<stem>.yaml and change `model:` below; nothing else moves.
+#
+# THE ONE GAP: `needlehaystack` is not version-pinned anywhere in this repo, and the version
+# behind the 2026-06-27 gemma2:9b result was never recorded. A future release could change
+# scoring or the config schema, and a re-run would then not be comparable to that 9/9. Record
+# the version alongside any result you intend to cite.
 
 run_name: mentar-niah
 model: gemma2                 # -> eval/niah/models/gemma2.yaml

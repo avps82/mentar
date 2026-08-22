@@ -36,7 +36,7 @@ The core is three components:
 Mentar is, candidly, **AI-built software**. The great majority of the code, tests, and docs in this
 repo are written by AI agents working under a human maintainer's direction, decisions, and review —
 **not hand-written by a person**. In that sense it is close to "vibe coding," even though it follows
-deliberate engineering discipline: spec-first design, test-driven development (790+ tests gating
+deliberate engineering discipline: spec-first design, test-driven development (1180+ tests gating
 changes), design docs before code, versioned prompts, and code review. Those principles raise the
 quality bar — but they don't change that underlying fact, and we'd rather be upfront about it.
 
@@ -80,13 +80,21 @@ mentar/
 │   ├── _template.md         # Authoring format for new curricula
 │   ├── visual_scaffolds/    # Per-topic visual-hint bundle (maths/english/science)
 │   └── templates/
-│       ├── AU_ACARA/        # Australian Curriculum v9 (maths Y2–12, English Y2–8, science Y2–8)
-│       ├── IN_GENERIC/      # India board-agnostic (maths + English, Classes 2–8)
-│       ├── SG_GENERIC/      # Singapore board-agnostic (Primary 2 – Secondary 2)
-│       ├── US_GENERIC/      # US board-agnostic (Grades 2–8)
+│       ├── AU_ACARA/        # Australian Curriculum v9 — maths Y1–12, English Y1–12,
+│       │                    #   science Y1–10, plus senior splits (biology/chemistry/
+│       │                    #   physics/earth-env, literature, maths methods/specialist/
+│       │                    #   general/essential)
+│       ├── IN_GENERIC/      # India board-agnostic — maths/English Classes 2–12,
+│       │                    #   science 2–10, senior bio/chem/physics C11–12
+│       ├── SG_GENERIC/      # Singapore board-agnostic — maths/English Primary 2 –
+│       │                    #   Secondary 4, science P2–Sec 2, senior bio/chem/physics Sec 3–4
+│       ├── US_GENERIC/      # US board-agnostic — maths/English Grades 2–12, science 2–8,
+│       │                    #   then sequenced Biology G9, Chemistry G10, Physics G11
 │       ├── _pilot/          # Phase-0 fractions/arithmetic/science pilot graph
 │       └── practice/        # Country-agnostic evergreen practice content
 ├── prompts/                 # Versioned prompt templates + prompts/README.md registry (W6.2)
+├── config/                  # Inference config example + the vetted model roster
+├── scripts/                 # bootstrap, binary build, item-bank build, backend check, ZIM fetch
 ├── src/mentar/              # Python package (src-layout)
 │   ├── engine/              # Concept graph (KST), BKT mastery, fringe, probe classifier,
 │   │                        #   item generators (see "How curriculum content is made" below)
@@ -103,7 +111,12 @@ mentar/
 ├── docs/                    # SPEC, PHASE0(+_STATUS), SAFETY, SESSION_FSM, ARCHITECTURE,
 │                            #   TESTS, CONTENT_LICENSES, PILOT_CONSENT, design/, research/
 ├── compliance/              # Compliance coverage-status map (points back to docs/)
-└── eval/                    # Eval datasets/outputs (data is gitignored)
+├── packaging/               # PyInstaller spec + entry point for the single-file binary
+├── eval/                    # Eval harness configs; datasets/outputs are gitignored.
+│                            #   eval/niah/ holds the needle-in-a-haystack retrieval configs —
+│                            #   run-only: `needlehaystack` is installed on demand, not vendored
+├── graphify-out/            # Generated knowledge-graph report (build output, not source)
+└── .github/workflows/       # CI + the manual binary build
 ```
 
 ### How curriculum content is actually made (read this before assuming what a ZIM download unlocks)
@@ -228,10 +241,13 @@ Full index: **[`docs/index.md`](docs/index.md)**. Highlights:
 model evaluation + pick (`gemma2:9b`), safety pipeline, and learner data model are all built
 and green.
 
-**What actually ships today** (2026-08-11): **319 concept nodes across 71 curriculum
-templates** — Australia (ACARA-aligned: maths Y2–12, English Y2–8, science Y2–8) plus three
-board-agnostic packs that claim no syllabus alignment (`IN_GENERIC` Classes 2–8,
-`SG_GENERIC` Primary 2–Secondary 2, `US_GENERIC` Grades 2–8), a fractions pilot pack, and
+**What actually ships today** (2026-08-22): **934 concept nodes across 157 curriculum
+templates** — Australia (ACARA-aligned: maths Y1–12, English Y1–12, science Y1–10, with the
+senior years split into biology/chemistry/physics/earth-env, literature, and the four maths
+courses) plus three board-agnostic packs that claim no syllabus alignment (`IN_GENERIC`
+Classes 2–12, `SG_GENERIC` Primary 2–Secondary 4, `US_GENERIC` Grades 2–12 — each carrying
+senior biology/chemistry/physics; see the Curriculum templates table above for the exact
+per-subject ranges), a fractions pilot pack, and
 country-agnostic practice packs. Every question is generated by hand-authored Python
 (parametric formula or curated fact table) and scored by a deterministic verifier — the
 model explains, it never decides whether an answer is right.
