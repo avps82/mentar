@@ -322,15 +322,15 @@ _ELEMENT_COMPOUND_GLOSSES = {
 }
 
 def _gen_classify_animals(rng: random.Random):
-    return mc_which_is(rng, "Which of these is a {label}?", _ANIMAL_CLASSES, glosses=_ANIMAL_GLOSSES, concept_name='ANIMAL GROUPS')
+    return mc_which_is(rng, "Which of these is {a_label}?", _ANIMAL_CLASSES, glosses=_ANIMAL_GLOSSES, concept_name='ANIMAL GROUPS')
 
 
 def _gen_states_of_matter(rng: random.Random):
-    return mc_which_is(rng, "Which of these is a {label}?", _MATTER_CLASSES, glosses=_MATTER_GLOSSES, concept_name='STATES OF MATTER')
+    return mc_which_is(rng, "Which of these is {a_label}?", _MATTER_CLASSES, glosses=_MATTER_GLOSSES, concept_name='STATES OF MATTER')
 
 
 def _gen_living_nonliving(rng: random.Random):
-    return mc_which_is(rng, "Which of these is a {label}?", _LIVING_CLASSES, glosses=_LIVING_GLOSSES, concept_name='LIVING VS NON-LIVING')
+    return mc_which_is(rng, "Which of these is {a_label}?", _LIVING_CLASSES, glosses=_LIVING_GLOSSES, concept_name='LIVING VS NON-LIVING')
 
 
 def _gen_sound_vibration(rng: random.Random):

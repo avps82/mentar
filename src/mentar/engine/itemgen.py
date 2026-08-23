@@ -22,6 +22,7 @@ from collections import deque
 from collections.abc import Callable
 
 from mentar.engine.itembank import Item
+from mentar.engine.wording import article
 
 # A generator: rng -> (answer_type, checker, problem, answer)
 # mc4 generators may return a 5-tuple instead: (answer_type, checker, STEM,
@@ -75,7 +76,12 @@ def mc_which_is(
     options = [*distractors, correct]
     rng.shuffle(options)
     letter = _LETTERS[options.index(correct)]
-    stem = prompt.format(label=target)
+    # {a_label} carries the article so a caller cannot hardcode the wrong one.
+    # Three templates said "is a {label}?" and the animal table contains
+    # "insect", so a quarter of those draws asked "Which of these is a insect?"
+    # (2026-08-23). Fixing it here rather than in the three call sites means the
+    # next fact table with a vowel-initial label cannot reintroduce it.
+    stem = prompt.format(label=target, a_label=article(target))
 
     method_steps = None
     if glosses is not None and concept_name is not None:

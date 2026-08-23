@@ -94,3 +94,59 @@ def test_no_item_says_one_of_a_plural_noun():
         "rather than hardcoding the plural beside a drawn number:\n"
         + "\n".join(f"  {o}" for o in sorted(offenders)[:15])
     )
+
+
+_ARTICLE = re.compile(r"\b(a|an)\s+([A-Za-z][A-Za-z-]+)\b")
+
+
+def test_no_item_uses_the_wrong_indefinite_article():
+    """"Which of these is a insect?" -- 25% of animal-classification draws
+    (2026-08-23). mc_which_is's template hardcoded "a" and the fact table
+    contains a vowel-initial label.
+
+    The rule is asked of inflect rather than of the first letter, because the
+    real rule is about SOUND: "an hour", "a use", "a one-way street" are all
+    correct and all break a vowel-letter test. Anything inflect itself would
+    write differently is the only thing flagged, so this cannot fire on the
+    English content that legitimately says "a use".
+    """
+    try:
+        import flask  # noqa: F401
+        import inflect
+    except ImportError:
+        import pytest
+        pytest.skip("flask/inflect not installed")
+
+    from mentar.engine.itemgen import ItemGenerator
+
+    engine = inflect.engine()
+    offenders = set()
+    for _subject, node, gen in _all_generators():
+        for seed in range(12):
+            try:
+                item = ItemGenerator({node: gen}, rng=random.Random(seed))._make(node)
+            except Exception:
+                continue
+            if item is None:
+                continue
+            text = " ".join(filter(None, [
+                item.problem, item.stem, " ".join(item.choices or ()),
+            ]))
+            for match in _ARTICLE.finditer(text):
+                written, noun = match.group(1), match.group(2)
+                # Ask about the LOWERCASED word. This content uses capitals for
+                # emphasis ("a STRUCTURAL adaptation", "an UNSUPPORTED claim"),
+                # and inflect reads an all-caps word as an initialism to be
+                # spelled out -- so it wanted "an STRUCTURAL". Genuine short
+                # initialisms (DNA, LED) are skipped rather than guessed at.
+                if noun.isupper() and len(noun) <= 4:
+                    continue
+                correct = engine.a(noun.lower()).split()[0]
+                if correct.lower() != written.lower():
+                    offenders.add(
+                        f"{node} seed={seed}: {match.group(0)!r} -> {correct} {noun}")
+    assert not offenders, (
+        "items use the wrong indefinite article. mc_which_is offers {a_label}, "
+        "which carries the article; engine/wording.py::article() for anything "
+        "else:\n" + "\n".join(f"  {o}" for o in sorted(offenders)[:15])
+    )

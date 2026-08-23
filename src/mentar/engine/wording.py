@@ -38,3 +38,13 @@ def plural(noun: str, count: int | float) -> str:
     """Just the noun, agreeing with `count` -- for when the number is already
     written elsewhere in the sentence."""
     return _ENGINE.plural(noun, count)
+
+
+def article(noun: str) -> str:
+    """"an insect", "a dog" -- the noun with its indefinite article.
+
+    inflect decides, because the rule is about SOUND, not spelling: "an hour",
+    "a use", "a one-way street" are all correct and all counter-examples to the
+    first-letter-is-a-vowel test anyone reaches for first.
+    """
+    return _ENGINE.a(noun)
