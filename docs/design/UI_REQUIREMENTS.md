@@ -278,6 +278,12 @@ note below). Per-screen:
   the whole text renders in the question block, which is exactly the pre-U-31 behaviour.
   Tests: `test_turn_split_feedback_from_question` (pure splitter cases + live view + htmx
   fragment).
+  **SUPERSEDED (noted 2026-08-23, doc audit).** Neither `_split_turn_text()` nor that test
+  exists any more. The view-layer split was replaced by STRUCTURED fields on `TurnResult`
+  (`.message` / `.question`), which `_turn_context()` reads directly — its comment now reads
+  "never string-split from prose", i.e. the mechanism this paragraph describes is the one the
+  code explicitly forbids. The paragraph is left as the record of how U-31 was solved on
+  2026-07-10; it is no longer a description of how the view works.
 - **Progress/concept map (U-40–U-42):** new `_compute_graph_layout()` in `web/app.py` — a
   pure, owned layered-DAG layout (level = 1 + max(prereq levels), percentage coordinates, no
   graph library) rendered as an SVG in `progress.html`. Verified against the real 8-node

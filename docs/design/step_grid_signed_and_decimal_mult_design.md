@@ -96,7 +96,7 @@ count total decimal places, place the point that many digits from the right):
 **Worked example** (`3.4 × 20 = 68.0`): strip points → `34 × 20`, run the existing
 partial-products builder unchanged (`34 × 20 = 680`, shown via its normal carry-row/
 partial-product-row layout), then re-insert the point 1 place from the right in the result
-row only (`frac_digits(3.4) + frac_digits(20) = 1 + 0 = 1`) → `68.0`. The operand rows at
+row only (`_frac_digits(3.4) + _frac_digits(20) = 1 + 0 = 1`) → `68.0`. The operand rows at
 the top of the grid still show `3.4` and `20` as given (with `3.4`'s own point in place),
 not the scaled integers — only the internal partial-product rows and the final result row
 come from the integer-scaled arithmetic.
