@@ -15,6 +15,23 @@
 #
 # Pushes are far rarer than commits, so paying for these here is affordable in
 # a way that paying on every commit is not.
+#
+# ── CI job -> where it is covered locally (keep this table honest) ───────────
+#   CI `test`            -> pre-push §1 (pytest tests/, a SUPERSET: CI ignores
+#                           test_browser_ui.py, this does not) + pre-commit ruff
+#   CI `browser checks`  -> pre-push §1 + §1b (§1b is the "must actually run"
+#                           half; without it a chromium-less machine goes green)
+#   CI `secrets`         -> pre-push §2 (same gitleaks git scan, same .toml)
+#   CI `prompt-eval-…`   -> not gated: it posts a REMINDER comment, not a pass/fail
+#   CI `OKF spec still current`
+#                        -> not gated here on purpose: it runs on SCHEDULE only,
+#                           never on push, and checks an UPSTREAM doc for drift.
+#                           A push cannot break it and a hook cannot fix it.
+#
+# The principle (maintainer, 2026-08-24): "we should not push where we know it
+# can fail." So anything CI gates ON PUSH must be gated here first. If a new
+# push-triggered CI job appears, it belongs in this table with a local
+# counterpart -- or an explicit line saying why it has none.
 set -uo pipefail
 
 # Nothing to check on a branch deletion (local sha is all zeros).
@@ -37,11 +54,31 @@ fi
 # better an explicit skip than a gate nobody runs.
 if [ -n "$PY" ]; then
   echo "pre-push: running the test suite (git push --no-verify to skip)..." >&2
-  if ! "$PY" -m pytest tests/ -q; then
+  # set +e so a failing pytest does not kill the step at the assignment and
+  # swallow its own output -- the same trap CI's browser job documents.
+  set +e
+  out=$("$PY" -m pytest tests/ -q -rs 2>&1); rc=$?
+  set -e
+  printf '%s\n' "$out"
+  if [ "$rc" -ne 0 ]; then
     echo "" >&2
     echo "Push blocked: tests are failing (see above). This is what CI would" >&2
     echo "have told you 8 minutes after the push instead." >&2
     echo "  Fix them, or: git push --no-verify" >&2
+    exit 1
+  fi
+  # ── 1b) The browser checks must have RUN, not skipped ──────────────────────
+  # Mirrors CI's "Browser checks (must actually run)" step. _skip_unless_browser
+  # skips the whole file when chromium is absent, so without this the suite goes
+  # green having verified nothing about rendering -- and CI, which installs
+  # chromium, then fails on a push we believed was safe. Exactly the "do not
+  # push where we know it can fail" case (maintainer, 2026-08-24).
+  if printf '%s' "$out" | grep -qE 'test_browser_ui.*[Ss]kipped|SKIPPED.*test_browser_ui'; then
+    echo "" >&2
+    echo "Push blocked: the BROWSER checks skipped -- chromium is missing here." >&2
+    echo "  CI installs chromium and runs them, so a skip locally means pushing" >&2
+    echo "  something no one has verified renders. Install chromium, or if this" >&2
+    echo "  push genuinely cannot wait: git push --no-verify" >&2
     exit 1
   fi
 else
