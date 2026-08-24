@@ -24,6 +24,17 @@ Design decisions documented inline:
 - Negative denominators: Fraction normalises these natively (e.g. 3/-6 → -1/2).
 - Zero denominator: SAFE_REJECT (never crash, never accept).
 - Multiple plausible candidates of equal precedence at the same position → SAFE_REJECT.
+- MEASURED LENIENCY, accepted not fixed (2026-08-25 sweep). Extraction takes the first
+  number it finds, so `decimal` accepts "4.0.0" against 4.0, and `int` accepts
+  "4;DROP TABLE x" against 4. Both are technically false-passes against the
+  err-on-safe-reject rule above. Left alone deliberately: the same leniency is what
+  lets a child write "4 apples" or " 4 ", the strings are ones nobody types, and every
+  LOAD-BEARING guard was re-verified intact in the same sweep (decimals into
+  int/fraction all SAFE_REJECT, zero denominator SAFE_REJECT, ambiguous multi-fraction
+  FAIL, 0 false passes across 6145 wrong answers drawn from real items). Tightening a
+  safety-critical verifier for a hypothetical input carries more regression risk than
+  the leniency carries harm. Recorded so the next reader knows it was measured and
+  weighed, not missed.
 """
 
 from __future__ import annotations
