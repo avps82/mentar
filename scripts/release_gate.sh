@@ -18,9 +18,28 @@
 set -uo pipefail
 cd "$(dirname "$0")/.."
 
+# The stamp records a SHA, but the gate tests the WORKING TREE. With
+# uncommitted changes those are different things, and the stamp would certify a
+# commit nobody tested -- exactly the "we know it can fail" case this is meant
+# to prevent (caught 2026-08-25, the first time the two diverged in practice).
+# So: commit first, then gate, then push.
+if [ -n "$(git status --porcelain)" ]; then
+  echo "GATE REFUSED: the working tree is dirty." >&2
+  echo "" >&2
+  echo "  The stamp records a commit SHA, but the gate tests what is on disk." >&2
+  echo "  With uncommitted changes it would certify a commit that was never run." >&2
+  echo "" >&2
+  echo "      git add -A && git commit && ./scripts/release_gate.sh && git push" >&2
+  exit 1
+fi
+
 PY=".venv/bin/python"; [ -x "$PY" ] || PY="python3"
 RUFF=".venv/bin/ruff";  [ -x "$RUFF" ] || RUFF="ruff"
-fail() { echo ""; echo "GATE FAILED: $1" >&2; exit 1; }
+# A failed gate must not leave a PASSING stamp behind. Without this the stamp
+# from an earlier green run survives, and if HEAD has not moved since, pre-push
+# would accept a tree the gate just rejected (spotted 2026-08-25, first time the
+# gate failed for real).
+fail() { rm -f .gate-passed; echo ""; echo "GATE FAILED: $1" >&2; exit 1; }
 
 echo "== 1/5 ruff"
 command -v "$RUFF" >/dev/null 2>&1 || [ -x "$RUFF" ] || fail "ruff not installed"

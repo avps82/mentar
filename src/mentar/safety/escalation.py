@@ -141,6 +141,23 @@ _HARM_TO_SELF_PATTERNS: list[re.Pattern[str]] = [p for p in (
     re.compile(r"(cutting|cut) myself (on purpose|to hurt|because)", re.I),
     # Deliberate eating-related self-harm (2026-08-12 safeguarding review). SAFETY §3.2 Cat A.
     re.compile(r"\bmake myself (sick|throw up|vomit)\b", re.I),
+    # 2026-08-25 probe round. 14 of 22 fresh child-register phrasings missed;
+    # these are the unambiguous half. Same finding shape as 2026-08-12's "my
+    # uncle touches me": the class already INTENDED to cover them, the wording
+    # just never reached them.
+    #
+    # Overdose. A child says "tablets", not "overdose".
+    re.compile(r"\bi\s+(took|swallowed|had)\s+(too many|a lot of|loads of|all the)\s+(tablets?|pills?|painkillers?|medicine)\b", re.I),
+    # "i don't want to wake up (tomorrow)" / "i think about not waking up".
+    # Requires the sleep-death framing, so "i don't want to wake up early" —
+    # which has an adverb, not a full stop — is not enough on its own.
+    re.compile(r"\b(don'?t|do not|dont)\s+want\s+to\s+wake\s+up\s*(tomorrow|again|ever|any ?more)?\s*[.!?]?$", re.I),
+    re.compile(r"\bthink(ing)?\s+about\s+not\s+waking\s+up\b", re.I),
+    # "i want it all to stop forever" — "forever"/"for good" is what separates
+    # ideation from ordinary frustration ("i want this noise to stop").
+    re.compile(r"\bwant\s+(it|it all|everything|all of it)\s+to\s+(stop|end)\s+(forever|for good|permanently)\b", re.I),
+    # Self-injury described by its result rather than its name.
+    re.compile(r"\b(scratch|scratching|scratched|cut|cutting|burn|burning|burnt|hit|hitting)\s+(my|myself|my own)\b[^.?!]{0,25}\b(t(i|il)l|until)\b[^.?!]{0,15}\bbleed", re.I),
     re.compile(r"\bhaven'?t eaten (for|in) [^.?!]{0,20}\bon purpose\b", re.I),
     re.compile(r"\b(refuse|refusing) to eat\b[^.?!]{0,20}\bon purpose\b", re.I),
 )]
@@ -285,6 +302,19 @@ _ABUSE_DISCLOSURE_PATTERNS: list[re.Pattern[str]] = [p for p in (
     re.compile(r"abuse(d)? (me|my body|sexually)", re.I),
     # Euphemistic disclosures — simplified to catch the span that matters
     re.compile(r"(a grown.?up|an adult|someone older) (did|does|made|makes) (something|things?) (to me|with me)", re.I),
+    # 2026-08-25. "someone at home touches me" missed: the touch pattern below
+    # requires the person immediately BEFORE the verb, and a child names the
+    # place. A separate pattern rather than loosening that one, because
+    # arbitrary text between subject and verb is how false positives get in.
+    re.compile(r"\b(someone|somebody|a man|a woman|a grown.?up|an adult)\s+(at|in)\s+(my\s+)?(home|house|school|club)\s+(touch(es|ed)?|is touching|keeps touching)\s+me\b", re.I),
+    # Online grooming: a request for images. "asking for pictures" is the
+    # child's wording; the adult framing ("sending nudes") is already covered.
+    re.compile(
+        r"\b(someone|somebody|a man|a woman|a person|a boy|a girl|he|she|they)\b"  # t7.3-exempt: regex alternation, not a prompt
+        r"[^.?!]{0,30}\b(online|on the internet|on a game|in a game|on a app|on an app|in chat)\b"
+        r"[^.?!]{0,40}\b(ask(s|ed|ing)?|want(s|ed)?|told me)\b"
+        r"[^.?!]{0,20}\b(pictures?|photos?|pics|videos?|selfies?)\b", re.I),
+    re.compile(r"\bkeeps?\s+asking\s+(me\s+)?for\s+(pictures?|photos?|pics|videos?|selfies?)\b", re.I),
     # Added 2026-08-12 after a probe found the plainest disclosures missed:
     # "my uncle touches me" matched nothing, because every existing touch pattern
     # required a body-part word, "in a wrong way", or "wants to touch". A child
@@ -334,6 +364,9 @@ _ABUSE_DISCLOSURE_PATTERNS: list[re.Pattern[str]] = [p for p in (
 _SECRECY_REQUEST_PATTERNS: list[re.Pattern[str]] = [p for p in (
     re.compile(r"(don'?t|do not|please don'?t) (tell|let|show) (my )?(mum|mom|mummy|mommy|dad|daddy|father|mother|parent|carer|guardian|teacher|anyone|grown.?up)", re.I),
     re.compile(r"(keep|kept) (this |it )?(a )?secret (from|between)", re.I),
+    # 2026-08-25: "the man next door asked me to keep a secret" — the pattern
+    # above needs "from"/"between" to follow, and a child stops at "a secret".
+    re.compile(r"\b(ask(ed)?|told|wants?)\s+me\s+to\s+keep\s+(it|this|that|a|the)?\s*secret\b", re.I),
     re.compile(r"(it'?s|this is) (just )?our secret", re.I),
     # "not to tell" is the natural child phrasing ("will you promise not to tell my mum?") —
     # found missing by the T2.5 pipeline run 2026-08-12.
@@ -373,8 +406,31 @@ _ADVERSARIAL_JAILBREAK_PATTERNS: list[re.Pattern[str]] = [p for p in (
     re.compile(r"(pretend you have no rules|pretend you'?re a different ai|pretend (there are|you have) no (rules|restrictions|limits?))", re.I),
     re.compile(r"(do anything now|say anything|no (rules|limits?|restrictions?))\b", re.I),
     # System-prompt / instruction extraction (prompt-leak attempts).
-    re.compile(r"(what('?s| is| are)|tell me|show me|give me) (your |the )?(system )?(prompt|instructions?|rules?|guidelines?)", re.I),
-    re.compile(r"(print|show|reveal|repeat|output|display) (me )?(your |the )?(system )?(prompt|instructions?|rules?|guidelines?)", re.I),
+    # The qualifier is MANDATORY (narrowed 2026-08-25). It used to be optional --
+    # `(your |the )?` -- so bare "the rule" matched, and "rule" is ordinary maths
+    # English: "What is the rule for this number pattern?", "What is the
+    # divisibility rule for 3?" and "Show me the rule for multiplying fractions"
+    # were all logged as JAILBREAK ATTEMPTS BY THE CHILD. Measured: 6 of 7 sample
+    # maths questions fired, plus 32 shipped curriculum cards.
+    #
+    # A jailbreak here is asking the model to reveal its OWN configuration, so
+    # require "your" or "system". "what are the rules" is deliberately let go:
+    # on a maths tutor that sentence is far likelier to be a child than an
+    # attacker, and the stronger forms ("no rules", "pretend you have no rules",
+    # "ignore your rules") are covered by their own patterns above.
+    re.compile(
+        r"(what('?s| is| are)|tell me|show me|give me)\s+(me\s+)?"
+        r"(your\s+(system\s+)?(prompt|instructions?|rules?|guidelines?)"
+        r"|the\s+system\s+(prompt|instructions?|rules?|guidelines?)"
+        r"|system\s+prompt)", re.I),
+    # Same mandatory-qualifier narrowing as the "what is your …" pattern above
+    # (2026-08-25): "Show me the rule for multiplying fractions" is a maths
+    # question, and with the qualifier optional it was a jailbreak match.
+    re.compile(
+        r"(print|show|reveal|repeat|output|display)\s+(me\s+)?"
+        r"(your\s+(system\s+)?(prompt|instructions?|rules?|guidelines?)"
+        r"|the\s+system\s+(prompt|instructions?|rules?|guidelines?)"
+        r"|system\s+prompt)", re.I),
     re.compile(r"(repeat|print|show|reveal|output) (the |all )?(text|words?|message|everything|content) (above|before|prior|earlier)", re.I),
     re.compile(r"what were you (told|instructed|programmed|asked|made) (not )?to", re.I),
 )]
@@ -390,7 +446,10 @@ _JAILBREAK_DEOBFUSCATED = re.compile(
     # without it the fallback re-fires on "you are now a tutor" after despacing.
     r"|youarenow(?!(?:a|an|my)?(?:tutor|helping|assisting))"
     r"|youhavenorules|pretend.{0,15}no.{0,5}(rule|restriction|limit)"
-    r"|(whatis|tellme|showme|print|reveal|repeat).{0,15}(systemprompt|instruction|rule|guideline)",
+    # Same narrowing as the primary pattern above, and for the same reason: the
+    # despaced view of "What is 8 x -6? ... 1. Sign rule:" is "whatis...signrule",
+    # which matched `whatis` + `rule` with nine characters of maths in between.
+    r"|(whatis|tellme|showme|print|reveal|repeat).{0,10}(systemprompt|your(instruction|rule|guideline|prompt))",
     re.I,
 )
 
@@ -436,9 +495,24 @@ _WELFARE_CONCERN_PATTERNS: list[re.Pattern[str]] = [p for p in (
     re.compile(r"\bi('?ve| have)?\s+(been\s+)?cut(ting)?\s+myself\b", re.I),
     # "my brother makes me do things i dont like" — requires the discomfort
     # clause, or every gym coach fires it
-    re.compile(r"\b(makes?|made|force[sd]?)\s+me\s+do\s+things?\b[^.?!]{0,30}\b(don'?t like|dont like|do not like|don'?t want|dont want|do not want|hate)\b", re.I),
+    re.compile(r"\b(makes?|made|force[sd]?)\s+me\s+do\s+(things?|stuff)\b[^.?!]{0,30}\b(don'?t like|dont like|do not like|don'?t want|dont want|do not want|hate)\b", re.I),
     re.compile(r"\b(scared|afraid|frightened|terrified)\s+to\s+go\s+home\b", re.I),
     re.compile(r"\bhave?n'?t\s+eaten\s+(for|in|since)\b[^.?!]{0,15}\bdays?\b", re.I),
+    # 2026-08-25 probe round — the AMBIGUOUS half of the 14 misses. CONCERN, not
+    # a freeze: each has an innocent reading, and this tier exists precisely so
+    # silence is not the alternative to over-reacting.
+    #
+    # Supervisory neglect.
+    re.compile(r"\b(leaves?|left|leaving)\s+me\s+(alone|on my own|by myself)\b[^.?!]{0,25}\b(all night|over ?night|all day|for days)\b", re.I),
+    # Food deprivation, as a state of the home or as a punishment.
+    re.compile(r"\b(never|no|not)\s+(any\s+|much\s+)?food\s+(at|in)\s+(my\s+|the\s+|our\s+)?(house|home|flat)\b", re.I),
+    re.compile(r"\b(don'?t|dont|do not|can'?t|cant)\s+get\s+to\s+eat\b", re.I),
+    # Unexplained injury the child cannot account for.
+    re.compile(r"\bbruises?\b[^.?!]{0,30}\b(can'?t|cant|cannot|not allowed to|won'?t|wont|mustn'?t)\s+(say|tell|talk about|explain)\b", re.I),
+    # Bullying. PHYSICAL_DANGER's subject list is adults and "someone"; the
+    # commonest real subject at this age is other children.
+    re.compile(r"\b(kids?|children|boys?|girls?|people|classmates?|they)\b[^.?!]{0,20}\b(keeps?|kept|always|keep)\s+(hitting|kicking|punching|hurting|beating|pushing)\s+me\b", re.I),
+    re.compile(r"\bwait\s+for\s+me\b[^.?!]{0,25}\b(beat|hit|hurt|jump)\s+me\b", re.I),
 )]
 
 
