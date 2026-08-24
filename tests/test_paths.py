@@ -107,6 +107,43 @@ def test_env_overrides_still_win_in_a_packaged_build(frozen, monkeypatch, tmp_pa
 
 
 
+def test_env_override_is_obeyed_by_the_CLI_too_not_only_the_web_app(monkeypatch, tmp_path):
+    """The test above asserted the override for web/app.py ONLY, and that is
+    exactly how this shipped broken (found 2026-08-25).
+
+    app.py implemented the override itself, with its own os.environ.get. The
+    three CLI commands that take a database -- run-session, backup,
+    recompute-mastery -- all call paths.db_path(), which did not consult the
+    variable, so all three silently used the default.
+
+    The damaging case is the one the test above names: a parent points
+    MENTAR_DB_PATH at a NAS, the web app writes the child's history there, and
+    `mentar backup` copies the untouched local default while reporting
+    "Backup OK ... integrity check passed". The command whose whole job is
+    protecting that history was protecting the wrong file.
+    """
+    import importlib
+
+    chosen = tmp_path / "nas" / "child.db"
+    monkeypatch.setenv("MENTAR_DB_PATH", str(chosen))
+    import mentar.paths as paths_mod
+    importlib.reload(paths_mod)
+    try:
+        assert paths_mod.db_path() == chosen, (
+            "db_path() ignored MENTAR_DB_PATH — every CLI command resolves the "
+            "database through it"
+        )
+        # and the web app, which resolves it separately, must still agree
+        import mentar.web.app as app_mod
+        importlib.reload(app_mod)
+        assert app_mod.DB_PATH == str(chosen), "app.py and db_path() disagree"
+    finally:
+        monkeypatch.undo()
+        importlib.reload(paths_mod)
+        import mentar.web.app as app_mod
+        importlib.reload(app_mod)
+
+
 # ── Writers into an EMPTY data directory ─────────────────────────────────────
 # 2026-08-15, reported from a real Windows machine running the packaged binary:
 # completing /setup crashed with

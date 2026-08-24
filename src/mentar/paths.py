@@ -85,7 +85,24 @@ def dotenv_path() -> Path:
 
 def db_path() -> Path:
     """The learner database. A child's whole history lives here, so this one must
-    never resolve inside the bundle -- see the module docstring."""
+    never resolve inside the bundle -- see the module docstring.
+
+    Honours MENTAR_DB_PATH, which this module's docstring has always promised
+    ("the rest still override either way") and which only web/app.py actually
+    implemented, via its own os.environ.get. The three CLI commands that take a
+    database -- run-session, backup, recompute-mastery -- called this function
+    and so ignored the variable entirely (2026-08-25).
+
+    The damaging case is the one test_env_overrides_still_win_in_a_packaged_build
+    already names: a parent points MENTAR_DB_PATH at a NAS, the web app writes
+    the child's history there, and `mentar backup` then copies the untouched
+    local default and reports "Backup OK ... integrity check passed". The one
+    command whose entire job is protecting that history was protecting the wrong
+    file, silently. Resolving it here fixes every caller at once.
+    """
+    override = os.environ.get("MENTAR_DB_PATH")
+    if override:
+        return Path(override)
     return data_dir() / "mentar_pilot.db"
 
 
