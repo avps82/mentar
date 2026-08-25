@@ -370,3 +370,28 @@ def test_an_ordinary_empty_reply_still_returns_empty(monkeypatch=None):
     cli.reply = ""
     cli.reasoning = None
     assert fn([{"role": "user", "content": "hi"}]) == ""
+
+
+def test_timeout_covers_the_budget_on_measured_local_hardware():
+    """A flat 120s was a remote-API assumption. Measured 2026-08-25 on a base M1:
+    7.25 tok/s for a 12B (hardware ceiling, 100% GPU), so the 1200-token budget
+    needs ~166s -- every full-length reply timed out, then retried twice.
+
+    The timeout must cover the budget the SAME config allows, or we ship a
+    generation limit that cannot be reached.
+    """
+    MEASURED_TPS = 7.25
+    for max_tokens in (1200, 2048):
+        got = B._gen_params({"generation": {"max_tokens": max_tokens}})["timeout"]
+        needed = max_tokens / MEASURED_TPS
+        assert got > needed, (
+            f"max_tokens={max_tokens} needs ~{needed:.0f}s at {MEASURED_TPS} tok/s "
+            f"but the timeout is {got:.0f}s — the budget can never be spent"
+        )
+
+
+def test_timeout_never_drops_below_the_old_default_and_is_overridable():
+    """A small budget must not shorten the timeout (prompt eval alone can be slow),
+    and an explicit generation.timeout still wins -- this is a floor, not a policy."""
+    assert B._gen_params({"generation": {"max_tokens": 16}})["timeout"] == B._DEFAULT_TIMEOUT_S
+    assert B._gen_params({"generation": {"max_tokens": 2048, "timeout": 45}})["timeout"] == 45.0

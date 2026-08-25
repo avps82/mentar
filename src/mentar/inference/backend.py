@@ -60,6 +60,15 @@ class ReasoningOnlyReply(RuntimeError):
     setting meant to suppress it does nothing. Deterministic, so never retried.
     """
 _DEFAULT_TIMEOUT_S = 120.0
+# A flat 120s is a REMOTE-API assumption. Local throughput is bounded by memory
+# bandwidth, not the network: measured 7.25 tok/s for a 12B on a base M1 (8.0 GB
+# resident, ~58 GB/s achieved, 100% GPU -- i.e. the hardware ceiling, nothing
+# misconfigured). At that rate the 1200-token budget needs ~166s, so EVERY
+# full-length reply timed out, then retried twice: ~6 min of waiting to fail.
+# So derive the floor from the budget we actually allow, at a conservative
+# tokens/sec. An explicit generation.timeout still wins.
+_SLOW_LOCAL_TOKENS_PER_S = 5.0
+_TIMEOUT_OVERHEAD_S = 30.0        # prompt eval + first-token latency + load
 _DEFAULT_RETRIES = 2          # total attempts = retries + 1
 _RETRY_BACKOFF_S = 1.5
 
@@ -231,12 +240,20 @@ def resolve_http_endpoint(cfg: dict) -> dict | None:
     return None
 
 
+def _timeout_for(max_tokens: int) -> float:
+    """Enough wall-clock for `max_tokens` to actually be produced on slow local
+    hardware, never below the old remote default."""
+    return max(_DEFAULT_TIMEOUT_S,
+               max_tokens / _SLOW_LOCAL_TOKENS_PER_S + _TIMEOUT_OVERHEAD_S)
+
+
 def _gen_params(cfg: dict) -> dict:
     gen = cfg.get("generation") or {}
+    max_tokens = int(gen.get("max_tokens", DEFAULT_MAX_TOKENS))
     return {
         "temperature": float(gen.get("temperature", _DEFAULT_TEMPERATURE)),
-        "max_tokens": int(gen.get("max_tokens", DEFAULT_MAX_TOKENS)),
-        "timeout": float(gen.get("timeout", _DEFAULT_TIMEOUT_S)),
+        "max_tokens": max_tokens,
+        "timeout": float(gen.get("timeout", _timeout_for(max_tokens))),
         "retries": int(gen.get("retries", _DEFAULT_RETRIES)),
         # Passthrough for non-standard request fields (e.g. {"think": false} to disable
         # a reasoning model's hidden chain-of-thought — see config/inference.example.yaml).
