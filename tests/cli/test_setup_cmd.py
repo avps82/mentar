@@ -90,3 +90,50 @@ if __name__ == "__main__":
         fn()
         print(f"  ✓ {fn.__name__}")
     print(f"\n{len(fns)}/{len(fns)} setup-cmd tests passed.")
+
+
+# ── Local runtimes ───────────────────────────────────────────────────────────
+# Everything above this line tests the REMOTE api path. Nothing tested the local
+# runtimes at all -- which is how `mentar setup --runtime auto` came to crash on
+# a Mac with Ollama installed, i.e. the default first run for most people:
+#
+#   model_path = models_dir() / (m["hf_file"] or "")
+#   KeyError: 'hf_file'
+#
+# That line runs for EVERY runtime but only gguf/llama_app use it, and four of
+# six roster models are ollama-only with no hf_file key at all.
+
+def _local_args(**kw):
+    """Separate from _args above -- that one defaults to the remote vllm runtime,
+    and a same-named second helper here silently shadowed it and broke all five
+    remote tests."""
+    base = dict(runtime="ollama", model=None, base_url=None, api_key=None,
+                ctx=4096, roster=str(REPO_ROOT / "config" / "model_roster.yaml"),
+                config=None, dry_run=True)
+    base.update(kw)
+    return SimpleNamespace(**base)
+
+
+def test_ollama_only_model_does_not_crash_on_a_missing_gguf_filename(tmp_path, capsys):
+    """The regression. gemma4-12b is ollama-only; setup must not reach for a
+    GGUF filename it does not have."""
+    rc = CLI._setup(_local_args(model="gemma4-12b", config=str(tmp_path / "inf.yaml")))
+    out = capsys.readouterr().out
+    assert rc == 0, out
+    assert "backend: ollama" in out
+    assert "ollama pull" in out
+
+
+def test_every_ollama_only_roster_model_can_be_set_up(tmp_path, capsys):
+    """Not just the one that happened to be picked. A roster entry with no
+    hf_file is normal, not exotic -- most of them are."""
+    import yaml
+
+    roster = yaml.safe_load((REPO_ROOT / "config" / "model_roster.yaml").read_text())
+    models = roster["models"] if isinstance(roster, dict) else roster
+    ollama_only = [m for m in models if m.get("ollama_tag") and not m.get("hf_file")]
+    assert ollama_only, "roster shape changed — this test is no longer meaningful"
+    for m in ollama_only:
+        rc = CLI._setup(_local_args(model=m["id"], config=str(tmp_path / f"{m['id']}.yaml")))
+        assert rc == 0, f"{m['id']}: {capsys.readouterr().out}"
+        capsys.readouterr()

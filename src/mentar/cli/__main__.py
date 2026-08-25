@@ -318,7 +318,15 @@ def _setup(args) -> int:
     if m.get("reasoning"):
         gen["extra_body"] = {"think": False}
 
-    model_path = models_dir() / (m["hf_file"] or "")
+    # .get, not [] -- this line runs for EVERY runtime but only the gguf and
+    # llama_app branches use it, and four of six roster models are ollama-only
+    # with no hf_file at all. `mentar setup --runtime auto` on a Mac with Ollama
+    # installed picks one of those and died here with KeyError: 'hf_file'
+    # (2026-08-25, maintainer's first run). The `or ""` shows the author expected
+    # an EMPTY value; the key can be absent entirely. The gguf/llama_app branches
+    # are safe either way: autoselect.py only offers those runtimes models that
+    # have a GGUF, so this is never empty when it is actually used.
+    model_path = models_dir() / (m.get("hf_file") or "")
     if sel.runtime == "ollama":
         cfg = {"backend": "ollama",
                "ollama": {"base_url": "http://localhost:11434", "model": m["ollama_tag"]},
