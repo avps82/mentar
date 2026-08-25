@@ -244,12 +244,13 @@ def _verify_backend(cfg: dict) -> tuple[bool, str]:
         return False, f"{type(e).__name__}: {e}"
     if out and out.strip():
         return True, f"model replied {out.strip()[:40]!r}"
-    # Kept under the 200-char prompt-literal limit (test_prompt_registry): this is
-    # a CLI diagnostic, not a prompt, and the long version tripped that gate.
+    # The reasoning-model case now raises ReasoningOnlyReply above and is reported
+    # by name, so reaching here means empty content AND no reasoning field --
+    # genuinely nothing came back. Kept under the 200-char prompt-literal limit
+    # (test_prompt_registry): a CLI diagnostic is not a prompt.
     return False, (
-        "empty reply — a reasoning model may be spending the whole budget on hidden "
-        "chain-of-thought. Ollama's /v1 can ignore extra_body.think=false, so raise "
-        "generation.max_tokens.")
+        "empty reply, and no reasoning either — the model returned nothing at all. "
+        "Check `ollama list` shows it, then try raising generation.max_tokens.")
 
 
 def _setup_remote_api(args, repo: Path) -> int:

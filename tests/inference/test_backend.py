@@ -33,8 +33,11 @@ from mentar.inference import backend as B  # noqa: E402
 # ── Fake OpenAI client (records calls, optionally raises) ─────────────────────
 
 class _FakeMessage:
-    def __init__(self, content):
-        self.message = type("M", (), {"content": content})
+    def __init__(self, content, reasoning=None):
+        attrs = {"content": content}
+        if reasoning is not None:
+            attrs["reasoning"] = reasoning
+        self.message = type("M", (), attrs)
 
 
 class _FakeCompletions:
@@ -46,7 +49,8 @@ class _FakeCompletions:
         if self._parent.raise_n > 0:
             self._parent.raise_n -= 1
             raise ConnectionError("boom")
-        return type("R", (), {"choices": [_FakeMessage(self._parent.reply)]})
+        return type("R", (), {"choices": [
+            _FakeMessage(self._parent.reply, getattr(self._parent, "reasoning", None))]})
 
 
 class _FakeClient:
@@ -56,6 +60,7 @@ class _FakeClient:
         self.init_kwargs = kwargs
         self.calls = []
         self.reply = "hello from model"
+        self.reasoning = None
         self.raise_n = 0
         self.chat = type("C", (), {"completions": _FakeCompletions(self)})
         _FakeClient.instances.append(self)
@@ -308,3 +313,60 @@ def test_upsert_dotenv_strips_surrounding_whitespace(tmp_path):
     env_path = tmp_path / ".env"
     B.upsert_dotenv_value(env_path, "MENTAR_VLLM_API_KEY", "  sk-padded\n")
     assert 'MENTAR_VLLM_API_KEY="sk-padded"' in env_path.read_text(encoding="utf-8")
+
+
+def test_reasoning_only_reply_is_named_not_returned_as_silence(monkeypatch=None):
+    """Ollama /v1 + a reasoning model: content is EMPTY and the whole budget went
+    into a non-standard `reasoning` field. Measured 2026-08-25 on gemma4:12b --
+    think=false and think=true were equivalent, both empty, so the setting meant
+    to prevent this does nothing on that server.
+
+    Returning "" made it look like a model with nothing to say, and the only log
+    line blamed max_tokens, which was not the cause.
+    """
+    _install_fake(monkeypatch)
+    fn = B.make_llm_call({"backend": "ollama",
+                          "ollama": {"base_url": "http://localhost:11434", "model": "gemma4:12b"}})
+    cli = _FakeClient.instances[-1]
+    cli.reply = ""
+    cli.reasoning = "The objective is to add two fractions: 3/4 and 1/8. " * 20
+
+    try:
+        fn([{"role": "user", "content": "What is 3/4 + 1/8?"}])
+        raise AssertionError("expected ReasoningOnlyReply, got a silent empty answer")
+    except B.ReasoningOnlyReply as exc:
+        msg = str(exc)
+
+    assert "gemma4:12b" in msg, msg          # which model
+    assert "think=false" in msg, msg         # why the config did not save you
+    assert "gemma2-9b" in msg, msg           # what to do instead
+    # The chain-of-thought is the model's scratchpad, never a child-facing answer.
+    assert "objective is to add" not in msg, "reasoning text must not be echoed"
+
+
+def test_a_reasoning_only_reply_is_not_retried(monkeypatch=None):
+    """It is deterministic, and on the hardware where it happens each retry is a
+    ~55s wait for the identical failure."""
+    _install_fake(monkeypatch)
+    fn = B.make_llm_call({"backend": "ollama",
+                          "ollama": {"base_url": "http://localhost:11434", "model": "gemma4:12b"}})
+    cli = _FakeClient.instances[-1]
+    cli.reply = ""
+    cli.reasoning = "thinking..."
+    try:
+        fn([{"role": "user", "content": "hi"}])
+    except B.ReasoningOnlyReply:
+        pass
+    assert len(cli.calls) == 1, f"retried a deterministic failure {len(cli.calls)} times"
+
+
+def test_an_ordinary_empty_reply_still_returns_empty(monkeypatch=None):
+    """Only the reasoning case is reclassified. A server that genuinely returns
+    nothing keeps its old behaviour -- this must not become a blanket raise."""
+    _install_fake(monkeypatch)
+    fn = B.make_llm_call({"backend": "ollama",
+                          "ollama": {"base_url": "http://localhost:11434", "model": "x"}})
+    cli = _FakeClient.instances[-1]
+    cli.reply = ""
+    cli.reasoning = None
+    assert fn([{"role": "user", "content": "hi"}]) == ""

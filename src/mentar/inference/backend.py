@@ -50,6 +50,15 @@ _DEFAULT_TEMPERATURE = 0.3
 # child saw). The verifier, not brevity, is the safety mechanism; the cap only
 # needs to bound runaway generation, not shape the prose.
 DEFAULT_MAX_TOKENS = 1200
+
+
+class ReasoningOnlyReply(RuntimeError):
+    """The server returned a reasoning model's chain-of-thought and NO answer.
+
+    Ollama's OpenAI-compatible /v1 puts hidden reasoning in a non-standard
+    `reasoning` field, leaves `content` empty, and IGNORES think=false -- so the
+    setting meant to suppress it does nothing. Deterministic, so never retried.
+    """
 _DEFAULT_TIMEOUT_S = 120.0
 _DEFAULT_RETRIES = 2          # total attempts = retries + 1
 _RETRY_BACKOFF_S = 1.5
@@ -273,7 +282,28 @@ def _make_openai_call(endpoint: dict, gen: dict) -> LLMCall:
                         "llm_call: output TRUNCATED at max_tokens=%d — raise "
                         "generation.max_tokens in the inference config", max_tokens,
                     )
-                return choice.message.content or ""
+                content = choice.message.content or ""
+                if not content:
+                    # Measured on Ollama /v1 with gemma4:12b (2026-08-25):
+                    # think=false and think=true were equivalent -- BOTH returned
+                    # content:"" with the whole budget spent in `reasoning`. So
+                    # `or ""` handed the child silence while the only log line
+                    # blamed max_tokens, which was not the cause. The reasoning
+                    # text is the model's scratchpad, NOT an answer, so it is
+                    # never shown -- but its presence names the real fault.
+                    reasoning = (getattr(choice.message, "reasoning", None)
+                                 or getattr(choice.message, "reasoning_content", None))
+                    if reasoning:
+                        raise ReasoningOnlyReply(
+                            f"model {model!r} returned only hidden reasoning and an "
+                            f"EMPTY answer ({len(reasoning)} chars of `reasoning`). "
+                            "This server ignores think=false, so the reasoning cannot "
+                            "be switched off here. Use a non-reasoning model "
+                            "(mentar setup --model gemma2-9b)."
+                        )
+                return content
+            except ReasoningOnlyReply:
+                raise  # deterministic — retrying just burns another slow call
             except Exception as exc:  # network/5xx/timeout — retry a couple times
                 last_exc = exc
                 if attempt < retries:
