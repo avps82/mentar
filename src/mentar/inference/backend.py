@@ -301,21 +301,37 @@ def _make_openai_call(endpoint: dict, gen: dict) -> LLMCall:
                     )
                 content = choice.message.content or ""
                 if not content:
-                    # Measured on Ollama /v1 with gemma4:12b (2026-08-25):
-                    # think=false and think=true were equivalent -- BOTH returned
-                    # content:"" with the whole budget spent in `reasoning`. So
-                    # `or ""` handed the child silence while the only log line
-                    # blamed max_tokens, which was not the cause. The reasoning
-                    # text is the model's scratchpad, NOT an answer, so it is
-                    # never shown -- but its presence names the real fault.
+                    # A reasoning model emits hidden reasoning FIRST, then the
+                    # answer. Ollama's /v1 puts that reasoning in a non-standard
+                    # field and leaves `content` empty, so `or ""` handed the
+                    # child silence. The reasoning text is the model's
+                    # scratchpad, NOT an answer, so it is never shown -- but its
+                    # presence, plus finish_reason, names which fault this is:
+                    #
+                    #   length -> reasoning was CUT OFF before the answer began.
+                    #             More budget can genuinely fix this.
+                    #   stop   -> the model finished and still said nothing.
+                    #             Budget will not help; the model is unusable here.
+                    #
+                    # Measured 2026-08-25 (gemma4:12b, Ollama /v1): think=false
+                    # and think=true were identical, so the flag that is supposed
+                    # to prevent all of this is ignored on that server.
                     reasoning = (getattr(choice.message, "reasoning", None)
                                  or getattr(choice.message, "reasoning_content", None))
                     if reasoning:
+                        why = getattr(choice, "finish_reason", None)
+                        if why == "length":
+                            raise ReasoningOnlyReply(
+                                f"model {model!r} spent all {max_tokens} tokens on hidden "
+                                f"reasoning ({len(reasoning)} chars) and was cut off before "
+                                "writing an answer. Raise generation.max_tokens, or use a "
+                                "non-reasoning model (mentar setup --model gemma2-9b). "
+                                "think=false does not help: Ollama's /v1 ignores it."
+                            )
                         raise ReasoningOnlyReply(
-                            f"model {model!r} returned only hidden reasoning and an "
-                            f"EMPTY answer ({len(reasoning)} chars of `reasoning`). "
-                            "This server ignores think=false, so the reasoning cannot "
-                            "be switched off here. Use a non-reasoning model "
+                            f"model {model!r} finished (finish_reason={why!r}) having written "
+                            f"{len(reasoning)} chars of hidden reasoning and an EMPTY answer. "
+                            "More tokens will NOT help. Use a non-reasoning model "
                             "(mentar setup --model gemma2-9b)."
                         )
                 return content

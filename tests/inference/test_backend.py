@@ -33,11 +33,12 @@ from mentar.inference import backend as B  # noqa: E402
 # ── Fake OpenAI client (records calls, optionally raises) ─────────────────────
 
 class _FakeMessage:
-    def __init__(self, content, reasoning=None):
+    def __init__(self, content, reasoning=None, finish_reason=None):
         attrs = {"content": content}
         if reasoning is not None:
             attrs["reasoning"] = reasoning
         self.message = type("M", (), attrs)
+        self.finish_reason = finish_reason
 
 
 class _FakeCompletions:
@@ -49,8 +50,10 @@ class _FakeCompletions:
         if self._parent.raise_n > 0:
             self._parent.raise_n -= 1
             raise ConnectionError("boom")
-        return type("R", (), {"choices": [
-            _FakeMessage(self._parent.reply, getattr(self._parent, "reasoning", None))]})
+        return type("R", (), {"choices": [_FakeMessage(
+            self._parent.reply,
+            getattr(self._parent, "reasoning", None),
+            getattr(self._parent, "finish_reason", None))]})
 
 
 class _FakeClient:
@@ -61,6 +64,7 @@ class _FakeClient:
         self.calls = []
         self.reply = "hello from model"
         self.reasoning = None
+        self.finish_reason = None
         self.raise_n = 0
         self.chat = type("C", (), {"completions": _FakeCompletions(self)})
         _FakeClient.instances.append(self)
@@ -331,16 +335,28 @@ def test_reasoning_only_reply_is_named_not_returned_as_silence(monkeypatch=None)
     cli.reply = ""
     cli.reasoning = "The objective is to add two fractions: 3/4 and 1/8. " * 20
 
+    # finish_reason="length": the reasoning was CUT OFF before the answer began,
+    # so more budget can genuinely fix it and the message must say so.
+    cli.finish_reason = "length"
     try:
         fn([{"role": "user", "content": "What is 3/4 + 1/8?"}])
         raise AssertionError("expected ReasoningOnlyReply, got a silent empty answer")
     except B.ReasoningOnlyReply as exc:
         msg = str(exc)
+    assert "gemma4:12b" in msg, msg
+    assert "max_tokens" in msg, msg
+    assert "objective is to add" not in msg, "reasoning text must not be echoed"
 
-    assert "gemma4:12b" in msg, msg          # which model
-    assert "think=false" in msg, msg         # why the config did not save you
-    assert "gemma2-9b" in msg, msg           # what to do instead
-    # The chain-of-thought is the model's scratchpad, never a child-facing answer.
+    # finish_reason="stop": it finished and still said nothing. Telling someone to
+    # raise max_tokens here would send them round a loop that cannot terminate.
+    cli.finish_reason = "stop"
+    try:
+        fn([{"role": "user", "content": "What is 3/4 + 1/8?"}])
+        raise AssertionError("expected ReasoningOnlyReply")
+    except B.ReasoningOnlyReply as exc:
+        msg = str(exc)
+    assert "NOT help" in msg, msg
+    assert "gemma2-9b" in msg, msg
     assert "objective is to add" not in msg, "reasoning text must not be echoed"
 
 
