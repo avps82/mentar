@@ -49,7 +49,7 @@ _DEFAULT_TEMPERATURE = 0.3
 # explanation MID-LIST on the maintainer's machine ("2." was the final line a
 # child saw). The verifier, not brevity, is the safety mechanism; the cap only
 # needs to bound runaway generation, not shape the prose.
-_DEFAULT_MAX_TOKENS = 1200
+DEFAULT_MAX_TOKENS = 1200
 _DEFAULT_TIMEOUT_S = 120.0
 _DEFAULT_RETRIES = 2          # total attempts = retries + 1
 _RETRY_BACKOFF_S = 1.5
@@ -226,7 +226,7 @@ def _gen_params(cfg: dict) -> dict:
     gen = cfg.get("generation") or {}
     return {
         "temperature": float(gen.get("temperature", _DEFAULT_TEMPERATURE)),
-        "max_tokens": int(gen.get("max_tokens", _DEFAULT_MAX_TOKENS)),
+        "max_tokens": int(gen.get("max_tokens", DEFAULT_MAX_TOKENS)),
         "timeout": float(gen.get("timeout", _DEFAULT_TIMEOUT_S)),
         "retries": int(gen.get("retries", _DEFAULT_RETRIES)),
         # Passthrough for non-standard request fields (e.g. {"think": false} to disable

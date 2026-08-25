@@ -179,3 +179,59 @@ def test_ollama_installed_but_not_running_is_started_for_you(tmp_path, capsys, m
     assert started, "setup did not start the ollama server"
     assert rc == 0, out
     assert "starting it" in out
+
+
+def _written_max_tokens(**kw) -> int:
+    """The max_tokens `mentar setup` would actually write, read back from its output."""
+    import contextlib
+    import io
+    import re
+
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        rc = CLI._setup(_local_args(**kw))
+    assert rc == 0, buf.getvalue()
+    found = re.search(r"max_tokens: (\d+)", buf.getvalue())
+    assert found, f"no max_tokens in setup output:\n{buf.getvalue()}"
+    return int(found.group(1))
+
+
+def test_setup_never_writes_a_smaller_budget_than_the_backend_default():
+    """setup used to hardcode 512 -- under HALF of DEFAULT_MAX_TOKENS (1200) -- so
+    running it silently DOWNGRADED generation and real turns logged
+    "output TRUNCATED at max_tokens=512" (live macOS run, 2026-08-25).
+
+    The bug is not the number, it is setup keeping a competing default at all.
+    """
+    import yaml
+
+    from mentar.inference.backend import DEFAULT_MAX_TOKENS
+
+    roster = yaml.safe_load((REPO_ROOT / "config" / "model_roster.yaml").read_text())
+    models = roster["models"] if isinstance(roster, dict) else roster
+    checked = [m for m in models if m.get("ollama_tag")]
+    assert checked, "roster shape changed — this test is no longer meaningful"
+    for m in checked:
+        got = _written_max_tokens(model=m["id"])
+        assert got >= DEFAULT_MAX_TOKENS, (
+            f"{m['id']}: setup writes max_tokens={got}, below the backend's own "
+            f"default of {DEFAULT_MAX_TOKENS} — setup must never downgrade generation"
+        )
+
+
+def test_a_reasoning_model_gets_more_room_than_a_plain_one():
+    """A reasoning model spends budget on hidden chain-of-thought BEFORE the visible
+    answer. think=False is meant to suppress that, but Ollama's OpenAI-compatible
+    /v1 can ignore the field, so the cap must survive the suppression being ignored.
+    """
+    import yaml
+
+    from mentar.inference.backend import DEFAULT_MAX_TOKENS
+
+    roster = yaml.safe_load((REPO_ROOT / "config" / "model_roster.yaml").read_text())
+    models = roster["models"] if isinstance(roster, dict) else roster
+    reasoning = [m for m in models if m.get("reasoning") and m.get("ollama_tag")]
+    plain = [m for m in models if not m.get("reasoning") and m.get("ollama_tag")]
+    assert reasoning and plain, "roster no longer has both kinds — test is meaningless"
+    assert _written_max_tokens(model=reasoning[0]["id"]) > DEFAULT_MAX_TOKENS
+    assert _written_max_tokens(model=plain[0]["id"]) == DEFAULT_MAX_TOKENS

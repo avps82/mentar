@@ -21,6 +21,7 @@ import time
 import uuid
 from pathlib import Path
 
+from mentar.inference.backend import DEFAULT_MAX_TOKENS
 from mentar.paths import bundle_root, config_path, db_path, is_frozen, models_dir
 
 
@@ -234,7 +235,7 @@ def _verify_backend(cfg: dict) -> tuple[bool, str]:
     # raise generation.max_tokens". It was telling the truth about a limit it had
     # imposed on itself. A verification step must test the configuration the app
     # will actually run, or it is testing something nobody ships.
-    gen.setdefault("max_tokens", 512)
+    gen.setdefault("max_tokens", DEFAULT_MAX_TOKENS)
     probe["generation"] = gen
     try:
         call = make_llm_call(probe)
@@ -268,7 +269,7 @@ def _setup_remote_api(args, repo: Path) -> int:
         "backend": "vllm",
         "vllm": {"base_url": args.base_url, "model": args.model,
                  "api_key": "${MENTAR_VLLM_API_KEY}" if args.api_key else "no-key"},
-        "generation": {"temperature": 0.3, "max_tokens": 512},
+        "generation": {"temperature": 0.3, "max_tokens": DEFAULT_MAX_TOKENS},
     }
 
     print("\nmentar setup (remote API)")
@@ -331,9 +332,21 @@ def _setup(args) -> int:
     for w in sel.warnings:
         print(f"  ! {w}")
 
-    gen: dict = {"temperature": 0.3, "max_tokens": 512}
+    # DEFAULT_MAX_TOKENS, not a number of our own: setup used to write 512 --
+    # under HALF the backend's own default -- so running setup silently
+    # DOWNGRADED generation, and real tutoring turns hit "output TRUNCATED at
+    # max_tokens=512" (reported from a live macOS run, 2026-08-25).
+    gen: dict = {"temperature": 0.3, "max_tokens": DEFAULT_MAX_TOKENS}
     if m.get("reasoning"):
+        # A reasoning model spends budget on hidden chain-of-thought BEFORE the
+        # visible answer, so it needs headroom the others don't. think=False is
+        # meant to suppress that, but Ollama's OpenAI-compatible /v1 can ignore
+        # the field even though its native API honours it -- so the suppression
+        # cannot be relied on, and the cap has to survive it being ignored.
+        # max_tokens is a CEILING, not a target: raising it costs nothing unless
+        # the model actually emits more, while truncation is always broken output.
         gen["extra_body"] = {"think": False}
+        gen["max_tokens"] = 2048
 
     # .get, not [] -- this line runs for EVERY runtime but only the gguf and
     # llama_app branches use it, and four of six roster models are ollama-only
