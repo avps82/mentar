@@ -121,15 +121,35 @@ fi
 if command -v gh >/dev/null 2>&1 && command -v timeout >/dev/null 2>&1; then
   branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
   ci=$(timeout 6 gh run list --workflow=ci.yml --branch "$branch" --limit 1 \
-         --json status,conclusion,headSha,url \
-         -q '.[]|"\(.status)\t\(.conclusion)\t\(.headSha[0:7])\t\(.url)"' 2>/dev/null || true)
+         --json status,conclusion,headSha,url,databaseId \
+         -q '.[]|"\(.status)\t\(.conclusion)\t\(.headSha[0:7])\t\(.url)\t\(.databaseId)"' 2>/dev/null || true)
   if [ -n "$ci" ]; then
     ci_status=$(printf '%s' "$ci" | cut -f1)
     ci_concl=$(printf '%s' "$ci" | cut -f2)
     ci_sha=$(printf '%s' "$ci" | cut -f3)
     ci_url=$(printf '%s' "$ci" | cut -f4)
+    ci_id=$(printf '%s' "$ci" | cut -f5)
     if [ "$ci_status" = "completed" ] && [ "$ci_concl" != "success" ] && [ "$ci_concl" != "skipped" ]; then
-      cat >&2 <<MSG
+      # A billing lapse (or a disabled runner) fails every job in SECONDS without
+      # executing a single step, and `gh run list` reports that identically to a
+      # genuinely broken build. Measured 2026-08-25: all 30 runs back to 08-21
+      # were refused this way, so "CI is failure" had cried wolf for five days --
+      # exactly how a real red run gets ignored. Zero total steps == never ran.
+      ci_steps=$(timeout 6 gh run view "$ci_id" --json jobs \
+                   -q '[.jobs[]|.steps|length]|add' 2>/dev/null || echo "")
+      if [ "$ci_steps" = "0" ]; then
+        cat >&2 <<MSG
+
+  ────────────────────────────────────────────────────────────────
+   CI never RAN on $branch (last run, commit $ci_sha)
+   GitHub refused it before any step executed -- almost always a failed
+   payment or spending limit, NOT your code. Nothing has been verified
+   remotely, so scripts/release_gate.sh is the only check you have.
+   $ci_url
+  ────────────────────────────────────────────────────────────────
+MSG
+      else
+        cat >&2 <<MSG
 
   ────────────────────────────────────────────────────────────────
    CI is $ci_concl on $branch (last run, commit $ci_sha)
@@ -137,6 +157,7 @@ if command -v gh >/dev/null 2>&1 && command -v timeout >/dev/null 2>&1; then
    Committing anyway is fine -- this is a heads-up, not a gate.
   ────────────────────────────────────────────────────────────────
 MSG
+      fi
     fi
   fi
 fi
