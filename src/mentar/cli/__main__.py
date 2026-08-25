@@ -222,7 +222,19 @@ def _verify_backend(cfg: dict) -> tuple[bool, str]:
     from mentar.inference import make_llm_call
     probe = dict(cfg)
     gen = dict(cfg.get("generation", {}))
-    gen["max_tokens"] = 16
+    # Probe with the CONFIG's own max_tokens, not a tighter cap. This forced 16,
+    # which is fewer tokens than a reasoning model spends before it emits any
+    # content -- so setup wrote a perfectly good config, probed it with a budget
+    # the real app never uses, got an empty string, and reported
+    # "✗ Backend did not respond" with exit 1 (2026-08-25, maintainer's Mac, on
+    # gemma4-12b -- which is what auto-selection PICKS on a 16GB machine, so the
+    # false failure hit the default first run).
+    #
+    # The probe's own warning said it: "output TRUNCATED at max_tokens=16 --
+    # raise generation.max_tokens". It was telling the truth about a limit it had
+    # imposed on itself. A verification step must test the configuration the app
+    # will actually run, or it is testing something nobody ships.
+    gen.setdefault("max_tokens", 512)
     probe["generation"] = gen
     try:
         call = make_llm_call(probe)
@@ -231,7 +243,12 @@ def _verify_backend(cfg: dict) -> tuple[bool, str]:
         return False, f"{type(e).__name__}: {e}"
     if out and out.strip():
         return True, f"model replied {out.strip()[:40]!r}"
-    return False, "empty reply (reasoning model? set generation.extra_body.think=false)"
+    return False, (
+        "empty reply. If this is a reasoning model, generation.extra_body.think=false "
+        "should suppress its hidden chain-of-thought -- note that Ollama's "
+        "OpenAI-compatible /v1 endpoint may ignore that field even though the native "
+        "API honours it, in which case raise generation.max_tokens instead so the "
+        "reasoning fits and real content still follows.")
 
 
 def _setup_remote_api(args, repo: Path) -> int:
@@ -391,14 +408,37 @@ def _setup(args) -> int:
         #
         # `ollama list` is the cheap probe: no network, and it honours OLLAMA_HOST
         # exactly as the pull will, which a hardcoded localhost URL would not.
-        probe = subprocess.run(["ollama", "list"], capture_output=True, text=True)
-        if probe.returncode != 0:
-            print("ERROR: Ollama is installed but its server is not running.\n"
-                  "  Start it, then re-run this command:\n"
-                  "      ollama serve          # or just open the Ollama app on macOS\n"
-                  "  Prefer not to use Ollama? Re-run with:\n"
-                  "      mentar setup --runtime gguf", file=sys.stderr)
-            return 1
+        if subprocess.run(["ollama", "list"], capture_output=True, text=True).returncode != 0:
+            # START IT, do not lecture about it (2026-08-25, maintainer: "I had to
+            # run ollama serve in another terminal.. not one cmd to start them").
+            # Setup's whole job is getting a local model working; sending someone
+            # to a second terminal to run one command is friction we can absorb,
+            # the same reasoning as scripts/bootstrap.sh wrapping the venv dance.
+            #
+            # Detached (start_new_session) so the daemon OUTLIVES setup -- it has
+            # to still be there for `mentar serve`. Output is discarded: the
+            # server is chatty and this is not its log.
+            print("Ollama is installed but not running — starting it...")
+            try:
+                subprocess.Popen(["ollama", "serve"],
+                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                                 start_new_session=True)
+            except OSError as e:
+                print(f"ERROR: could not start ollama serve: {e}", file=sys.stderr)
+                return 1
+            for _ in range(20):                      # up to ~10s, it is quick
+                time.sleep(0.5)
+                if subprocess.run(["ollama", "list"],
+                                  capture_output=True, text=True).returncode == 0:
+                    print("✓ Ollama server is up.")
+                    break
+            else:
+                print("ERROR: started `ollama serve` but it did not come up within 10s.\n"
+                      "  Run it yourself to see why:\n"
+                      "      ollama serve\n"
+                      "  Prefer not to use Ollama? Re-run with:\n"
+                      "      mentar setup --runtime gguf", file=sys.stderr)
+                return 1
         print(f"\nPulling {m['ollama_tag']} (may take a while)...")
         if subprocess.run(["ollama", "pull", m["ollama_tag"]]).returncode != 0:
             print(f"ERROR: `ollama pull {m['ollama_tag']}` failed (see its output above).\n"

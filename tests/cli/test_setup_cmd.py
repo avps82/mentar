@@ -139,35 +139,43 @@ def test_every_ollama_only_roster_model_can_be_set_up(tmp_path, capsys):
         capsys.readouterr()
 
 
-def test_ollama_installed_but_not_running_says_how_to_start_it(tmp_path, capsys, monkeypatch):
-    """autoselect picks the ollama runtime on `shutil.which("ollama")` alone, so
-    "installed but not serving" is a normal first-run state -- on macOS the brew
-    install gives you the binary and the daemon only starts with the app.
+def test_ollama_installed_but_not_running_is_started_for_you(tmp_path, capsys, monkeypatch):
+    """autoselect picks the ollama runtime on `shutil.which("ollama")` alone -- the
+    BINARY being on PATH. On macOS the brew install gives you exactly that while
+    the daemon only starts with the app, so "installed but not serving" is an
+    ordinary first-run state.
 
-    It used to print "ERROR: ollama pull failed." after "may take a while",
-    which says nothing about what to do, while the branch right above it (ollama
-    not installed at all) gave a proper instruction. The commonest failure had
-    the least useful message.
+    It used to print "ERROR: ollama pull failed." AFTER "may take a while", then
+    (briefly) a message telling you to open a second terminal. Maintainer,
+    2026-08-25: "I had to run ollama serve in another terminal.. not one cmd to
+    start them". So setup starts it, and only explains itself if that fails.
     """
-    import subprocess
-
-    calls = []
+    started, listed = [], {"n": 0}
 
     def fake_run(cmd, *a, **kw):
-        calls.append(cmd)
         if cmd[:2] == ["ollama", "list"]:
-            return SimpleNamespace(returncode=1, stdout="", stderr="connection refused")
-        raise AssertionError(f"should not have got as far as {cmd!r}")
+            listed["n"] += 1
+            # down on the first look, up once `serve` has been spawned
+            return SimpleNamespace(returncode=0 if started else 1, stdout="", stderr="")
+        if cmd[:2] == ["ollama", "pull"]:
+            return SimpleNamespace(returncode=0, stdout="", stderr="")
+        raise AssertionError(f"unexpected command {cmd!r}")
+
+    def fake_popen(cmd, *a, **kw):
+        assert cmd == ["ollama", "serve"], cmd
+        assert kw.get("start_new_session"), "daemon must outlive setup"
+        started.append(cmd)
+        return SimpleNamespace(pid=1234)
 
     monkeypatch.setattr(CLI.shutil, "which", lambda name: "/usr/local/bin/ollama")
-    monkeypatch.setattr(subprocess, "run", fake_run)
     monkeypatch.setattr(CLI.subprocess, "run", fake_run)
+    monkeypatch.setattr(CLI.subprocess, "Popen", fake_popen)
+    monkeypatch.setattr(CLI.time, "sleep", lambda s: None)
+    monkeypatch.setattr(CLI, "_verify_backend", lambda cfg: (True, "model replied 'ping'"))
 
     rc = CLI._setup(_local_args(model="gemma4-12b", dry_run=False,
                                 config=str(tmp_path / "inf.yaml")))
-    err = capsys.readouterr().err
-    assert rc == 1
-    assert "server is not running" in err
-    assert "ollama serve" in err
-    # and it must NOT have started a download first
-    assert not any(c[:2] == ["ollama", "pull"] for c in calls), calls
+    out = capsys.readouterr().out
+    assert started, "setup did not start the ollama server"
+    assert rc == 0, out
+    assert "starting it" in out
