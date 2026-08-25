@@ -50,9 +50,13 @@ echo "== 2/5 doc paths"
 
 echo "== 3/5 test suite (~22 min)"
 set +e
-out=$("$PY" -m pytest tests/ -q -rs 2>&1); rc=$?
+# --durations: the suite takes ~22 min on this 2-core box and recorded no
+# per-test timings, so "why so long" could only be guessed at. Costs nothing.
+out=$("$PY" -m pytest tests/ -q -rs --durations=15 2>&1); rc=$?
 set -e
-printf '%s\n' "$out" | tail -25
+# tail -45, not -25: the durations block is ~17 lines and would otherwise push
+# the -rs skip reasons out of view.
+printf '%s\n' "$out" | tail -45
 [ "$rc" -eq 0 ] || fail "tests are failing"
 
 echo "== 4/5 browser checks actually ran"
