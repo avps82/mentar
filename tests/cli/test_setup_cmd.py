@@ -137,3 +137,37 @@ def test_every_ollama_only_roster_model_can_be_set_up(tmp_path, capsys):
         rc = CLI._setup(_local_args(model=m["id"], config=str(tmp_path / f"{m['id']}.yaml")))
         assert rc == 0, f"{m['id']}: {capsys.readouterr().out}"
         capsys.readouterr()
+
+
+def test_ollama_installed_but_not_running_says_how_to_start_it(tmp_path, capsys, monkeypatch):
+    """autoselect picks the ollama runtime on `shutil.which("ollama")` alone, so
+    "installed but not serving" is a normal first-run state -- on macOS the brew
+    install gives you the binary and the daemon only starts with the app.
+
+    It used to print "ERROR: ollama pull failed." after "may take a while",
+    which says nothing about what to do, while the branch right above it (ollama
+    not installed at all) gave a proper instruction. The commonest failure had
+    the least useful message.
+    """
+    import subprocess
+
+    calls = []
+
+    def fake_run(cmd, *a, **kw):
+        calls.append(cmd)
+        if cmd[:2] == ["ollama", "list"]:
+            return SimpleNamespace(returncode=1, stdout="", stderr="connection refused")
+        raise AssertionError(f"should not have got as far as {cmd!r}")
+
+    monkeypatch.setattr(CLI.shutil, "which", lambda name: "/usr/local/bin/ollama")
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    monkeypatch.setattr(CLI.subprocess, "run", fake_run)
+
+    rc = CLI._setup(_local_args(model="gemma4-12b", dry_run=False,
+                                config=str(tmp_path / "inf.yaml")))
+    err = capsys.readouterr().err
+    assert rc == 1
+    assert "server is not running" in err
+    assert "ollama serve" in err
+    # and it must NOT have started a download first
+    assert not any(c[:2] == ["ollama", "pull"] for c in calls), calls

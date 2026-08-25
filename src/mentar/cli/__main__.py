@@ -382,9 +382,29 @@ def _setup(args) -> int:
             print("ERROR: Ollama not installed — get it at https://ollama.com/download, "
                   "or re-run: mentar setup --runtime gguf", file=sys.stderr)
             return 1
+        # Installed does NOT mean running. autoselect picks this runtime on
+        # `shutil.which("ollama")` alone, and on macOS `brew install ollama`
+        # gives you the binary while the daemon only starts when you open the
+        # app -- so the commonest first-run state is "installed, not serving"
+        # (2026-08-25, maintainer's Mac). Probe BEFORE the download, so the
+        # failure does not arrive after "may take a while".
+        #
+        # `ollama list` is the cheap probe: no network, and it honours OLLAMA_HOST
+        # exactly as the pull will, which a hardcoded localhost URL would not.
+        probe = subprocess.run(["ollama", "list"], capture_output=True, text=True)
+        if probe.returncode != 0:
+            print("ERROR: Ollama is installed but its server is not running.\n"
+                  "  Start it, then re-run this command:\n"
+                  "      ollama serve          # or just open the Ollama app on macOS\n"
+                  "  Prefer not to use Ollama? Re-run with:\n"
+                  "      mentar setup --runtime gguf", file=sys.stderr)
+            return 1
         print(f"\nPulling {m['ollama_tag']} (may take a while)...")
         if subprocess.run(["ollama", "pull", m["ollama_tag"]]).returncode != 0:
-            print("ERROR: ollama pull failed.", file=sys.stderr)
+            print(f"ERROR: `ollama pull {m['ollama_tag']}` failed (see its output above).\n"
+                  "  Common causes: no disk space, no network, or the tag was renamed\n"
+                  "  upstream. `ollama list` shows what you already have.",
+                  file=sys.stderr)
             return 1
     else:
         if sel.runtime == "gguf" and not _ensure_llama_cpp():
