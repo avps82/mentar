@@ -243,12 +243,12 @@ def _verify_backend(cfg: dict) -> tuple[bool, str]:
         return False, f"{type(e).__name__}: {e}"
     if out and out.strip():
         return True, f"model replied {out.strip()[:40]!r}"
+    # Kept under the 200-char prompt-literal limit (test_prompt_registry): this is
+    # a CLI diagnostic, not a prompt, and the long version tripped that gate.
     return False, (
-        "empty reply. If this is a reasoning model, generation.extra_body.think=false "
-        "should suppress its hidden chain-of-thought -- note that Ollama's "
-        "OpenAI-compatible /v1 endpoint may ignore that field even though the native "
-        "API honours it, in which case raise generation.max_tokens instead so the "
-        "reasoning fits and real content still follows.")
+        "empty reply — a reasoning model may be spending the whole budget on hidden "
+        "chain-of-thought. Ollama's /v1 can ignore extra_body.think=false, so raise "
+        "generation.max_tokens.")
 
 
 def _setup_remote_api(args, repo: Path) -> int:
