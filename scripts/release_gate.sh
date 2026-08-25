@@ -32,6 +32,11 @@ if [ -n "$(git status --porcelain)" ]; then
   echo "      git add -A && git commit && ./scripts/release_gate.sh && git push" >&2
   exit 1
 fi
+# Checking cleanliness only HERE is not enough: a ~24 min run leaves a wide
+# window to edit or commit, and the stamp written at the end would then certify
+# a tree that was never the one tested. Remember what we actually ran against.
+head_at_start=$(git rev-parse HEAD)
+tree_at_start=$(git status --porcelain)
 
 PY=".venv/bin/python"; [ -x "$PY" ] || PY="python3"
 RUFF=".venv/bin/ruff";  [ -x "$RUFF" ] || RUFF="ruff"
@@ -73,7 +78,16 @@ else
   echo "   NOTE: gitleaks missing or older than CI's v8.30.1 -- not gated locally" >&2
 fi
 
+# Re-verify before stamping. If HEAD moved or the tree was touched during the
+# run, some tests ran against code that is no longer here and the stamp would be
+# a lie that pre-push then trusts. Refuse rather than certify a mixed tree.
 sha=$(git rev-parse HEAD)
+if [ "$sha" != "$head_at_start" ]; then
+  fail "HEAD moved during the run ($head_at_start -> $sha) — re-run the gate"
+fi
+if [ "$(git status --porcelain)" != "$tree_at_start" ]; then
+  fail "the working tree changed during the run — re-run the gate"
+fi
 echo "$sha" > .gate-passed
 echo ""
 echo "GATE PASSED for $sha  (stamped .gate-passed — pre-push will accept this commit)"
