@@ -1809,3 +1809,30 @@ def test_rejumping_to_the_topic_you_left_still_resumes_it():
     assert ctrl.session_id == session_id_before, (
         "re-tapping the SAME topic must resume its session, not open a new one"
     )
+
+
+def test_a_stop_outlasts_the_slowest_turn_the_config_allows():
+    """U-11 "you can stop anytime", and the call site says a stop WAITS for an
+    in-flight turn rather than being dropped.
+
+    It waited a flat 20s, which was right when a turn took seconds. Measured
+    2026-08-25 on a base M1 a turn runs 166-282s, so the stop timed out, fell
+    through to the double-press branch and was silently dropped -- the exact
+    trade the comment says we never make. Derived from the backend timeout now,
+    so a bigger budget cannot silently outrun the stop again.
+    """
+    import mentar.web.app as A
+    from mentar.inference.backend import _gen_params
+
+    saved = A._INFERENCE_CFG
+    try:
+        for max_tokens in (1200, 2048):
+            A._INFERENCE_CFG = {"generation": {"max_tokens": max_tokens}}
+            wait = A._stop_wait_seconds()
+            budget = _gen_params({"generation": {"max_tokens": max_tokens}})["timeout"]
+            assert wait > budget, (
+                f"max_tokens={max_tokens}: a turn may take {budget:.0f}s but a stop "
+                f"gives up after {wait:.0f}s — the stop gets silently dropped"
+            )
+    finally:
+        A._INFERENCE_CFG = saved

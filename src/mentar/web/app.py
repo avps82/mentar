@@ -422,6 +422,25 @@ _SETUP_GATE_CACHE: dict = {"ok": None, "checked_at": 0.0}
 _SETUP_GATE_TTL_S = 30.0
 
 
+def _stop_wait_seconds() -> float:
+    """How long a stop waits for an in-flight turn to finish.
+
+    This was a flat 20s, which was right when a turn took seconds. On slow local
+    hardware it is not: measured 2026-08-25 on a base M1, one turn runs 166-282s,
+    so the stop timed out, fell through to the double-press branch and was
+    SILENTLY DROPPED -- precisely what the comment at the call site says we never
+    do, and what U-11 ("you can stop anytime") promises we never do.
+
+    Derived from the backend's own timeout so the two cannot drift apart again:
+    if generation is allowed to take that long, a stop has to outlast it.
+    """
+    from mentar.inference.backend import _gen_params
+
+    gen = _gen_params(_INFERENCE_CFG or {})
+    # +5s so we lose the race to the turn finishing, not to our own deadline.
+    return float(gen["timeout"]) + 5.0
+
+
 def _reload_inference_config() -> None:
     """(Re-)read config/inference.yaml and reset every cached derivative.
     Called at import time AND after /setup writes a new config -- no
@@ -937,7 +956,8 @@ def answer():
     # dropped -- dropping a child's stop silently is not a trade we make for
     # tidiness. Everything else is a double-press and gets dropped.
     wants_stop = request.form.get("answer", "").strip().lower() in STOP_WORDS
-    acquired = lock.acquire(timeout=20) if wants_stop else lock.acquire(blocking=False)
+    acquired = (lock.acquire(timeout=_stop_wait_seconds()) if wants_stop
+                else lock.acquire(blocking=False))
     if not acquired:
         # This learner already has a turn in flight (double-press). Do NOT step
         # the FSM again -- hand back the turn they are already looking at.
