@@ -264,7 +264,7 @@ def _gen_params(cfg: dict) -> dict:
 # ── Backend factories ─────────────────────────────────────────────────────────
 
 def _make_openai_call(endpoint: dict, gen: dict) -> LLMCall:
-    from openai import OpenAI  # already a hard dependency
+    from openai import APITimeoutError, OpenAI  # already a hard dependency
 
     client = OpenAI(
         base_url=endpoint["base_url"],
@@ -337,7 +337,26 @@ def _make_openai_call(endpoint: dict, gen: dict) -> LLMCall:
                 return content
             except ReasoningOnlyReply:
                 raise  # deterministic — retrying just burns another slow call
-            except Exception as exc:  # network/5xx/timeout — retry a couple times
+            except APITimeoutError as exc:
+                # A timeout is NOT transient on a local backend: the model is
+                # simply slower than the deadline, so a retry spends the same
+                # minutes over again for the same outcome.
+                #
+                # It also breaks a guarantee elsewhere. Retrying makes one turn
+                # take timeout x (retries+1) -- up to 22 min at max_tokens=2048 --
+                # while a child's stop waits only timeout+5s
+                # (web/app.py:_stop_wait_seconds). The stop would be silently
+                # dropped again, which is the exact bug that derivation was added
+                # to fix. Failing on the first timeout keeps a turn bounded by the
+                # timeout, which is what the stop is derived from.
+                raise RuntimeError(
+                    f"LLM endpoint {endpoint['base_url']} (model={model}) did not answer "
+                    f"within {gen['timeout']:.0f}s. Not retried: a timeout here means the "
+                    "model is slower than the budget, not that the call was unlucky. Use a "
+                    "smaller model (mentar setup --model gemma2-9b) or lower "
+                    "generation.max_tokens."
+                ) from exc
+            except Exception as exc:  # network/5xx — retry a couple times
                 last_exc = exc
                 if attempt < retries:
                     time.sleep(_RETRY_BACKOFF_S * (attempt + 1))

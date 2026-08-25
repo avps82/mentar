@@ -49,7 +49,7 @@ class _FakeCompletions:
         self._parent.calls.append(kwargs)
         if self._parent.raise_n > 0:
             self._parent.raise_n -= 1
-            raise ConnectionError("boom")
+            raise self._parent.raise_exc()
         return type("R", (), {"choices": [_FakeMessage(
             self._parent.reply,
             getattr(self._parent, "reasoning", None),
@@ -66,6 +66,7 @@ class _FakeClient:
         self.reasoning = None
         self.finish_reason = None
         self.raise_n = 0
+        self.raise_exc = lambda: ConnectionError("boom")
         self.chat = type("C", (), {"completions": _FakeCompletions(self)})
         _FakeClient.instances.append(self)
 
@@ -411,3 +412,43 @@ def test_timeout_never_drops_below_the_old_default_and_is_overridable():
     and an explicit generation.timeout still wins -- this is a floor, not a policy."""
     assert B._gen_params({"generation": {"max_tokens": 16}})["timeout"] == B._DEFAULT_TIMEOUT_S
     assert B._gen_params({"generation": {"max_tokens": 2048, "timeout": 45}})["timeout"] == 45.0
+
+
+def _timeout_exc():
+    import httpx
+    import openai
+    return openai.APITimeoutError(request=httpx.Request("POST", "http://x/v1"))
+
+
+def test_a_timeout_is_not_retried(monkeypatch=None):
+    """Retrying a timeout is not free -- it makes ONE turn take
+    timeout x (retries+1): up to 22 min at max_tokens=2048. A child's stop waits
+    timeout+5s (web/app.py:_stop_wait_seconds), so the retries silently outrun the
+    stop and drop it -- the exact bug that derivation was added to fix.
+
+    On a local backend a timeout is not bad luck either; the model is simply
+    slower than the budget, so the retry buys the same outcome twice more.
+    """
+    _install_fake(monkeypatch, raise_n=99)
+    fn = B.make_llm_call({"backend": "ollama",
+                          "ollama": {"base_url": "http://localhost:11434", "model": "gemma4:12b"}})
+    cli = _FakeClient.instances[-1]
+    cli.raise_exc = _timeout_exc
+    try:
+        fn([{"role": "user", "content": "hi"}])
+        raise AssertionError("expected the timeout to surface")
+    except RuntimeError as exc:
+        msg = str(exc)
+    assert len(cli.calls) == 1, f"a timeout was retried {len(cli.calls)} times"
+    assert "did not answer" in msg, msg
+    assert "gemma2-9b" in msg or "max_tokens" in msg, msg
+
+
+def test_a_connection_error_is_still_retried(monkeypatch=None):
+    """Only timeouts stop being retried. A genuinely transient network fault keeps
+    its retries -- this must not become a blanket no-retry."""
+    _install_fake(monkeypatch, raise_n=2)
+    fn = B.make_llm_call({"backend": "ollama",
+                          "ollama": {"base_url": "http://localhost:11434", "model": "x"}})
+    assert fn([{"role": "user", "content": "hi"}]) == "hello from model"
+    assert len(_FakeClient.instances[-1].calls) == 3, "transient faults must still retry"
