@@ -132,7 +132,7 @@ vllm:
   base_url: "http://<host>:4000/v1"      # your LiteLLM/vLLM endpoint (must end in /v1)
   model: "gemma2:9b"                      # the name the proxy exposes it under
   api_key: "${MENTAR_VLLM_API_KEY}"       # resolved from config/.env (below) or the environment
-generation: { temperature: 0.3, max_tokens: 512, timeout: 120 }
+generation: { temperature: 0.3, max_tokens: 1200 }   # timeout: omit — it scales with max_tokens
 ```
 Put the **token in a local `config/.env`** (gitignored — it persists across terminals, no shell
 `export` needed). Mentar auto-loads it when reading the config:
@@ -241,10 +241,16 @@ ollama:
 
 generation:
   temperature: 0.3
-  max_tokens: 512
-  # If you use a "thinking"/reasoning model (it pauses then answers), uncomment:
+  max_tokens: 1200            # the backend default; setup used to write 512, which
+                              # silently halved it and truncated real replies
+  # timeout: omit it. The default scales with max_tokens (~5 tok/s + 30s), because
+  # a flat 120s is a remote-API assumption a slow local machine cannot meet.
+  #
+  # A "thinking"/reasoning model is NOT recommended locally: on Ollama's /v1 the
+  # think:false flag below is IGNORED (measured 2026-08-25), so the reasoning
+  # cannot be switched off and `content` comes back empty. Prefer gemma2-9b.
   # extra_body:
-  #   think: false            # otherwise replies can come back empty/truncated
+  #   think: false
 ```
 
 ## 6. Run it
@@ -385,10 +391,11 @@ llamacpp:
 | Symptom | Fix |
 |---------|-----|
 | `no inference config found` | You skipped step 5 — create `config/inference.yaml`. |
-| Empty / blank tutor replies | Your model is a reasoning model — set `generation.extra_body.think: false`. |
+| Empty / blank tutor replies | A reasoning model is spending the whole budget on hidden reasoning and returning empty `content`. **`think: false` does NOT fix this on Ollama** — measured 2026-08-25, Ollama's OpenAI-compatible `/v1` ignores the flag (`think=false` and `think=true` were identical, both empty). Use a non-reasoning model: `./mentar setup --model gemma2-9b`. Setup now names this failure explicitly. |
 | `Connection refused` / timeouts | Ollama isn't running. Open the Ollama app, or run `ollama serve`. |
 | Model not found | The `model:` in the config doesn't match a pulled tag — run `ollama list`. |
 | First reply is slow | The model is loading into memory; later turns are faster. |
+| **Every** reply is slow | Local speed is capped by memory bandwidth, not CPU. Measured on a base M1 (68 GB/s): a 12B model runs ~7.25 tok/s — a full reply takes minutes, and that is the hardware ceiling with Metal working correctly (`ollama ps` will say 100% GPU). A smaller model is the only fix: `gemma2-9b` is ~1.5x faster and the only other safety-graded option. |
 | `Illegal instruction` (GGUF path) | Pre-AVX2 CPU — rebuild `llama-cpp-python` from source (see box above). |
 | `mentar: bad interpreter: …/.venv/bin/pythonX.Y: no such file or directory` | The venv's Python was upgraded/removed (e.g. a Homebrew patch bump), so the venv dangles. Recreate it: `rm -rf .venv && ./scripts/bootstrap.sh` (installs `grounding` too if you add it to the extras in that script, or run `.venv/bin/pip install -e ".[web,setup,grounding]"` after). |
 | `401` from the proxy (LiteLLM/vLLM) | The token is missing/wrong. Put it in `config/.env` as `MENTAR_VLLM_API_KEY=sk-…` (gitignored, auto-loaded) — no shell `export` needed. A real env var still overrides it. |

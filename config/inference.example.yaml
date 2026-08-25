@@ -39,8 +39,12 @@ ollama:
 # Generation params (apply to whichever HTTP backend is active).
 #   extra_body = passthrough for non-standard request fields. REASONING models (e.g.
 #   gemma4:12b) otherwise burn the whole token budget on hidden reasoning_content and
-#   return empty/truncated `content` — disable it with think:false (Ollama) or
-#   reasoning_effort:none. A child tutor wants a direct answer; correctness is the verifier's job.
+#   return empty/truncated `content`. think:false is MEANT to disable that, but
+#   Ollama's OpenAI-compatible /v1 IGNORES it -- measured 2026-08-25 on gemma4:12b,
+#   think=false and think=true were identical, both content:"" -- so on Ollama the
+#   only real fix is a NON-reasoning model (gemma2-9b). Mentar detects this case and
+#   names it rather than handing the child silence.
+#   A child tutor wants a direct answer; correctness is the verifier's job.
 generation:
   temperature: 0.3
   max_tokens: 1200   # Help explanations are long (story + per-choice analysis); 512 truncated them mid-list
