@@ -1971,12 +1971,6 @@ def _log_turn(learner_uuid: str, role: str, text: str) -> None:
         _turn_logs.setdefault(learner_uuid, []).append({"role": role, "text": text})
 
 
-def _last_mentar_text(learner_uuid: str) -> str | None:
-    for entry in reversed(_turn_logs.get(learner_uuid, [])):
-        if entry["role"] == "Mentar":
-            return entry["text"]
-    return None
-
 
 # ── Entry point ───────────────────────────────────────────────────────────────
 
