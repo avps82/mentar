@@ -47,6 +47,12 @@ def test_cyclic_fixture_template_refuses_to_serve(tmp_path, monkeypatch):
 
     monkeypatch.setenv("MENTAR_CURRICULUM", str(bad_template))
     monkeypatch.setenv("MENTAR_DB_PATH", os.path.join(tempfile.mkdtemp(), "a16.db"))
+    # Isolate pack state: a dev checkout's live curriculum/pack_state.json holds an
+    # `enabled` list from real use, under which the injected cyclic template's derived
+    # key is simply NOT enabled -- it gets skipped before validation and nothing raises
+    # (found 2026-08-26: this test failed on any machine that had toggled packs).
+    # A fresh-install state (file absent) enables country-less packs, cyclic included.
+    monkeypatch.setenv("MENTAR_PACK_STATE", str(tmp_path / "pack_state.json"))
 
     # Whether mentar.web.app is already cached (import is a no-op, only reload
     # re-executes top-level code) or this is the first import in the process

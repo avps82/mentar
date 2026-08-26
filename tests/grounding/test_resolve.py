@@ -31,6 +31,8 @@ import pytest
 def _ensure_fixture():
     if not FIXTURE_ZIM.exists():
         import importlib.util
+        if importlib.util.find_spec("libzim") is None:
+            pytest.skip("libzim not installed (grounding extra) and no prebuilt fixture ZIM")
         script = REPO_ROOT / "tests" / "fixtures" / "build_fixture_zim.py"
         spec = importlib.util.spec_from_file_location("bfz", script)
         mod = importlib.util.module_from_spec(spec)

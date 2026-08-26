@@ -27,6 +27,9 @@ def _ensure_fixture_zim() -> pathlib.Path:
         build_script = FIXTURE_DIR / "build_fixture_zim.py"
         import importlib.util
 
+        if importlib.util.find_spec("libzim") is None:
+            pytest.skip("libzim not installed (grounding extra) and no prebuilt fixture ZIM")
+
         spec = importlib.util.spec_from_file_location("build_fixture_zim", build_script)
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
