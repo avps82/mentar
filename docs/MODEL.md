@@ -108,8 +108,8 @@ final pick into the Decision section** below.
 | `qwen2.5:0.5b` | Qwen 2.5 | ~0.5B | <2 GB | low-end | **candidate** (in roster rank 8) | minimum-RAM fallback; not yet formally eval'd through T1 suite |
 | `nanbeige:3b` (tag unconfirmed) | Nanbeige | ~3B | <4 GB | low-end | **candidate** *(queued, added 2026-07-26)* | Not yet on the eval-host proxy — checked `tools/llm.sh --models` 2026-07-26, absent. Maintainer to pull/expose on the eval host; re-run `--models` to confirm before any eval. |
 | `bonzai:27b` (name/tag unconfirmed) | — | ~27B | ~16+ GB | capable-GPU | **candidate** *(queued, added 2026-07-26)* | Name given verbatim by the maintainer, not independently verified — no open-weight model called "Bonzai" is recognized at this size from prior sessions' research. Not yet on the eval-host proxy. Confirm the exact family/tag once pulled before treating this row as more than a placeholder. |
-| `gemma-4-E2B-it-qat` | Gemma 4 QAT | **2.3B effective / 5.1B with embeddings** | ~4 GB RAM (see sizing note) | low-end / broad-HW | **candidate** *(queued, added 2026-07-22; params corrected 2026-08-15)* | llama.cpp only, no Ollama tag — `unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q4_K_XL`; host setup pending. 35 layers, 128K ctx, text/image/audio. **Not in `config/model_roster.yaml`** — ungraded, see §Small-model eval queue |
-| `gemma-4-E4B-it-qat` | Gemma 4 QAT | **4.5B effective / 8B with embeddings** | ~6 GB RAM (see sizing note) | low-end / broad-HW | **candidate** *(queued, added 2026-07-22; params corrected 2026-08-15)* | llama.cpp only, no Ollama tag — `unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q4_K_XL`; host setup pending. 42 layers, 128K ctx, text/image/audio. **Not in `config/model_roster.yaml`** — ungraded, see §Small-model eval queue |
+| `gemma-4-E2B-it-qat` | Gemma 4 QAT | **2.3B effective / 5.1B with embeddings** | ~4 GB RAM (see sizing note) | low-end / broad-HW | **candidate** *(queued, added 2026-07-22; params corrected 2026-08-15)* | llama.cpp `-hf` pull (**2026-08-26: an Ollama tag `gemma4:e2b`/`e4b` is now reported — verify on host; would dissolve the packaged-build caveat**) — `unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q4_K_XL`; host setup pending. 35 layers, 128K ctx, text/image/audio. **Not in `config/model_roster.yaml`** — ungraded, see §Small-model eval queue |
+| `gemma-4-E4B-it-qat` | Gemma 4 QAT | **4.5B effective / 8B with embeddings** | ~6 GB RAM (see sizing note) | low-end / broad-HW | **candidate** *(queued, added 2026-07-22; params corrected 2026-08-15)* | llama.cpp `-hf` pull (**2026-08-26: an Ollama tag `gemma4:e2b`/`e4b` is now reported — verify on host; would dissolve the packaged-build caveat**) — `unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q4_K_XL`; host setup pending. 42 layers, 128K ctx, text/image/audio. **Not in `config/model_roster.yaml`** — ungraded, see §Small-model eval queue |
 | `mistral-small3.1` | Mistral | ~24B (15GB) | ~16 GB (CPU-offload) | — | **CEILING, not candidate** | quality upper-bound; too big/slow for the pilot envelope — do **not** pick as the tutor |
 | `claude-sonnet-4-6` | Anthropic (cloud) | — | n/a | n/a | **judge / oracle** | grades candidate outputs; Phase-2 LLM-as-judge |
 | `claude-haiku-4-5` | Anthropic (cloud) | — | n/a | n/a | **dev / cheap judge** | not a tutor candidate |
@@ -460,6 +460,28 @@ teaches, rather than a different family chosen only because it is small.
    package, and a frozen build has no Python to install it into (2026-08-15). So for
    the downloadable build these are usable only via llama.app. A model with an Ollama
    tag is materially easier to ship.
+
+### 2026-08-26 additions — filling the 4 GB and 6 GB tiers fairly
+
+**Maintainer, 2026-08-26:** the 9B class stays the *recommended* pick, but a 6 GB and a
+4 GB machine must each end up with an **evaluated** pick of their own — "measured-poor or
+never measured" is not an acceptable answer for either tier. New releases since the last
+sweep make this tractable; three added to `eval/models.yaml` (all web-sourced, tags to be
+verified on the host before any run):
+
+| Model | Tier target | Why queued |
+|---|---|---|
+| `qwen3.5:4b` | 4 GB | The missing middle sibling — its 2b and 9b siblings are both graded (61% maths each); the 4b was never run. Same family, known harness behaviour. |
+| `llama3.2:3b` | 4 GB | The tier's most widely-run baseline. Family prior is weak (llama3.1:8b: 18/31), so it is the reference point to beat, not a favourite. |
+| `smollm3:3b` | 4 GB | Fully open (weights+data+recipe) — exploratory, no prior. |
+
+The **6 GB tier's best prior remains `gemma-4-E4B-it-qat`** (same family as the
+100%-correctness gemma4:12b), and the **4 GB tier's best prior is `gemma-4-E2B-it-qat`** —
+both were blocked on "llama.cpp only, host setup pending"; the reported Ollama tags
+(`gemma4:e2b`/`e4b`, unverified) would remove that blocker. Verify the tags first, then run
+the E-models before the three above — best prior first, comparability second, exploration
+third. The bar each must clear is unchanged (next section); a tier's pick goes into
+`config/model_roster.yaml` only after clearing it, with an honest `eval:` line.
 
 ### Definition of "works" — the bar to clear
 
