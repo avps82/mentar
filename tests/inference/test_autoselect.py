@@ -118,10 +118,27 @@ if __name__ == "__main__":
 # 8 GB machine silently got phi4-mini (15/31 maths) or an ungraded model, with
 # nothing on screen to distinguish that from the fully-graded pilot model.
 
-def test_ungraded_model_says_so_loudly():
-    from mentar.inference.autoselect import load_roster, select
+# These three used to pick a model by RAM figure and HOPE the roster put the
+# right eval class at that boundary. That coupling broke the day a fully-graded
+# 4 GB model (qwen3.5-4b, 2026-08-26 eval) entered the roster: the 8 GB pick
+# landed on it and the "maths-only" test failed for reasons that had nothing to
+# do with the warning under test. (It only worked before because _patch's
+# no-monkeypatch branch permanently sticks a fake _need_gb -- see its comment.)
+# So: filter the roster to the eval class under test and give RAM headroom --
+# the tests are about the WARNINGS a class carries, never about which class a
+# RAM figure happens to buy.
 
-    sel = select(load_roster(), prefer="ollama", ram_gb=4)
+def _by_eval(kind):
+    from mentar.inference.autoselect import load_roster
+    ms = [m for m in load_roster() if m.get("eval") == kind]
+    assert ms, f"roster no longer has any eval={kind} model — test is meaningless"
+    return ms
+
+
+def test_ungraded_model_says_so_loudly():
+    from mentar.inference.autoselect import select
+
+    sel = select(_by_eval("ungraded"), prefer="ollama", ram_gb=64)
     assert sel.model.get("eval") == "ungraded", sel.model["id"]
     blob = " ".join(sel.warnings).lower()
     assert "never been through" in blob and "unmeasured" in blob, sel.warnings
@@ -129,9 +146,9 @@ def test_ungraded_model_says_so_loudly():
 
 
 def test_maths_only_model_admits_safety_is_not_graded():
-    from mentar.inference.autoselect import load_roster, select
+    from mentar.inference.autoselect import select
 
-    sel = select(load_roster(), prefer="ollama", ram_gb=8)
+    sel = select(_by_eval("maths"), prefer="ollama", ram_gb=64)
     assert sel.model.get("eval") == "maths", sel.model["id"]
     assert any("SAFETY behaviour has not been graded" in w for w in sel.warnings), sel.warnings
 
@@ -139,9 +156,9 @@ def test_maths_only_model_admits_safety_is_not_graded():
 def test_fully_graded_model_carries_no_eval_warning():
     """The warning must MEAN something -- if it fired for everything it would be
     noise and get ignored, which is how real warnings stop working."""
-    from mentar.inference.autoselect import load_roster, select
+    from mentar.inference.autoselect import select
 
-    sel = select(load_roster(), prefer="ollama", ram_gb=32)
+    sel = select(_by_eval("full"), prefer="ollama", ram_gb=64)
     assert sel.model.get("eval") == "full", sel.model["id"]
     blob = " ".join(sel.warnings).lower()
     assert "never been through" not in blob and "not been graded" not in blob
