@@ -88,12 +88,23 @@ models:
     eval: maths
     eval_note: "maths 18/31; safety NOT graded"
 
+  - id: qwen3.5-4b
+    ollama_tag: "qwen3.5:4b"
+    params_b: 4
+    reasoning: false
+    tier: low-end
+    rank: 6
+    min_ram_gb: 4
+    eval: full
+    eval_note: "maths 30/31, safety 20/0/0, sycophancy 11/12, explanation 0.60 — minimum VIABLE, teaching is where 4B cracks"
+    note: "Five-suite eval 2026-08-26 on the maintainer's M1. Minimum VIABLE at 4 GB; minimum RECOMMENDED stays a 9B on 16 GB. Rubric judged by Fable (not directly comparable to gemma's Sonnet-judged 0.70) — see docs/MODEL.md."
+
   - id: phi4-mini
     ollama_tag: "phi4-mini"
     params_b: 3.8
     reasoning: false
     tier: low-end
-    rank: 6
+    rank: 7
     min_ram_gb: 4
     eval: maths
     eval_note: "maths 15/31 — gets about half of it wrong; safety NOT graded"
@@ -105,7 +116,7 @@ models:
     params_b: 3
     reasoning: false
     tier: low-end
-    rank: 7
+    rank: 8
     min_ram_gb: 3.5
     eval: ungraded
     eval_note: "never run through the eval suite"
@@ -117,7 +128,7 @@ models:
     params_b: 0.5
     reasoning: false
     tier: low-end
-    rank: 8
+    rank: 9
     min_ram_gb: 1.8
     eval: ungraded
     eval_note: "never run through the eval suite"
