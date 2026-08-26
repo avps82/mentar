@@ -1057,6 +1057,21 @@ def test_r5_footer_settings_link_on_learner_and_progress_not_frozen_or_parent():
     assert "settings-link" not in frozen_html
 
 
+def _pin_http_endpoint(app_mod) -> dict:
+    """Pin an HTTP-backed status endpoint instead of inheriting the machine's config.
+
+    These three tests asserted `_LLM_STATUS_ENDPOINT is not None` with the comment
+    "sandbox/CI configs are HTTP-backed" — true on CI, false on a dev machine whose
+    `mentar setup` wrote an IN-PROCESS config (2026-08-26: the maintainer's fresh
+    install did exactly that and all three failed). Same machine-state-dependence
+    class as the pack_state case in test_startup_validation. OpenAI is mocked in
+    every caller, so the values never reach a network.
+    """
+    ep = {"base_url": "http://127.0.0.1:9/v1", "model": "pinned-test-model", "api_key": "no-key"}
+    app_mod._LLM_STATUS_ENDPOINT = ep
+    return ep
+
+
 def test_llm_status_reports_ok_when_backend_reachable():
     """The /settings/llm-status endpoint is a short-timeout reachability
     check -- mocked here (no real network in tests) to cover both outcomes.
@@ -1072,7 +1087,7 @@ def test_llm_status_reports_ok_when_backend_reachable():
     from unittest.mock import MagicMock, patch
 
     app_mod, c = _client()
-    assert app_mod._LLM_STATUS_ENDPOINT is not None  # sandbox/CI configs are HTTP-backed
+    _pin_http_endpoint(app_mod)  # never inherit the machine's config (see helper)
     with patch("openai.OpenAI") as mock_openai_cls:
         mock_client = MagicMock()
         mock_openai_cls.return_value = mock_client
@@ -1108,6 +1123,7 @@ def test_llm_status_is_red_when_the_server_answers_but_the_model_is_unloaded():
     from unittest.mock import MagicMock, patch
 
     app_mod, c = _client()
+    _pin_http_endpoint(app_mod)  # never inherit the machine's config (see helper)
     with patch("openai.OpenAI") as mock_openai_cls:
         mock_client = MagicMock()
         mock_openai_cls.return_value = mock_client
@@ -1192,6 +1208,7 @@ def test_llm_status_reports_not_ok_when_backend_unreachable():
     from unittest.mock import patch
 
     app_mod, c = _client()  # noqa: F841
+    _pin_http_endpoint(app_mod)  # never inherit the machine's config (see helper)
     with patch("openai.OpenAI", side_effect=ConnectionError("Connection refused")):
         r = c.get("/settings/llm-status")
         assert r.status_code == 200
