@@ -638,7 +638,7 @@ input[type=text], input[type=number] {
 .hint { color: var(--text-muted); font-size: 0.9rem; margin-top: 8px; }
 /* Anything that can contain a URL must be allowed to break mid-string. The
    backend-status line reports failures like "Cannot reach
-   http://192.168.xx.xxx:4000/v1/chat/completions - connection refused", and a URL
+   http://192.168.1.10:4000/v1/chat/completions - connection refused", and a URL
    is one unbreakable word: measured 2026-08-23, it pushed a 360px phone to 364px
    at NORMAL zoom and 693px at 200%. That is the settings page scrolling sideways
    at exactly the moment a family's model is unreachable and they need to read

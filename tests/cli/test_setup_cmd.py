@@ -49,7 +49,7 @@ def test_remote_api_dry_run_writes_nothing():
 def test_remote_api_writes_config_and_dotenv_with_key():
     with tempfile.TemporaryDirectory() as td:
         cfg_path = pathlib.Path(td) / "inference.yaml"
-        args = _args(base_url="http://192.168.xx.xxx:4000/v1", model="gemma2:9b",
+        args = _args(base_url="http://192.168.1.10:4000/v1", model="gemma2:9b",
                      api_key="FAKE-K1", config=str(cfg_path))
         with patch.object(CLI, "_verify_backend", return_value=(True, "model replied 'pong'")):
             assert CLI._setup(args) == 0

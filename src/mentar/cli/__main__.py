@@ -759,7 +759,7 @@ def main(argv: list[str] | None = None) -> int:
                          "and --model, no download/roster involved.")
     su.add_argument("--model", help="Override auto-selection with a roster id or ollama tag "
                     "(or the exact remote model name, for --runtime vllm).")
-    su.add_argument("--base-url", help="Remote API base URL, e.g. http://192.168.xx.xxx:4000/v1 "
+    su.add_argument("--base-url", help="Remote API base URL, e.g. http://192.168.1.10:4000/v1 "
                     "(--runtime vllm only).")
     su.add_argument("--api-key", help="Remote API key, if the server needs one (--runtime vllm only) -- "
                     "written to a gitignored .env next to the config, never inlined in the yaml.")

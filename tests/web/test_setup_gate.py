@@ -218,7 +218,7 @@ def test_setup_save_never_inlines_api_key_writes_to_dotenv_instead():
     with patch.object(app_mod, "_INFERENCE_CONFIG_PATH", scratch_cfg):
         with patch("openai.OpenAI", return_value=_reachable_openai_mock()):
             c.post("/setup", data={
-                "backend": "vllm", "base_url": "http://192.168.xx.xxx:4000/v1",
+                "backend": "vllm", "base_url": "http://192.168.1.10:4000/v1",
                 "model": "gemma2:9b", "api_key": "FAKE-KEY-1",
             })
 

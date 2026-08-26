@@ -1177,7 +1177,7 @@ def test_text_zoom_to_200_percent_does_not_push_the_page_sideways():
 
 def test_an_unreachable_backend_message_does_not_push_the_page_sideways():
     """The settings page reports backend failures like "Cannot reach
-    http://192.168.xx.xxx:4000/v1/chat/completions - connection refused". A URL is
+    http://192.168.1.10:4000/v1/chat/completions - connection refused". A URL is
     one unbreakable word, and measured 2026-08-23 it pushed a 360px phone to
     364px at NORMAL zoom and 693px at 200%.
 
@@ -1188,7 +1188,7 @@ def test_an_unreachable_backend_message_does_not_push_the_page_sideways():
     path; the zoom test caught it as a cross-test state difference.
     """
     _skip_unless_browser()
-    long_error = ("Cannot reach http://192.168.xx.xxx:4000/v1/chat/completions"
+    long_error = ("Cannot reach http://192.168.1.10:4000/v1/chat/completions"
                   " - connection refused")
     server, browser = _Server(), None
     try:

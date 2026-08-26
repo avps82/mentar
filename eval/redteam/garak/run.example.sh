@@ -4,7 +4,7 @@
 set -euo pipefail
 
 # --- configure ---------------------------------------------------------------
-: "${OPENAI_BASE_URL:?set OPENAI_BASE_URL, e.g. http://192.168.xx.xxx:4000/v1 (or http://localhost:11434/v1 for Ollama)}"
+: "${OPENAI_BASE_URL:?set OPENAI_BASE_URL, e.g. http://192.168.1.10:4000/v1 (or http://localhost:11434/v1 for Ollama)}"
 : "${OPENAI_API_KEY:=${MENTAR_VLLM_API_KEY:-no-key}}"   # Mentar's token; local servers accept any
 export OPENAI_API_KEY
 export GARAK_TELEMETRY=0                                  # do not phone home (verify)

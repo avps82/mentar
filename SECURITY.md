@@ -47,8 +47,8 @@ hosted deployment. See [`docs/LICENSE_AUDIT.md`](docs/LICENSE_AUDIT.md).
 
 Please report security or child-safety issues **privately** — do **not** open a public issue:
 
-- Use **GitHub → Security → "Report a vulnerability"** (private advisory) on this repository, or
-- contact the maintainer listed in `pyproject.toml`.
+- Use **GitHub → Security → "Report a vulnerability"** (private advisory) on this repository.
+  This is the canonical channel — it reaches the maintainer directly and stays private until fixed.
 
 We aim to acknowledge reports promptly. Given the child-safety domain, safety reports are
 prioritised over feature work.

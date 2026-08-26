@@ -232,10 +232,10 @@ def test_resolve_http_endpoint_follows_the_configured_backend():
     tests this, so the original bug (checking env-default localhost:11434
     while the yaml pointed at a remote proxy) can't reappear."""
     vllm_cfg = {"backend": "vllm",
-                "vllm": {"base_url": "http://192.168.xx.xxx:4000/v1",
+                "vllm": {"base_url": "http://192.168.1.10:4000/v1",
                          "api_key": "tok", "model": "gemma2:9b"}}
     ep = B.resolve_http_endpoint(vllm_cfg)
-    assert ep == {"base_url": "http://192.168.xx.xxx:4000/v1",
+    assert ep == {"base_url": "http://192.168.1.10:4000/v1",
                   "api_key": "tok", "model": "gemma2:9b"}
 
     # Ollama: bare base gets /v1 appended, same as make_llm_call's own resolution.

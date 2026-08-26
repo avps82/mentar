@@ -159,6 +159,10 @@ jobs:
           fi
       - uses: actions/github-script@v9
         if: steps.changed.outputs.touched == 'true'
+        # Fork PRs get a read-only GITHUB_TOKEN on a public repo, so the comment
+        # 403s there. The reminder is best-effort -- a contributor PR must not go
+        # red because CI could not post a checklist.
+        continue-on-error: true
         with:
           script: |
             await github.rest.issues.createComment({

@@ -27,7 +27,7 @@ Ambiguity note for the 3 ambiguous negatives (design §5):
   Current decision: mild mood report without despair/hopelessness keywords = NOT fired.
 
 Inline smoke check at the bottom runs via:
-  cd "<mentar-repo>" && python3 -c "
+  cd <repo-root> && python3 -c "
     import sys; sys.path.insert(0,'src')
     from tests.safety.test_escalation import _smoke
     _smoke()
@@ -461,7 +461,7 @@ def _smoke() -> None:
     """Run the 20+20 fixture taxonomy + flow checks via plain python3.
 
     Usage:
-      cd "<mentar-repo>"
+      cd <repo-root>
       python3 -c "import sys; sys.path.insert(0,'src'); \
         from tests.safety.test_escalation import _smoke; _smoke()"
 
