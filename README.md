@@ -13,6 +13,26 @@ Local LLM hosting. Curriculum-templated by country and year level. Built-in kid 
 
 ---
 
+## What it looks like
+
+A Year 10 two-stage probability question — the child taps **Show me how**, and after the
+model's spoken-style explanation, a deterministic worked-example card lays out the branch
+tree (computed by the engine, not the model — it is always correct):
+
+| Ask for help | Get the working |
+|---|---|
+| ![Asking for help on a Year 10 probability question](docs/img/03_complex_question_year10_asking_for_help.jpg) | ![Computed worked example with probability tree](docs/img/04_worked_example_probability_tree.jpg) |
+
+The same tutor scales down to a Year 2 counting question, answers wrong answers with a
+gentle pointer back to the working rather than a red X, and tracks mastery on the
+curriculum's prerequisite graph:
+
+| Simple end of the range | Wrong answer → gentle retry | Progress map |
+|---|---|---|
+| ![Year 2 counting money](docs/img/02_simple_question_year2.jpg) | ![Gentle retry](docs/img/05_gentle_retry_after_wrong_answer.jpg) | ![Mastery map](docs/img/07_progress_mastery_map.jpg) |
+
+---
+
 ## What it is
 
 Mentar is an open-source tutoring framework that lets parents run an AI tutor on their own hardware, with no data leaving the device and no per-seat API fees.
