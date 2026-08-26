@@ -115,10 +115,23 @@ REASONING_MODELS = {"gemma4:12b"}
 GATEWAY_REASONING_MODELS = {"gemma4-12b-q4", "qwen3.6-27b-q5"}
 
 
-def build_payload(item: dict, model: str, system_prompt_text: str | None = None) -> dict:
+def build_payload(item: dict, model: str, system_prompt_text: str | None = None,
+                  fold_system: bool = False) -> dict:
     if system_prompt_text:
         user_turn, grounding = pipeline_inputs(item)
         messages = build_pipeline_messages(system_prompt_text, user_turn, grounding)
+        if fold_system:
+            # Some chat templates have NO system role (gemma-2's), and some servers
+            # silently DROP it rather than erroring — llama-cpp-python's
+            # `--chat_format gemma` formats with system_message="" after a debug-level
+            # log (format_gemma, verified in 0.3.35 source). A "pipeline" run against
+            # such a server is a BARE-model run wearing the pipeline filename
+            # (caught 2026-08-26: jailbreak/persona behaviour with 5/5 injection
+            # passes — the exact bare-model portrait). Folding the system turn into
+            # the first user turn is what Ollama's gemma template does, so this
+            # reproduces the graded baseline condition faithfully.
+            from mentar.inference.backend import fold_system_messages
+            messages = fold_system_messages(messages)
     else:
         messages = [{"role": "user", "content": item["prompt"]}]
     payload = {"model": model, "messages": messages, "temperature": TEMPERATURE, "max_tokens": MAX_TOKENS}
@@ -164,7 +177,8 @@ def _reasoning_of(resp: dict) -> str:
 def run_model(model: str, items: list[dict], base_url: str, api_key: str,
               out_dir: Path = RESPONSES_DIR,
               post: Callable[..., dict] = post_chat,
-              system_prompt_text: str | None = None) -> Path:
+              system_prompt_text: str | None = None,
+              fold_system: bool = False) -> Path:
     """Generate + record responses for one model. Returns the responses file path.
 
     With system_prompt_text set (full-pipeline mode), each prompt is wrapped via the system
@@ -180,7 +194,7 @@ def run_model(model: str, items: list[dict], base_url: str, api_key: str,
             t0 = time.time()
             reasoning_fallback = False
             try:
-                resp = post(base_url, api_key, build_payload(it, model, system_prompt_text))
+                resp = post(base_url, api_key, build_payload(it, model, system_prompt_text, fold_system=fold_system))
                 content, err = _content_of(resp), None
                 if not content.strip():
                     # Reasoning models may emit only a reasoning/thinking field — use it
@@ -206,6 +220,11 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--system-prompt", default=None,
                     help="Path to a system prompt (e.g. prompts/system_prompt.md) — runs the FULL "
                          "pipeline (safety wrapper). Writes {model}__pipeline.jsonl.")
+    ap.add_argument("--fold-system", action="store_true",
+                    help="Fold the system prompt into the first user turn — REQUIRED when the "
+                         "serving template has no system role (gemma-2 via llama-cpp-python's "
+                         "--chat_format gemma silently discards it; a 'pipeline' run without "
+                         "this is actually a bare-model run).")
     ap.add_argument("--suite", default=None,
                     choices=["reexplain", "transfer", "adversarial", "sycophancy", "abstention"],
                     help="Restrict to one suite (e.g. adversarial for the pipeline safety re-run).")
@@ -227,7 +246,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"[dry-run] {mode}: {len(items)} prompts x {len(targets)} models: {targets}")
         if items and targets:
             print("[dry-run] sample payload:")
-            print(json.dumps(build_payload(items[0], targets[0], sys_text), indent=2)[:800])
+            print(json.dumps(build_payload(items[0], targets[0], sys_text, fold_system=args.fold_system), indent=2)[:800])
         return 0
 
     base_url = os.environ.get("MENTAR_VLLM_BASE_URL")
@@ -238,7 +257,7 @@ def main(argv: list[str] | None = None) -> int:
 
     for model in targets:
         print(f"[run] {model} — {len(items)} prompts{' (pipeline)' if sys_text else ''} ...")
-        path = run_model(model, items, base_url, cred, system_prompt_text=sys_text)
+        path = run_model(model, items, base_url, cred, system_prompt_text=sys_text, fold_system=args.fold_system)
         print(f"[run] wrote {path}")
     return 0
 
