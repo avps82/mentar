@@ -240,11 +240,14 @@ class ZimReader:
             FileNotFoundError: If ``zim_path`` does not exist.
             RuntimeError: If libzim cannot open the archive.
         """
-        from libzim.reader import Archive  # deferred: libzim not in test-time import
-
+        # Path check FIRST: the documented FileNotFoundError contract must hold
+        # even without the optional grounding extra installed — importing libzim
+        # before the check surfaced ModuleNotFoundError instead (2026-08-26).
         path = Path(zim_path)
         if not path.exists():
             raise FileNotFoundError(f"ZIM file not found: {path}")
+        from libzim.reader import Archive  # deferred: libzim not in test-time import
+
         self._archive = Archive(path)
         self._zim_path = path
         logger.debug("ZimReader: opened %s (%d entries)", path.name, self._archive.all_entry_count)
