@@ -14,6 +14,8 @@ import tempfile
 from types import SimpleNamespace
 from unittest.mock import patch
 
+import pytest
+
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
@@ -102,6 +104,19 @@ if __name__ == "__main__":
 #
 # That line runs for EVERY runtime but only gguf/llama_app use it, and four of
 # six roster models are ollama-only with no hf_file key at all.
+
+@pytest.fixture(autouse=True)
+def _no_network_sizing(monkeypatch):
+    """Keep these tests hermetic. autoselect's sizing path (_need_gb) will
+    otherwise lazily DOWNLOAD gguf-parser from GitHub and query the Ollama
+    registry per model — observed hanging the whole suite for minutes on a
+    network-restricted Linux machine (2026-08-26). Force the documented
+    heuristic fallback and a fixed RAM figure; the sizing code itself is
+    covered by tests/inference/test_autoselect.py with the same stubbing."""
+    from mentar.inference import ggufparser
+    monkeypatch.setattr(ggufparser, "estimate_ram_gb", lambda ref, n_ctx=4096: None)
+    monkeypatch.setattr(ggufparser, "total_ram_gb", lambda: 16.0)
+
 
 def _local_args(**kw):
     """Separate from _args above -- that one defaults to the remote vllm runtime,
