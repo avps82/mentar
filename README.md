@@ -1,5 +1,10 @@
 # Mentar
 
+[![CI](https://github.com/avps82/mentar/actions/workflows/ci.yml/badge.svg)](https://github.com/avps82/mentar/actions/workflows/ci.yml)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](pyproject.toml)
+[![Status: research preview](https://img.shields.io/badge/status-research_preview-orange.svg)](#status)
+
 **OSS-first AI tutor for children that supplements — never replaces — school education.**
 
 Local LLM hosting. Curriculum-templated by country and year level. Built-in kid safety from day one.
