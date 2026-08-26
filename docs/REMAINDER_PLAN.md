@@ -1359,7 +1359,7 @@ go-public docs. `main` green.
 
 ## A3–A19 — Repo-review wave (2026-07-03)
 
-Source: **[REVIEW_2026-07-03.md](../REVIEW_2026-07-03.md)** (full detail + rationale per task;
+Source: **[REVIEW_2026-07-03.md](_legacy/REVIEW_2026-07-03.md)** (full detail + rationale per task;
 section refs below). Same per-task gate: pytest green + ruff clean, one branch+PR per task.
 Ordered by the review's priority table.
 
