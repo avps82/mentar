@@ -29,46 +29,50 @@ Rules of engagement (agreed 2026-08-27):
 
 **First comment (post immediately after submitting — this is the real pitch):**
 
-Hi HN — I built Mentar because I wanted my kids to have an AI tutor without an
-account, a subscription, or their questions leaving the house.
+Hi HN. I wanted an AI tutor for my kids that didn't need an account, a
+subscription, or their questions going to someone's cloud. Couldn't find one,
+so I've been building it.
 
-The architecture decision I'd most like feedback on: **the LLM never decides
-correctness.** Every question comes from hand-authored parametric generators
-(934 curriculum topics, Years 1–12, AU/IN/SG/US), and answers are scored by a
-deterministic verifier. The model's only job is *explaining* — analogies, worked
-examples, gentle retries. If the model hallucinates, a child gets a bad
-explanation, never a wrong grade.
+The design decision I care most about: the LLM never grades anything. All the
+questions come from parametric generators I can actually read (934 topics,
+years 1–12, AU/IN/SG/US), and a deterministic verifier checks the answers. The
+model just explains — analogies, worked examples, "have another look at step 2"
+style nudges. Worst case a hallucination gives my kid a clumsy explanation. It
+can't tell her a wrong answer is right.
 
-Runs fully local (Ollama / llama.cpp; a base M1 with 16 GB works — that's my
-test machine). AGPL on purpose: the network clause means nobody can offer kids
-a modified version whose safety changes can't be inspected.
+It runs fully local. My test hardware is what I had: a base M1 MacBook with
+16GB and an old gaming rig with a 3080. The M1 is also why last week was mostly
+me discovering that Ollama's /v1 endpoint silently ignores `think:false` — a
+reasoning model burned its whole token budget on hidden chain-of-thought and
+returned empty strings. Fun bug. It's gemma2:9b now.
 
-Honesty, because it matters here: the code is **largely AI-written under my
-direction and review** — the README says so prominently. It's a research
-preview, **supervised use only**. The safety layer is spec'd and tested but has
-NOT had a professional safeguarding audit — I'm an unfunded OSS project seeking
-that review pro-bono, and the repo carries a ready-made review packet for any
-professional willing to look. I would genuinely value scrutiny from this crowd
-on the safety design (docs/SAFETY.md) as much as stars.
+Full disclosure, since it's going to come up anyway: most of this code is
+AI-written, under my direction and review. The README says so in the first
+screen. I'd rather you judge the 1247 tests and the safety design than take my
+word for anything. Which is genuinely part of why I'm posting — it's a tutor
+for children, and it has NOT had a professional safeguarding audit. I'm an
+unfunded side project; I'm looking for that review pro-bono and there's a
+ready-made packet in the repo for any professional willing to look. Until then
+the README is blunt: supervised use only, adult in the room.
 
-Stack: Python, Flask + htmx (no build step), SQLite, BKT for mastery tracking,
-Ollama/llama.cpp/any OpenAI-compatible endpoint for inference.
+AGPL, on purpose. If someone offers kids a modified version, the safety changes
+have to be inspectable. Commercial licences exist if that doesn't work for you.
 
-**Prepared answers for predictable questions:**
+Stack is boring by choice: Python, Flask + htmx, SQLite, BKT for mastery.
+Happy to answer anything — especially pointed questions about the safety layer.
 
-- *"AI + children, seriously?"* → Supervised-only is a hard line in the README,
-  the warning block, and SAFETY.md §3.5.1. The safety case for unsupervised use
-  needs professionally-validated pieces we don't have yet, so it is out of
-  bounds — stated, not hedged.
-- *"Why not just use ChatGPT?"* → Privacy (nothing leaves the device), cost
-  (zero marginal), and the verifier: a chat window will happily mark a wrong
-  answer right. Mentar structurally cannot.
-- *"AI-written code, so is it slop?"* → 1247 tests, a release gate that runs
-  the full suite + browser checks + gitleaks before any push, and every claim
-  in the README is machine-checked against the tree (stale counts fail CI).
-  Judge the code, not the author.
-- *"AGPL will kill adoption"* → For a children's-safety project the network
-  clause IS the feature. Commercial licences exist for anyone who needs them.
+**Maintainer crib sheet — NOT for posting. Answers you'll want mid-thread:**
+
+- *"AI + children, seriously?"* — supervised-only is a hard line in the README,
+  the warning block, and SAFETY.md §3.5.1. Unsupervised needs professionally
+  validated pieces we don't have; it's out of bounds, stated not hedged.
+- *"Why not just ChatGPT?"* — privacy, zero marginal cost, and the verifier: a
+  chat window will happily mark a wrong answer right; Mentar structurally can't.
+- *"AI-written = slop?"* — 1247 tests, a release gate (full suite + browser
+  checks + gitleaks) before any push, README counts machine-checked against the
+  tree. Judge the code, not the author.
+- *"AGPL kills adoption"* — for a children's-safety project the network clause
+  IS the feature. Commercial licences available.
 
 ## 2. r/LocalLLaMA
 
@@ -78,11 +82,13 @@ Ollama/llama.cpp/any OpenAI-compatible endpoint for inference.
 
 **Body sketch:**
 
-The project: local-first AI tutor, LLM explains but never grades (deterministic
-verifier), 934 topics Y1–12, AGPL. Runs on a base M1/16 GB.
+The project: local-first AI tutor for my kids — the LLM explains but never
+grades (deterministic verifier), 934 topics Y1–12, AGPL. My hardware is a base
+M1/16GB and an old gaming rig with a 3080 10GB, so if it doesn't run on those
+it doesn't ship. (The 3080 fits gemma2:9b quantized with room to spare — you
+don't need a 4090 for this.)
 
-The content this sub might actually enjoy — things that only surfaced when
-testing on real low-end hardware:
+Things I only learned by testing on that hardware, which this sub might enjoy:
 
 - Ollama's OpenAI-compatible `/v1` **ignores** `think:false` for reasoning
   models (gemma3-class): the whole token budget goes to hidden reasoning in a
