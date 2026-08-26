@@ -239,7 +239,14 @@ def _verify_backend(cfg: dict) -> tuple[bool, str]:
     probe["generation"] = gen
     try:
         call = make_llm_call(probe)
-        out = call([{"role": "user", "content": "Reply with the single word: ping"}])
+        # System + user, the shape every REAL tutoring turn has. A user-only
+        # probe reported LIVE while gemma-2's in-process chat template rejected
+        # the system role on every actual turn (2026-08-26, fresh install) —
+        # same lesson as max_tokens above: verify what the app will run.
+        out = call([
+            {"role": "system", "content": "You are a tutoring assistant."},
+            {"role": "user", "content": "Reply with the single word: ping"},
+        ])
     except Exception as e:  # noqa: BLE001 — report any backend failure plainly
         return False, f"{type(e).__name__}: {e}"
     if out and out.strip():

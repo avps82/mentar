@@ -280,6 +280,57 @@ def test_upsert_dotenv_value_replaces_only_the_matching_key(tmp_path):
     assert content.count("MENTAR_VLLM_API_KEY=") == 1
 
 
+def test_fold_system_messages_prepends_to_first_user_turn():
+    """The regression (2026-08-26, fresh install): gemma-2's in-process chat
+    template raises on the system role, so every tutoring turn degraded to ""
+    while ollama-served gemma silently accepted the same messages."""
+    msgs = [
+        {"role": "system", "content": "You are a tutor."},
+        {"role": "user", "content": "What is 6x8?"},
+        {"role": "assistant", "content": "48."},
+    ]
+    folded = B.fold_system_messages(msgs)
+    assert [m["role"] for m in folded] == ["user", "assistant"]
+    assert folded[0]["content"] == "You are a tutor.\n\nWhat is 6x8?"
+    # The input is not mutated -- callers may retry with the original.
+    assert msgs[0]["role"] == "system" and msgs[1]["content"] == "What is 6x8?"
+
+
+def test_fold_system_messages_with_no_user_turn_becomes_a_user_turn():
+    folded = B.fold_system_messages([{"role": "system", "content": "Only rules."}])
+    assert folded == [{"role": "user", "content": "Only rules."}]
+
+
+def test_chat_with_system_fold_retries_once_and_then_folds_upfront():
+    calls = []
+
+    def create(messages, **kw):
+        calls.append([m["role"] for m in messages])
+        if any(m["role"] == "system" for m in messages):
+            raise ValueError("System role not supported")
+        return {"ok": True, "first": messages[0]["content"]}
+
+    state = {"fold": False}
+    msgs = [{"role": "system", "content": "S."}, {"role": "user", "content": "U?"}]
+    out = B._chat_with_system_fold(create, msgs, state)
+    assert out["ok"] and out["first"] == "S.\n\nU?"
+    assert calls == [["system", "user"], ["user"]]  # raw attempt, folded retry
+    # Second call folds upfront -- one attempt, no exception round-trip.
+    B._chat_with_system_fold(create, msgs, state)
+    assert calls[-1] == ["user"] and len(calls) == 3
+
+
+def test_chat_with_system_fold_leaves_other_valueerrors_alone():
+    def create(messages, **kw):
+        raise ValueError("something unrelated")
+
+    try:
+        B._chat_with_system_fold(create, [{"role": "user", "content": "x"}], {"fold": False})
+        raise AssertionError("expected the unrelated ValueError to propagate")
+    except ValueError as exc:
+        assert "unrelated" in str(exc)
+
+
 # ── Inline smoke runner ───────────────────────────────────────────────────────
 
 if __name__ == "__main__":

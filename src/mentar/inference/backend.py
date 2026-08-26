@@ -369,6 +369,51 @@ def _make_openai_call(endpoint: dict, gen: dict) -> LLMCall:
     return call
 
 
+def fold_system_messages(messages: list[dict]) -> list[dict]:
+    """Merge system content into the first user turn.
+
+    gemma-2's embedded chat template (and others) raises ValueError("System role
+    not supported") at PROMPT-RENDER time — so via the in-process llama-cpp path
+    every real tutoring turn failed while Ollama, which rewrites the system turn
+    itself, hid the same limitation (found 2026-08-26, fresh-install run: the
+    child only ever saw the deterministic fallback scaffolds). Folding is what
+    Ollama effectively does; doing it here makes the shipped prompts work on any
+    template.
+    """
+    sys_text = "\n\n".join(
+        m.get("content") or "" for m in messages if m.get("role") == "system"
+    ).strip()
+    rest = [dict(m) for m in messages if m.get("role") != "system"]
+    if not sys_text:
+        return rest
+    for m in rest:
+        if m.get("role") == "user":
+            m["content"] = f"{sys_text}\n\n{m.get('content') or ''}"
+            break
+    else:
+        rest.insert(0, {"role": "user", "content": sys_text})
+    return rest
+
+
+def _chat_with_system_fold(create, messages: list[dict], state: dict, **kw):
+    """Call ``create`` (create_chat_completion-shaped); if the model's template
+    rejects the system role, fold and retry ONCE, then keep folding for the rest
+    of the process. The rejection happens during template rendering — before any
+    generation — so the retry costs milliseconds, not a second generation."""
+    msgs = fold_system_messages(messages) if state.get("fold") else messages
+    try:
+        return create(messages=msgs, **kw)
+    except ValueError as exc:
+        if state.get("fold") or "system role" not in str(exc).lower():
+            raise
+        state["fold"] = True
+        logger.warning(
+            "llm_call: this model's chat template rejects the system role — "
+            "folding system text into the first user turn from now on"
+        )
+        return create(messages=fold_system_messages(messages), **kw)
+
+
 def _make_in_process_call(block: dict, gen: dict) -> LLMCall:
     try:
         from llama_cpp import Llama  # optional dependency
@@ -391,9 +436,13 @@ def _make_in_process_call(block: dict, gen: dict) -> LLMCall:
     temperature = gen["temperature"]
     max_tokens = gen["max_tokens"]
 
+    state: dict = {"fold": False}
+
     def call(messages: list[dict]) -> str:
-        resp = llm.create_chat_completion(
-            messages=messages,
+        resp = _chat_with_system_fold(
+            llm.create_chat_completion,
+            messages,
+            state,
             temperature=temperature,
             max_tokens=max_tokens,
         )
