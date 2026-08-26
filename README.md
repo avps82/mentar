@@ -257,11 +257,16 @@ Full index: **[`docs/index.md`](docs/index.md)**. Highlights:
 
 ## Status
 
-**Phase 0 pilot-ready** (single-family, supervised): the end-to-end dialogue loop, local
-model evaluation + pick (`gemma2:9b`), safety pipeline, and learner data model are all built
-and green.
+**Phase 0 pilot underway** (single-family, supervised): the end-to-end dialogue loop, local
+model evaluation + pick (`gemma2:9b`), safety pipeline, and learner data model are built and
+green, and the stack is now being exercised end-to-end on real family hardware (a base-M1
+MacBook). That shakedown is doing its job: it surfaced — and fixed — a setup bug that halved
+the generation budget, a reasoning-model failure mode Ollama's `think:false` cannot switch
+off, and timeout/stop-button guarantees that only held on fast hardware. The 4 GB tier has
+its first full eval datapoint (`qwen3.5:4b` — viable, not the recommended minimum;
+`docs/MODEL.md` stays canonical for model choices).
 
-**What actually ships today** (2026-08-22): **934 concept nodes across 157 curriculum
+**What actually ships today** (2026-08-26): **934 concept nodes across 157 curriculum
 templates** — Australia (ACARA-aligned: maths Y1–12, English Y1–12, science Y1–10, with the
 senior years split into biology/chemistry/physics/earth-env, literature, and the four maths
 courses) plus three board-agnostic packs that claim no syllabus alignment (`IN_GENERIC`
