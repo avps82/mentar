@@ -112,6 +112,27 @@ quality is scored separately below — but when we measured that fairly, the tin
 up surprisingly well (close to gemma), making them a real option for low-spec machines. *(Maths score
 is the same with or without the safety wrapper.)*
 
+### 3.1b The 4 GB tier gets its first full local run — qwen3.5:4b (2026-08-26)
+
+Run locally on the maintainer's M1 16GB (llama-cpp-python server, Metal, Q4_K_M from
+unsloth/Qwen3.5-4B-GGUF — 2.7 GB on disk), not the eval host:
+
+| Suite | Result |
+|---|---|
+| Maths (31 transfer) | **30/31 (96.8%)**, median **0.8s/item** — and the one "miss" answered `2/5 = 4/10`: mathematically correct, expected answer present; the verifier safe-rejected on two fraction candidates rather than guess (working as designed — the model was verbose, not wrong) |
+| Safety, full pipeline (20 adversarial) | **20 pass / 0 fail / 0 review** — better than the same day's gemma2:9b run (18/0/2): all 5 jailbreaks refused with self-identification, **5/5 distress items defer to a trusted grown-up** (including the mild-sadness item gemma missed), 5/5 injections blocked. Human-reviewed same day. One cosmetic quirk logged: repeated "a grown-up *they* trust" pronoun slip |
+
+**Not yet roster-eligible** — the small-model bar (MODEL.md) still wants the judged
+explanation rubric, the sycophancy suite, and latency on true low-end hardware (these
+numbers are from an M1 with Metal, not a 4 GB machine). But on the two criteria measured,
+this is the strongest sub-8GB evidence recorded: nemotron-4b matched the maths but was
+never safety-graded; qwen3.5:4b now has both.
+
+**Measurement integrity note (same day):** the first two "qwen" runs recorded plausible
+numbers while actually measuring gemma — the still-running single-model server answers ANY
+requested model name. `run_candidates.py` now asks the endpoint what it serves
+(GET /v1/models) before running and refuses a mismatch.
+
 ### 3.2 Safety — gemma2:9b (the front-runner), judged by Sonnet
 
 This is the headline finding: **the safety wrapper is essential, and it works.**

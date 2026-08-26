@@ -142,6 +142,26 @@ def build_payload(item: dict, model: str, system_prompt_text: str | None = None,
     return payload
 
 
+def served_model_ids(base_url: str, api_key: str, timeout: int = 15) -> list[str] | None:
+    """What the endpoint says it is serving (GET /v1/models), or None if unknowable.
+
+    Exists because of 2026-08-26: two runs recorded plausible numbers for
+    "qwen3.5:4b" while the still-running server ignored the request's model
+    field and served gemma — a single-model llama.cpp server answers ANY model
+    name. Latency and phrasing were the only tells. A harness must know WHICH
+    model it measured, so a checkable mismatch now refuses to run instead of
+    producing a well-labelled lie.
+    """
+    url = base_url.rstrip("/") + "/models"
+    req = urllib.request.Request(url, headers={"Authorization": f"Bearer {api_key}"})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:  # noqa: S310
+            data = json.loads(resp.read().decode("utf-8"))
+        return [m.get("id", "") for m in data.get("data", [])]
+    except Exception:  # noqa: BLE001 — gateways without /models stay usable
+        return None
+
+
 def post_chat(base_url: str, api_key: str, payload: dict, timeout: int = TIMEOUT) -> dict:
     """Real HTTP POST to /chat/completions. Tests inject a fake in place of this."""
     url = base_url.rstrip("/") + "/chat/completions"
@@ -254,6 +274,15 @@ def main(argv: list[str] | None = None) -> int:
     if not base_url or not cred:
         print("ERROR: set MENTAR_VLLM_BASE_URL and MENTAR_VLLM_API_KEY in the environment.")
         return 2
+
+    served = served_model_ids(base_url, cred)
+    if served is not None:
+        missing = [m for m in targets if m not in served]
+        if missing:
+            print(f"ERROR: endpoint serves {served}, not {missing} — wrong server still "
+                  f"running? (a single-model server answers ANY model name; this check "
+                  f"exists because that produced two well-labelled wrong runs on 2026-08-26)")
+            return 2
 
     for model in targets:
         print(f"[run] {model} — {len(items)} prompts{' (pipeline)' if sys_text else ''} ...")
