@@ -56,7 +56,7 @@ ready-made packet in the repo for any professional willing to look. Until then
 the README is blunt: supervised use only, adult in the room.
 
 AGPL, on purpose. If someone offers kids a modified version, the safety changes
-have to be inspectable. Commercial licences exist if that doesn't work for you.
+have to be inspectable.
 
 Stack is boring by choice: Python, Flask + htmx, SQLite, BKT for mastery.
 Happy to answer anything — especially pointed questions about the safety layer.
