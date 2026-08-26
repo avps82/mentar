@@ -29,43 +29,43 @@ Rules of engagement (agreed 2026-08-27):
 
 **URL:** https://github.com/avps82/mentar
 
-**First comment (post immediately after submitting — this is the real pitch):**
+**First comment (FINAL — maintainer's own voice, edited 2026-08-27; post immediately after submitting):**
 
-Hi HN. Parent and dev here — this exists because I wanted an AI tutor for my
-own kids that didn't need an account, a subscription, or their questions going
-to someone's cloud. Couldn't find one, so I built it. Open-sourcing it because
-other parents shouldn't have to.
+Hi Hacker News,
 
-The design decision I care most about: the LLM never grades anything. All the
-questions come from parametric generators I can actually read (934 topics,
+I wanted an AI tutor for my kids that didn't need an account, a subscription,
+or their questions going to someone's cloud. Couldn't find one for free, so
+I've been building it and thought I'd share it with the OSS community.
+
+The design decision I care about most is the LLM never grades anything. All
+the questions come from parametric generators I can actually read (934 topics,
 years 1–12, AU/IN/SG/US), and a deterministic verifier checks the answers. The
-model just explains — analogies, worked examples, "have another look at step 2"
-style nudges. Worst case a hallucination gives my kid a clumsy explanation. It
-can't tell her a wrong answer is right.
+model just explains with analogies, worked examples, "have another look at
+step 2" style nudges. Worst case a hallucination gives my kid a clumsy
+explanation. It can't tell her a wrong answer is right.
 
-It runs fully local. My test hardware is what I had: a base M1 MacBook with
-16GB and an old gaming rig with a 3080. The M1 is also why last week was mostly
-me discovering that Ollama's /v1 endpoint silently ignores `think:false` — a
-reasoning model burned its whole token budget on hidden chain-of-thought and
+It runs fully local. My test hardware is what I had, a base M1 MacBook with
+16GB and an old gaming rig with a 3080. The M1 is also why last week was
+mostly me discovering that Ollama's /v1 endpoint silently ignores think:false,
+a reasoning model burned its whole token budget on hidden chain-of-thought and
 returned empty strings. Fun bug. It's gemma2:9b now.
 
 Full disclosure, since it's going to come up anyway: most of this code is
-AI-written, under my direction and review. The README says so in the first
-screen. I'd rather you judge the 1247 tests and the safety design than take my
-word for anything. Which is genuinely part of why I'm posting — it's a tutor
-for children, and it has NOT had a professional safeguarding audit. I'm an
-unfunded side project; I'm looking for that review pro-bono and there's a
-ready-made packet in the repo for any professional willing to look. Until then
-the README is blunt: supervised use only, adult in the room.
+AI-written, under my direction, review and a lot of late nights. The README
+says so in the first screen. I'd rather you judge the ~1200 tests and the
+safety design than take my word for anything. Which is genuinely part of why
+I'm posting here, it's a tutor for children, and it has NOT had a professional
+safeguarding audit. I'm an unfunded side project; I'm looking for that review
+pro bono, and the repo has a ready-made packet for any professional willing to
+look. Until then, the README is blunt: supervised use only, adult in the room.
 
-AGPL, on purpose. If someone offers kids a modified version, the safety changes
-have to be inspectable.
+I'm not selling anything, and there's no startup behind this. It's just a
+parent with a repo. My kids are the first users, so I want those questions
+asked.
 
 Stack is boring by choice: Python, Flask + htmx, SQLite, BKT for mastery.
 
-I'm not selling anything and there's no startup behind this — just a parent
-with a repo. Happy to answer anything, especially pointed questions about the
-safety layer. My kids are the first users, so I want those questions asked.
+Happy to answer anything — especially pointed questions about the safety layer.
 
 **Maintainer crib sheet — NOT for posting. Answers you'll want mid-thread:**
 
