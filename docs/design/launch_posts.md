@@ -21,6 +21,8 @@ Rules of engagement (agreed 2026-08-27):
 
 **Title (pick one, ≤80 chars):**
 
+> Show HN: I built my kids a local AI tutor that can't mark a wrong answer right
+>
 > Show HN: Mentar – local-first AI tutor for kids where the LLM never grades
 >
 > Show HN: An AI tutor that runs on your own machine and can't mark wrong answers right
@@ -29,9 +31,10 @@ Rules of engagement (agreed 2026-08-27):
 
 **First comment (post immediately after submitting — this is the real pitch):**
 
-Hi HN. I wanted an AI tutor for my kids that didn't need an account, a
-subscription, or their questions going to someone's cloud. Couldn't find one,
-so I've been building it.
+Hi HN. Parent and dev here — this exists because I wanted an AI tutor for my
+own kids that didn't need an account, a subscription, or their questions going
+to someone's cloud. Couldn't find one, so I built it. Open-sourcing it because
+other parents shouldn't have to.
 
 The design decision I care most about: the LLM never grades anything. All the
 questions come from parametric generators I can actually read (934 topics,
@@ -59,7 +62,10 @@ AGPL, on purpose. If someone offers kids a modified version, the safety changes
 have to be inspectable.
 
 Stack is boring by choice: Python, Flask + htmx, SQLite, BKT for mastery.
-Happy to answer anything — especially pointed questions about the safety layer.
+
+I'm not selling anything and there's no startup behind this — just a parent
+with a repo. Happy to answer anything, especially pointed questions about the
+safety layer. My kids are the first users, so I want those questions asked.
 
 **Maintainer crib sheet — NOT for posting. Answers you'll want mid-thread:**
 
@@ -114,8 +120,9 @@ over bigger reasoning models. `docs/MODEL.md` has the full reasoning.
 
 **Body sketch:**
 
-Angle: the *data* story, not the AI story. Children's tutoring data is exactly
-the category you don't want in anyone's cloud. Everything — questions, answers,
+Angle: the *data* story, not the AI story. Parent-dev, built for my own kids,
+self-hosted because children's tutoring data is exactly the category you don't
+want in anyone's cloud. Everything — questions, answers,
 mastery tracking, safety logs — lives in a local SQLite file the parent owns.
 LAN mode serves a tablet in the same house; parent views are admin-gated.
 Setup is `./mentar setup` (auto-detects Ollama) → `./mentar serve`. AGPL.
