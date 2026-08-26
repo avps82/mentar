@@ -56,7 +56,7 @@ The core is three components:
 Mentar is, candidly, **AI-built software**. The great majority of the code, tests, and docs in this
 repo are written by AI agents working under a human maintainer's direction, decisions, and review —
 **not hand-written by a person**. In that sense it is close to "vibe coding," even though it follows
-deliberate engineering discipline: spec-first design, test-driven development (1180+ tests gating
+deliberate engineering discipline: spec-first design, test-driven development (1240+ tests gating
 changes), design docs before code, versioned prompts, and code review. Those principles raise the
 quality bar — but they don't change that underlying fact, and we'd rather be upfront about it.
 
@@ -98,6 +98,8 @@ for the authoritative layout.
 mentar/
 ├── curriculum/              # Markdown curriculum templates (concept graphs)
 │   ├── _template.md         # Authoring format for new curricula
+│   ├── itembank/            # Frozen authored items (jsonl) for the pilot graph
+│   ├── packs.json           # Pack registry (key → template dir + display name)
 │   ├── visual_scaffolds/    # Per-topic visual-hint bundle (maths/english/science)
 │   └── templates/
 │       ├── AU_ACARA/        # Australian Curriculum v9 — maths Y1–12, English Y1–12,
@@ -114,7 +116,8 @@ mentar/
 │       └── practice/        # Country-agnostic evergreen practice content
 ├── prompts/                 # Versioned prompt templates + prompts/README.md registry (W6.2)
 ├── config/                  # Inference config example + the vetted model roster
-├── scripts/                 # bootstrap, binary build, item-bank build, backend check, ZIM fetch
+├── scripts/                 # bootstrap, binary build, item-bank build, backend check, ZIM fetch,
+│   │                        #   release_gate.sh (the full pre-push verification) + git-hooks/
 ├── src/mentar/              # Python package (src-layout)
 │   ├── engine/              # Concept graph (KST), BKT mastery, fringe, probe classifier,
 │   │                        #   item generators (see "How curriculum content is made" below)
@@ -152,7 +155,9 @@ in the current build. Grounding, where it exists, only adds a quoted reference p
 deterministic verifier, never the LLM.
 
 This is a deliberate, proven design for the content it covers (see
-[`docs/EXPLAIN_METHOD_AUDIT.md`](docs/EXPLAIN_METHOD_AUDIT.md) for a full audit), but it doesn't
+[`docs/EXPLAIN_METHOD_AUDIT.md`](docs/EXPLAIN_METHOD_AUDIT.md) — a node-by-node audit, last run
+in full on 2026-08-11 when the curriculum was 319 nodes; it has not yet been re-run over the
+growth to today's 934), but it doesn't
 scale to broader/deeper subject coverage by itself — a **hybrid** direction (keep hand-authoring
 where it fits; add a retrieve→extract→verify→freeze pipeline sourced from real ZIM content for
 subjects that need it) has been ratified but **not yet built** — see
