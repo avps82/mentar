@@ -48,7 +48,7 @@ It runs fully local. My test hardware is what I had: a base M1 MacBook with
 16GB and an old gaming rig with a 3080. The M1 is also why last week was
 mostly me discovering that Ollama's /v1 endpoint silently ignores think:false,
 a reasoning model burned its whole token budget on hidden chain-of-thought and
-returned empty strings. Fun bug. It's gemma2:9b now.
+returned empty strings. Fun bug. It's qwen3.5:9b and gemma2:9b now.
 
 Full disclosure, since it's going to come up anyway: most of this code is
 AI-written, under my direction, review and a lot of late nights. The README
@@ -66,9 +66,7 @@ asked.
 
 Stack is boring by choice: Python, Flask + htmx, SQLite, BKT for mastery.
 
-Happy to answer anything — especially pointed questions about the safety layer.
-
-Bye!
+Happy to answer anything, especially pointed questions about the safety layer.
 
 **Maintainer crib sheet — NOT for posting. Answers you'll want mid-thread:**
 
