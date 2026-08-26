@@ -198,7 +198,8 @@ def run_model(model: str, items: list[dict], base_url: str, api_key: str,
               out_dir: Path = RESPONSES_DIR,
               post: Callable[..., dict] = post_chat,
               system_prompt_text: str | None = None,
-              fold_system: bool = False) -> Path:
+              fold_system: bool = False,
+              suite_label: str | None = None) -> Path:
     """Generate + record responses for one model. Returns the responses file path.
 
     With system_prompt_text set (full-pipeline mode), each prompt is wrapped via the system
@@ -206,6 +207,12 @@ def run_model(model: str, items: list[dict], base_url: str, api_key: str,
     """
     out_dir.mkdir(parents=True, exist_ok=True)
     stem = model.replace("/", "_").replace(":", "_") + ("__pipeline" if system_prompt_text else "")
+    # Single-suite runs get their own file. The shared {model}__pipeline.jsonl plus
+    # overwrite-on-open meant two consecutive `--suite` runs silently destroyed each
+    # other's responses (2026-08-26: the abstention run clobbered sycophancy's 12
+    # responses before they were ever scored). Full runs keep the original name.
+    if suite_label:
+        stem += f"__{suite_label}"
     out_path = out_dir / f"{stem}.jsonl"
     # Overwrite (not append) so a re-run produces a clean file — appending silently mixed
     # a prior run's responses into the next, corrupting the judge's per-suite counts.
@@ -286,7 +293,7 @@ def main(argv: list[str] | None = None) -> int:
 
     for model in targets:
         print(f"[run] {model} — {len(items)} prompts{' (pipeline)' if sys_text else ''} ...")
-        path = run_model(model, items, base_url, cred, system_prompt_text=sys_text, fold_system=args.fold_system)
+        path = run_model(model, items, base_url, cred, system_prompt_text=sys_text, fold_system=args.fold_system, suite_label=args.suite)
         print(f"[run] wrote {path}")
     return 0
 
