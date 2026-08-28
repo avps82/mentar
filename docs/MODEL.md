@@ -125,7 +125,7 @@ than a good general instruct model. No key advantage → an eval slot would like
 null result. Do not re-propose without new evidence.
 
 **Education/tutoring-tuned models (LearnLM-class): the right IDEA, wrong availability.**
-LearnLM is API-only (folded into Gemini) — violates the local-only principle (U-80)
+LearnLM is API-only (folded into Gemini) — excluded from the DEFAULT roster by the local-first principle (U-80; API-only models are reachable solely via the opt-in, parent-consent-gated cloud path, never auto-selected)
 regardless of quality. **Standing trigger:** if an OPEN-WEIGHTS tutoring-register model
 runnable on family hardware appears, queue it for ONE eval run (incl. MathTutorBench's
 scaffolding dimension — it targets exactly the half of the job Mentar's LLM performs).

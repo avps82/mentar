@@ -29,6 +29,9 @@ the safety layer work as intended. It is a prototype: it can make mistakes.
 
 - All data stays **on the local device** — no cloud, no telemetry, no third party
   (SAFETY.md §4.1). Nothing about the child is transmitted off the device.
+  (If you later opt in to a cloud AI backend — off by default and gated on a separate
+  explicit acknowledgment — lesson turns are sent to that provider under YOUR account
+  and this local-only statement no longer fully applies; see SAFETY.md §4.5.)
 - Stored locally (SAFETY.md §4.3): learner profile (year-level, age-mode, curriculum),
   per-turn transcripts (child input + system response), BKT mastery state, Help/probe
   events, and any escalation-log entries.

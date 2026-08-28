@@ -86,7 +86,7 @@ What this means for you:
 
 Two reasons:
 
-1. **Privacy** — children's data never leaves the device. No operator collects it. This is also a major compliance advantage (see `compliance/`).
+1. **Privacy** — children's data never leaves the device (unless a parent explicitly opts in to a cloud LLM backend — off by default, consent-gated, see `docs/SAFETY.md` §4.5). No operator collects it. This is also a major compliance advantage (see `compliance/`).
 2. **Cost** — no per-seat API fees. A parent with a capable laptop or homelab machine pays nothing to run inference.
 
 A paid hosted-inference tier (for non-technical parents) is a planned future bridge, but it carries its own heavier compliance obligations. The OSS local edition stays deliberately data-light by design.

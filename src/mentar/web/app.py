@@ -505,7 +505,16 @@ def _probe_llm_backend(endpoint: dict, deep: bool = False) -> tuple[bool, int, s
             base_url=endpoint["base_url"], api_key=endpoint["api_key"],
             timeout=60.0 if deep else 5.0,
         )
-        client.models.list()
+        try:
+            client.models.list()
+        except Exception as exc:  # noqa: BLE001 — status-code check below
+            # Anthropic's OpenAI-compat surface (and other minimal compat
+            # servers) may not serve a models catalog at all. A clean HTTP
+            # 404/405 means "reachable, endpoint absent" — for the shallow
+            # "is there a server here?" question that is a YES. Anything
+            # else (conn refused, 401, 5xx) stays a real failure.
+            if getattr(exc, "status_code", None) not in (404, 405):
+                raise
         if deep:
             resp = client.chat.completions.create(
                 model=endpoint["model"],
@@ -517,6 +526,21 @@ def _probe_llm_backend(endpoint: dict, deep: bool = False) -> tuple[bool, int, s
         return True, round((_time.monotonic() - start) * 1000), None
     except Exception as exc:
         return False, round((_time.monotonic() - start) * 1000), str(exc)
+
+
+def _has_cloud_consent_cached(backend: str) -> bool:
+    from mentar.consent import has_cloud_consent
+    return has_cloud_consent(backend)
+
+
+@app.context_processor
+def _inject_cloud_state():
+    """Every page's trust strip must tell the truth: 'no cloud · no accounts'
+    over an ACTIVE cloud backend would be a lie on every screen. None when
+    local (the default wording stays); the provider's name when cloud is on."""
+    backend = ((_INFERENCE_CFG or {}).get("backend") or "").lower()
+    names = {"openai": "OpenAI", "claude": "Anthropic"}
+    return {"cloud_provider": names.get(backend)}
 
 
 def _setup_is_complete() -> bool:
@@ -535,7 +559,14 @@ def _setup_is_complete() -> bool:
         return _SETUP_GATE_CACHE["ok"]
 
     ok = False
-    if _INFERENCE_CONFIG_PATH.exists():
+    backend = ((_INFERENCE_CFG or {}).get("backend") or "").lower()
+    if backend in ("openai", "claude") and not _has_cloud_consent_cached(backend):
+        # A cloud config with no recorded parent acknowledgment is NOT set up,
+        # however reachable the provider is — make_llm_call would refuse it, so
+        # green-lighting it here would bounce the child into a broken session.
+        # Route the parent back to /setup to complete (or re-do) the consent.
+        ok = False
+    elif _INFERENCE_CONFIG_PATH.exists():
         if _LLM_STATUS_ENDPOINT is None:
             ok = True  # in-process backend -- no HTTP endpoint to probe, trust it
         else:
@@ -749,23 +780,50 @@ def setup_save():
     model = request.form.get("model", "").strip()
     api_key = (request.form.get("api_key", "")).strip()
 
-    if backend not in ("ollama", "vllm") or not base_url or not model:
+    _CLOUD = {"openai": "OPENAI_API_KEY", "claude": "ANTHROPIC_API_KEY"}
+    if backend in _CLOUD:
+        # ── Cloud path (SPEC §20.1). Consent BEFORE anything is written: the
+        # child's lesson turns will leave this device under the parent's
+        # account, and SAFETY §4.5 requires the acknowledgment up front. Both
+        # the checkbox AND the typed word, mirroring /parent/ack's RESUME —
+        # a checkbox alone is one accidental tap.
+        if not model or not api_key:
+            return render_template("setup.html", result={
+                "ok": False, "error": "Please fill in the model and API key."})
+        if (request.form.get("cloud_ack") != "on"
+                or request.form.get("cloud_confirm", "").strip().upper() != "AGREE"):
+            return render_template("setup.html", result={
+                "ok": False,
+                "error": "Cloud setup needs the acknowledgment box ticked AND the "
+                         "word AGREE typed — nothing was saved."})
+        try:
+            upsert_dotenv_value(
+                _INFERENCE_CONFIG_PATH.parent / ".env", _CLOUD[backend], api_key)
+        except ValueError as exc:
+            return render_template("setup.html", result={"ok": False, "error": str(exc)})
+        from mentar.consent import record_cloud_consent
+        record_cloud_consent(backend)
+        cfg = {"backend": backend,
+               backend: {"model": model, "api_key": "${" + _CLOUD[backend] + "}"}}
+        if base_url:  # optional for cloud — code default is the provider host
+            cfg[backend]["base_url"] = base_url
+    elif backend in ("ollama", "vllm") and base_url and model:
+        cfg = {"backend": backend, backend: {"base_url": base_url, "model": model}}
+        if backend == "vllm":
+            if api_key:
+                try:
+                    upsert_dotenv_value(
+                        _INFERENCE_CONFIG_PATH.parent / ".env", "MENTAR_VLLM_API_KEY", api_key
+                    )
+                except ValueError as exc:
+                    # A pasted key with a line break in it. Show the parent the
+                    # reason on the form rather than a 500 -- nothing is written.
+                    return render_template("setup.html", result={"ok": False, "error": str(exc)})
+                cfg["vllm"]["api_key"] = "${MENTAR_VLLM_API_KEY}"
+            else:
+                cfg["vllm"]["api_key"] = "no-key"
+    else:
         return render_template("setup.html", result={"ok": False, "error": "Please fill in all fields."})
-
-    cfg: dict = {"backend": backend, backend: {"base_url": base_url, "model": model}}
-    if backend == "vllm":
-        if api_key:
-            try:
-                upsert_dotenv_value(
-                    _INFERENCE_CONFIG_PATH.parent / ".env", "MENTAR_VLLM_API_KEY", api_key
-                )
-            except ValueError as exc:
-                # A pasted key with a line break in it. Show the parent the
-                # reason on the form rather than a 500 -- nothing is written.
-                return render_template("setup.html", result={"ok": False, "error": str(exc)})
-            cfg["vllm"]["api_key"] = "${MENTAR_VLLM_API_KEY}"
-        else:
-            cfg["vllm"]["api_key"] = "no-key"
 
     write_inference_config(cfg, _INFERENCE_CONFIG_PATH)
     _reload_inference_config()

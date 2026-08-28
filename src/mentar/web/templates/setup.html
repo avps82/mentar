@@ -42,4 +42,51 @@
     <button type="submit">Save &amp; Connect (Remote API)</button>
   </form>
 </section>
+
+<section class="settings-section">
+  <h2 style="font-size:1.1rem">Option C — Cloud AI (uses the internet, your account)</h2>
+  <p class="hint"><strong>Read this before choosing a cloud option.</strong>
+    With a cloud AI, your child's typed lesson answers and the tutor's replies are sent
+    over the internet to the provider, every turn, under <em>your</em> account.
+    You — not Mentar — become the data operator for that flow, and the provider's own
+    data-handling terms apply. Mentar's usual "everything stays on this computer"
+    promise does not fully apply while a cloud option is on.
+    To turn it off later, come back here and pick a local option.</p>
+
+  <form method="POST" action="/setup">
+    <input type="hidden" name="backend" value="openai">
+    <h3 style="font-size:1rem">OpenAI (API key)</h3>
+    <label>Model<br>
+      <input type="text" name="model" placeholder="gpt-5.2-mini">
+    </label><br><br>
+    <label>OpenAI API key<br>
+      <input type="password" name="api_key" placeholder="sk-...">
+    </label><br><br>
+    <label><input type="checkbox" name="cloud_ack">
+      I understand my child's lesson conversation will be sent to OpenAI under my
+      account, and I accept responsibility for that data flow.</label><br>
+    <label>Type <strong>AGREE</strong> to confirm<br>
+      <input type="text" name="cloud_confirm" autocomplete="off">
+    </label><br><br>
+    <button type="submit">Save &amp; Connect (OpenAI)</button>
+  </form>
+
+  <form method="POST" action="/setup" style="margin-top:1.2rem">
+    <input type="hidden" name="backend" value="claude">
+    <h3 style="font-size:1rem">Claude / Anthropic (API key)</h3>
+    <label>Model<br>
+      <input type="text" name="model" placeholder="claude-sonnet-5">
+    </label><br><br>
+    <label>Anthropic API key<br>
+      <input type="password" name="api_key" placeholder="sk-ant-...">
+    </label><br><br>
+    <label><input type="checkbox" name="cloud_ack">
+      I understand my child's lesson conversation will be sent to Anthropic under my
+      account, and I accept responsibility for that data flow.</label><br>
+    <label>Type <strong>AGREE</strong> to confirm<br>
+      <input type="text" name="cloud_confirm" autocomplete="off">
+    </label><br><br>
+    <button type="submit">Save &amp; Connect (Claude)</button>
+  </form>
+</section>
 {% endblock %}

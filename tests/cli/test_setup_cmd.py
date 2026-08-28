@@ -250,3 +250,54 @@ def test_a_reasoning_model_gets_more_room_than_a_plain_one():
     assert reasoning and plain, "roster no longer has both kinds — test is meaningless"
     assert _written_max_tokens(model=reasoning[0]["id"]) > DEFAULT_MAX_TOKENS
     assert _written_max_tokens(model=plain[0]["id"]) == DEFAULT_MAX_TOKENS
+
+
+# ── Cloud runtimes (P2): consent-gated CLI setup ─────────────────────────────
+
+def _cloud_args(**kw):
+    base = dict(runtime="openai", model="gpt-5.2-mini", base_url=None,
+                api_key="sk-test", ctx=4096,
+                roster=str(REPO_ROOT / "config" / "model_roster.yaml"),
+                config=None, dry_run=False, accept_cloud_terms=True)
+    base.update(kw)
+    return SimpleNamespace(**base)
+
+
+def test_cloud_runtime_without_the_flag_noninteractive_writes_nothing(tmp_path, capsys, monkeypatch):
+    """Headless install, no --accept-cloud-terms: exit 1, statement printed,
+    zero files written — a script cannot consent on the parent's behalf."""
+    import mentar.consent as C
+    monkeypatch.setattr(C, "consent_path", lambda: tmp_path / "cloud_consent.yaml")
+    monkeypatch.setattr("sys.stdin", type("T", (), {"isatty": staticmethod(lambda: False)})())
+    cfg = tmp_path / "inf.yaml"
+    rc = CLI._setup(_cloud_args(config=str(cfg), accept_cloud_terms=False))
+    out = capsys.readouterr()
+    assert rc == 1
+    assert "acknowledgment" in out.out + out.err
+    assert "data operator" in out.out            # the statement itself printed
+    assert not cfg.exists()
+    assert not (tmp_path / ".env").exists()
+    assert not (tmp_path / "cloud_consent.yaml").exists()
+
+
+def test_cloud_runtime_with_flag_writes_config_env_and_consent(tmp_path, capsys, monkeypatch):
+    import mentar.consent as C
+    monkeypatch.setattr(C, "consent_path", lambda: tmp_path / "cloud_consent.yaml")
+    with patch.object(CLI, "_verify_backend", return_value=(True, "model replied 'ping'")):
+        rc = CLI._setup(_cloud_args(runtime="claude", model="claude-sonnet-5",
+                                    api_key="sk-ant-x", config=str(tmp_path / "inf.yaml")))
+    assert rc == 0, capsys.readouterr().out
+    text = (tmp_path / "inf.yaml").read_text()
+    assert "${ANTHROPIC_API_KEY}" in text and "sk-ant-x" not in text
+    assert 'ANTHROPIC_API_KEY="sk-ant-x"' in (tmp_path / ".env").read_text()
+    assert C.has_cloud_consent("claude", path=tmp_path / "cloud_consent.yaml")
+
+
+def test_cloud_dry_run_writes_nothing_not_even_consent(tmp_path, capsys, monkeypatch):
+    import mentar.consent as C
+    monkeypatch.setattr(C, "consent_path", lambda: tmp_path / "cloud_consent.yaml")
+    rc = CLI._setup(_cloud_args(dry_run=True, config=str(tmp_path / "inf.yaml")))
+    assert rc == 0
+    assert not (tmp_path / "inf.yaml").exists()
+    assert not (tmp_path / ".env").exists()
+    assert not (tmp_path / "cloud_consent.yaml").exists()

@@ -296,3 +296,108 @@ if __name__ == "__main__":
         fn()
         print(f"  ✓ {fn.__name__}")
     print(f"\n{len(fns)}/{len(fns)} setup-gate tests passed.")
+
+
+# ── Cloud backends (P2): consent-gated /setup Option C ────────────────────────
+
+def _cloud_form(**over):
+    base = {"backend": "openai", "model": "gpt-5.2-mini", "api_key": "sk-test",
+            "cloud_ack": "on", "cloud_confirm": "AGREE"}
+    base.update(over)
+    return base
+
+
+def test_cloud_save_without_consent_writes_nothing(monkeypatch):
+    """Missing checkbox OR missing/wrong typed word: the form errors and NOT ONE
+    file is written — no yaml, no .env, no consent record. consent_path is
+    patched INTO the tmpdir so an early-record bug cannot hide by writing to
+    the repo's real config dir instead."""
+    import mentar.consent as C
+    app_mod, client = _client()
+    with tempfile.TemporaryDirectory() as td:
+        cfg = pathlib.Path(td) / "inference.yaml"
+        monkeypatch.setattr(C, "consent_path",
+                            lambda: pathlib.Path(td) / "cloud_consent.yaml")
+        with patch.object(app_mod, "_INFERENCE_CONFIG_PATH", cfg), \
+             patch.object(app_mod, "_probe_llm_backend", return_value=(True, 5, None)):
+            for broken in (_cloud_form(cloud_ack=""), _cloud_form(cloud_confirm="yes"),
+                           _cloud_form(cloud_confirm="")):
+                r = client.post("/setup", data=broken)
+                assert r.status_code == 200
+                assert b"AGREE" in r.data          # the error names the fix
+                assert not cfg.exists()
+                assert not (pathlib.Path(td) / ".env").exists()
+        assert not (pathlib.Path(td) / "cloud_consent.yaml").exists()
+
+
+def test_cloud_save_with_consent_records_and_reloads(monkeypatch):
+    import mentar.consent as C
+    app_mod, client = _client()
+    with tempfile.TemporaryDirectory() as td:
+        cfg = pathlib.Path(td) / "inference.yaml"
+        consent = pathlib.Path(td) / "cloud_consent.yaml"
+        monkeypatch.setattr(C, "consent_path", lambda: consent)
+        with patch.object(app_mod, "_INFERENCE_CONFIG_PATH", cfg), \
+             patch.object(app_mod, "_probe_llm_backend", return_value=(True, 5, None)):
+            r = client.post("/setup", data=_cloud_form())
+            assert r.status_code == 302, r.data[:300]
+            # yaml holds the ${VAR} reference, never the literal key
+            text = cfg.read_text()
+            assert "${OPENAI_API_KEY}" in text and "sk-test" not in text
+            env = (pathlib.Path(td) / ".env").read_text()
+            assert 'OPENAI_API_KEY="sk-test"' in env
+            assert C.has_cloud_consent("openai", path=consent)
+
+
+def test_cloud_config_without_consent_record_fails_the_gate(monkeypatch):
+    """A hand-placed cloud yaml (or a wiped consent file) must send every route
+    back to /setup — make_llm_call would refuse it, so the gate saying 'ready'
+    would bounce the child into a broken session."""
+    import mentar.consent as C
+    app_mod, client = _client()
+    with tempfile.TemporaryDirectory() as td:
+        cfg = pathlib.Path(td) / "inference.yaml"
+        cfg.write_text(
+            'backend: claude\nclaude:\n  model: "m"\n  api_key: "k"\n', encoding="utf-8")
+        monkeypatch.setattr(C, "consent_path", lambda: pathlib.Path(td) / "absent.yaml")
+        with patch.object(app_mod, "_INFERENCE_CONFIG_PATH", cfg):
+            app_mod._reload_inference_config()
+            r = client.get("/", follow_redirects=False)
+            assert r.status_code == 302 and "/setup" in r.headers["Location"]
+
+
+def test_setup_page_discloses_what_leaves_the_device():
+    """The SAFETY §4.5 wording is load-bearing: what leaves, to whom, under
+    whose account, that the local promise is suspended, and how to turn it off."""
+    app_mod, client = _client()
+    with tempfile.TemporaryDirectory() as td:
+        cfg = pathlib.Path(td) / "inference.yaml"
+        cfg.write_text("backend: ollama\nollama: {model: m}\n", encoding="utf-8")
+        with patch.object(app_mod, "_INFERENCE_CONFIG_PATH", cfg):
+            html = client.get("/setup").data.decode()
+    for phrase in ("sent\n    over the internet", "under <em>your</em> account",
+                   "data operator", "does not fully apply", "turn it off"):
+        assert phrase.replace("\n    ", " ") in html.replace("\n    ", " "), phrase
+
+
+def test_trust_strip_tells_the_truth_about_cloud(monkeypatch):
+    import mentar.consent as C
+    app_mod, client = _client()
+    with tempfile.TemporaryDirectory() as td:
+        cfg = pathlib.Path(td) / "inference.yaml"
+        consent = pathlib.Path(td) / "cloud_consent.yaml"
+        # local config: the absolute wording stays
+        cfg.write_text("backend: ollama\nollama: {model: m}\n", encoding="utf-8")
+        with patch.object(app_mod, "_INFERENCE_CONFIG_PATH", cfg):
+            app_mod._reload_inference_config()
+            html = client.get("/setup").data.decode()
+            assert "no cloud · no accounts" in html
+            # cloud config + consent: the strip must CHANGE
+            monkeypatch.setattr(C, "consent_path", lambda: consent)
+            C.record_cloud_consent("claude", path=consent)
+            cfg.write_text(
+                'backend: claude\nclaude:\n  model: "m"\n  api_key: "k"\n', encoding="utf-8")
+            app_mod._reload_inference_config()
+            html = client.get("/setup").data.decode()
+            assert "no cloud · no accounts" not in html
+            assert "Anthropic" in html and "parent-approved" in html

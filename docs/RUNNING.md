@@ -119,6 +119,29 @@ Prefer to do it by hand? The manual steps (4–6) below still work.
 
 ---
 
+## Alternative: a cloud AI account (opt-in, parent-consent-gated)
+
+If you already pay OpenAI or Anthropic, you can point Mentar at that account instead of
+running a model locally. **Read this first:** with a cloud backend, your child's typed
+lesson answers and the tutor's replies are sent to the provider on every turn, under
+YOUR account — you become the data operator for that flow, and the usual "everything
+stays on this computer" promise no longer fully applies (SAFETY.md §4.5). Setup makes
+you acknowledge exactly that (a checkbox AND typing AGREE) before anything is saved.
+
+```bash
+./mentar setup --runtime openai --model gpt-5.2-mini   --api-key sk-...     # OpenAI
+./mentar setup --runtime claude --model claude-sonnet-5 --api-key sk-ant-... # Anthropic
+# both need --accept-cloud-terms when run non-interactively
+```
+
+Or use the web page: `./mentar serve` → the setup page's **Option C**. The key goes into
+the gitignored `config/.env`, never into a tracked file; the acknowledgment is recorded
+in `config/cloud_consent.yaml`.
+
+**To turn it off:** re-run setup with a local runtime (the header strip on every page
+shows when a cloud backend is active). To revoke fully, also delete the key line from
+`config/.env` and rotate the key at the provider.
+
 ## Alternative: point at a remote OpenAI-compatible proxy (LiteLLM / vLLM)
 
 No local model at all — if you already run an OpenAI-compatible endpoint (e.g. a **LiteLLM**

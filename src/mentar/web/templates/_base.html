@@ -10,7 +10,9 @@
   <a href="/" class="brand"><span class="brand-emoji">🧠</span> <span class="brand-text">Mentar</span>{% if subject_label %} <span class="subject-label">· {{ subject_label }}</span>{% endif %}</a>
   <a href="/settings" class="settings-link" aria-label="Settings">⚙️ Settings</a>
 </div>
-<p class="trust-strip">Runs entirely locally · no cloud · no accounts</p>
+{% if cloud_provider %}<p class="trust-strip">Runs locally · cloud AI on (parent-approved · {{ cloud_provider }})</p>
+{% else %}<p class="trust-strip">Runs entirely locally · no cloud · no accounts</p>
+{% endif %}
 {% endblock %}
 {% block content %}{% endblock %}
 {% block footer %}{% endblock %}

@@ -3,7 +3,7 @@
 {% block body_class %}wide-page{% endblock %}
 {% block content %}
 <p style="text-align:center;color:var(--text-muted);max-width:480px;margin:0 auto 8px">
-  Your private learning helper — everything stays on this computer.
+  Your private learning helper{% if cloud_provider %} — using {{ cloud_provider }}'s cloud AI, approved by your parent{% else %} — everything stays on this computer{% endif %}.
 </p>
 <h2 style="text-align:center;color:var(--text)">What would you like to learn today?</h2>
 {% if not subject_groups %}

@@ -575,7 +575,7 @@ If a parent opts in to a cloud LLM backend (Gemini API, Claude API, or similar �
 
 - Session turn content (child inputs + generated responses) is transmitted to a third-party API.
 - **The parent, not Mentar, becomes the operator/controller for that data flow** (SPEC §17.2, §20.1).
-- Mentar does not store or route cloud API credentials; the parent supplies and owns them.
+- Cloud credentials are supplied and owned by the parent. Mentar stores them only on the parent's own device (an API key in the gitignored `config/.env`); they are sent only to the chosen provider and to no one else. No Mentar-operated service ever sees them.
 - The parent is responsible for reviewing the third-party API provider's data handling terms before opting in.
 - The parent setup flow for cloud backends includes an explicit acknowledgment of this responsibility.
 
@@ -700,7 +700,7 @@ Transparency applies to the child as well as the parent:
 | Session PIN gate (Phase 1) | On / Off | On (under-13), Off (13+) |
 | Transcript retention window | **Not built for the pilot** (retains everything; deletion = delete the `.db` file — §4.6) | Forever (pilot) |
 | Probe frequency cap (`probe_frequency_cap`) | 0 (disable) to N items per probe | 5 items |
-| Cloud backend acknowledgment | Required per opt-in | N/A (local default) |
+| Cloud backend acknowledgment | **Built** — consent step in `/setup` (checkbox + typed AGREE) and `mentar setup --runtime openai|claude` (`--accept-cloud-terms` or typed AGREE); recorded per-backend in `config/cloud_consent.yaml`, enforced at the LLM chokepoint | Off (local default) |
 | Learner profile deletion | Explicit action | N/A |
 
 ---

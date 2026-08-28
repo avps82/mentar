@@ -79,6 +79,7 @@ _RUNTIME_ARTIFACTS = {
     "config/.env",                  # operator-created, never committed
     "eval/dataset_v1.jsonl",        # git-ignored eval data
     "config/inference.yaml",        # operator-written; config/inference.example.yaml is tracked
+    "config/cloud_consent.yaml",    # written by the cloud-consent step (SAFETY §4.5), gitignored
     # graphify output (docs/design/R16_release_plan.md §graphify): generated into
     # graphify-out/ by a tool run, deliberately untracked.
     "graph.json", "graph.html", "manifest.json",

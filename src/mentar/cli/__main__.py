@@ -260,6 +260,87 @@ def _verify_backend(cfg: dict) -> tuple[bool, str]:
         "Check `ollama list` shows it, then try raising generation.max_tokens.")
 
 
+# The consent DISCLOSURE (SAFETY §4.5). Parent-facing legal-ish text, not a
+# prompt: completeness is load-bearing and it must match the web form wording,
+# so it is exempt from the prompt-literal cap rather than shortened.
+_CLOUD_STATEMENT = (
+    "\n"  # t7.3-exempt: consent disclosure, not a prompt (see comment above)
+    """Cloud AI acknowledgment (SAFETY.md §4.5) — read before continuing:
+
+  * Your child's typed lesson answers and the tutor's replies will be sent
+    over the internet to {provider}, on every turn, under YOUR account.
+  * You — not Mentar — are the data operator for that flow, and {provider}'s
+    own data-handling terms apply to it.
+  * Mentar's usual "everything stays on this device" promise does not fully
+    apply while a cloud backend is on.
+  * To turn it off later: re-run `mentar setup` with a local runtime.
+"""
+)
+
+
+def _setup_cloud(args) -> int:
+    """--runtime openai|claude: opt-in cloud backend, parent-consent-gated.
+    Same write path as the web /setup Option C; --accept-cloud-terms (or an
+    interactive typed AGREE) is the CLI counterpart of the consent form."""
+    from mentar.consent import record_cloud_consent
+    from mentar.inference.backend import upsert_dotenv_value, write_inference_config
+
+    backend = args.runtime
+    provider = {"openai": "OpenAI", "claude": "Anthropic"}[backend]
+    env_var = {"openai": "OPENAI_API_KEY", "claude": "ANTHROPIC_API_KEY"}[backend]
+
+    if not args.model or not args.api_key:
+        print(f"ERROR: --runtime {backend} requires --model and --api-key", file=sys.stderr)
+        return 1
+
+    print(_CLOUD_STATEMENT.format(provider=provider))
+    if not getattr(args, "accept_cloud_terms", False):
+        if not sys.stdin.isatty():
+            print("ERROR: cloud setup needs the acknowledgment — pass "
+                  "--accept-cloud-terms (the statement above still applies).",
+                  file=sys.stderr)
+            return 1
+        typed = input("Type AGREE to accept, anything else to abort: ").strip().upper()
+        if typed != "AGREE":
+            print("Aborted — nothing was written.")
+            return 1
+
+    cfg_path = Path(args.config) if args.config else config_path()
+    cfg: dict = {
+        "backend": backend,
+        backend: {"model": args.model, "api_key": "${" + env_var + "}"},
+        "generation": {"temperature": 0.3, "max_tokens": DEFAULT_MAX_TOKENS},
+    }
+    if args.base_url:
+        cfg[backend]["base_url"] = args.base_url
+
+    if args.dry_run:
+        import yaml
+        print(f"\n[dry-run] would write {cfg_path} (and record consent):\n")
+        print(yaml.safe_dump(cfg, sort_keys=False))
+        return 0
+
+    try:
+        upsert_dotenv_value(cfg_path.parent / ".env", env_var, args.api_key)
+    except ValueError as exc:
+        print(f"✗ {exc}", file=sys.stderr)
+        return 1
+    # Consent BEFORE verify: _verify_backend builds make_llm_call, which
+    # refuses an unconsented cloud backend by design.
+    record_cloud_consent(backend)
+    write_inference_config(cfg, cfg_path)
+    print(f"\n✓ Wrote {cfg_path}  (consent recorded)")
+
+    print("\nVerifying the backend responds...")
+    ok, msg = _verify_backend(cfg)
+    if not ok:
+        print(f"✗ Backend did not respond: {msg}", file=sys.stderr)
+        return 1
+    print(f"✓ Backend LIVE — {msg}")
+    print("✓ Ready — run:  mentar serve   (web)   or   mentar run-session   (terminal)")
+    return 0
+
+
 def _setup_remote_api(args, repo: Path) -> int:
     """--runtime vllm: a remote OpenAI-compatible API (LiteLLM/vLLM proxy) --
     no roster/download involved, just write what the caller already knows.
@@ -316,6 +397,8 @@ def _setup(args) -> int:
     repo = _repo_root()
     if args.runtime == "vllm":
         return _setup_remote_api(args, repo)
+    if args.runtime in ("openai", "claude"):
+        return _setup_cloud(args)
 
     from mentar.inference.autoselect import load_roster, select
     from mentar.inference.backend import write_inference_config
@@ -753,7 +836,8 @@ def main(argv: list[str] | None = None) -> int:
     sub = parser.add_subparsers(dest="cmd", required=True)
 
     su = sub.add_parser("setup", help="Detect hardware, pick + download the best-fit model, write config.")
-    su.add_argument("--runtime", choices=["auto", "ollama", "llama_app", "gguf", "vllm"], default="auto",
+    su.add_argument("--runtime", choices=["auto", "ollama", "llama_app", "gguf", "vllm", "openai", "claude"],
+                    default="auto",
                     help="Runtime: auto = Ollama, else llama.app (`llama serve`), else in-process GGUF. "
                          "vllm = a remote OpenAI-compatible API (LiteLLM/vLLM proxy) -- needs --base-url "
                          "and --model, no download/roster involved.")
@@ -761,6 +845,9 @@ def main(argv: list[str] | None = None) -> int:
                     "(or the exact remote model name, for --runtime vllm).")
     su.add_argument("--base-url", help="Remote API base URL, e.g. http://192.168.1.10:4000/v1 "
                     "(--runtime vllm only).")
+    su.add_argument("--accept-cloud-terms", action="store_true",
+                    help="Cloud runtimes (openai/claude): accept the parent "
+                         "acknowledgment non-interactively (it still prints)")
     su.add_argument("--api-key", help="Remote API key, if the server needs one (--runtime vllm only) -- "
                     "written to a gitignored .env next to the config, never inlined in the yaml.")
     su.add_argument("--ctx", type=int, default=4096, help="Context size for fit sizing (default: 4096).")

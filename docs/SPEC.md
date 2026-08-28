@@ -506,8 +506,10 @@ generate(prompt, grounding_passages, constraints) → text
   ├─ Backend: llama.cpp (GGUF)                 ← PRIMARY local default (lightweight, broadest HW support)
   │     • Ollama is an optional convenience wrapper over the same engine
   ├─ Backend: parent's own vLLM cluster        ← capable-GPU / throughput tier, parent-operated
-  ├─ Backend: Gemini API (opt-in)              ← parent supplies + owns the key
-  └─ Backend: Claude / other API (opt-in)      ← parent supplies + owns the key
+  ├─ Backend: Gemini API (opt-in)              ← parent supplies + owns the key (not yet wired)
+  └─ Backend: OpenAI / Claude API (opt-in)     ← parent supplies + owns the key; BUILT
+        2026-08 as `openai` / `claude` backends — consent-gated per SAFETY §4.5
+        (recorded acknowledgment required before the chokepoint will build them)
 ```
 
 **Primary local backend = `llama.cpp` (decision, 2026-06-15, the maintainer).** Reasons: it is the
