@@ -47,7 +47,12 @@ while IFS= read -r f; do
   # blocked the commit (found 2026-08-16). ERE has no negative lookahead, so the
   # code-reference idioms are filtered out here instead. A literal secret has
   # none of them.
-  susp=$(printf '%s\n' "$added" | grep -Ei "$pat" | grep -Eiv '(os\.environ|getenv|\.get\(|\$\{)' || true)
+  # `name(` on the value side = a function CALL supplying the value
+  # (get_access_token(), access.strip()) -- a literal secret never contains a
+  # parenthesis. Added 2026-08-28 when codex_auth.py's token-HANDLING code
+  # tripped the keyword branch; gitleaks in the release gate + pre-push stays
+  # the backstop for anything this idiom filter waves through.
+  susp=$(printf '%s\n' "$added" | grep -Ei "$pat" | grep -Eiv '(os\.environ|getenv|\.get\(|\$\{|[a-z_]{3,}\()' || true)
   if [ -n "$susp" ]; then
     echo "BLOCKED (content) in: $f"
     printf '%s\n' "$susp" | head -3 | sed 's/^/   /'
