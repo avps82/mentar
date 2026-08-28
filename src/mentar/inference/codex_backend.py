@@ -15,12 +15,18 @@ So the shape assumptions live HERE and nowhere else, deliberately quarantined:
 spellings, because the exact one is unpublished. If OpenAI changes them, one
 function and its fixtures move, not the backend.
 
-⚠ NOT YET VERIFIED AGAINST THE LIVE ENDPOINT (2026-08-29). The request body and
-event shapes below are taken from published descriptions of how the existing
-piggyback integrations call this endpoint, NOT from a capture of our own — the
-maintainer has no ChatGPT subscription to test with. Everything around this
-module (sign-in, refresh, consent, error UX) IS covered by tests; this module's
-wire format is the one thing that could be wrong on first contact.
+Wire format checked against OpenAI's OWN Codex client source (2026-08-29):
+codex-rs/core/src/client.rs for the request (headers, required body fields, and
+the fact that it sends NO temperature) and codex-rs/codex-api/src/sse/responses.rs
+for the event names and where the assistant text actually lives. That is the
+authoritative spec for an unpublished protocol, and it corrected four things
+this module had wrong.
+
+⚠ STILL NOT EXERCISED AGAINST THE LIVE ENDPOINT — the maintainer has no ChatGPT
+subscription. Codex also sends session/installation headers (x-codex-*) and an
+`include: ["reasoning.encrypted_content"]` field that we omit as
+tool/reasoning-specific; if the backend turns out to require any of them, the
+first real call will say so.
 
 To verify: run ``scripts/capture_codex_probe.py`` on a machine with a ChatGPT
 sign-in and correct ``_build_body``/``extract_text`` against the capture. Until
@@ -61,14 +67,19 @@ def _build_body(messages: list[dict], model: str, max_tokens: int,
     ]
     body = {
         "model": model,
+        # Codex always sends instructions, even empty — mirroring it exactly
+        # costs nothing and removes one way to be rejected.
+        "instructions": instructions,
         "input": body_input,
         "stream": True,          # the codex backend is stream-first
         "store": False,          # never ask them to retain a child's turn
+        "tool_choice": "auto",   # sent unconditionally by codex-rs
         "max_output_tokens": max_tokens,
-        "temperature": temperature,
     }
-    if instructions:
-        body["instructions"] = instructions
+    # NO temperature. Verified 2026-08-29 against codex-rs/core/src/client.rs:
+    # it never sends one, and the GPT-5-family models this endpoint serves
+    # reject the parameter outright. We had been sending it.
+    _ = temperature
     return body
 
 
@@ -104,6 +115,14 @@ def extract_text(sse_lines) -> str:
                 deltas.append(piece)
         elif etype.endswith("output_text.done") and isinstance(event.get("text"), str):
             completed = completed or event["text"]
+        elif etype.endswith("output_item.done"):
+            # Where the Codex CLI itself reads the assistant text (verified
+            # 2026-08-29 against codex-rs/codex-api/src/sse/responses.rs). We
+            # ignored this event entirely: a stream that emits item.done
+            # WITHOUT deltas would have returned "" — a silent blank turn.
+            item_text = _text_from_item(event.get("item") or {})
+            if item_text:
+                completed = completed or item_text
         elif etype.endswith("response.completed"):
             completed = _text_from_response(event.get("response") or {}) or completed
         elif etype.endswith("failed") or etype.endswith("error"):
@@ -112,10 +131,23 @@ def extract_text(sse_lines) -> str:
             # (measured 2026-08-28). Same silent-empty class as the reasoning
             # model bug: name it, so the parent's status page can show it.
             err = (event.get("response") or {}).get("error") or event.get("error") or {}
-            msg = err.get("message") if isinstance(err, dict) else str(err)
+            if isinstance(err, dict):
+                # codex-rs classifies on `code` (context_length_exceeded,
+                # rate_limit_exceeded, ...); the message is the human half.
+                msg = err.get("message") or err.get("code")
+            else:
+                msg = str(err)
             raise CodexBackendError(
                 f"the ChatGPT backend reported an error: {msg or etype}")
     return completed if completed is not None else "".join(deltas)
+
+
+def _text_from_item(item: dict) -> str | None:
+    """Assistant text out of one output ITEM (its content parts)."""
+    chunks = [part["text"] for part in (item.get("content") or [])
+              if isinstance(part, dict) and isinstance(part.get("text"), str)
+              and part.get("type", "output_text") == "output_text"]
+    return "".join(chunks) if chunks else None
 
 
 def _text_from_response(response: dict) -> str | None:
@@ -164,7 +196,10 @@ def make_codex_call(block: dict, gen: dict):
                 "Authorization": f"Bearer {token}",
                 "Content-Type": "application/json",
                 "chatgpt-account-id": creds.get("account_id") or "",
-                "OpenAI-Beta": "responses=experimental",
+                # Verbatim from codex-rs/core/src/client.rs (2026-08-29); the
+                # value we had invented ("responses=experimental") is not a
+                # thing the backend advertises.
+                "OpenAI-Beta": "responses_websockets=2026-02-06",
                 "originator": "codex_cli_rs",
             }
             try:

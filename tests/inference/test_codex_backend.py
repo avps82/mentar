@@ -74,6 +74,10 @@ def test_system_turn_becomes_instructions_not_a_message():
     assert body["input"][0]["content"][0]["text"] == "What is 3/4 + 1/8?"
     assert body["store"] is False, "never ask them to retain a child's turn"
     assert body["model"] == "gpt-5.2"
+    assert "temperature" not in body, (
+        "codex-rs never sends temperature and the GPT-5-family models this "
+        "endpoint serves reject it")
+    assert body["tool_choice"] == "auto"    # sent unconditionally by codex-rs
 
 
 def test_missing_model_is_refused_at_build_time():
@@ -172,3 +176,43 @@ def test_a_failure_event_without_a_message_still_names_the_event():
     with pytest.raises(CB.CodexBackendError) as exc:
         CB.extract_text(_sse({"type": "response.failed"}))
     assert "response.failed" in str(exc.value)
+
+
+def test_output_item_done_is_where_codex_itself_reads_the_text():
+    """Verified 2026-08-29 against codex-rs/codex-api/src/sse/responses.rs: the
+    CLI extracts the assistant text from response.output_item.done. We ignored
+    that event, so a stream emitting item.done WITHOUT deltas returned "" — a
+    silent blank turn, the failure mode hardest to notice."""
+    text = CB.extract_text(_sse(
+        {"type": "response.output_item.done", "item": {
+            "type": "message", "role": "assistant",
+            "content": [{"type": "output_text", "text": "three quarters"}]}},
+    ))
+    assert text == "three quarters"
+
+
+def test_output_item_done_ignores_non_text_parts():
+    text = CB.extract_text(_sse(
+        {"type": "response.output_item.done", "item": {"content": [
+            {"type": "reasoning", "text": "hidden thinking"},
+            {"type": "output_text", "text": "the answer"}]}},
+    ))
+    assert text == "the answer", "reasoning parts must never reach the child"
+
+
+def test_a_failure_event_with_only_a_code_still_names_it():
+    """codex-rs classifies failures on `code`; the message is the human half
+    and may be absent."""
+    with pytest.raises(CB.CodexBackendError) as exc:
+        CB.extract_text(_sse({"type": "response.failed", "response": {
+            "error": {"code": "context_length_exceeded"}}}))
+    assert "context_length_exceeded" in str(exc.value)
+
+
+def test_the_beta_header_matches_the_codex_client(monkeypatch):
+    _stub_auth(monkeypatch)
+    calls = _fake_stream(monkeypatch, 200, lines=_sse(
+        {"type": "response.output_text.delta", "delta": "ok"}))
+    fn = CB.make_codex_call({"model": "m"}, _gen())
+    fn([{"role": "user", "content": "hi"}])
+    assert calls[0]["headers"]["OpenAI-Beta"] == "responses_websockets=2026-02-06"
