@@ -633,3 +633,27 @@ def test_a_connection_error_is_still_retried(monkeypatch=None):
                           "ollama": {"base_url": "http://localhost:11434", "model": "x"}})
     assert fn([{"role": "user", "content": "hi"}]) == "hello from model"
     assert len(_FakeClient.instances[-1].calls) == 3, "transient faults must still retry"
+
+
+def test_revoking_consent_stops_an_ALREADY_BUILT_cloud_call(monkeypatch=None):
+    """The gate must work in BOTH directions. Consent was checked only when the
+    callable was built, so a parent who revoked mid-session kept sending their
+    child's turns to the provider — a live SessionController holds that callable
+    for the whole session (measured 2026-08-29)."""
+    import mentar.consent as C
+    _install_fake(monkeypatch)
+    state = {"ok": True}
+    orig = C.has_cloud_consent
+    C.has_cloud_consent = lambda b, path=None: state["ok"]
+    try:
+        fn = B.make_llm_call({"backend": "openai",
+                              "openai": {"model": "m", "api_key": "sk-x"}})
+        assert fn([{"role": "user", "content": "hi"}]) == "hello from model"
+        state["ok"] = False                     # the parent revokes
+        try:
+            fn([{"role": "user", "content": "hi again"}])
+            raise AssertionError("a revoked backend kept talking to the cloud")
+        except RuntimeError as exc:
+            assert "acknowledgment" in str(exc)
+    finally:
+        C.has_cloud_consent = orig

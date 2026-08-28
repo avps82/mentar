@@ -64,6 +64,15 @@ def record_cloud_consent(backend: str, path: Path | None = None) -> None:
 
 
 def has_cloud_consent(backend: str, path: Path | None = None) -> bool:
-    """True only for a record made against the CURRENT statement wording."""
+    """True only for a record made against the CURRENT statement wording.
+
+    Every malformed shape reads as NO consent rather than raising. A
+    hand-written or truncated file used to crash here with AttributeError
+    (``{backend: true}`` has no .get), and this is called from make_llm_call
+    AND from the web setup gate — so a stray line in a config file 500'd every
+    page instead of routing the parent to /setup. Measured 2026-08-29.
+    """
     entry = _load(path or consent_path()).get(backend)
-    return bool(entry) and entry.get("statement_version") == STATEMENT_VERSION
+    if not isinstance(entry, dict):
+        return False
+    return entry.get("statement_version") == STATEMENT_VERSION

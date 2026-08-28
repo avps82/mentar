@@ -45,3 +45,15 @@ def test_corrupt_record_reads_as_no_consent(tmp_path):
     # and recording over the corpse works
     C.record_cloud_consent("openai", path=p)
     assert C.has_cloud_consent("openai", path=p)
+
+
+def test_every_malformed_shape_reads_as_no_consent(tmp_path):
+    """This is called from make_llm_call AND the web setup gate, so a crash here
+    500'd every page instead of routing the parent to /setup. A hand-written
+    `backend: true` line did exactly that (AttributeError, 2026-08-29)."""
+    p = tmp_path / "cloud_consent.yaml"
+    for forged in ({"openai": True}, {"openai": "yes"}, {"openai": ["x"]},
+                   {"openai": None}, {"openai": {"statement_version": "1"}},
+                   {"openai": {"statement_version": 999}}, {"openai": {}}):
+        p.write_text(yaml.safe_dump(forged))
+        assert C.has_cloud_consent("openai", path=p) is False, forged

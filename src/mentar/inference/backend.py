@@ -567,16 +567,33 @@ def make_llm_call(cfg: dict) -> LLMCall:
         # hand-edited yaml cannot switch a child's sessions to the cloud without
         # the SAFETY §4.5 parent acknowledgment ever having been made.
         from mentar.consent import has_cloud_consent
-        if not has_cloud_consent(backend):
-            raise RuntimeError(
-                f"cloud backend '{backend}' is configured but no parent "
-                "acknowledgment is recorded — open /setup (or run `mentar setup`) "
-                "and complete the cloud consent step"
-            )
+
+        def _require_consent() -> None:
+            if not has_cloud_consent(backend):
+                raise RuntimeError(
+                    f"cloud backend '{backend}' is configured but no parent "
+                    "acknowledgment is recorded — open /setup (or run `mentar "
+                    "setup`) and complete the cloud consent step"
+                )
+
+        _require_consent()          # fail fast at setup/verify time
         if backend == "openai_chatgpt":
             from mentar.inference.codex_backend import make_codex_call
-            return make_codex_call(block, gen)
-        return _make_openai_call(_resolve_http(backend, block), gen)
+            inner = make_codex_call(block, gen)
+        else:
+            inner = _make_openai_call(_resolve_http(backend, block), gen)
+
+        # ...and again on EVERY call. Checking only here would make the gate
+        # one-directional: enabling a cloud backend is gated, but a parent who
+        # REVOKES mid-session would keep sending their child's turns to the
+        # provider, because a live SessionController holds this callable for the
+        # whole session (measured 2026-08-29). Re-reading a small local YAML per
+        # turn is free next to a multi-second model call.
+        def gated(messages: list[dict]) -> str:
+            _require_consent()
+            return inner(messages)
+
+        return gated
 
     if backend in ("llamacpp", "vllm", "ollama"):
         return _make_openai_call(_resolve_http(backend, block), gen)
