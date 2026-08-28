@@ -146,8 +146,13 @@ then choose the ChatGPT option. A browser opens, you sign in, and the tokens are
 locally in `config/chatgpt_auth.json` (gitignored) and refreshed automatically.
 
 **Understand the trade before you rely on it.** OpenAI does not officially support
-other apps using a ChatGPT sign-in — it works today, it is what several developer
-tools do, and it **may stop working at any time**. Your plan's usage limits also apply,
+other apps using a ChatGPT sign-in — it is what several developer tools do, and it
+**may stop working at any time**. It is also **not yet verified end-to-end**: the
+sign-in, token refresh and consent flow are all tested, but the wire format of the
+call itself was written from published descriptions rather than a capture of our own,
+because the maintainer has no ChatGPT subscription. If you have one and it fails,
+`scripts/capture_codex_probe.py` produces exactly the (redacted) evidence needed to
+fix it — please open an issue with it. Your plan's usage limits also apply,
 so a heavy session can hit a cap mid-lesson. For dependable capacity, use an API key.
 
 **There is no Claude equivalent, and there will not be one soon.** Anthropic explicitly

@@ -92,11 +92,14 @@
   <div style="margin-top:1.4rem;padding-top:1rem;border-top:1px solid var(--border)">
     <h3 style="font-size:1rem">ChatGPT subscription
       <span style="color:var(--danger);font-size:.8rem">⚗ EXPERIMENTAL</span></h3>
-    <p class="hint"><strong>Unofficial.</strong> This signs in with your existing ChatGPT
-      Plus/Pro account instead of a paid API key. OpenAI does not officially support
-      other apps using a ChatGPT sign-in, so <strong>it may stop working at any
-      time</strong>, and heavy use can hit your plan's usage limits mid-lesson.
-      If you want something dependable, use one of the API-key options above.</p>
+    <p class="hint"><strong>Unofficial, and not yet tested against a live account.</strong>
+      This signs in with your existing ChatGPT account instead of a paid API key.
+      OpenAI does not officially support other apps doing this, so <strong>it may stop
+      working at any time</strong>, and heavy use can hit your plan's limits mid-lesson.
+      Nobody has yet run it against a real ChatGPT subscription, so it may simply not
+      work on the first try — if it fails, please
+      <a href="https://github.com/avps82/mentar/issues">tell us what you saw</a>.
+      For something dependable today, use one of the API-key options above.</p>
 
     {% if chatgpt and chatgpt.present and not chatgpt.stale %}
       <p class="hint">✓ Signed in on this computer.</p>

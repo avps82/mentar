@@ -11,11 +11,20 @@ So the shape assumptions live HERE and nowhere else, deliberately quarantined:
   * request building  -> ``_build_body`` (messages -> Responses ``input``)
   * response parsing  -> ``extract_text`` (SSE event stream -> plain text)
 
-``extract_text`` is written against a REAL capture taken by
-``scripts/capture_codex_probe.py`` and is intentionally forgiving: it accepts
-several event/field spellings, because the exact one is unpublished. Its tests
-pin the shapes we have actually observed; if OpenAI changes them, one function
-and its fixtures move, not the backend.
+``extract_text`` is intentionally forgiving: it accepts several event/field
+spellings, because the exact one is unpublished. If OpenAI changes them, one
+function and its fixtures move, not the backend.
+
+⚠ NOT YET VERIFIED AGAINST THE LIVE ENDPOINT (2026-08-29). The request body and
+event shapes below are taken from published descriptions of how the existing
+piggyback integrations call this endpoint, NOT from a capture of our own — the
+maintainer has no ChatGPT subscription to test with. Everything around this
+module (sign-in, refresh, consent, error UX) IS covered by tests; this module's
+wire format is the one thing that could be wrong on first contact.
+
+To verify: run ``scripts/capture_codex_probe.py`` on a machine with a ChatGPT
+sign-in and correct ``_build_body``/``extract_text`` against the capture. Until
+someone does, the setup page labels this option unverified.
 """
 
 from __future__ import annotations
