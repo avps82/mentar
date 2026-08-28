@@ -1,9 +1,11 @@
 """Read (and refresh) the ChatGPT sign-in that OpenAI's Codex CLI stores locally.
 
 EXPERIMENTAL / UNOFFICIAL (plan §P3, risk R1): "Sign in with ChatGPT" officially
-ships only inside Codex tooling. Mentar never runs the OAuth flow itself — the
-parent signs in with OpenAI's own `codex login`, and this module consumes the
-credential file that login leaves at ``~/.codex/auth.json``.
+ships only inside Codex tooling. The parent signs in either via Mentar's own
+embedded flow (``mentar chatgpt-login`` / the setup button — see
+``chatgpt_login.py``, which stores tokens in this same file shape at
+``config/chatgpt_auth.json``) or with OpenAI's own ``codex login``; this module
+reads whichever exists (Mentar's own file wins) and owns refresh for both.
 
 Refresh policy (maintainer decision, 2026-08-28): access tokens expire after a
 few hours, so on (near-)expiry we POST the refresh_token grant to OpenAI's token
@@ -44,15 +46,27 @@ _REFRESH_MARGIN_S = 300.0          # refresh when <5 min of validity remains
 _REFRESH_LOCK = threading.Lock()   # single-flight: rotation makes races lossy
 
 
+def default_auth_path() -> Path:
+    """Mentar's own sign-in (written by `mentar chatgpt-login` / the setup
+    button) wins; a pre-existing `codex login` is the no-extra-work fallback.
+    Chosen fresh on every call — no caching — so signing in either way takes
+    effect on the very next turn."""
+    from mentar.paths import config_path
+    own = config_path().parent / "chatgpt_auth.json"
+    return own if own.exists() else CODEX_AUTH_PATH
+
+
 class CodexAuthError(RuntimeError):
     """The Codex sign-in is missing/unreadable/expired beyond repair."""
 
 
 def _remedy(path: Path) -> str:
-    if shutil.which("codex") is None:
-        return ("the Codex CLI is not installed — install it from "
-                "https://developers.openai.com/codex, then run: codex login")
-    return f"run: codex login   (Mentar reads the sign-in it stores at {path})"
+    hint = "sign in with:  mentar chatgpt-login   (or the button on /setup)"
+    if shutil.which("codex") is not None:
+        hint += "  — or run: codex login"
+    else:
+        hint += "  (no separate Codex CLI install needed)"
+    return f"{hint}. Mentar reads the ChatGPT sign-in stored at {path}."
 
 
 def _jwt_exp(token: str) -> float | None:
@@ -72,7 +86,7 @@ def read_credentials(path: Path | None = None) -> dict:
     """Fresh read of auth.json → {access_token, refresh_token, account_id,
     expires_at}. No caching: after the parent runs `codex login`, the very
     next call sees the new sign-in. Tolerant to the two known shapes."""
-    p = Path(path).expanduser() if path else CODEX_AUTH_PATH
+    p = Path(path).expanduser() if path else default_auth_path()
     if not p.exists():
         raise CodexAuthError(f"no ChatGPT sign-in found at {p} — {_remedy(p)}")
     try:
@@ -134,7 +148,7 @@ def _refresh(p: Path, creds: dict) -> dict:
 
 def get_access_token(path: Path | None = None) -> str:
     """A currently-valid access token, refreshing (and persisting) if needed."""
-    p = Path(path).expanduser() if path else CODEX_AUTH_PATH
+    p = Path(path).expanduser() if path else default_auth_path()
     creds = read_credentials(p)
     exp = creds["expires_at"]
     if exp is not None and exp - time.time() < _REFRESH_MARGIN_S:
@@ -162,7 +176,7 @@ def make_codex_token_provider(auth_file: str | None = None):
 
 def login_status(path: Path | None = None) -> dict:
     """For setup/status pages only — never used on the call path."""
-    p = Path(path).expanduser() if path else CODEX_AUTH_PATH
+    p = Path(path).expanduser() if path else default_auth_path()
     found = shutil.which("codex") is not None
     try:
         creds = read_credentials(p)

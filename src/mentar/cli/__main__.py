@@ -278,6 +278,19 @@ _CLOUD_STATEMENT = (
 )
 
 
+def _chatgpt_login(args) -> int:
+    """`mentar chatgpt-login`: the embedded Sign-in-with-ChatGPT (PKCE) flow.
+    EXPERIMENTAL — unofficial; see docs/RUNNING.md. Stores tokens locally in
+    config/chatgpt_auth.json; no Codex CLI install needed."""
+    from mentar.inference.chatgpt_login import run_login_flow
+    try:
+        run_login_flow(open_browser=not args.no_browser)
+    except Exception as exc:  # noqa: BLE001 — parent-facing, print plainly
+        print(f"✗ Sign-in failed: {exc}", file=sys.stderr)
+        return 1
+    return 0
+
+
 def _setup_cloud(args) -> int:
     """--runtime openai|claude: opt-in cloud backend, parent-consent-gated.
     Same write path as the web /setup Option C; --accept-cloud-terms (or an
@@ -835,6 +848,12 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="mentar")
     sub = parser.add_subparsers(dest="cmd", required=True)
 
+    cl = sub.add_parser("chatgpt-login",
+                        help="EXPERIMENTAL: sign in with a ChatGPT subscription "
+                             "(browser opens; tokens stored locally)")
+    cl.add_argument("--no-browser", action="store_true",
+                    help="print the sign-in URL instead of opening a browser")
+
     su = sub.add_parser("setup", help="Detect hardware, pick + download the best-fit model, write config.")
     su.add_argument("--runtime", choices=["auto", "ollama", "llama_app", "gguf", "vllm", "openai", "claude"],
                     default="auto",
@@ -899,6 +918,8 @@ def main(argv: list[str] | None = None) -> int:
 
     args = parser.parse_args(argv)
 
+    if args.cmd == "chatgpt-login":
+        return _chatgpt_login(args)
     if args.cmd == "setup":
         return _setup(args)
 

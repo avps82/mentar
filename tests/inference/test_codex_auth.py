@@ -113,7 +113,7 @@ def test_failed_refresh_names_the_remedy_and_leaves_the_file_alone(tmp_path, mon
     monkeypatch.setattr(httpx, "post", lambda *a, **kw: _Resp())
     with pytest.raises(CA.CodexAuthError) as exc:
         CA.get_access_token(p)
-    assert "codex login" in str(exc.value)
+    assert "chatgpt-login" in str(exc.value)   # the always-available remedy
     assert p.read_text() == before
 
 

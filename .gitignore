@@ -118,3 +118,4 @@ eval/redteam/output/
 
 # release_gate.sh stamp: which commit passed the local gate (machine-local)
 .gate-passed
+config/chatgpt_auth.json
