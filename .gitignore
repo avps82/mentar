@@ -91,6 +91,7 @@ secrets/
 config/*.local.yaml
 config/*.local.yml
 config/inference.yaml
+config/cloud_consent.yaml
 config/secrets.*
 # R10: per-install curriculum on/off state (which packs a family turned off) --
 # local state, not repo content.

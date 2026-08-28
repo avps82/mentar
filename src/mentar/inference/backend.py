@@ -17,6 +17,7 @@ it takes OpenAI-style ``messages`` and returns the assistant text.
 Backends (``cfg["backend"]``)
 -----------------------------
     llamacpp (mode="server") | vllm | ollama  -> OpenAI-compatible HTTP (openai client)
+    openai | claude (opt-in cloud, parent-consent-gated) -> same client, provider hosts
     llamacpp (mode="in_process")              -> llama-cpp-python (lazy optional import)
     gemini | claude                           -> opt-in cloud (not wired for the local pilot)
 
@@ -209,8 +210,42 @@ def _normalize_base_url(url: str) -> str:
     return url
 
 
+# Opt-in cloud backends (SPEC §20.1, SAFETY §4.5). Both speak OpenAI-style
+# chat completions: `claude` rides Anthropic's OpenAI-compatible surface, so no
+# second protocol path exists. Gated on a recorded parent acknowledgment — see
+# mentar.consent — because turns leave the device under the PARENT's account.
+_CLOUD_DEFAULT_BASE_URLS = {
+    "openai": "https://api.openai.com/v1",
+    "claude": "https://api.anthropic.com/v1/",
+}
+_CLOUD_BACKENDS = frozenset(_CLOUD_DEFAULT_BASE_URLS)
+
+
 def _resolve_http(backend: str, block: dict) -> dict:
     """Return {base_url, api_key, model} for an OpenAI-compatible backend."""
+    if backend in _CLOUD_BACKENDS:
+        # No forgiving defaults here, unlike the local branches below: a wrong
+        # fallback model would silently BILL the parent's account, and a
+        # missing key expands to "" (unset ${VAR} -- _expand_env) which would
+        # only fail later with a bare 401.  Fail at resolve time, by name.
+        model = block.get("model")
+        if not model:
+            raise ValueError(
+                f"cloud backend '{backend}' needs an explicit model: in its config "
+                "block — there is no safe default for a billed account"
+            )
+        env_var = "OPENAI_API_KEY" if backend == "openai" else "ANTHROPIC_API_KEY"
+        api_key = block.get("api_key")
+        if not api_key:
+            raise ValueError(
+                f"cloud backend '{backend}' has no api_key — set {env_var} in "
+                "config/.env (re-run setup), or the provider will reject every call"
+            )
+        return {
+            "base_url": block.get("base_url") or _CLOUD_DEFAULT_BASE_URLS[backend],
+            "api_key": api_key,
+            "model": model,
+        }
     if backend == "ollama":
         base_url = _normalize_base_url(block.get("base_url") or "http://localhost:11434")
     else:  # llamacpp(server) / vllm — already include /v1 in the example config
@@ -228,13 +263,22 @@ def resolve_http_endpoint(cfg: dict) -> dict | None:
     on", whether the config points local or remote (used by the web settings
     page's reachability check, so it always tests the endpoint the app really
     calls, never a parallel set of defaults). Returns None for the in-process
-    llamacpp mode (no HTTP endpoint to probe) and for unknown/cloud backends."""
+    llamacpp mode (no HTTP endpoint to probe) and for unknown backends."""
     backend = (cfg.get("backend") or "llamacpp").lower()
     block = cfg.get(backend) or {}
     if not isinstance(block, dict):
         return None
     if backend == "llamacpp" and block.get("mode", "server") == "in_process":
         return None
+    if backend in _CLOUD_BACKENDS:
+        # A misconfigured cloud block (missing model/key) raises in
+        # _resolve_http where a CALL is being built; here the caller is a
+        # status page asking "is there an endpoint to probe" — for that
+        # question a block that cannot resolve is honestly "no".
+        try:
+            return _resolve_http(backend, block)
+        except ValueError:
+            return None
     if backend in ("llamacpp", "vllm", "ollama"):
         return _resolve_http(backend, block)
     return None
@@ -264,13 +308,27 @@ def _gen_params(cfg: dict) -> dict:
 # ── Backend factories ─────────────────────────────────────────────────────────
 
 def _make_openai_call(endpoint: dict, gen: dict) -> LLMCall:
-    from openai import APITimeoutError, OpenAI  # already a hard dependency
+    from openai import APITimeoutError, AuthenticationError, OpenAI  # hard dependency
 
-    client = OpenAI(
-        base_url=endpoint["base_url"],
-        api_key=endpoint["api_key"],
-        timeout=gen["timeout"],
-    )
+    # Credential-provider seam: a static key builds the client exactly once (the
+    # provider always returns the same string), while a rotating credential (a
+    # future subscription token) transparently gets a fresh client the moment
+    # its provider returns a new value.  Token-keyed, so we never rebuild per
+    # call and never hold a stale credential.
+    provider = endpoint.get("api_key_provider") or (lambda: endpoint["api_key"])
+    _cache: dict = {"token": None, "client": None}
+
+    def _client() -> OpenAI:
+        tok = provider()
+        if tok != _cache["token"]:
+            _cache["client"] = OpenAI(
+                base_url=endpoint["base_url"], api_key=tok, timeout=gen["timeout"],
+            )
+            _cache["token"] = tok
+        return _cache["client"]
+
+    _client()  # build eagerly: config errors fail at factory time, as before
+
     model = endpoint["model"]
     temperature = gen["temperature"]
     max_tokens = gen["max_tokens"]
@@ -281,7 +339,7 @@ def _make_openai_call(endpoint: dict, gen: dict) -> LLMCall:
         last_exc: Exception | None = None
         for attempt in range(retries + 1):
             try:
-                resp = client.chat.completions.create(
+                resp = _client().chat.completions.create(
                     model=model,
                     messages=messages,
                     temperature=temperature,
@@ -337,6 +395,16 @@ def _make_openai_call(endpoint: dict, gen: dict) -> LLMCall:
                 return content
             except ReasoningOnlyReply:
                 raise  # deterministic — retrying just burns another slow call
+            except AuthenticationError as exc:
+                # 401 is deterministic: the credential is wrong/expired and a
+                # retry sends the identical credential again.  Name the remedy —
+                # this surfaces on /setup, /settings/llm-status and `mentar
+                # setup` verify (the child-facing path degrades to "" upstream).
+                raise RuntimeError(
+                    f"the credential for {endpoint['base_url']} was rejected "
+                    f"(model={model}). Re-run setup (/setup or `mentar setup`) "
+                    "with a valid key."
+                ) from exc
             except APITimeoutError as exc:
                 # A timeout is NOT transient on a local backend: the model is
                 # simply slower than the deadline, so a retry spends the same
@@ -361,6 +429,16 @@ def _make_openai_call(endpoint: dict, gen: dict) -> LLMCall:
                 if attempt < retries:
                     time.sleep(_RETRY_BACKOFF_S * (attempt + 1))
                     logger.warning("llm_call retry %d/%d: %s", attempt + 1, retries, exc)
+        # A 429 on a cloud account is not "unreachable" — it is the PARENT's
+        # plan hitting its usage cap, and saying "unreachable" sends them
+        # debugging their network instead of their subscription.
+        from openai import RateLimitError
+        if isinstance(last_exc, RateLimitError):
+            raise RuntimeError(
+                f"the provider at {endpoint['base_url']} rate-limited this account "
+                f"(model={model}). This is a usage/rate cap on the account's plan, "
+                "not a Mentar fault — wait a while, or raise the plan's limits."
+            ) from last_exc
         raise RuntimeError(
             f"LLM endpoint {endpoint['base_url']} (model={model}) unreachable after "
             f"{retries + 1} attempt(s): {last_exc}"
@@ -472,13 +550,26 @@ def make_llm_call(cfg: dict) -> LLMCall:
     if backend == "llamacpp" and block.get("mode", "server") == "in_process":
         return _make_in_process_call(block, gen)
 
+    if backend in _CLOUD_BACKENDS:
+        # Enforced HERE, at the one chokepoint every path funnels through, so a
+        # hand-edited yaml cannot switch a child's sessions to the cloud without
+        # the SAFETY §4.5 parent acknowledgment ever having been made.
+        from mentar.consent import has_cloud_consent
+        if not has_cloud_consent(backend):
+            raise RuntimeError(
+                f"cloud backend '{backend}' is configured but no parent "
+                "acknowledgment is recorded — open /setup (or run `mentar setup`) "
+                "and complete the cloud consent step"
+            )
+        return _make_openai_call(_resolve_http(backend, block), gen)
+
     if backend in ("llamacpp", "vllm", "ollama"):
         return _make_openai_call(_resolve_http(backend, block), gen)
 
-    if backend in ("gemini", "claude"):
+    if backend == "gemini":
         raise NotImplementedError(
-            f"backend '{backend}' is opt-in cloud and not wired for the local pilot; "
-            "use llamacpp / vllm / ollama"
+            "backend 'gemini' is not wired; use openai / claude (opt-in cloud) "
+            "or llamacpp / vllm / ollama (local)"
         )
 
     raise ValueError(f"unknown inference backend: {backend!r}")

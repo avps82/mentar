@@ -60,10 +60,20 @@ item_source: composite
 # Opt-in cloud backends (parent owns the key). Leave unset for the local-only pilot.
 gemini:
   api_key: "${GEMINI_API_KEY}"
-  model: "REPLACE_ME"
+  model: "REPLACE_ME"          # not wired — kept as a placeholder only
+
+# Opt-in CLOUD backends (SPEC §20.1, SAFETY §4.5). Turns leave this device
+# under the PARENT's account, and setup records an explicit parent
+# acknowledgment (config/cloud_consent.yaml) before either will run.
+# Keys live in config/.env (gitignored), never in this file.
+openai:
+  api_key: "${OPENAI_API_KEY}"
+  model: "gpt-5.2-mini"        # any chat-completions model on the account
+  # base_url: "https://api.openai.com/v1"        # default; override for proxies
 claude:
   api_key: "${ANTHROPIC_API_KEY}"
-  model: "REPLACE_ME"
+  model: "claude-sonnet-5"
+  # base_url: "https://api.anthropic.com/v1/"    # Anthropic's OpenAI-compat surface
 
 # ══ Grounding / ZIM-reader (W7) ═══════════════════════════════════════════════
 # SPEC §15 (layer-1 RAG): feeds vetted offline text into {{grounding_passage}} in

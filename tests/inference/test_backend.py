@@ -217,13 +217,134 @@ def test_unknown_backend():
     assert raised
 
 
-def test_cloud_backend_not_implemented():
-    raised = False
+def test_gemini_backend_not_implemented():
+    """claude/openai are wired (consent-gated) since the cloud-backend work;
+    gemini stays a declared placeholder and must say where to go instead."""
     try:
-        B.make_llm_call({"backend": "claude", "claude": {"model": "x"}})
-    except NotImplementedError:
-        raised = True
-    assert raised
+        B.make_llm_call({"backend": "gemini", "gemini": {"model": "x"}})
+        raise AssertionError("expected NotImplementedError")
+    except NotImplementedError as exc:
+        assert "openai / claude" in str(exc)
+
+
+def _consented(monkeypatch=None):
+    """Pretend the parent acknowledgment exists (unit tests never write it)."""
+    import mentar.consent as C
+    if monkeypatch:
+        monkeypatch.setattr(C, "has_cloud_consent", lambda b, path=None: True)
+        return None
+    orig = C.has_cloud_consent
+    C.has_cloud_consent = lambda b, path=None: True
+    return orig
+
+
+def test_cloud_backend_without_consent_is_refused(monkeypatch=None):
+    """The SAFETY §4.5 guarantee: a hand-edited yaml cannot switch a child's
+    sessions to the cloud — the chokepoint refuses without a recorded parent
+    acknowledgment, and the message says where to go."""
+    try:
+        B.make_llm_call({"backend": "openai",
+                         "openai": {"model": "gpt-5.2-mini", "api_key": "sk-x"}})
+        raise AssertionError("expected the consent refusal")
+    except RuntimeError as exc:
+        assert "acknowledgment" in str(exc) and "/setup" in str(exc)
+
+
+def test_cloud_backends_dispatch_with_consent(monkeypatch=None):
+    import mentar.consent as C
+    _install_fake(monkeypatch)
+    orig = _consented(monkeypatch)
+    try:
+        for backend, base in (("openai", "https://api.openai.com/v1"),
+                              ("claude", "https://api.anthropic.com/v1/")):
+            fn = B.make_llm_call({"backend": backend,
+                                  backend: {"model": "m1", "api_key": "sk-live"}})
+            assert fn([{"role": "user", "content": "hi"}]) == "hello from model"
+            cli = _FakeClient.instances[-1]
+            assert cli.init_kwargs["base_url"] == base
+            assert cli.init_kwargs["api_key"] == "sk-live"
+    finally:
+        if orig:
+            C.has_cloud_consent = orig
+
+
+def test_cloud_backend_requires_model_and_key_by_name():
+    """No forgiving local-style defaults on a BILLED account: a wrong default
+    model silently spends the parent's money, and an unset ${VAR} expands to ""
+    which would only fail later as a bare 401."""
+    try:
+        B._resolve_http("openai", {"api_key": "sk-x"})
+        raise AssertionError("model default must not exist for cloud")
+    except ValueError as exc:
+        assert "model" in str(exc)
+    try:
+        B._resolve_http("claude", {"model": "claude-sonnet-5", "api_key": ""})
+        raise AssertionError("empty key must fail at resolve time")
+    except ValueError as exc:
+        assert "ANTHROPIC_API_KEY" in str(exc)
+
+
+def test_resolve_http_endpoint_sees_cloud_backends():
+    ep = B.resolve_http_endpoint({"backend": "claude",
+                                  "claude": {"model": "m", "api_key": "k"}})
+    assert ep and ep["base_url"].startswith("https://api.anthropic.com")
+
+
+def test_provider_seam_rebuilds_client_only_when_the_token_changes(monkeypatch=None):
+    """Both mutants must die: 'rebuild every call' (wasteful, and would hide a
+    stale-credential bug class) and 'never rebuild' (a rotated token would keep
+    authenticating with the dead one forever)."""
+    _install_fake(monkeypatch)
+    tokens = iter(["tok-A", "tok-A", "tok-A", "tok-B"])
+    endpoint = {"base_url": "http://x/v1", "api_key": "unused",
+                "api_key_provider": lambda: next(tokens), "model": "m"}
+    fn = B._make_openai_call(endpoint, B._gen_params({}))  # eager build: draws tok-A
+    after_factory = len(_FakeClient.instances)
+    fn([{"role": "user", "content": "1"}])   # tok-A -> reuse
+    fn([{"role": "user", "content": "2"}])   # tok-A -> reuse
+    assert len(_FakeClient.instances) == after_factory, "same token must reuse the client"
+    fn([{"role": "user", "content": "3"}])   # tok-B -> rebuild
+    assert len(_FakeClient.instances) == after_factory + 1, "new token must rebuild"
+    assert _FakeClient.instances[-1].init_kwargs["api_key"] == "tok-B"
+
+
+def test_a_rejected_credential_is_not_retried_and_names_the_remedy(monkeypatch=None):
+    import httpx
+    import openai
+    _install_fake(monkeypatch, raise_n=99)
+    fn = B.make_llm_call({"backend": "vllm",
+                          "vllm": {"base_url": "http://x/v1", "model": "m"}})
+    cli = _FakeClient.instances[-1]
+    resp = httpx.Response(401, request=httpx.Request("POST", "http://x/v1"))
+    cli.raise_exc = lambda: openai.AuthenticationError(
+        "bad key", response=resp, body=None)
+    try:
+        fn([{"role": "user", "content": "hi"}])
+        raise AssertionError("expected the 401 to surface")
+    except RuntimeError as exc:
+        assert "rejected" in str(exc) and "setup" in str(exc)
+    assert len(cli.calls) == 1, "a 401 retried sends the identical dead credential"
+
+
+def test_a_rate_limit_names_the_plan_not_the_network(monkeypatch=None):
+    """'Unreachable' sends a parent debugging their WIFI when the truth is
+    their subscription's usage cap."""
+    import httpx
+    import openai
+    _install_fake(monkeypatch, raise_n=99)
+    fn = B.make_llm_call({"backend": "vllm",
+                          "vllm": {"base_url": "http://x/v1", "model": "m"}})
+    cli = _FakeClient.instances[-1]
+    resp = httpx.Response(429, request=httpx.Request("POST", "http://x/v1"))
+    cli.raise_exc = lambda: openai.RateLimitError(
+        "slow down", response=resp, body=None)
+    try:
+        fn([{"role": "user", "content": "hi"}])
+        raise AssertionError("expected the 429 to surface")
+    except RuntimeError as exc:
+        assert "rate-limited" in str(exc) and "plan" in str(exc)
+        assert "unreachable" not in str(exc)
+    assert len(cli.calls) == 3, "429 keeps its retries — only the final message changes"
 
 
 def test_resolve_http_endpoint_follows_the_configured_backend():
@@ -252,7 +373,10 @@ def test_resolve_http_endpoint_returns_none_when_no_http_endpoint_exists():
     probe -- None, so the status route reports 'nothing to check' honestly."""
     in_proc = {"backend": "llamacpp", "llamacpp": {"mode": "in_process", "model_path": "x.gguf"}}
     assert B.resolve_http_endpoint(in_proc) is None
+    # a cloud block that cannot RESOLVE (no key) is honestly "nothing to probe";
+    # gemini stays unwired entirely
     assert B.resolve_http_endpoint({"backend": "claude", "claude": {"model": "x"}}) is None
+    assert B.resolve_http_endpoint({"backend": "gemini", "gemini": {"model": "x"}}) is None
     assert B.resolve_http_endpoint({"backend": "vllm", "vllm": "not-a-mapping"}) is None
 
 
