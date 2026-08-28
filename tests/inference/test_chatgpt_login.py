@@ -99,3 +99,21 @@ def test_default_auth_path_prefers_mentars_own_file(tmp_path, monkeypatch):
     own.parent.mkdir(parents=True)
     own.write_text("{}")
     assert CA.default_auth_path() == own
+
+
+def test_a_busy_callback_port_explains_itself(monkeypatch):
+    """The redirect URI is registered for this client id, so the port is not
+    ours to change. A bare '[Errno 98] Address already in use' tells a parent
+    nothing — name the two things that actually cause it (2026-08-28)."""
+    import http.server
+
+    def _boom(*a, **kw):
+        raise OSError(98, "Address already in use")
+
+    monkeypatch.setattr(http.server, "HTTPServer", _boom)
+    with pytest.raises(RuntimeError) as exc:
+        L.run_login_flow(open_browser=False, timeout_s=1)
+    msg = str(exc.value)
+    assert "already in use" in msg
+    assert "already running" in msg and "Codex" in msg
+    assert "Errno" not in msg, "the raw errno is not a parent-facing message"

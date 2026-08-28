@@ -444,3 +444,80 @@ def test_chatgpt_backend_is_not_ready_without_a_signin(monkeypatch):
                               return_value={"present": True}):
                 app_mod._SETUP_GATE_CACHE["ok"] = None
                 assert app_mod._setup_is_complete() is True
+
+
+def test_a_second_signin_click_does_not_spawn_a_doomed_listener(monkeypatch):
+    """The callback port is fixed, so a second click used to bind-fail in a
+    background thread and the page looked unchanged — the parent clicks again,
+    and again. Reuse the running flow and say so (2026-08-28)."""
+    import threading
+
+    app_mod, client = _client()
+    started = []
+    release = threading.Event()
+
+    def _slow_flow(*a, **kw):
+        started.append(1)
+        release.wait(timeout=5)
+
+    monkeypatch.setattr("mentar.inference.chatgpt_login.run_login_flow", _slow_flow)
+    app_mod._CHATGPT_LOGIN["thread"] = None
+    with tempfile.TemporaryDirectory() as td:
+        cfg = pathlib.Path(td) / "inference.yaml"
+        cfg.write_text("backend: ollama\nollama: {model: m}\n")
+        with patch.object(app_mod, "_INFERENCE_CONFIG_PATH", cfg):
+            first = client.post("/setup/chatgpt-login")
+            assert b"opening in your browser" in first.data
+            second = client.post("/setup/chatgpt-login")
+            assert b"already open in your browser" in second.data
+    release.set()
+    assert len(started) == 1, "a second click must not start a second flow"
+
+
+def test_a_failed_signin_reason_reaches_the_parent(monkeypatch):
+    """Without this the panel just says 'Not signed in yet' forever, with the
+    real reason buried in a log the parent will never read."""
+    app_mod, client = _client()
+
+    def _fail(*a, **kw):
+        raise RuntimeError("port 1455 on this computer is already in use")
+
+    monkeypatch.setattr("mentar.inference.chatgpt_login.run_login_flow", _fail)
+    app_mod._CHATGPT_LOGIN["thread"] = None
+    with tempfile.TemporaryDirectory() as td:
+        cfg = pathlib.Path(td) / "inference.yaml"
+        cfg.write_text("backend: ollama\nollama: {model: m}\n")
+        with patch.object(app_mod, "_INFERENCE_CONFIG_PATH", cfg):
+            client.post("/setup/chatgpt-login")
+            t = app_mod._CHATGPT_LOGIN["thread"]
+            if t:
+                t.join(timeout=5)
+            html = client.get("/setup").data.decode()
+    assert "Last sign-in attempt failed" in html
+    assert "1455" in html
+
+
+def test_the_signin_button_works_before_any_backend_is_configured(monkeypatch):
+    """The first-run state IS the state the sign-in button exists for. It was
+    not exempt from the setup gate, so the POST redirected to /setup and the
+    button silently did nothing (2026-08-28) — found only because unrelated
+    test-order pollution put the gate into its real first-run state."""
+    app_mod, client = _client()
+    started = []
+    monkeypatch.setattr("mentar.inference.chatgpt_login.run_login_flow",
+                        lambda *a, **kw: started.append(1))
+    app_mod._CHATGPT_LOGIN["thread"] = None
+    with tempfile.TemporaryDirectory() as td:
+        # No config at all: the genuine first-run state.
+        cfg = pathlib.Path(td) / "inference.yaml"
+        with patch.object(app_mod, "_INFERENCE_CONFIG_PATH", cfg):
+            app_mod._reload_inference_config()
+            app_mod._SETUP_GATE_CACHE["ok"] = None
+            assert app_mod._setup_is_complete() is False, "precondition: not set up"
+            r = client.post("/setup/chatgpt-login")
+            assert r.status_code == 200, "the gate must not redirect the sign-in away"
+            assert b"opening in your browser" in r.data
+    t = app_mod._CHATGPT_LOGIN["thread"]
+    if t:
+        t.join(timeout=5)
+    assert started, "the flow must actually start"

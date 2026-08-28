@@ -171,7 +171,18 @@ def run_login_flow(open_browser: bool = True, timeout_s: float = 300.0,
 
     _OneShotCallback.expected_state = state
     _OneShotCallback.result = {}
-    server = http.server.HTTPServer(("127.0.0.1", _CALLBACK_PORT), _OneShotCallback)
+    try:
+        server = http.server.HTTPServer(("127.0.0.1", _CALLBACK_PORT), _OneShotCallback)
+    except OSError as exc:
+        # The redirect URI is registered for this client id, so the port is not
+        # ours to change. A bare "[Errno 98] Address already in use" tells a
+        # parent nothing; name the two things that actually cause it.
+        raise RuntimeError(
+            f"cannot start the sign-in: port {_CALLBACK_PORT} on this computer is "
+            "already in use. That usually means a sign-in is already running (in "
+            "Mentar or in the Codex CLI) — finish or close that one, then try "
+            "again."
+        ) from exc
     server.timeout = 1.0
 
     print("Opening the ChatGPT sign-in page in your browser…")

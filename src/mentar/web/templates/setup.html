@@ -105,6 +105,10 @@
     {% else %}
       <p class="hint">Not signed in yet.</p>
     {% endif %}
+    {% if chatgpt and chatgpt.last_error %}
+      <p class="hint" style="color:var(--danger)">Last sign-in attempt failed:
+        {{ chatgpt.last_error }}</p>
+    {% endif %}
 
     <form method="POST" action="/setup/chatgpt-login">
       <button type="submit">Sign in with ChatGPT…</button>

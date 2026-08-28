@@ -767,7 +767,13 @@ def _require_setup():
     """R9: every route redirects to /setup while no working LLM backend is
     configured -- a family should never reach a picker that will just fail
     confusingly the moment they try to start a lesson."""
-    if request.endpoint in ("setup", "setup_save", "static"):
+    # setup_chatgpt_login belongs here for the same reason setup/setup_save do:
+    # it is part of GETTING set up. Without it the gate redirected the sign-in
+    # POST straight back to /setup, so the button did nothing in exactly the
+    # state it exists for -- a first run with no backend configured yet
+    # (measured 2026-08-28; masked in isolation because the test's own config
+    # made setup "complete").
+    if request.endpoint in ("setup", "setup_save", "setup_chatgpt_login", "static"):
         return None
     if not _setup_is_complete():
         return redirect(url_for("setup"))
@@ -780,17 +786,26 @@ def setup():
     return render_template("setup.html", result=None, chatgpt=_chatgpt_login_status())
 
 
+# Tracks the single in-flight sign-in flow (thread + last error) so a second
+# click cannot silently spawn a doomed listener on the fixed callback port.
+_CHATGPT_LOGIN: dict = {"thread": None, "error": None}
+
+
 def _chatgpt_login_status() -> dict:
     """Whether a ChatGPT sign-in exists on this machine, for the setup page.
     Never raises: a status panel must not be able to break the one page a
     stuck parent has to reach."""
     try:
         from mentar.inference.codex_auth import login_status
-        return login_status()
+        st = login_status()
+        # A failed background flow left its reason here; without this the parent
+        # just sees "Not signed in yet" forever with no idea why.
+        st["last_error"] = _CHATGPT_LOGIN.get("error")
+        return st
     except Exception:  # noqa: BLE001 -- status only, never load-bearing
         app.logger.warning("chatgpt login status check failed", exc_info=True)
         return {"present": False, "expires_at": None, "stale": False,
-                "codex_binary_found": False}
+                "codex_binary_found": False, "last_error": None}
 
 
 @app.route("/setup/chatgpt-login", methods=["POST"])
@@ -811,13 +826,32 @@ def setup_chatgpt_login():
 
     from mentar.inference.chatgpt_login import run_login_flow
 
+    # One flow at a time. The callback port is fixed by the registered redirect
+    # URI, so a second click just binds-fails in a background thread and the
+    # parent sees nothing change -- they click again, and again. Reuse the
+    # running flow instead and say so.
+    running = _CHATGPT_LOGIN.get("thread")
+    if running is not None and running.is_alive():
+        return render_template("setup.html", chatgpt=_chatgpt_login_status(), result={
+            "ok": False,
+            "error": "A ChatGPT sign-in is already open in your browser — finish "
+                     "there (or close the tab and wait a moment), then press "
+                     "'Save & Connect (ChatGPT)'.",
+        })
+
     def _run():
         try:
             run_login_flow()
-        except Exception:  # noqa: BLE001 -- surfaced via the status panel
+        except Exception as exc:  # noqa: BLE001 -- surfaced via the status panel
+            _CHATGPT_LOGIN["error"] = str(exc)
             app.logger.warning("chatgpt sign-in flow failed", exc_info=True)
+        else:
+            _CHATGPT_LOGIN["error"] = None
 
-    threading.Thread(target=_run, daemon=True, name="chatgpt-login").start()
+    _CHATGPT_LOGIN["error"] = None
+    t = threading.Thread(target=_run, daemon=True, name="chatgpt-login")
+    _CHATGPT_LOGIN["thread"] = t
+    t.start()
     return render_template("setup.html", chatgpt=_chatgpt_login_status(), result={
         "ok": False,
         "error": "A ChatGPT sign-in page is opening in your browser. Finish there, "

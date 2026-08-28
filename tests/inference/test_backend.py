@@ -228,13 +228,20 @@ def test_gemini_backend_not_implemented():
 
 
 def _consented(monkeypatch=None):
-    """Pretend the parent acknowledgment exists (unit tests never write it)."""
+    """Pretend the parent acknowledgment exists (unit tests never write it).
+
+    ALWAYS returns the original so the caller can restore it. The earlier
+    version returned None under monkeypatch and permanently rebound the global
+    otherwise -- the exact leak test_autoselect.py's _patch documents, and it
+    escaped this file: it left has_cloud_consent always-True for the rest of
+    the session (2026-08-28).
+    """
     import mentar.consent as C
+    orig = C.has_cloud_consent
     if monkeypatch:
         monkeypatch.setattr(C, "has_cloud_consent", lambda b, path=None: True)
-        return None
-    orig = C.has_cloud_consent
-    C.has_cloud_consent = lambda b, path=None: True
+    else:
+        C.has_cloud_consent = lambda b, path=None: True
     return orig
 
 
@@ -264,8 +271,7 @@ def test_cloud_backends_dispatch_with_consent(monkeypatch=None):
             assert cli.init_kwargs["base_url"] == base
             assert cli.init_kwargs["api_key"] == "sk-live"
     finally:
-        if orig:
-            C.has_cloud_consent = orig
+        C.has_cloud_consent = orig
 
 
 def test_cloud_backend_requires_model_and_key_by_name():
