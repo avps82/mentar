@@ -74,6 +74,11 @@ claude:
   api_key: "${ANTHROPIC_API_KEY}"
   model: "claude-sonnet-5"
   # base_url: "https://api.anthropic.com/v1/"    # Anthropic's OpenAI-compat surface
+openai_chatgpt:                # EXPERIMENTAL: your ChatGPT Plus/Pro subscription.
+  model: "gpt-5.2"             # No api_key -- the credential is the sign-in stored by
+                               # `mentar chatgpt-login` (or the /setup button).
+                               # Unofficial: OpenAI may stop allowing this at any time,
+                               # and your plan's usage limits apply. See docs/RUNNING.md.
 
 # ══ Grounding / ZIM-reader (W7) ═══════════════════════════════════════════════
 # SPEC §15 (layer-1 RAG): feeds vetted offline text into {{grounding_passage}} in

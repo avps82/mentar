@@ -88,5 +88,42 @@
     </label><br><br>
     <button type="submit">Save &amp; Connect (Claude)</button>
   </form>
+
+  <div style="margin-top:1.4rem;padding-top:1rem;border-top:1px solid var(--border)">
+    <h3 style="font-size:1rem">ChatGPT subscription
+      <span style="color:var(--danger);font-size:.8rem">⚗ EXPERIMENTAL</span></h3>
+    <p class="hint"><strong>Unofficial.</strong> This signs in with your existing ChatGPT
+      Plus/Pro account instead of a paid API key. OpenAI does not officially support
+      other apps using a ChatGPT sign-in, so <strong>it may stop working at any
+      time</strong>, and heavy use can hit your plan's usage limits mid-lesson.
+      If you want something dependable, use one of the API-key options above.</p>
+
+    {% if chatgpt and chatgpt.present and not chatgpt.stale %}
+      <p class="hint">✓ Signed in on this computer.</p>
+    {% elif chatgpt and chatgpt.present and chatgpt.stale %}
+      <p class="hint">⚠ The sign-in on this computer has expired — sign in again.</p>
+    {% else %}
+      <p class="hint">Not signed in yet.</p>
+    {% endif %}
+
+    <form method="POST" action="/setup/chatgpt-login">
+      <button type="submit">Sign in with ChatGPT…</button>
+      <span class="hint">(opens your browser; nothing is saved until you connect below)</span>
+    </form>
+
+    <form method="POST" action="/setup" style="margin-top:1rem">
+      <input type="hidden" name="backend" value="openai_chatgpt">
+      <label>Model<br>
+        <input type="text" name="model" placeholder="gpt-5.2">
+      </label><br><br>
+      <label><input type="checkbox" name="cloud_ack">
+        I understand my child's lesson conversation will be sent to OpenAI under my
+        ChatGPT account, and I accept responsibility for that data flow.</label><br>
+      <label>Type <strong>AGREE</strong> to confirm<br>
+        <input type="text" name="cloud_confirm" autocomplete="off">
+      </label><br><br>
+      <button type="submit">Save &amp; Connect (ChatGPT)</button>
+    </form>
+  </div>
 </section>
 {% endblock %}

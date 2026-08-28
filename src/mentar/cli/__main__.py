@@ -298,13 +298,24 @@ def _setup_cloud(args) -> int:
     from mentar.consent import record_cloud_consent
     from mentar.inference.backend import upsert_dotenv_value, write_inference_config
 
-    backend = args.runtime
-    provider = {"openai": "OpenAI", "claude": "Anthropic"}[backend]
-    env_var = {"openai": "OPENAI_API_KEY", "claude": "ANTHROPIC_API_KEY"}[backend]
+    backend = "openai_chatgpt" if args.runtime == "chatgpt" else args.runtime
+    provider = {"openai": "OpenAI", "claude": "Anthropic",
+                "openai_chatgpt": "OpenAI (your ChatGPT subscription)"}[backend]
+    env_var = {"openai": "OPENAI_API_KEY", "claude": "ANTHROPIC_API_KEY"}.get(backend)
 
-    if not args.model or not args.api_key:
-        print(f"ERROR: --runtime {backend} requires --model and --api-key", file=sys.stderr)
+    if not args.model:
+        print(f"ERROR: --runtime {args.runtime} requires --model", file=sys.stderr)
         return 1
+    if env_var and not args.api_key:
+        print(f"ERROR: --runtime {args.runtime} requires --api-key", file=sys.stderr)
+        return 1
+    if backend == "openai_chatgpt":
+        # The credential is the sign-in on this machine, not a typed key.
+        from mentar.inference.codex_auth import login_status
+        if not login_status().get("present"):
+            print("ERROR: no ChatGPT sign-in found — run:  mentar chatgpt-login",
+                  file=sys.stderr)
+            return 1
 
     print(_CLOUD_STATEMENT.format(provider=provider))
     if not getattr(args, "accept_cloud_terms", False):
@@ -319,9 +330,11 @@ def _setup_cloud(args) -> int:
             return 1
 
     cfg_path = Path(args.config) if args.config else config_path()
+    block: dict = {"model": args.model}
+    if env_var:
+        block["api_key"] = "${" + env_var + "}"
     cfg: dict = {
-        "backend": backend,
-        backend: {"model": args.model, "api_key": "${" + env_var + "}"},
+        "backend": backend, backend: block,
         "generation": {"temperature": 0.3, "max_tokens": DEFAULT_MAX_TOKENS},
     }
     if args.base_url:
@@ -333,11 +346,12 @@ def _setup_cloud(args) -> int:
         print(yaml.safe_dump(cfg, sort_keys=False))
         return 0
 
-    try:
-        upsert_dotenv_value(cfg_path.parent / ".env", env_var, args.api_key)
-    except ValueError as exc:
-        print(f"✗ {exc}", file=sys.stderr)
-        return 1
+    if env_var:
+        try:
+            upsert_dotenv_value(cfg_path.parent / ".env", env_var, args.api_key)
+        except ValueError as exc:
+            print(f"✗ {exc}", file=sys.stderr)
+            return 1
     # Consent BEFORE verify: _verify_backend builds make_llm_call, which
     # refuses an unconsented cloud backend by design.
     record_cloud_consent(backend)
@@ -410,7 +424,7 @@ def _setup(args) -> int:
     repo = _repo_root()
     if args.runtime == "vllm":
         return _setup_remote_api(args, repo)
-    if args.runtime in ("openai", "claude"):
+    if args.runtime in ("openai", "claude", "chatgpt"):
         return _setup_cloud(args)
 
     from mentar.inference.autoselect import load_roster, select
@@ -855,7 +869,8 @@ def main(argv: list[str] | None = None) -> int:
                     help="print the sign-in URL instead of opening a browser")
 
     su = sub.add_parser("setup", help="Detect hardware, pick + download the best-fit model, write config.")
-    su.add_argument("--runtime", choices=["auto", "ollama", "llama_app", "gguf", "vllm", "openai", "claude"],
+    su.add_argument("--runtime", choices=["auto", "ollama", "llama_app", "gguf", "vllm", "openai", "claude",
+                             "chatgpt"],
                     default="auto",
                     help="Runtime: auto = Ollama, else llama.app (`llama serve`), else in-process GGUF. "
                          "vllm = a remote OpenAI-compatible API (LiteLLM/vLLM proxy) -- needs --base-url "

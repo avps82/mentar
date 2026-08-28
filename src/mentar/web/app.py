@@ -560,7 +560,8 @@ def _setup_is_complete() -> bool:
 
     ok = False
     backend = ((_INFERENCE_CFG or {}).get("backend") or "").lower()
-    if backend in ("openai", "claude") and not _has_cloud_consent_cached(backend):
+    if (backend in ("openai", "claude", "openai_chatgpt")
+            and not _has_cloud_consent_cached(backend)):
         # A cloud config with no recorded parent acknowledgment is NOT set up,
         # however reachable the provider is — make_llm_call would refuse it, so
         # green-lighting it here would bounce the child into a broken session.
@@ -763,7 +764,52 @@ def _require_setup():
 @app.route("/setup")
 def setup():
     """R9: the first-run gate's destination -- never itself gated."""
-    return render_template("setup.html", result=None)
+    return render_template("setup.html", result=None, chatgpt=_chatgpt_login_status())
+
+
+def _chatgpt_login_status() -> dict:
+    """Whether a ChatGPT sign-in exists on this machine, for the setup page.
+    Never raises: a status panel must not be able to break the one page a
+    stuck parent has to reach."""
+    try:
+        from mentar.inference.codex_auth import login_status
+        return login_status()
+    except Exception:  # noqa: BLE001 -- status only, never load-bearing
+        app.logger.warning("chatgpt login status check failed", exc_info=True)
+        return {"present": False, "expires_at": None, "stale": False,
+                "codex_binary_found": False}
+
+
+@app.route("/setup/chatgpt-login", methods=["POST"])
+def setup_chatgpt_login():
+    """Start the embedded Sign-in-with-ChatGPT flow (EXPERIMENTAL).
+
+    The OAuth callback lands on localhost:1455 -- the redirect URI registered
+    for the public Codex client id, not a port we choose -- so the flow runs in
+    a worker thread here rather than blocking the request. The page returns
+    immediately telling the parent to finish in the browser tab that just
+    opened; they then submit the form below, by which point the token file
+    exists.
+
+    Loopback-only by inheritance: /setup is already restricted to this computer
+    under --lan (_GROWN_UP_PREFIXES), so a child's tablet cannot start a
+    sign-in that binds a listener on the parent's machine."""
+    import threading
+
+    from mentar.inference.chatgpt_login import run_login_flow
+
+    def _run():
+        try:
+            run_login_flow()
+        except Exception:  # noqa: BLE001 -- surfaced via the status panel
+            app.logger.warning("chatgpt sign-in flow failed", exc_info=True)
+
+    threading.Thread(target=_run, daemon=True, name="chatgpt-login").start()
+    return render_template("setup.html", chatgpt=_chatgpt_login_status(), result={
+        "ok": False,
+        "error": "A ChatGPT sign-in page is opening in your browser. Finish there, "
+                 "then come back and press 'Save & Connect (ChatGPT)'.",
+    })
 
 
 @app.route("/setup", methods=["POST"])
@@ -780,6 +826,32 @@ def setup_save():
     model = request.form.get("model", "").strip()
     api_key = (request.form.get("api_key", "")).strip()
 
+    if backend == "openai_chatgpt":
+        # Subscription sign-in: the credential is the token file the sign-in
+        # button wrote, NOT a key typed into this form -- so there is no
+        # api_key field to validate or store. Consent is still mandatory.
+        if not model:
+            return render_template("setup.html", chatgpt=_chatgpt_login_status(), result={
+                "ok": False, "error": "Please fill in the model."})
+        if (request.form.get("cloud_ack") != "on"
+                or request.form.get("cloud_confirm", "").strip().upper() != "AGREE"):
+            return render_template("setup.html", chatgpt=_chatgpt_login_status(), result={
+                "ok": False,
+                "error": "Cloud setup needs the acknowledgment box ticked AND the "
+                         "word AGREE typed — nothing was saved."})
+        status = _chatgpt_login_status()
+        if not status.get("present"):
+            return render_template("setup.html", chatgpt=status, result={
+                "ok": False,
+                "error": "No ChatGPT sign-in found on this computer — press "
+                         "'Sign in with ChatGPT…' first."})
+        from mentar.consent import record_cloud_consent
+        record_cloud_consent(backend)
+        cfg = {"backend": backend, backend: {"model": model}}
+        write_inference_config(cfg, _INFERENCE_CONFIG_PATH)
+        _reload_inference_config()
+        return redirect(url_for("index"))
+
     _CLOUD = {"openai": "OPENAI_API_KEY", "claude": "ANTHROPIC_API_KEY"}
     if backend in _CLOUD:
         # ── Cloud path (SPEC §20.1). Consent BEFORE anything is written: the
@@ -788,11 +860,11 @@ def setup_save():
         # the checkbox AND the typed word, mirroring /parent/ack's RESUME —
         # a checkbox alone is one accidental tap.
         if not model or not api_key:
-            return render_template("setup.html", result={
+            return render_template("setup.html", chatgpt=_chatgpt_login_status(), result={
                 "ok": False, "error": "Please fill in the model and API key."})
         if (request.form.get("cloud_ack") != "on"
                 or request.form.get("cloud_confirm", "").strip().upper() != "AGREE"):
-            return render_template("setup.html", result={
+            return render_template("setup.html", chatgpt=_chatgpt_login_status(), result={
                 "ok": False,
                 "error": "Cloud setup needs the acknowledgment box ticked AND the "
                          "word AGREE typed — nothing was saved."})
@@ -800,7 +872,7 @@ def setup_save():
             upsert_dotenv_value(
                 _INFERENCE_CONFIG_PATH.parent / ".env", _CLOUD[backend], api_key)
         except ValueError as exc:
-            return render_template("setup.html", result={"ok": False, "error": str(exc)})
+            return render_template("setup.html", chatgpt=_chatgpt_login_status(), result={"ok": False, "error": str(exc)})
         from mentar.consent import record_cloud_consent
         record_cloud_consent(backend)
         cfg = {"backend": backend,
@@ -818,12 +890,12 @@ def setup_save():
                 except ValueError as exc:
                     # A pasted key with a line break in it. Show the parent the
                     # reason on the form rather than a 500 -- nothing is written.
-                    return render_template("setup.html", result={"ok": False, "error": str(exc)})
+                    return render_template("setup.html", chatgpt=_chatgpt_login_status(), result={"ok": False, "error": str(exc)})
                 cfg["vllm"]["api_key"] = "${MENTAR_VLLM_API_KEY}"
             else:
                 cfg["vllm"]["api_key"] = "no-key"
     else:
-        return render_template("setup.html", result={"ok": False, "error": "Please fill in all fields."})
+        return render_template("setup.html", chatgpt=_chatgpt_login_status(), result={"ok": False, "error": "Please fill in all fields."})
 
     write_inference_config(cfg, _INFERENCE_CONFIG_PATH)
     _reload_inference_config()
@@ -837,7 +909,7 @@ def setup_save():
 
     if ok:
         return redirect(url_for("index"))
-    return render_template("setup.html", result={"ok": False, "error": f"Saved, but couldn't connect: {error}"})
+    return render_template("setup.html", chatgpt=_chatgpt_login_status(), result={"ok": False, "error": f"Saved, but couldn't connect: {error}"})
 
 
 @app.route("/")

@@ -218,7 +218,9 @@ _CLOUD_DEFAULT_BASE_URLS = {
     "openai": "https://api.openai.com/v1",
     "claude": "https://api.anthropic.com/v1/",
 }
-_CLOUD_BACKENDS = frozenset(_CLOUD_DEFAULT_BASE_URLS)
+# openai_chatgpt is cloud (so: consent-gated) but speaks its OWN protocol at a
+# fixed host -- no base_url to resolve, and it never reaches _make_openai_call.
+_CLOUD_BACKENDS = frozenset({*_CLOUD_DEFAULT_BASE_URLS, "openai_chatgpt"})
 
 
 def _resolve_http(backend: str, block: dict) -> dict:
@@ -270,6 +272,8 @@ def resolve_http_endpoint(cfg: dict) -> dict | None:
         return None
     if backend == "llamacpp" and block.get("mode", "server") == "in_process":
         return None
+    if backend == "openai_chatgpt":
+        return None  # its own protocol at a fixed host — nothing OpenAI-compat to probe
     if backend in _CLOUD_BACKENDS:
         # A misconfigured cloud block (missing model/key) raises in
         # _resolve_http where a CALL is being built; here the caller is a
@@ -561,6 +565,9 @@ def make_llm_call(cfg: dict) -> LLMCall:
                 "acknowledgment is recorded — open /setup (or run `mentar setup`) "
                 "and complete the cloud consent step"
             )
+        if backend == "openai_chatgpt":
+            from mentar.inference.codex_backend import make_codex_call
+            return make_codex_call(block, gen)
         return _make_openai_call(_resolve_http(backend, block), gen)
 
     if backend in ("llamacpp", "vllm", "ollama"):

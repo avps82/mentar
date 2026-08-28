@@ -138,6 +138,22 @@ Or use the web page: `./mentar serve` → the setup page's **Option C**. The key
 the gitignored `config/.env`, never into a tracked file; the acknowledgment is recorded
 in `config/cloud_consent.yaml`.
 
+### Using your ChatGPT subscription instead of an API key (EXPERIMENTAL)
+
+If you pay for ChatGPT Plus/Pro, Mentar can use that instead of a separate paid API
+key — press **Sign in with ChatGPT** on the setup page (or run `mentar chatgpt-login`),
+then choose the ChatGPT option. A browser opens, you sign in, and the tokens are stored
+locally in `config/chatgpt_auth.json` (gitignored) and refreshed automatically.
+
+**Understand the trade before you rely on it.** OpenAI does not officially support
+other apps using a ChatGPT sign-in — it works today, it is what several developer
+tools do, and it **may stop working at any time**. Your plan's usage limits also apply,
+so a heavy session can hit a cap mid-lesson. For dependable capacity, use an API key.
+
+**There is no Claude equivalent, and there will not be one soon.** Anthropic explicitly
+prohibits (and technically blocks) using a Claude Pro/Max subscription from third-party
+tools — so Claude works with an API key only. That asymmetry is theirs, not ours.
+
 **To turn it off:** re-run setup with a local runtime (the header strip on every page
 shows when a cloud backend is active). To revoke fully, also delete the key line from
 `config/.env` and rotate the key at the provider.
