@@ -97,6 +97,15 @@ def extract_text(sse_lines) -> str:
             completed = completed or event["text"]
         elif etype.endswith("response.completed"):
             completed = _text_from_response(event.get("response") or {}) or completed
+        elif etype.endswith("failed") or etype.endswith("error"):
+            # An explicit failure event used to fall through and return "" --
+            # the child got a blank turn and the log said nothing about why
+            # (measured 2026-08-28). Same silent-empty class as the reasoning
+            # model bug: name it, so the parent's status page can show it.
+            err = (event.get("response") or {}).get("error") or event.get("error") or {}
+            msg = err.get("message") if isinstance(err, dict) else str(err)
+            raise CodexBackendError(
+                f"the ChatGPT backend reported an error: {msg or etype}")
     return completed if completed is not None else "".join(deltas)
 
 

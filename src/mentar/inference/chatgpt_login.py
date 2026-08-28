@@ -118,6 +118,11 @@ def write_auth_file(tokens: dict, path: Path | None = None) -> Path:
     p.parent.mkdir(parents=True, exist_ok=True)
     tmp = p.with_suffix(p.suffix + ".mentar-tmp")
     tmp.write_text(json.dumps(data, indent=2), encoding="utf-8")
+    # 0600 BEFORE the rename: this file is a live credential, and the default
+    # 0644 would let any other account on a shared family computer read the
+    # parent's ChatGPT tokens. Set on the temp file so the credential is never
+    # world-readable even momentarily.
+    os.chmod(tmp, 0o600)
     os.replace(tmp, p)
     return p
 

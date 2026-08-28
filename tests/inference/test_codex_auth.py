@@ -130,3 +130,60 @@ def test_login_status_shapes(tmp_path):
     assert live["present"] is True and live["stale"] is False
     stale = CA.login_status(_auth_file(tmp_path, exp=time.time() - 3600, refresh=None))
     assert stale["stale"] is True
+
+
+# ── Bug-hunt regressions (2026-08-28) ────────────────────────────────────────
+
+def test_a_refresh_never_writes_into_codexs_own_file(tmp_path, monkeypatch):
+    """Our single-flight lock is process-local; the Codex CLI refreshes in its
+    OWN process. Since refresh tokens are single-use and rotate, writing into
+    ~/.codex/auth.json could destroy a token codex just rotated and log BOTH
+    tools out. Codex's file is read-only input: refreshed tokens go to Mentar's.
+    """
+    import httpx
+
+    from mentar.inference import chatgpt_login as L
+
+    codex_file = tmp_path / "codex_auth.json"
+    codex_file.write_text(json.dumps({"tokens": {
+        "access_token": _jwt(time.time() - 10), "refresh_token": "rt1",
+        "account_id": "acct-7"}}))
+    before = codex_file.read_text()
+    own = tmp_path / "chatgpt_auth.json"
+    monkeypatch.setattr(CA, "CODEX_AUTH_PATH", codex_file)
+    monkeypatch.setattr(L, "mentar_auth_path", lambda: own)
+
+    class _Resp:
+        status_code = 200
+        @staticmethod
+        def json():
+            return {"access_token": _jwt(time.time() + 7200), "refresh_token": "rt2"}
+
+    monkeypatch.setattr(httpx, "post", lambda *a, **kw: _Resp())
+    CA.get_access_token(codex_file)
+    assert codex_file.read_text() == before, "codex's own file must never be written"
+    assert own.exists(), "the refreshed tokens must land in Mentar's own file"
+    assert json.loads(own.read_text())["tokens"]["refresh_token"] == "rt2"
+    assert json.loads(own.read_text())["tokens"]["account_id"] == "acct-7"
+
+
+def test_credential_files_are_not_world_readable(tmp_path, monkeypatch):
+    """A live token at the default 0644 is readable by every other account on a
+    shared family computer (measured 2026-08-28)."""
+    import stat
+
+    from mentar.inference import chatgpt_login as L
+
+    p = L.write_auth_file({"access_token": "tok", "refresh_token": "r",
+                           "id_token": None}, path=tmp_path / "chatgpt_auth.json")
+    mode = stat.S_IMODE(p.stat().st_mode)
+    assert mode == 0o600, f"token file is {oct(mode)}, want 0600"
+
+
+def test_dotenv_is_not_world_readable(tmp_path):
+    import stat
+
+    from mentar.inference.backend import upsert_dotenv_value
+    e = tmp_path / ".env"
+    upsert_dotenv_value(e, "OPENAI_API_KEY", "sk-secret")
+    assert stat.S_IMODE(e.stat().st_mode) == 0o600, "an API key must not be world-readable"

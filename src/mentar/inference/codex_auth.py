@@ -9,18 +9,19 @@ reads whichever exists (Mentar's own file wins) and owns refresh for both.
 
 Refresh policy (maintainer decision, 2026-08-28): access tokens expire after a
 few hours, so on (near-)expiry we POST the refresh_token grant to OpenAI's token
-endpoint with the public Codex client id — exactly what the established
-piggyback integrations do — and write the rotated tokens BACK to auth.json:
+endpoint with the public Codex client id and persist the rotated tokens:
 
-  * atomically (tmp + rename), preserving unknown JSON fields verbatim;
-  * under a process-wide single-flight lock. Refresh tokens rotate, so two
-    racing refreshes mean the loser holds a dead token — and worse, a clobbered
-    write could log the parent out of Codex itself (risk R7).
+  * atomically (tmp + rename, mode 0600), preserving unknown JSON fields;
+  * under a process-wide single-flight lock;
+  * ALWAYS into Mentar's own file, never into ~/.codex/auth.json. That lock is
+    process-local and cannot serialise against the Codex CLI refreshing in its
+    own process; since refresh tokens are single-use and rotate, a lost race
+    would destroy a token and log BOTH tools out (risk R7). Codex's file is
+    read-only input to us.
 
 Failure UX: every error raises CodexAuthError naming the file checked and the
-remedy (`codex login`). The child-facing path never sees these — the dialogue
-controller degrades LLM failures to a safe fallback; parents see them on the
-setup/status pages.
+remedy. The child-facing path never sees these — the dialogue controller
+degrades LLM failures to a safe fallback; parents see them on setup/status.
 """
 
 from __future__ import annotations
@@ -129,21 +130,33 @@ def _refresh(p: Path, creds: dict) -> dict:
     if not new_access:
         raise CodexAuthError(f"token refresh returned no access_token — {_remedy(p)}")
 
-    # Write back: read the CURRENT file (not our parsed view), update only the
-    # token fields, keep everything else byte-for-byte — then atomic rename.
-    data = json.loads(p.read_text(encoding="utf-8"))
-    tokens = data.setdefault("tokens", {})
+    # WHERE we write matters. Our single-flight lock is process-local, so it
+    # cannot serialise against the Codex CLI refreshing in its own process: if
+    # both refresh, the loser's write destroys a rotated (single-use) refresh
+    # token and BOTH tools are logged out. Measured 2026-08-28 by simulating a
+    # concurrent codex write mid-refresh.
+    #
+    # So Mentar never writes into ~/.codex/auth.json. Refreshed tokens go to
+    # Mentar's OWN file, which default_auth_path() then prefers — codex's file
+    # is read-only input, and the parent's `codex login` cannot be broken by us.
+    from mentar.inference.chatgpt_login import mentar_auth_path
+    target = p if p != CODEX_AUTH_PATH else mentar_auth_path()
+    base = json.loads(p.read_text(encoding="utf-8")) if target == p else {}
+    tokens = base.setdefault("tokens", {})
+    tokens.setdefault("account_id", creds.get("account_id"))
     tokens["access_token"] = new_access
     if fresh.get("refresh_token"):
         tokens["refresh_token"] = fresh["refresh_token"]
     if fresh.get("id_token"):
         tokens["id_token"] = fresh["id_token"]
-    data["last_refresh"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-    tmp = p.with_suffix(p.suffix + ".mentar-tmp")
-    tmp.write_text(json.dumps(data, indent=2), encoding="utf-8")
-    os.replace(tmp, p)
-    logger.info("codex_auth: refreshed the ChatGPT sign-in (rotated tokens written back)")
-    return read_credentials(p)
+    base["last_refresh"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    target.parent.mkdir(parents=True, exist_ok=True)
+    tmp = target.with_suffix(target.suffix + ".mentar-tmp")
+    tmp.write_text(json.dumps(base, indent=2), encoding="utf-8")
+    os.chmod(tmp, 0o600)          # a live credential is never world-readable
+    os.replace(tmp, target)
+    logger.info("codex_auth: refreshed the ChatGPT sign-in -> %s", target)
+    return read_credentials(target)
 
 
 def get_access_token(path: Path | None = None) -> str:

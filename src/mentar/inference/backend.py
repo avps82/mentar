@@ -146,6 +146,14 @@ def upsert_dotenv_value(env_path: str | Path, key: str, value: str) -> None:
     kept = [line for line in lines if not line.strip().startswith(prefix)]
     kept.append(f'{key}="{value}"')
     env_path.write_text("\n".join(kept) + "\n", encoding="utf-8")
+    # This file holds live API keys. The default 0644 lets any other account on
+    # a shared family computer read them (measured 2026-08-28) -- 0600 it.
+    # Best-effort: some filesystems (Windows/FAT/network mounts) do not support
+    # POSIX modes, and failing to write the key there would be the worse bug.
+    try:
+        os.chmod(env_path, 0o600)
+    except OSError:  # pragma: no cover - platform/filesystem dependent
+        logger.debug("could not chmod %s to 0600 (filesystem may not support it)", env_path)
 
 
 def load_inference_config(path: str | Path | None = None) -> dict | None:

@@ -401,3 +401,46 @@ def test_trust_strip_tells_the_truth_about_cloud(monkeypatch):
             html = client.get("/setup").data.decode()
             assert "no cloud · no accounts" not in html
             assert "Anthropic" in html and "parent-approved" in html
+
+
+def test_trust_strip_names_the_chatgpt_backend_too(monkeypatch):
+    """openai_chatgpt is in _CLOUD_BACKENDS; omitting it from the provider table
+    left every page still claiming 'no cloud - no accounts' while a child's
+    turns went to OpenAI (measured 2026-08-28)."""
+    app_mod, _client_ = _client()
+    for backend, expect in (("openai", "OpenAI"), ("claude", "Anthropic"),
+                            ("openai_chatgpt", "OpenAI"), ("ollama", None)):
+        app_mod._INFERENCE_CFG = {"backend": backend}
+        got = app_mod._inject_cloud_state()["cloud_provider"]
+        if expect is None:
+            assert got is None, f"{backend} must not claim a cloud provider"
+        else:
+            assert got and expect in got, f"{backend} -> {got!r}"
+
+
+def test_chatgpt_backend_is_not_ready_without_a_signin(monkeypatch):
+    """No OpenAI-compatible endpoint exists for this backend, so the 'None means
+    in-process, trust it' branch green-lit it with NO sign-in: the child started
+    a session and every turn failed (measured 2026-08-28)."""
+    import mentar.consent as C
+    app_mod, client = _client()
+    with tempfile.TemporaryDirectory() as td:
+        cfg = pathlib.Path(td) / "inference.yaml"
+        cfg.write_text("backend: openai_chatgpt\nopenai_chatgpt:\n  model: m\n")
+        consent = pathlib.Path(td) / "cloud_consent.yaml"
+        monkeypatch.setattr(C, "consent_path", lambda: consent)
+        C.record_cloud_consent("openai_chatgpt", path=consent)
+        with patch.object(app_mod, "_INFERENCE_CONFIG_PATH", cfg):
+            app_mod._reload_inference_config()
+            # consent recorded, but no sign-in on this machine
+            with patch.object(app_mod, "_chatgpt_login_status",
+                              return_value={"present": False}):
+                app_mod._SETUP_GATE_CACHE["ok"] = None
+                assert app_mod._setup_is_complete() is False
+                r = client.get("/", follow_redirects=False)
+                assert r.status_code == 302 and "/setup" in r.headers["Location"]
+            # with a sign-in present it becomes ready
+            with patch.object(app_mod, "_chatgpt_login_status",
+                              return_value={"present": True}):
+                app_mod._SETUP_GATE_CACHE["ok"] = None
+                assert app_mod._setup_is_complete() is True

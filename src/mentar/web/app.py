@@ -539,7 +539,12 @@ def _inject_cloud_state():
     over an ACTIVE cloud backend would be a lie on every screen. None when
     local (the default wording stays); the provider's name when cloud is on."""
     backend = ((_INFERENCE_CFG or {}).get("backend") or "").lower()
-    names = {"openai": "OpenAI", "claude": "Anthropic"}
+    # openai_chatgpt MUST be here: it is in _CLOUD_BACKENDS, so omitting it left
+    # every page still claiming "no cloud - no accounts" while a child's turns
+    # went to OpenAI (measured 2026-08-28). The one lie this function exists to
+    # prevent, reintroduced by adding a backend and forgetting this table.
+    names = {"openai": "OpenAI", "claude": "Anthropic",
+             "openai_chatgpt": "OpenAI (ChatGPT account)"}
     return {"cloud_provider": names.get(backend)}
 
 
@@ -567,6 +572,14 @@ def _setup_is_complete() -> bool:
         # green-lighting it here would bounce the child into a broken session.
         # Route the parent back to /setup to complete (or re-do) the consent.
         ok = False
+    elif backend == "openai_chatgpt":
+        # No OpenAI-compatible endpoint to probe, so the "None means in-process,
+        # trust it" branch below would green-light this backend with NO sign-in
+        # on the machine -- the child starts a session and every turn fails
+        # (measured 2026-08-28). The sign-in IS the credential here, so its
+        # presence is the readiness check.
+        ok = (_INFERENCE_CONFIG_PATH.exists()
+              and _chatgpt_login_status().get("present", False))
     elif _INFERENCE_CONFIG_PATH.exists():
         if _LLM_STATUS_ENDPOINT is None:
             ok = True  # in-process backend -- no HTTP endpoint to probe, trust it

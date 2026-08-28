@@ -156,3 +156,19 @@ def test_a_successful_call_sends_the_account_header_and_returns_text(monkeypatch
     headers = calls[0]["headers"]
     assert headers["Authorization"] == "Bearer tok-abc"
     assert headers["chatgpt-account-id"] == "acct-1"
+
+
+def test_an_explicit_failure_event_is_named_not_silently_empty():
+    """A response.failed used to fall through to "" — the child got a blank turn
+    and the log said nothing about why. Same silent-empty class as the
+    reasoning-model bug (2026-08-28)."""
+    with pytest.raises(CB.CodexBackendError) as exc:
+        CB.extract_text(_sse({"type": "response.failed", "response": {
+            "error": {"message": "model overloaded"}}}))
+    assert "model overloaded" in str(exc.value)
+
+
+def test_a_failure_event_without_a_message_still_names_the_event():
+    with pytest.raises(CB.CodexBackendError) as exc:
+        CB.extract_text(_sse({"type": "response.failed"}))
+    assert "response.failed" in str(exc.value)
