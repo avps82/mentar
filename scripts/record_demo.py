@@ -45,7 +45,7 @@ PORT = int(os.environ.get("MENTAR_DEMO_PORT", "5099"))
 BASE = f"http://127.0.0.1:{PORT}"
 
 
-def _start_server(stub: bool, pack: str) -> subprocess.Popen:
+def _start_server(stub: bool, pack: str, config: str | None = None) -> subprocess.Popen:
     env = dict(os.environ)
     env["PYTHONPATH"] = str(REPO / "src")
     # Only 5 of 157 packs ship enabled (the pilot + practice), so without this
@@ -61,7 +61,9 @@ def _start_server(stub: bool, pack: str) -> subprocess.Popen:
     code = (
         # _SETUP_GATE_BYPASS is a module attribute (not an env var): without it
         # every route redirects to /setup and the recording is one page long.
-        "import mentar.web.app as A; A._SETUP_GATE_BYPASS = True;"
+        "import mentar.web.app as A, pathlib; A._SETUP_GATE_BYPASS = True;"
+        + (f"A._INFERENCE_CONFIG_PATH = pathlib.Path({config!r}); "
+           "A._reload_inference_config();" if config else "")
         # Deliberately SUBJECT-AGNOSTIC. A fixed subject-specific hint (the
         # first draft said "the bottom number of each fraction") appears under
         # whatever question the engine actually drew — it read as nonsense over
@@ -88,6 +90,26 @@ def _start_server(stub: bool, pack: str) -> subprocess.Popen:
             time.sleep(0.1)
     proc.kill()
     raise RuntimeError(f"demo server never came up on {BASE}")
+
+
+def _settle(browser, timeout: float = 180.0) -> None:
+    """Wait until no htmx request is in flight.
+
+    Fixed sleeps were tuned against the stub, which answers instantly. A real
+    model takes seconds to minutes, so the recording caught the
+    "Mentar is thinking..." spinner instead of the reply (2026-08-29). Wait for
+    the condition, never for a duration.
+    """
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        busy = browser.js(
+            "document.querySelectorAll('.htmx-request').length > 0 || "
+            "!!document.querySelector('.htmx-indicator:not([style*=\"display: none\"])')")
+        if not busy:
+            time.sleep(0.4)          # let the swap paint
+            return
+        time.sleep(0.5)
+    raise RuntimeError("a turn never completed — the model may be unreachable or very slow")
 
 
 def _shot(browser, frames: list, hold: int = 1) -> None:
@@ -123,6 +145,9 @@ def main() -> int:
     ap.add_argument("--topic", default="au9_combine_expressions",
                     help="node id to pin, so the demo is not a coin flip "
                          "(default: combining like terms)")
+    ap.add_argument("--config",
+                    help="inference config to use for this recording (leave the "
+                         "installed one untouched)")
     ap.add_argument("--width", type=int, default=900)
     ap.add_argument("--height", type=int, default=1000)
     args = ap.parse_args()
@@ -130,7 +155,7 @@ def main() -> int:
     from test_browser_ui import _Browser  # the tests' own CDP client
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    server = _start_server(args.stub, args.pack)
+    server = _start_server(args.stub, args.pack, args.config)
     browser = None
     frames: list = []
     try:
@@ -156,8 +181,8 @@ def main() -> int:
             raise RuntimeError(
                 f"topic {args.topic!r} not on /topics?subject={args.pack} — "
                 "check --pack/--topic")
-        time.sleep(2.5)
-        browser.wait_for("document.querySelector('.question-text, .question') !== null", timeout=30)
+        browser.wait_for("document.querySelector('.question-text, .question') !== null", timeout=60)
+        _settle(browser)
         _shot(browser, frames, hold=4)                      # the question
 
         # A deliberately wrong answer, so the gentle retry is on screen.
@@ -166,7 +191,7 @@ def main() -> int:
                    "i.dispatchEvent(new Event('input',{bubbles:true}));}"
                    "const b=[...document.querySelectorAll('button')]"
                    ".find(x=>/send/i.test(x.textContent));if(b)b.click();})()")
-        time.sleep(3.0)
+        _settle(browser)
         _shot(browser, frames, hold=4)                      # gentle retry
 
         # The payoff: "Show me the working" reveals the COMPUTED worked example
@@ -175,7 +200,7 @@ def main() -> int:
         browser.js("(()=>{const b=[...document.querySelectorAll('button,a')]"
                    ".find(x=>/show me the working/i.test(x.textContent));"
                    "if(b)b.click();})()")
-        time.sleep(3.0)
+        _settle(browser)
         _shot(browser, frames, hold=4)
         # Only worth a second beat if the page ACTUALLY scrolls. When the whole
         # turn fits the viewport this shot is byte-identical to the one above,

@@ -202,7 +202,16 @@ def _normalise_llm_math(text: str) -> str:
             text = text.replace(src, dst)
     def _unwrap(m):
         inner = m.group(1)
-        return inner if re.search(r"[=×÷+^/−]|\d\s*-\s*\d", inner) else m.group(0)
+        if re.search(r"[=×÷+^/−]|\d\s*-\s*\d", inner):
+            return inner
+        # A bare ALGEBRAIC SYMBOL carries no operator, so the operator guard
+        # left it wrapped and a Year 12 child read "The $y$ terms are like the
+        # cars" (seen 2026-08-29 with a live model). Money is always $<digits>,
+        # so a short letter-led token cannot be a price: "$y$", "$x2$", "$ab$"
+        # unwrap; "$5 and $8" (digit-led) and "$130 increases" (unpaired) do not.
+        if re.fullmatch(r"[A-Za-z][A-Za-z0-9_^]{0,3}", inner.strip()):
+            return inner
+        return m.group(0)
     return _DOLLAR_MATH_RE.sub(_unwrap, text)
 
 
