@@ -292,3 +292,41 @@ def test_a_what_comes_next_question_leaves_somewhere_for_the_answer_to_go():
             f"seed={seed} the line has {rule.count('+') - 1} segments for "
             f"{len(known)} known values plus the unknown: {rule!r}"
         )
+
+
+# ── Method cards must not give the answer away before the first step ─────────
+
+def test_no_method_card_states_the_answer_before_its_steps():
+    """A card shown for the LIVE question used to open with
+    "... what is a + b? → 7y + 7" AND close with "Answer: 7y + 7" — the answer
+    on the FIRST line, before a single step, while the app's own repeat prompt
+    tells the child "the answer is on the last line". 34 of 69 AU generators did
+    it (2026-08-29). A child asked to "try it" had been shown the answer twice
+    before reading any method.
+    """
+    import random
+
+    from mentar.engine import au_items as AU
+    from mentar.engine.itemgen import ItemGenerator
+
+    gens = {}
+    for name, val in vars(AU).items():
+        if isinstance(val, dict) and name.endswith("GENERATORS"):
+            gens.update(val)
+    assert gens, "no AU generators found — this test is meaningless"
+
+    maker = ItemGenerator(gens, rng=random.Random(5))
+    offenders = []
+    for node in gens:
+        item = maker._make(node)
+        if not item or not item.method_steps:
+            continue
+        steps = [str(s) for s in item.method_steps]
+        if not any(s.strip().startswith("Answer:") for s in steps):
+            continue                       # no closing line: the header is all there is
+        for line in steps[:2]:             # title + restated problem
+            if "→" in line:
+                offenders.append(f"{node}: {line.strip()[:70]}")
+    assert not offenders, (
+        "method cards state the answer before their steps:\n  "
+        + "\n  ".join(offenders[:8]))

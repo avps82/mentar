@@ -38,6 +38,43 @@ GenFn = Callable[[random.Random], tuple]
 _LETTERS = "ABCD"
 
 
+def _drop_duplicate_answer_header(steps: tuple[str, ...] | None, answer: str):
+    """Strip a card's opening "question → answer" giveaway when the card already
+    ends with an ``Answer:`` line.
+
+    Half the AU generators (34 of 69, measured 2026-08-29) restated the problem
+    as ``... ? → 7y + 7`` on line 2 AND closed with ``Answer: 7y + 7``. On a
+    card shown for the LIVE question that puts the answer on the FIRST line —
+    before a single step — while the app's own repeat prompt tells the child
+    "the answer is on the last line". The product contradicted its own
+    instruction, and a child asked to "try it" had already been shown the
+    answer twice before reading any method.
+
+    Done here, once, rather than by editing 31 f-strings: this is the single
+    place every generator's card becomes an Item, so new generators inherit the
+    rule instead of re-introducing the leak. The senior-maths file's ``_card()``
+    helper already builds cards the clean way and is unaffected.
+    """
+    if not steps or not answer:
+        return steps
+    closing = [str(s).strip()[len("Answer:"):].strip()
+               for s in steps if str(s).strip().startswith("Answer:")]
+    if not closing:
+        return steps          # no trailing answer line -> the header is all there is
+    # Match the CARD's own closing value as well as item.answer: for an mc4 item
+    # the answer is the letter ("D") while the card's arrow carries the value
+    # ("40"), so comparing only against item.answer missed every choice question.
+    targets = {closing[-1], str(answer).strip()}
+    out = []
+    for line in steps:
+        text = str(line)
+        head, sep, tail = text.rpartition("→")
+        if sep and tail.strip() in targets and not text.strip().startswith("Answer:"):
+            text = head.rstrip()
+        out.append(text)
+    return tuple(out)
+
+
 def compose_mc_problem(stem: str, choices: tuple[str, ...] | list[str]) -> str:
     """The single place that builds inline "A) … B) …" mc problem text — used
     by every mc generator via ItemGenerator._make, so CLI/transcript output
@@ -404,6 +441,7 @@ class ItemGenerator:
         # mc4 or not), so this is always unambiguous: a non-mc4 generator that
         # wants a card explicitly passes None at index 4.
         method_steps = tuple(result[5]) if len(result) > 5 and result[5] else None
+        method_steps = _drop_duplicate_answer_header(method_steps, answer)
         # A 7th element (2026-08-19): a per-item answer-format hint, used by
         # formula questions to put the FORMULA in the cue slot. Same
         # present-or-None positional rule as choices/method_steps above.

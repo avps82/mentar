@@ -58,7 +58,13 @@ def test_card_names_the_concept_and_states_the_real_answer():
             # never just repeating the generic word "science".
             assert concept == concept.upper() and len(concept) > 3, (node_id, concept)
             correct_text = item.choices[_LETTERS.index(item.answer)]
-            assert correct_text in question_line, (node_id, correct_text, question_line)
+            # The card names the answer where it TEACHES ("owl -> bird (birds
+            # have feathers...)") and again on its closing line — but NOT on the
+            # restated question. That opening duplicate was stripped centrally
+            # on 2026-08-29: it put the answer on the card's first content line,
+            # before any reasoning, while the app's repeat prompt tells the child
+            # "the answer is on the last line".
+            assert correct_text not in question_line, (node_id, question_line)
             assert correct_text in answer_line, (node_id, correct_text, answer_line)
             # ...and the card ends by naming it outright.
             assert final.strip() == f"Answer: {correct_text}", (node_id, final)
