@@ -240,10 +240,23 @@ _LATEX_SUBS = [
 _DOLLAR_MATH_RE = re.compile(r"\$([^$\n]{1,80}?)\$")
 
 
+# Python power syntax, which models emit constantly for algebra ("x**2").
+# ONLY when a digit follows, because markdown-lite renders bold with the same
+# characters: "**important**" must survive, while "4x**2 + 3x**2 = 7x**2" must
+# not be parsed as a bold span. It was -- a Year 12 explanation rendered
+# "4x**2 + 3x**2" with "2 + 3x" in BOLD, mangling the maths (seen with a live
+# model, 2026-08-29). Caret, not the prettier superscript, matching the same
+# decision in app.py's _display_expr_text: the verifier ACCEPTS a caret and
+# safe-rejects a superscript, so a child copying the display back is never
+# marked wrong.
+_POWER_STARS_RE = re.compile(r"\*\*(?=\d)")
+
+
 def _normalise_llm_math(text: str) -> str:
     """Replace the LaTeX tokens models emit ("force $\\rightarrow$ a VECTOR")
     with the plain characters a child can read. Substring replacement on a
     fixed list -- never a LaTeX parser."""
+    text = _POWER_STARS_RE.sub("^", text)
     for src, dst in _LATEX_SUBS:
         if src in text:
             text = text.replace(src, dst)

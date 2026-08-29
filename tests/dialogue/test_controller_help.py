@@ -64,3 +64,20 @@ def test_the_explanation_register_follows_the_year_level():
     # unknown/pilot falls back to the original wording, never a crash
     for unknown in ("pilot", None, "", "Stage 3", "Reception"):
         assert "8–9" in reg(unknown), unknown
+
+
+def test_python_power_syntax_in_prose_is_not_rendered_as_bold():
+    """Models emit "x**2" constantly for algebra, and markdown-lite renders bold
+    with the same characters — so a Year 12 explanation showed
+    "4x**2 + 3x**2 = 7x**2" with "2 + 3x" in BOLD, mangling the maths (live
+    model, 2026-08-29). Converted only when a DIGIT follows, so deliberate bold
+    still works; caret not superscript, because the verifier accepts a caret and
+    safe-rejects a superscript.
+    """
+    from mentar.dialogue.controller import _normalise_llm_math as norm
+
+    assert norm("4x**2 + 3x**2 = 7x**2") == "4x^2 + 3x^2 = 7x^2"
+    assert norm("A term like x**2 differs from x") == "A term like x^2 differs from x"
+    # deliberate emphasis is untouched, even beside a power
+    assert norm("This is **important**.") == "This is **important**."
+    assert norm("The **key idea** is x**2 vs x") == "The **key idea** is x^2 vs x"
