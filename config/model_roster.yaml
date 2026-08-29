@@ -122,6 +122,27 @@ models:
     eval: maths
     eval_note: "maths 15/31 — gets about half of it wrong; safety NOT graded"
 
+  # Capable-GPU tier, added 2026-08-29 on the maintainer's steer toward MTP.
+  # DELIBERATELY ranked below every graded model: it needs ~22 GB, so it cannot
+  # run on the reference family hardware (base M1 16 GB / RTX 3080 10 GB) and is
+  # opt-in only, never the automatic pick.
+  #
+  # Quant choice is load-bearing. On the official Ollama library the
+  # multi-token-prediction builds are 27b-mtp-q4_K_M (18 GB) and 27b-mtp-q8_0
+  # (30 GB). A Q5_K_M exists only as a THIRD-PARTY upload and almost certainly
+  # carries no MTP head -- i.e. the quant that matches our other -q5 models
+  # would discard the exact feature MTP was chosen for (checked 2026-08-29).
+  - id: qwen3.8-27b
+    ollama_tag: "qwen3.8:27b-mtp-q4_K_M"
+    params_b: 27
+    reasoning: false
+    tier: capable-gpu
+    rank: 10
+    min_ram_gb: 22
+    eval: ungraded
+    eval_note: "never run through the eval suite — QUEUED (2026-08-29), gradeable on the 32 GB eval host"
+    note: "Apache 2.0. MTP gives ~15-25% higher throughput via speculative decoding. Headline gains are AGENTIC/coding (Terminal Bench, SWE-bench) which predict tutoring quality poorly -- the explanation rubric is the axis that matters here, so it stays opt-in until graded. Ships a ~931 MB vision encoder Mentar never uses."
+
   - id: qwen2.5-3b
     ollama_tag: "qwen2.5:3b"
     hf_repo: "Qwen/Qwen2.5-3B-Instruct-GGUF"

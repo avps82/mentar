@@ -29,6 +29,17 @@ refs: "SPEC §20 (local LLM), §20.3 (eval host), §15 (RAG/quality), docs/desig
 > a smaller default that can. It remains selectable explicitly, and is fine
 > behind a LiteLLM/vLLM path.
 >
+> **Also queued (2026-08-29):** `qwen3.8:27b-mtp-q4_K_M` — Apache 2.0, MTP,
+> added at **rank 10 / capable-GPU tier, opt-in only**. It needs ~22 GB so it
+> cannot run on the reference family hardware (base M1 16 GB, RTX 3080 10 GB),
+> but it IS gradeable on the 32 GB eval host. **Quant note:** the official MTP
+> builds are `27b-mtp-q4_K_M` (18 GB) and `27b-mtp-q8_0` (30 GB); a `Q5_K_M`
+> exists only as a third-party upload and almost certainly has no MTP head, so
+> the quant matching our other `-q5` models would discard the feature MTP was
+> chosen for. Its headline gains are agentic/coding benchmarks, which predict
+> *tutoring* quality poorly — the explanation rubric is the axis that decides
+> anything here.
+>
 > **Queued:** a five-suite eval of `qwen3.5:9b`. Qwen3.5 has multi-token
 > prediction, so it is faster per parameter than the rest of the 9B field
 > (maintainer, 2026-08-29) — but it is currently **maths 19/31 with safety NOT
