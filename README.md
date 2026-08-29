@@ -32,6 +32,11 @@ Nothing in those recordings is staged: the questions come from the generators, t
 from the deterministic verifier, the working from the engine. Only the prose is the model's.
 Regenerate them yourself with `python3 scripts/record_demo.py` (see the script's header).
 
+> **First run starts small.** Only the pilot and practice packs are on out of the box, so a
+> fresh install opens on simple arithmetic — not the Year 12 algebra above. Turn on your
+> child's country and year in **⚙️ Settings → Curriculum packs** (157 are shipped, nothing to
+> download). A setup step that asks this up front is planned — see `docs/PHASE0_STATUS.md`.
+
 A Year 10 two-stage probability question — the child taps **Show me how**, and after the
 model's spoken-style explanation, a deterministic worked-example card lays out the branch
 tree (computed by the engine, not the model — it is always correct):

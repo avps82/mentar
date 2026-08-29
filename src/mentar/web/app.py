@@ -777,7 +777,8 @@ def _require_setup():
     # state it exists for -- a first run with no backend configured yet
     # (measured 2026-08-28; masked in isolation because the test's own config
     # made setup "complete").
-    if request.endpoint in ("setup", "setup_save", "setup_chatgpt_login", "static"):
+    if request.endpoint in ("setup", "setup_save", "setup_chatgpt_login",
+                            "setup_curriculum", "static"):
         return None
     if not _setup_is_complete():
         return redirect(url_for("setup"))
@@ -810,6 +811,67 @@ def _chatgpt_login_status() -> dict:
         app.logger.warning("chatgpt login status check failed", exc_info=True)
         return {"present": False, "expires_at": None, "stale": False,
                 "codex_binary_found": False, "last_error": None}
+
+
+# The packs that ship enabled. Used to tell a genuine first run (nothing chosen
+# yet) from someone re-running setup who already picked their child's year.
+_STARTER_PACKS = frozenset({"practice_english", "practice_maths",
+                            "arithmetic", "fractions", "science"})
+
+
+def _pack_choices() -> dict:
+    """Countries and year levels available to the first-run picker.
+
+    Built from the packs themselves, so adding a template adds an option with
+    no code change -- the same discovery the Settings list uses.
+    """
+    packs = _all_packs_with_state()
+    countries: dict[str, set] = {}
+    for p in packs:
+        countries.setdefault(p["country"] or "General", set()).add(p["year_level"] or "")
+    return {c: sorted((y for y in ys if y), key=_grade_sort_key)
+            for c, ys in sorted(countries.items())}
+
+
+@app.route("/setup/curriculum", methods=["GET", "POST"])
+def setup_curriculum():
+    """First-run curriculum picker (2026-08-29).
+
+    Only the pilot + practice packs ship enabled, so a fresh install opened on
+    simple arithmetic however senior the child was -- the README shows Year 12
+    algebra and a new user got "98 + 87" until they found Settings. Asking once,
+    here, turns a hidden setting into a question anyone can answer.
+
+    Deliberately SKIPPABLE and re-runnable: it enables packs, which Settings can
+    already change, so getting it wrong costs nothing. Never a gate.
+    """
+    choices = _pack_choices()
+    if request.method == "GET":
+        return render_template("setup_curriculum.html", choices=choices, result=None)
+
+    country = request.form.get("country", "").strip()
+    year = request.form.get("year_level", "").strip()
+    if not country or not year:
+        return render_template("setup_curriculum.html", choices=choices,
+                               result={"ok": False,
+                                       "error": "Pick a country and a year to continue."})
+    picked = [p["key"] for p in _all_packs_with_state()
+              if (p["country"] or "General") == country and p["year_level"] == year]
+    if not picked:
+        return render_template("setup_curriculum.html", choices=choices,
+                               result={"ok": False,
+                                       "error": f"No packs found for {country} {year}."})
+    # ADD to what is on; never silently switch off the pilot/practice packs a
+    # family may already be mid-session in.
+    for key in picked:
+        _ENABLED_PACKS.add(key)
+    ok, err = _apply_pack_change()
+    if not ok:
+        return render_template("setup_curriculum.html", choices=choices,
+                               result={"ok": False, "error": err})
+    app.logger.info("first-run curriculum picker enabled %d pack(s) for %s %s",
+                    len(picked), country, year)
+    return redirect(url_for("index"))
 
 
 @app.route("/setup/chatgpt-login", methods=["POST"])
@@ -959,6 +1021,13 @@ def setup_save():
     _SETUP_GATE_CACHE["checked_at"] = time.monotonic()
 
     if ok:
+        # Straight to the curriculum picker on a FIRST run: the starter set is
+        # pilot+practice only, so without this a family who just configured a
+        # model lands on simple arithmetic whatever year their child is in.
+        # Only when nothing beyond the starter set is on -- someone re-running
+        # setup with packs already chosen goes where they expected.
+        if not (_ENABLED_PACKS - _STARTER_PACKS):
+            return redirect(url_for("setup_curriculum"))
         return redirect(url_for("index"))
     return render_template("setup.html", chatgpt=_chatgpt_login_status(), result={"ok": False, "error": f"Saved, but couldn't connect: {error}"})
 

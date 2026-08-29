@@ -155,7 +155,11 @@ def test_setup_save_writes_local_config_and_reloads_without_restart():
                 "backend": "ollama", "base_url": "http://localhost:11434/v1", "model": "gemma2:9b",
             }, follow_redirects=False)
         assert r.status_code == 302
-        assert r.headers["Location"].endswith("/")
+        # First run (nothing beyond the shipped starter packs is on) lands on
+        # the curriculum picker, not the home page: without it a family who has
+        # just configured a model opens on simple arithmetic whatever year their
+        # child is in. The 'already chosen' branch is covered below.
+        assert r.headers["Location"].endswith("/setup/curriculum")
         assert scratch_cfg.exists()
         written = scratch_cfg.read_text(encoding="utf-8")
         assert "backend: ollama" in written
@@ -521,3 +525,76 @@ def test_the_signin_button_works_before_any_backend_is_configured(monkeypatch):
     if t:
         t.join(timeout=5)
     assert started, "the flow must actually start"
+
+
+# ── First-run curriculum picker (2026-08-29) ─────────────────────────────────
+
+def test_the_picker_is_reachable_before_setup_is_complete():
+    """It is part of GETTING set up, like /setup itself. Without the exemption
+    the gate would redirect it away — the same bug the ChatGPT sign-in route
+    had."""
+    app_mod, client = _client()
+    with tempfile.TemporaryDirectory() as td:
+        cfg = pathlib.Path(td) / "inference.yaml"          # no config: first run
+        with patch.object(app_mod, "_INFERENCE_CONFIG_PATH", cfg):
+            app_mod._reload_inference_config()
+            app_mod._SETUP_GATE_CACHE["ok"] = None
+            r = client.get("/setup/curriculum")
+            assert r.status_code == 200, "the gate must not redirect the picker away"
+            assert b"Which year" in r.data
+
+
+def test_picking_a_year_enables_exactly_that_country_and_year():
+    app_mod, client = _client()
+    before = set(app_mod._ENABLED_PACKS)
+    with patch.object(app_mod, "_apply_pack_change", return_value=(True, "")):
+        r = client.post("/setup/curriculum",
+                        data={"country": "AU", "year_level": "Year 9"})
+    assert r.status_code == 302
+    added = app_mod._ENABLED_PACKS - before
+    assert added, "nothing was enabled"
+    for key in added:
+        pack = next(p for p in app_mod._all_packs_with_state() if p["key"] == key)
+        assert pack["country"] == "AU" and pack["year_level"] == "Year 9", pack
+    # the starter packs a family may be mid-session in are never switched OFF
+    assert before <= app_mod._ENABLED_PACKS
+
+
+def test_the_picker_refuses_an_empty_or_unknown_choice():
+    app_mod, client = _client()
+    before = set(app_mod._ENABLED_PACKS)
+    for data in ({"country": "", "year_level": ""},
+                 {"country": "AU", "year_level": ""},
+                 {"country": "Atlantis", "year_level": "Year 9"}):
+        r = client.post("/setup/curriculum", data=data)
+        assert r.status_code == 200          # re-renders the form, no redirect
+        assert app_mod._ENABLED_PACKS == before, f"{data} changed the pack state"
+
+
+def test_the_choices_come_from_the_shipped_packs():
+    """Built by discovery, so a new template adds an option with no code change."""
+    app_mod, _client_ = _client()
+    choices = app_mod._pack_choices()
+    assert "AU" in choices, list(choices)
+    assert "Year 12" in choices["AU"] and "Year 1" in choices["AU"]
+    # years are grade-sorted, never lexicographic ("Year 10" < "Year 2" as strings)
+    au = choices["AU"]
+    assert au.index("Year 2") < au.index("Year 10"), au
+
+
+def test_re_running_setup_with_packs_already_chosen_skips_the_picker():
+    """The picker is a FIRST-run step. Someone changing their backend later has
+    already answered it, and should land where they expected."""
+    app_mod, c = _client()
+    scratch = pathlib.Path(tempfile.mkdtemp()) / "inference.yaml"
+    app_mod._ENABLED_PACKS.add("au_acara_year9_maths")     # beyond the starter set
+    try:
+        with patch.object(app_mod, "_INFERENCE_CONFIG_PATH", scratch), \
+             patch("openai.OpenAI", return_value=_reachable_openai_mock()):
+            r = c.post("/setup", data={
+                "backend": "ollama", "base_url": "http://localhost:11434/v1",
+                "model": "gemma2:9b"}, follow_redirects=False)
+        assert r.status_code == 302
+        assert r.headers["Location"].endswith("/"), r.headers["Location"]
+    finally:
+        app_mod._ENABLED_PACKS.discard("au_acara_year9_maths")

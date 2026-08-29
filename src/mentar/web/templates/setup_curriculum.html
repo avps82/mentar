@@ -1,0 +1,55 @@
+{% extends "_base.html" %}
+{% block title %}Mentar — Choose your child's year{% endblock %}
+{% block content %}
+<h1 style="font-size:1.4rem">Which year is your child in?</h1>
+<p class="hint">Mentar ships 157 curriculum packs — nothing to download. Only a small
+  starter set is switched on, so pick the country and year that fit your child and
+  Mentar will turn those on now. You can change this any time in
+  <strong>⚙️ Settings → Curriculum packs</strong>, and you can add more years later.</p>
+
+{% if result and not result.ok %}
+<p class="hint" style="color:var(--danger)">{{ result.error }}</p>
+{% endif %}
+
+<section class="settings-section">
+  <form method="POST" action="/setup/curriculum">
+    <label>Country<br>
+      <select name="country" id="country-select">
+        {% for country in choices %}
+        <option value="{{ country }}">{{ country }}</option>
+        {% endfor %}
+      </select>
+    </label><br><br>
+    <label>Year / grade<br>
+      <select name="year_level" id="year-select">
+        {% for country, years in choices.items() %}
+          {% for y in years %}
+          <option value="{{ y }}" data-country="{{ country }}">{{ y }}</option>
+          {% endfor %}
+        {% endfor %}
+      </select>
+    </label><br><br>
+    <button type="submit">Turn these on</button>
+    <a href="/" class="hint" style="margin-left:1rem">Skip for now</a>
+  </form>
+</section>
+
+<script>
+// Show only the years that belong to the chosen country. Plain JS, no build
+// step (U-80/U-83). Without JS every year stays listed and the server still
+// validates the pair, so the page degrades to "pick a valid combination".
+(function () {
+  var country = document.getElementById('country-select');
+  var year = document.getElementById('year-select');
+  if (!country || !year) return;
+  var all = Array.prototype.slice.call(year.options);
+  function sync() {
+    year.innerHTML = '';
+    all.filter(function (o) { return o.dataset.country === country.value; })
+       .forEach(function (o) { year.appendChild(o); });
+  }
+  country.addEventListener('change', sync);
+  sync();
+})();
+</script>
+{% endblock %}
