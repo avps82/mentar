@@ -20,6 +20,18 @@ Local LLM hosting. Curriculum-templated by country and year level. Built-in kid 
 
 ## What it looks like
 
+Two real sessions, recorded end-to-end against a locally-run model — same tutor, same
+safety model, pitched at the year being taught:
+
+| Year 5 Science | Year 12 Maths Methods |
+|---|---|
+| ![Year 5 science: adaptations, then a Year-5-pitched explanation](https://github.com/avps82/mentar/releases/download/v0.1.0-preview/demo_year5_science.gif) | ![Year 12: combining quadratic expressions, with the computed working](https://github.com/avps82/mentar/releases/download/v0.1.0-preview/demo_year12_quadratics.gif) |
+| Multiple-choice question, then an explanation built on a **different** example (a bird's feathers) so the answer on screen is never given away. | Senior register — "terms with the exact same variable and exponent" — and the worked example ends in the computed answer, not a guess. |
+
+Nothing in those recordings is staged: the questions come from the generators, the marking
+from the deterministic verifier, the working from the engine. Only the prose is the model's.
+Regenerate them yourself with `python3 scripts/record_demo.py` (see the script's header).
+
 A Year 10 two-stage probability question — the child taps **Show me how**, and after the
 model's spoken-style explanation, a deterministic worked-example card lays out the branch
 tree (computed by the engine, not the model — it is always correct):

@@ -120,6 +120,10 @@ eval/redteam/output/
 .gate-passed
 config/chatgpt_auth.json
 
-# Launch demo recordings (scripts/record_demo.py) — regenerate, never commit:
-# a --stub run has placeholder PROSE and must not reach a public page.
+# Launch demo recordings (scripts/record_demo.py) — NEVER committed. Two
+# reasons: a --stub run has placeholder PROSE and must not reach a public page,
+# and a GIF is a permanent ~300 KB blob in history. The shipped recordings live
+# as RELEASE ASSETS on the v0.1.0-preview tag; README/RUNNING link to those URLs
+# (maintainer, 2026-08-29). Re-upload with:
+#   gh release upload v0.1.0-preview <file> --clobber
 docs/img/demo*

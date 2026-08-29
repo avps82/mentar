@@ -12,6 +12,12 @@ sequence that shows what makes Mentar different:
 
 Writes ``docs/img/demo.gif`` plus the individual frames beside it.
 
+Outputs are gitignored and are NEVER committed -- a GIF is a permanent blob in
+history. The recordings README/RUNNING display are RELEASE ASSETS. To replace
+one, record it WITHOUT --stub (check the GIF says "live model") then:
+
+    gh release upload v0.1.0-preview docs/img/demo.gif --clobber
+
 WHICH PARTS ARE REAL
     The questions, the answer checking, the retry and the worked-example card
     are all deterministic engine output — they are real in every run, including
@@ -186,20 +192,33 @@ def main() -> int:
         _shot(browser, frames, hold=4)                      # the question
 
         # A deliberately wrong answer, so the gentle retry is on screen.
-        browser.js("(()=>{const i=document.querySelector('input[name=answer]');"
-                   "if(i){i.focus();i.value='99';"
-                   "i.dispatchEvent(new Event('input',{bubbles:true}));}"
-                   "const b=[...document.querySelectorAll('button')]"
-                   ".find(x=>/send/i.test(x.textContent));if(b)b.click();})()")
+        # Two widgets to handle: a text box (maths) and radio buttons (choice
+        # questions, which every science node uses). Setting .value on a radio
+        # selects nothing, so the science demo submitted an empty answer and
+        # never reached the teaching beat.
+        browser.js("""(()=>{
+          const radios=[...document.querySelectorAll('input[type=radio][name=answer]')];
+          if(radios.length){ radios[radios.length-1].click(); }
+          else { const i=document.querySelector('input[name=answer]');
+                 if(i){i.focus();i.value='99';
+                       i.dispatchEvent(new Event('input',{bubbles:true}));} }
+          const b=[...document.querySelectorAll('button')]
+            .find(x=>/send/i.test(x.textContent)); if(b) b.click();
+        })()""")
         _settle(browser)
         _shot(browser, frames, hold=4)                      # gentle retry
 
         # The payoff: "Show me the working" reveals the COMPUTED worked example
         # — engine output, correct by construction, and the thing that makes the
         # never-grades architecture visible in one screen.
-        browser.js("(()=>{const b=[...document.querySelectorAll('button,a')]"
-                   ".find(x=>/show me the working/i.test(x.textContent));"
-                   "if(b)b.click();})()")
+        browser.js("""(()=>{
+          const btns=[...document.querySelectorAll('button,a')];
+          // "Show me the working" appears after a wrong answer; choice questions
+          // reach the same teaching through "Show me how".
+          const b = btns.find(x=>/show me the working/i.test(x.textContent))
+                 || btns.find(x=>/show me how/i.test(x.textContent));
+          if(b) b.click();
+        })()""")
         _settle(browser)
         _shot(browser, frames, hold=4)
         # Only worth a second beat if the page ACTUALLY scrolls. When the whole

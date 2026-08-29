@@ -83,6 +83,15 @@ given a binary, you are entitled to the source it was built from.
 
 ---
 
+## What a session looks like
+
+| Year 5 Science | Year 12 Maths Methods |
+|---|---|
+| ![Year 5 science session](https://github.com/avps82/mentar/releases/download/v0.1.0-preview/demo_year5_science.gif) | ![Year 12 maths session](https://github.com/avps82/mentar/releases/download/v0.1.0-preview/demo_year12_quadratics.gif) |
+
+Both recorded end-to-end against a locally-run model. Regenerate either with
+`python3 scripts/record_demo.py --pack <pack> --topic <node>`.
+
 ## Fastest path: `./mentar setup`
 
 After installing the package (steps 1–3 below), one command detects your hardware, picks the
