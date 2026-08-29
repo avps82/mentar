@@ -195,3 +195,33 @@ def test_every_roster_entry_declares_its_eval_status():
     missing = [m["id"] for m in load_roster()
                if m.get("eval") not in ("full", "maths", "ungraded")]
     assert not missing, f"roster entries with no honest eval status: {missing}"
+
+
+def test_the_roster_is_internally_consistent():
+    """Cheap structural guard on a file that is edited by hand whenever a model
+    is added or re-ranked (twice on 2026-08-29 alone): unique ranks, sorted,
+    every entry installable, every eval status a known value."""
+    ms = A.load_roster()
+    ranks = [m["rank"] for m in ms]
+    assert len(ranks) == len(set(ranks)), f"duplicate ranks: {ranks}"
+    assert ranks == sorted(ranks), "roster must stay rank-sorted"
+    for m in ms:
+        assert m.get("ollama_tag") or (m.get("hf_repo") and m.get("hf_file")), \
+            f"{m['id']} has no way to be installed"
+        assert m.get("eval") in ("full", "maths", "ungraded"), \
+            f"{m['id']} has an unknown eval status {m.get('eval')!r}"
+        assert isinstance(m.get("min_ram_gb"), (int, float)), \
+            f"{m['id']} has no usable min_ram_gb"
+
+
+def test_an_ungraded_model_can_never_outrank_a_fully_graded_one():
+    """The 2026-08-29 rule, made structural: a default is promoted on evidence,
+    never on speed or size. qwen3.8-27b (MTP, bigger) sits at rank 10 behind
+    graded models for exactly this reason, and qwen3.5-9b only moves up if its
+    queued eval beats gemma2-9b."""
+    ms = A.load_roster()
+    best_graded = min(m["rank"] for m in ms if m.get("eval") == "full")
+    for m in ms:
+        if m.get("eval") == "ungraded":
+            assert m["rank"] > best_graded, (
+                f"{m['id']} is ungraded but outranks the best fully-graded model")
