@@ -91,7 +91,17 @@ def _start_server(stub: bool, pack: str) -> subprocess.Popen:
 
 
 def _shot(browser, frames: list, hold: int = 1) -> None:
-    """Capture the viewport; `hold` repeats it to slow that beat down."""
+    """Capture the viewport. `hold` is how long this beat stays on screen, in
+    ~0.7s units, recorded as an explicit per-frame DURATION.
+
+Capped at 2.5s: a launch GIF is glanced at, not watched.
+
+    It used to append `hold` duplicate copies instead. PIL's optimize pass
+    merges identical consecutive frames by SUMMING their durations, so the two
+    held end beats collapsed into a single 11.2-second frame -- out of a 21
+    second loop. On a phone you land on that still and the GIF looks like a
+    JPEG (maintainer, 2026-08-29: "nothing is moving on my end").
+    """
     import base64
     import io
 
@@ -99,7 +109,7 @@ def _shot(browser, frames: list, hold: int = 1) -> None:
 
     data = browser.send("Page.captureScreenshot", format="png")["data"]
     img = Image.open(io.BytesIO(base64.b64decode(data))).convert("P", palette=1)
-    frames.extend([img] * max(1, hold))
+    frames.append((img, min(2500, 600 * max(1, hold))))
 
 
 def main() -> int:
@@ -166,10 +176,15 @@ def main() -> int:
                    ".find(x=>/show me the working/i.test(x.textContent));"
                    "if(b)b.click();})()")
         time.sleep(3.0)
-        _shot(browser, frames, hold=8)
-        browser.js("window.scrollTo(0, document.body.scrollHeight)")
-        time.sleep(0.8)
-        _shot(browser, frames, hold=8)                      # the working itself
+        _shot(browser, frames, hold=4)
+        # Only worth a second beat if the page ACTUALLY scrolls. When the whole
+        # turn fits the viewport this shot is byte-identical to the one above,
+        # and PIL merges identical neighbours by SUMMING their durations -- that
+        # is how one frame ended up holding 6.4s of a 16s loop.
+        if browser.js("document.body.scrollHeight > window.innerHeight + 20"):
+            browser.js("window.scrollTo(0, document.body.scrollHeight)")
+            time.sleep(0.8)
+            _shot(browser, frames, hold=4)
 
         if not browser.js("/\\d/.test(document.body.innerText) && "
                           "document.querySelectorAll('pre, .steps-pre').length > 0"):
@@ -179,15 +194,22 @@ def main() -> int:
         if len(frames) < 4:
             raise RuntimeError("captured too few frames — the flow did not advance")
 
-        for i, f in enumerate(frames[:: max(1, len(frames) // 6)]):
+        images = [f for f, _ in frames]
+        durations = [d for _, d in frames]
+        for i, f in enumerate(images):
             f.save(OUT_DIR / f"demo_frame_{i}.png")
         gif = OUT_DIR / "demo.gif"
-        frames[0].save(gif, save_all=True, append_images=frames[1:],
-                       duration=700, loop=0, optimize=True,
+        # No frame may dominate the loop: a long tail reads as a static image
+        # on a phone. Cap any single beat and keep the whole loop short enough
+        # that a glance catches movement.
+        images[0].save(gif, save_all=True, append_images=images[1:],
+                       duration=durations, loop=0, optimize=True,
                        comment=b"mentar demo (STUBBED PROSE)" if args.stub
                        else b"mentar demo (live model)")
+        total = sum(durations) / 1000
         size = gif.stat().st_size / 1024
-        print(f"\n✓ {gif}  ({size:.0f} KB, {len(frames)} frames)")
+        print(f"\n✓ {gif}  ({size:.0f} KB, {len(images)} frames, {total:.1f}s loop)")
+        print(f"  beat durations (ms): {durations}")
         print(f"  frames: {OUT_DIR}/demo_frame_*.png")
         if args.stub:
             print("\n⚠ --stub: the tutor's PROSE in this recording is a hard-coded")
