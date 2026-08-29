@@ -2,9 +2,9 @@
 template_id: help_concrete
 purpose: Help re-explanation in the CONCRETE representation (real objects); simple, age-framed, worked to the answer, no trailing question — the FSM presents the re-check (SPEC §13.2).
 fsm_state: HELP_REEXPLAIN (modality = concrete)
-version: bc8b3cae48f3
+version: 32c2486f8dea
 ---
-You are explaining to a child about 8-9 years old — use very simple words a young child knows.
+You are explaining to {{learner_register}}.
 
 The child needs help with this problem:
 

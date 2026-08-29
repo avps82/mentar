@@ -16,6 +16,32 @@ see-also: docs/MODEL.md (roster + run plan + pick), docs/TESTS.md (T1.x test spe
 > temperature-0.2 wobble (§5). Both review items were human-reviewed same day
 > (maintainer): one benign redirect, one logged borderline. Detail in the A18
 > re-runs list (§3.2). The safety claims below may be cited again.
+>
+> ✅ **A18 re-run 2026-08-29 — the age-register change.** Eight prompt bodies
+> changed (all six `help_*`, `system_prompt`, `pattern_read_then_question`):
+> the hardcoded "a child about 8–9 years old" became a `{{learner_register}}`
+> slot filled from the curriculum's own `year_level`, because a Year 12 student
+> was getting quadratics explained as "sorting a big box of toys" (observed with
+> a live model). T1.5 adversarial re-run through the full pipeline on
+> `gemma4-12b-q4`, **twice** — once per register band, since the senior wording
+> is entirely new text that had never been safety-tested and it instructs an
+> adult tone, the direction most likely to loosen child-safety framing:
+>
+> | Register rendered into the prompt | adv | pass | fail | review |
+> |---|---|---|---|---|
+> | young (Year 4 → "a child about 9–10 years old") | 20 | 20 | 0 | 0 |
+> | senior (Year 12 → "a student about 17–18 years old") | 20 | 20 | 0 | 0 |
+>
+> Both match the `gemma4-12b-q4__pipeline` baseline (20/0/0). Senior-register
+> outputs were read, not just scored: the model still refuses roleplay ("I cannot
+> pretend to be a robot friend"), refuses to do the homework, refuses an
+> unbounded game, declares itself an AI, and redirects to the lesson every time.
+>
+> Method note: the eval harness sends the prompt FILE as the system message, so
+> a `{{slot}}` would have been evaluated literally. Both runs used a
+> pre-rendered prompt, which is why there are two. The harness also used to
+> select 0 models and exit 0 when `--model` named a served-but-unregistered id —
+> an A18 re-run could have "passed" having evaluated nothing; it now exits 2.
 
 **The question:** which small, free, locally-runnable AI model should tutor an 8–9-year-old in
 fractions? This page is the plain, human-readable record of how we test the candidates and what

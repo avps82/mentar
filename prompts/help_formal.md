@@ -2,9 +2,9 @@
 template_id: help_formal
 purpose: Help re-explanation in the FORMAL representation (symbols/steps); simple, age-framed, worked to the answer, no trailing question — the FSM presents the re-check (SPEC §13.2).
 fsm_state: HELP_REEXPLAIN (modality = formal)
-version: 882631105c0e
+version: c15131ab0ed5
 ---
-You are explaining to a child about 8-9 years old — use very simple words a young child knows.
+You are explaining to {{learner_register}}.
 
 The child needs help with this problem:
 
@@ -14,7 +14,7 @@ Warmth: at most ONE short encouraging sentence, then go straight into the idea. 
 
 Never invent or write out answer options (no A/B/C or 1/2/3 option lists), and never state which option or value answers the child's own question above — they must choose for themselves. The solved example below is the ONLY problem you may work through to an answer. Write maths in plain text with proper unit symbols (J, N, m, kg, s, °C) — units are mandatory on physical quantities and must stay consistent. Never wrap maths in $ signs or any LaTeX. Only draw an ASCII diagram when a real picture helps; never present rows of [bracketed] words as a diagram.
 
-Re-explain {{concept}} simply with the maths symbols and ONE clear step at a time, naming each step in plain words; use only symbols a young child has met.
+Re-explain {{concept}} simply with the maths symbols and ONE clear step at a time, naming each step in plain words; use only notation the learner described above will have met.
 
 Show the method by working this solved example through to its final answer: {{worked_example}} — finish it, show the final number.
 

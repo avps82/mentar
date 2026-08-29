@@ -76,6 +76,53 @@ _DIAGRAM_HAS_NUMBER_RE = re.compile(r"[0-9]")
 # "Let's see how it's solved!" and this line rather than after both (maintainer,
 # 2026-08-16). Anchoring on a shared constant, not on the last "\n\n", so the
 # layout cannot silently drift if either line is reworded.
+# ── Who am I talking to? ───────────────────────────────────────────────────────
+# Every prompt template used to hardcode "a child about 8-9 years old", which was
+# correct for the Phase-0 Year 4 fractions pilot and became wrong the moment the
+# curriculum grew to Y1-Y12: a Year 12 student asking about the chain rule was
+# getting it explained "with very simple words a young child knows" (measured
+# with a live model 2026-08-29 -- it produced a toy-sorting analogy for
+# quadratics). The register now follows the curriculum's own year_level.
+_REGISTER_FALLBACK = ("a child about 8–9 years old — use very simple words a "
+                      "young child knows")
+
+# First year of each system maps to this age; every later year adds one.
+# AU "Year 1" ~ 6, IN "Class 1" ~ 6, US "Grade 1" ~ 6, SG "Primary 1" ~ 7,
+# SG "Secondary 1" ~ 13.
+_YEAR_SYSTEM_BASE = {"year": 6, "class": 6, "grade": 6, "primary": 7, "secondary": 13}
+_YEAR_RE = re.compile(r"(year|class|grade|primary|secondary)\s*(\d{1,2})", re.I)
+
+
+def learner_register(year_level: str | None) -> str:
+    """The phrase describing WHO the explanation is for, from a year level.
+
+    Returns the pilot's original wording for anything unrecognised ("pilot",
+    None, a format we have not seen): an unknown learner is treated as the
+    youngest, because over-simplifying is a wasted explanation while
+    under-simplifying can lose a child completely.
+    """
+    m = _YEAR_RE.search(str(year_level or ""))
+    if not m:
+        return _REGISTER_FALLBACK
+    system, n = m.group(1).lower(), int(m.group(2))
+    age = _YEAR_SYSTEM_BASE.get(system, 6) + (n - 1)
+    lo, hi = age, age + 1
+    if age <= 11:
+        return (f"a child about {lo}–{hi} years old — use very simple words a "
+                "young child knows")
+    if age <= 15:
+        return (f"a student about {lo}–{hi} years old — use clear, plain language "
+                "and the proper mathematical or scientific terms for the topic; "
+                "never talk down to them")
+    # Stated positively. The first draft said "do NOT simplify to a young
+    # child's vocabulary or use toy analogies" -- naming the thing you don't
+    # want is weak prompting (it plants the very idea), and it also put the
+    # words "young child" into a senior student's prompt.
+    return (f"a student about {lo}–{hi} years old — write as a senior-secondary "
+            "teacher would: precise, subject-appropriate language, correct "
+            "notation, and analogies drawn from adult or academic contexts")
+
+
 RECHECK_PROMPT = "Now you try it! ✏️"
 
 STALE_MASTERY_DAYS = 14  # mastery older than this counts as "stale" for forgetting detection
@@ -509,6 +556,7 @@ class SessionController:
         item_bank=None,
         session_id: str | None = None,
         subject: str = "maths",
+        year_level: str | None = None,
         scope_line: str | None = None,
         rng_seed: int | None = None,
         max_items: int | None = None,
@@ -532,6 +580,11 @@ class SessionController:
         # prompt hardcoded "fractions" regardless of the active subject (REVIEW §2.1).
         self._subject = subject
         self._scope_line = scope_line or subject
+        # A7 sibling: the curriculum template's `year_level:` ("Year 12",
+        # "Class 11", "Secondary 4", "pilot"). Fills {{learner_register}} so the
+        # explanation is pitched at the year being taught -- see
+        # learner_register(). None/unknown keeps the pilot's 8-9 wording.
+        self._year_level = year_level
         # R11 micro-session cap: end warmly after this many completed items (None = uncapped).
         self._max_items = max_items
         # R-RES: a checkpoint from a session a server-process restart interrupted --
@@ -2018,6 +2071,7 @@ class SessionController:
             .replace("{{question}}", question or "the question they're working on")
             .replace("{{previous_explanation}}", previous_explanation or "(none yet — this is the first explanation)")
             .replace("{{visual_scaffold}}", scaffold)
+            .replace("{{learner_register}}", learner_register(self._year_level))
         )
 
     def _build_steps_grid_if_eligible(self) -> StepGrid | None:
@@ -2149,4 +2203,8 @@ class SessionController:
             .replace("{{grounding_passage}}", passage)
             .replace("{{subject}}", self._subject)
             .replace("{{scope_line}}", self._scope_line)
+            # The system prompt renders through its OWN path, not
+            # _render_template -- adding a slot to one and not the other would
+            # send the model a literal "{{learner_register}}".
+            .replace("{{learner_register}}", learner_register(self._year_level))
         )

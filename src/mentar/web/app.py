@@ -748,6 +748,10 @@ def _get_or_create_controller(learner_uuid: str, subject: str) -> SessionControl
             learner_id=learner_uuid,
             item_bank=item_source,
             subject=_SUBJECT_NAMES[subject],
+            # The pack's own year_level ("Year 12", "Class 11", "pilot") picks
+            # the explanation register -- without it every year got the Phase-0
+            # pilot's 8-9-year-old wording.
+            year_level=(SUBJECTS.get(subject) or {}).get("year_level"),
             max_items=SESSION_ITEMS or None,
             session_id=resume_session_id,
             resume_checkpoint=resume_checkpoint,

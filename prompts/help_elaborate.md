@@ -2,9 +2,9 @@
 template_id: help_elaborate
 purpose: R12.5 "Explain more" — unpack the SAME explanation one level deeper at the child's request; same safety guards as the modality explanations; no trailing question (the FSM presents the re-check).
 fsm_state: HELP_ELABORATE
-version: fdaa51da9893
+version: a1dd65693507
 ---
-You are explaining to a child about 8-9 years old — use very simple words a young child knows.
+You are explaining to {{learner_register}}.
 
 The child heard this explanation of {{concept}} and asked to hear MORE about it:
 

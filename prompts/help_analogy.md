@@ -2,9 +2,9 @@
 template_id: help_analogy
 purpose: Help re-explanation by ANALOGY; simple, age-framed, worked to the answer, no trailing question — the FSM presents the re-check (SPEC §13.2).
 fsm_state: HELP_REEXPLAIN (modality = analogy)
-version: aeac80f6ebef
+version: f7b8fea8e6f3
 ---
-You are explaining to a child about 8-9 years old — use very simple words a young child knows.
+You are explaining to {{learner_register}}.
 
 The child needs help with this problem:
 

@@ -2,9 +2,9 @@
 template_id: help_story
 purpose: Help re-explanation as a short STORY; simple, age-framed, worked to the answer, no trailing question — the FSM presents the re-check (SPEC §13.2).
 fsm_state: HELP_REEXPLAIN (modality = story)
-version: 02f8eead8a59
+version: a0b89025d823
 ---
-You are explaining to a child about 8-9 years old — use very simple words a young child knows.
+You are explaining to {{learner_register}}.
 
 The child needs help with this problem:
 

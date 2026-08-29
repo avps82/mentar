@@ -2,9 +2,9 @@
 template_id: help_visual
 purpose: Help re-explanation in the VISUAL representation (shapes/pictures); simple, age-framed, worked to the answer, no trailing question — the FSM presents the re-check (SPEC §13.2).
 fsm_state: HELP_REEXPLAIN (modality = visual)
-version: 2fd568ece4ab
+version: 57afdc704388
 ---
-You are explaining to a child about 8-9 years old — use very simple words a young child knows.
+You are explaining to {{learner_register}}.
 
 The child needs help with this problem:
 

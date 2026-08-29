@@ -19,6 +19,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import sys
 import time
 import urllib.request
 from collections.abc import Callable
@@ -265,6 +266,17 @@ def main(argv: list[str] | None = None) -> int:
         targets = [m["name"] for m in models if m["name"] in set(args.model)]
     else:
         targets = [m["name"] for m in models if m.get("role") == args.role]
+
+    if not targets:
+        # Ran 0 models and exited 0 (found 2026-08-29): --model only accepts
+        # names present in models.yaml, so a gateway id that is served but
+        # unregistered silently produced NOTHING -- and an A18 prompt re-run
+        # would have "passed" having evaluated nothing at all.
+        known = sorted(m["name"] for m in models)
+        print(f"ERROR: no models selected. --model must name an entry in "
+              f"eval/models.yaml.\n  asked for: {args.model or '(role=' + args.role + ')'}"
+              f"\n  known: {known}", file=sys.stderr)
+        return 2
 
     sys_text = Path(args.system_prompt).read_text(encoding="utf-8") if args.system_prompt else None
 

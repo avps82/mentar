@@ -40,7 +40,11 @@ def _build_controller(args):
     from mentar.db.adapter import _DbStoreAdapter
     from mentar.db.store import LearnerStore
     from mentar.dialogue.controller import SessionController
-    from mentar.engine.curriculum import load_curriculum, load_template_subject
+    from mentar.engine.curriculum import (
+        load_curriculum,
+        load_template_meta,
+        load_template_subject,
+    )
     from mentar.engine.itembank import load_item_bank
     from mentar.engine.itemgen import build_item_source
     from mentar.inference import load_inference_config, make_llm_call
@@ -101,6 +105,9 @@ def _build_controller(args):
         learner_id=learner_uuid,
         item_bank=item_bank,
         subject=load_template_subject(curriculum_path),
+        # Same register fix as the web path: without the template's year_level
+        # a Year 12 terminal session also got the pilot's 8-9-year-old wording.
+        year_level=load_template_meta(curriculum_path).get("year_level"),
     )
     return ctrl, cfg
 
