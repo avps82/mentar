@@ -119,3 +119,8 @@ eval/redteam/output/
 # release_gate.sh stamp: which commit passed the local gate (machine-local)
 .gate-passed
 config/chatgpt_auth.json
+
+# Launch demo recordings (scripts/record_demo.py) — regenerate, never commit:
+# a --stub run has placeholder PROSE and must not reach a public page.
+docs/img/demo.gif
+docs/img/demo_frame_*.png
