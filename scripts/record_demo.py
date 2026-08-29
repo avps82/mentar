@@ -45,9 +45,18 @@ PORT = int(os.environ.get("MENTAR_DEMO_PORT", "5099"))
 BASE = f"http://127.0.0.1:{PORT}"
 
 
-def _start_server(stub: bool) -> subprocess.Popen:
+def _start_server(stub: bool, pack: str) -> subprocess.Popen:
     env = dict(os.environ)
     env["PYTHONPATH"] = str(REPO / "src")
+    # Only 5 of 157 packs ship enabled (the pilot + practice), so without this
+    # the recording can only ever show "98 + 87" — true, but it undersells the
+    # engine badly on a launch page. Enable the pack we are demoing, in a
+    # THROWAWAY state file so the maintainer's own toggles are untouched.
+    import json as _json
+    state = pathlib.Path(tempfile.mkdtemp()) / "pack_state.json"
+    base = ["practice_english", "arithmetic", "fractions", "practice_maths", "science"]
+    state.write_text(_json.dumps({"enabled": sorted({*base, pack})}))
+    env["MENTAR_PACK_STATE"] = str(state)
     env.setdefault("MENTAR_DB_PATH", str(pathlib.Path(tempfile.mkdtemp()) / "demo.db"))
     code = (
         # _SETUP_GATE_BYPASS is a module attribute (not an env var): without it
@@ -97,6 +106,13 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--stub", action="store_true",
                     help="run without a model; the tutor's PROSE will be fake")
+    ap.add_argument("--pack", default="au_acara_year9_maths",
+                    help="curriculum pack to enable for the recording "
+                         "(default: AU Year 9 maths — algebra, so the working "
+                         "on screen is worth looking at)")
+    ap.add_argument("--topic", default="au9_combine_expressions",
+                    help="node id to pin, so the demo is not a coin flip "
+                         "(default: combining like terms)")
     ap.add_argument("--width", type=int, default=900)
     ap.add_argument("--height", type=int, default=1000)
     args = ap.parse_args()
@@ -104,7 +120,7 @@ def main() -> int:
     from test_browser_ui import _Browser  # the tests' own CDP client
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    server = _start_server(args.stub)
+    server = _start_server(args.stub, args.pack)
     browser = None
     frames: list = []
     try:
@@ -116,11 +132,21 @@ def main() -> int:
         browser.wait_for("document.querySelectorAll('a,button').length > 0")
         _shot(browser, frames, hold=3)                      # the picker
 
-        # The picker is a set of FORMS posting to /choose (not links) — submit
-        # the first one, exactly as tapping a subject card does.
-        browser.js("(()=>{const f=document.querySelector('form[action=\"/choose\"]');"
-                   "if(f) f.submit();})()")
-        time.sleep(2.0)
+        # Pin the exact topic. Left to chance the picker gives whatever pack
+        # sorts first, and a launch demo should not be a coin flip — nor should
+        # it show single-digit addition when the engine does algebra.
+        browser.goto(f"{BASE}/topics?subject={args.pack}")
+        browser.wait_for("document.querySelectorAll('form,button,a').length > 0")
+        _shot(browser, frames, hold=3)                      # the topic list
+        pinned = browser.js(
+            "(()=>{const f=[...document.querySelectorAll('form')]"
+            f".find(x=>x.innerHTML.includes({args.topic!r}));"
+            "if(f){f.submit();return true;} return false;})()")
+        if not pinned:
+            raise RuntimeError(
+                f"topic {args.topic!r} not on /topics?subject={args.pack} — "
+                "check --pack/--topic")
+        time.sleep(2.5)
         browser.wait_for("document.querySelector('.question-text, .question') !== null", timeout=30)
         _shot(browser, frames, hold=4)                      # the question
 
