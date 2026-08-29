@@ -17,6 +17,25 @@ refs: "SPEC §20 (local LLM), §20.3 (eval host), §15 (RAG/quality), docs/desig
 > deliberately: rewriting them would misstate which build produced these measurements. Read
 > them as records, and take the current name from the roster.
 
+> **Roster re-rank (2026-08-29).** `gemma2:9b` is now **rank 1** — the automatic
+> pick — and `gemma4:12b` dropped to rank 3. Not a quality judgement: gemma4's
+> scores below are excellent, but they were measured through the eval host's
+> **LiteLLM** path, where `think:false` is honoured. On **Ollama's `/v1`** — the
+> runtime `docs/RUNNING.md` tells families to install first — that flag is
+> ignored and `content` comes back **empty every time** (measured on the
+> maintainer's M1, 2026-08-25: `think=false` and `think=true` were
+> byte-identical, both empty). So its eval conditions do not reproduce where
+> most families actually run it, and a default that cannot answer is worse than
+> a smaller default that can. It remains selectable explicitly, and is fine
+> behind a LiteLLM/vLLM path.
+>
+> **Queued:** a five-suite eval of `qwen3.5:9b`. Qwen3.5 has multi-token
+> prediction, so it is faster per parameter than the rest of the 9B field
+> (maintainer, 2026-08-29) — but it is currently **maths 19/31 with safety NOT
+> graded**, versus gemma2:9b's 31/31 and safety 1.00. It takes rank 1 **if the
+> eval grades it above gemma2:9b, and not before**: a children's tutor does not
+> get a new default on a speed argument alone.
+
 ## W1.3 — Decision (2026-06-27): pilot model = `gemma2:9b`
 
 Clean full-suite run (all 5 suites, Sonnet-judged) of the two front-runners:

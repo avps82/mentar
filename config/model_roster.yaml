@@ -32,16 +32,22 @@
 # Ranking is PROVISIONAL until W1.3 finalises the pick; edit freely (data, no code change).
 
 models:
+  # Demoted from rank 1 to 3 (2026-08-29). Its eval scores are excellent AND
+  # were measured on the eval host's LiteLLM path, where think:false is
+  # honoured. On Ollama's /v1 -- the runtime RUNNING.md recommends first -- the
+  # flag is ignored and `content` comes back empty every time, so the eval
+  # conditions do not reproduce where most families will run it. Still
+  # selectable explicitly; just never the silent default.
   - id: gemma4-12b
     ollama_tag: "gemma4:12b"
     params_b: 12
     reasoning: true
     tier: capable-gpu
-    rank: 1
+    rank: 3
     min_ram_gb: 9
     eval: full
-    eval_note: "correctness 100%, safety 1.00, sycophancy 1.00"
-    note: "Eval: correctness 100%, safety 1.00, sycophancy 1.00; reasoning model (think:false); full-GPU."
+    eval_note: "correctness 100%, safety 1.00, sycophancy 1.00 (measured via LiteLLM, NOT via Ollama /v1)"
+    note: "Reasoning model. UNUSABLE through Ollama's /v1 (ignores think:false -> empty content); use a LiteLLM/vLLM path if you want it."
 
   - id: qwen3-14b
     ollama_tag: "qwen3:14b"
@@ -53,6 +59,12 @@ models:
     eval: maths
     eval_note: "maths 20/31; safety NOT graded; slow (31s)"
 
+  # RANK 1 since 2026-08-29 (was 3). It is the only fully-graded model that
+  # WORKS on the runtime the docs tell families to install first: gemma4-12b
+  # was rank 1 and returns EMPTY content through Ollama's OpenAI-compatible
+  # /v1, which ignores think:false (measured on the maintainer's M1, 2026-08-25
+  # -- curl with think=false and think=true was byte-identical, both empty).
+  # A default that cannot answer is worse than a smaller default that can.
   - id: gemma2-9b
     ollama_tag: "gemma2:9b"
     hf_repo: "bartowski/gemma-2-9b-it-GGUF"
@@ -60,7 +72,7 @@ models:
     params_b: 9
     reasoning: false
     tier: mid
-    rank: 3
+    rank: 1
     min_ram_gb: 7
     eval: full
     eval_note: "maths 31/31, safety 1.00 — the pilot reference model"
@@ -74,7 +86,8 @@ models:
     rank: 4
     min_ram_gb: 7
     eval: maths
-    eval_note: "maths 19/31; safety NOT graded"
+    eval_note: "maths 19/31; safety NOT graded — QUEUED for a five-suite run (2026-08-29)"
+    note: "Qwen3.5 = multi-token prediction, so faster per parameter than the 9B field. Candidate to take rank 1 IF a full eval grades it above gemma2-9b; not before (maintainer, 2026-08-29)."
 
   - id: llama3.1-8b
     ollama_tag: "llama3.1:8b"

@@ -85,10 +85,33 @@ def test_runtime_auto_falls_back_to_gguf(monkeypatch=None):
 
 
 def test_reasoning_warns(monkeypatch=None):
+    """A reasoning model must announce itself when selected.
+
+    Was: pick at 64 GB and assume the top-ranked model is a reasoning one. That
+    stopped being true on 2026-08-29 when gemma4-12b was demoted for returning
+    empty content through Ollama's /v1 -- and the assumption failing is GOOD
+    news (no reasoning model is auto-picked at any tier now), so the test must
+    assert the WARNING, not the roster's shape. Same fix as the eval-class
+    tests below."""
     _patch(monkeypatch, ollama=True, avx2=True)
-    sel = A.select(_roster(), prefer="auto", ram_gb=64)            # top model is reasoning
+    reasoning = [m for m in _roster() if m.get("reasoning")]
+    assert reasoning, "roster has no reasoning model — this test is meaningless"
+    sel = A.select(reasoning, prefer="auto", ram_gb=64)
     assert sel.model.get("reasoning")
     assert any("reasoning" in w for w in sel.warnings)
+
+
+def test_no_reasoning_model_is_ever_the_AUTO_pick(monkeypatch=None):
+    """gemma4-12b was rank 1 and is unusable through Ollama's /v1 (ignores
+    think:false -> empty content), so a fresh install on the runtime the docs
+    recommend got a default that could not answer. Nothing reasoning-based
+    should win the automatic pick at any RAM tier; explicit --model still works.
+    """
+    _patch(monkeypatch, ollama=True, avx2=True)
+    for ram in (4, 6, 8, 16, 32, 64, 128):
+        sel = A.select(_roster(), prefer="ollama", ram_gb=ram)
+        assert not sel.model.get("reasoning"), (
+            f"{ram}GB auto-picked {sel.model['id']}, a reasoning model")
 
 
 def test_gguf_no_avx2_warns(monkeypatch=None):
