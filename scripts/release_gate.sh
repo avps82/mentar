@@ -46,14 +46,14 @@ RUFF=".venv/bin/ruff";  [ -x "$RUFF" ] || RUFF="ruff"
 # gate failed for real).
 fail() { rm -f .gate-passed; echo ""; echo "GATE FAILED: $1" >&2; exit 1; }
 
-echo "== 1/5 ruff"
+echo "== 1/6 ruff"
 command -v "$RUFF" >/dev/null 2>&1 || [ -x "$RUFF" ] || fail "ruff not installed"
 "$RUFF" check . || fail "ruff is not clean"
 
-echo "== 2/5 doc paths"
+echo "== 2/6 doc paths"
 "$PY" src/mentar/tools/check_doc_paths.py || fail "a doc references a path not in the repo"
 
-echo "== 3/5 test suite (~22 min)"
+echo "== 3/6 test suite (~22 min)"
 set +e
 # --durations: the suite takes ~22 min on this 2-core box and recorded no
 # per-test timings, so "why so long" could only be guessed at. Costs nothing.
@@ -64,14 +64,25 @@ set -e
 printf '%s\n' "$out" | tail -45
 [ "$rc" -eq 0 ] || fail "tests are failing"
 
-echo "== 4/5 browser checks actually ran"
+echo "== 4/6 browser checks actually ran"
 # CI installs chromium and runs these; _skip_unless_browser() skips the whole
 # file without it, so a green suite can mean "verified nothing about rendering".
 if printf '%s' "$out" | grep -qE 'SKIPPED.*test_browser_ui|test_browser_ui.*[Ss]kipped'; then
   fail "the browser checks SKIPPED (chromium missing) -- CI runs them, so this would go red"
 fi
 
-echo "== 5/5 gitleaks (full history)"
+echo "== 5/6 packaging imports (frozen-binary safety)"
+# The single-file builds failed on all three platforms for days behind a green
+# gate and green CI: nothing here touched the packaging path, so a module-level
+# `import inflect` (it reads Python source while importing, which a PyInstaller
+# bundle has none of) went unnoticed. These tests import the app under that
+# exact condition. They do NOT build a binary -- only scripts/build_binary.py
+# proves a bundle runs -- but they are the part that costs seconds, so the
+# cheap half of the check can never rot again.
+"$PY" -m pytest tests/test_frozen_imports.py -q >/dev/null \
+  || fail "the app cannot be imported in a frozen binary (see tests/test_frozen_imports.py)"
+
+echo "== 6/6 gitleaks (full history)"
 if command -v gitleaks >/dev/null 2>&1 && gitleaks --help 2>&1 | grep -qE '^[[:space:]]+git[[:space:]]'; then
   gitleaks git . --no-banner --redact -v || fail "gitleaks found something"
 else

@@ -18,11 +18,24 @@ library covers, and the naive version is wrong on box/boxes, sheep and half.
 
 from __future__ import annotations
 
-import inflect
+import functools
 
-# One engine for the process: inflect.engine() is not free to construct, and
-# item generation calls this on every draw.
-_ENGINE = inflect.engine()
+
+# `import inflect` is LAZY, not module-level. inflect calls inspect.getsource()
+# while importing, and a PyInstaller binary ships no .py source -- so a
+# module-level import made every frozen build fail at startup with
+# "could not get source code", taking the web app and the whole item registry
+# with it (all three platforms, 2026-08-30). itemgen imports this module and
+# everything imports itemgen, so one module-level import broke the entire
+# binary while pytest and ruff stayed green: neither runs the frozen path.
+#
+# Deferring it to first CALL keeps the import graph clean for the packaged
+# build. lru_cache keeps the "one engine per process" property that mattered
+# here originally -- inflect.engine() is not free, and this runs on every draw.
+@functools.lru_cache(maxsize=1)
+def _engine():
+    import inflect
+    return inflect.engine()
 
 
 def count_noun(count: int | float, noun: str) -> str:
@@ -31,13 +44,13 @@ def count_noun(count: int | float, noun: str) -> str:
     `noun` is given in the SINGULAR; inflect decides the rest, so irregulars
     (box, sheep, half) come out right without a table here.
     """
-    return f"{count} {_ENGINE.plural(noun, count)}"
+    return f"{count} {_engine().plural(noun, count)}"
 
 
 def plural(noun: str, count: int | float) -> str:
     """Just the noun, agreeing with `count` -- for when the number is already
     written elsewhere in the sentence."""
-    return _ENGINE.plural(noun, count)
+    return _engine().plural(noun, count)
 
 
 def article(noun: str) -> str:
@@ -47,4 +60,4 @@ def article(noun: str) -> str:
     "a use", "a one-way street" are all correct and all counter-examples to the
     first-letter-is-a-vowel test anyone reaches for first.
     """
-    return _ENGINE.a(noun)
+    return _engine().a(noun)

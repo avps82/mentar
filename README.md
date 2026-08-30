@@ -9,7 +9,7 @@
 
 Local LLM hosting. Curriculum-templated by country and year level. Built-in kid safety from day one.
 
-▶️ **Want to run it?** See **[docs/RUNNING.md](docs/RUNNING.md)** — a 6-step quick start for Windows, macOS (incl. MacBook Pro M1 16 GB) and Linux — plus, at the end, the advanced path for using it from a tablet. There are also **experimental single-file builds** (download one file, no Python install) — they are unsigned, so your OS will warn you, and the language model is still downloaded on first run; RUNNING.md explains the trade-off before you pick.
+▶️ **Want to run it?** See **[docs/RUNNING.md](docs/RUNNING.md)** — a 6-step quick start for Windows, macOS (incl. MacBook Pro M1 16 GB) and Linux — plus, at the end, the advanced path for using it from a tablet. There are also **experimental single-file builds** on the [latest release](https://github.com/avps82/mentar/releases/latest) — Windows x64, macOS Apple Silicon and Linux x64 (no Intel Mac build). Download one file, no Python install; they are unsigned, so your OS will warn you, and the language model is still downloaded on first run. RUNNING.md explains the trade-off before you pick.
 
 > ⚠️ **Research preview — supervised pilot only.** Mentar is pre-1.0 and **not** ready for
 > unsupervised use with real children (known safety gaps: no emergency-services signposting,

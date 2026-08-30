@@ -23,8 +23,12 @@ local LLM (no cloud, no API key needed) and talk to the tutor in the terminal or
 
 ## Download and run — no install (EXPERIMENTAL)
 
-There is a single-file build for Windows, macOS and Linux. Download one file, run it,
-and Mentar opens in your browser. No Python, no `git clone`, no virtual environment.
+There is a single-file build for **Windows (x64)**, **macOS (Apple Silicon)** and
+**Linux (x64)**, attached to the latest release. Download one file, run it, and Mentar
+opens in your browser. No Python, no `git clone`, no virtual environment.
+
+> **Intel Macs are not covered.** The macOS build is Apple Silicon only (the runner
+> that produces it is arm64), so on an Intel Mac use the `./mentar setup` path below.
 
 > **Read this before you rely on it.** These builds are experimental and they are
 > **unsigned**, because code-signing certificates cost money Mentar does not have.
