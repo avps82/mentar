@@ -135,7 +135,7 @@ def test_logging_is_best_effort_without_store_methods(tmp_path):
         def get_skill_state(self, learner_id, node_id):
             return None
 
-        def update_skill_state(self, learner_id, node_id, p):
+        def update_skill_state(self, learner_id, node_id, p, **kw):
             self._m[node_id] = p
 
     ctrl = SessionController(

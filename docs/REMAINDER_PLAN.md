@@ -82,6 +82,7 @@ WebSearch/Context7 at execution time, not from training-data memory (maintainer 
 ## New task specs (A20, A21 — not yet in the A3–A19 table below)
 
 ### A20 — BKT Option B: gate `learns` on non-wrong observations `[O]`
+*(2026-09-02: the adjacent policy — which re-checks on one item count as observations at all — is W3.3 §3.3, shipped; see PHASE0_STATUS changelog.)*
 - **Why:** ratified 2026-07-04 (see above). Current recurrence applies `learns` credit after
   *every* attempt (SPEC §11 / W3.3), so wrong answers from a low prior still raise mastery
   (verified: 10%→21%→22%, plateaus, never false-masters — but counterintuitive for a

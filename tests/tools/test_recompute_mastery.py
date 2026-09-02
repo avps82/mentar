@@ -113,3 +113,29 @@ def test_a_skill_with_no_response_history_is_left_alone():
     con.close()
     assert all(c.skill_id != "ghost_node" for c in recompute_mastery(db))
     assert _stored(db)["ghost_node"] == pytest.approx(0.5)
+
+
+def test_the_store_persists_the_params_the_engine_actually_used():
+    """W3.3 §6 B1 (2026-09-02): until this fix `update_skill_state` never wrote
+    p_guess/p_slip/p_learns/p_forgets, so every row held the schema defaults
+    (0.2/0.1/0.2/0 -- the mc4 class) whatever the node's real class. The pilot
+    fractions nodes are numeric-class (guess 0.05), so a row still carrying the
+    default fails this."""
+    from mentar.tools.recompute_mastery import _params_by_node
+
+    db, _ = _session(["999999"])
+    con = sqlite3.connect(db)
+    try:
+        rows = con.execute(
+            "SELECT skill_id, p_guess, p_slip, p_learns, p_forgets FROM skill_state"
+        ).fetchall()
+    finally:
+        con.close()
+    assert rows, "precondition: the session wrote a skill_state row"
+    by_node = _params_by_node()
+    for skill, g, s, learns, f in rows:
+        p = by_node[skill]
+        assert (g, s, learns, f) == pytest.approx((p.guess, p.slip, p.learns, p.forgets)), skill
+    assert any(g != pytest.approx(0.2) for _, g, *_ in rows), (
+        "every row still holds the schema-default guess -- the params were not written"
+    )

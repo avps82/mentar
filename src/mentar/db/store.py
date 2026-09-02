@@ -24,6 +24,8 @@ import sqlite3
 import threading
 from pathlib import Path
 
+from mentar.engine.bkt import BktParams
+
 # Path to the schema DDL file alongside this module.
 _SCHEMA_PATH = Path(__file__).parent / "schema.sql"
 
@@ -301,27 +303,56 @@ class LearnerStore:
         skill_id: str,
         p_mastery: float,
         priors_used: bool,
+        *,
+        params: BktParams | None = None,
     ) -> None:
         """Upsert the BKT mastery estimate for one skill.
 
-        Only p_mastery and prior_mode are updated here because the BKT
-        parameters (p_guess, p_slip, p_learns, p_forgets) are set once at
-        cold-start from the priors table and not changed until the fitted
-        model supersedes them (W3.3: N >= 100 scored responses per skill).
+        `params` are the BKT parameters the caller actually used for this update
+        (the node's `bkt_priors`, resolved by `engine.bkt.params_for`). Until
+        2026-09-02 this method never wrote p_guess/p_slip/p_learns/p_forgets at
+        all -- its docstring claimed they were "set once at cold-start", but no
+        code did so, and every row carried the schema defaults (the mc4 class)
+        whatever the node's real class. `recompute_mastery` found that by
+        disagreeing with the live engine on its first test. Callers that don't
+        know the params (None) update mastery only and leave the columns alone;
+        rows written before this change keep their defaults until their next
+        update, which is why the replay tool still reads params from the
+        curriculum, not from here.
         """
-        self._conn.execute(
-            """
-            INSERT INTO skill_state (learner_id, skill_id, p_mastery, prior_mode,
-                                     updated_at)
-            VALUES (?, ?, ?, ?,
-                    strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
-            ON CONFLICT (learner_id, skill_id) DO UPDATE
-               SET p_mastery  = excluded.p_mastery,
-                   prior_mode = excluded.prior_mode,
-                   updated_at = excluded.updated_at;
-            """,
-            (learner_id, skill_id, p_mastery, int(priors_used)),
-        )
+        if params is None:
+            self._conn.execute(
+                """
+                INSERT INTO skill_state (learner_id, skill_id, p_mastery, prior_mode,
+                                         updated_at)
+                VALUES (?, ?, ?, ?,
+                        strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
+                ON CONFLICT (learner_id, skill_id) DO UPDATE
+                   SET p_mastery  = excluded.p_mastery,
+                       prior_mode = excluded.prior_mode,
+                       updated_at = excluded.updated_at;
+                """,
+                (learner_id, skill_id, p_mastery, int(priors_used)),
+            )
+        else:
+            self._conn.execute(
+                """
+                INSERT INTO skill_state (learner_id, skill_id, p_mastery, prior_mode,
+                                         p_guess, p_slip, p_learns, p_forgets, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?,
+                        strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
+                ON CONFLICT (learner_id, skill_id) DO UPDATE
+                   SET p_mastery  = excluded.p_mastery,
+                       prior_mode = excluded.prior_mode,
+                       p_guess    = excluded.p_guess,
+                       p_slip     = excluded.p_slip,
+                       p_learns   = excluded.p_learns,
+                       p_forgets  = excluded.p_forgets,
+                       updated_at = excluded.updated_at;
+                """,
+                (learner_id, skill_id, p_mastery, int(priors_used),
+                 params.guess, params.slip, params.learns, params.forgets),
+            )
         self._conn.commit()
 
     def get_skill_state(self, learner_id: int, skill_id: str) -> sqlite3.Row | None:

@@ -97,6 +97,7 @@ def _parse_frontmatter(text: str) -> tuple[dict[str, Any], str]:
 # ---------------------------------------------------------------------------
 
 _RECOMMENDED_FIELDS = ("grounding", "transfer_seeds", "verifier", "bkt_priors")
+_BKT_PRIOR_KEYS = frozenset({"guess", "slip", "learns", "forgets"})
 
 
 def validate(path: str) -> ValidationResult:
@@ -167,6 +168,24 @@ def validate(path: str) -> ValidationResult:
                 warnings.append(
                     f"concept '{cid}': missing recommended field '{field_name}'"
                 )
+
+        # bkt_priors, when present, must be sane: engine.bkt.params_for applies
+        # them unchecked, a value outside [0,1] yields a posterior outside [0,1],
+        # the schema CHECK then rejects the persist and the child carries corrupt
+        # in-memory mastery for the session. Presence stays a warning; a bad
+        # value is an ERROR (2026-09-02, W3.3 §6 B2).
+        priors = entry.get("bkt_priors")
+        if priors is not None:
+            if not isinstance(priors, dict):
+                errors.append(f"concept '{cid}': bkt_priors must be a mapping, got {type(priors).__name__}")
+            else:
+                for key, val in priors.items():
+                    if key not in _BKT_PRIOR_KEYS:
+                        errors.append(f"concept '{cid}': bkt_priors.{key} is not a BKT parameter (expected one of {sorted(_BKT_PRIOR_KEYS)})")
+                    elif isinstance(val, bool) or not isinstance(val, (int, float)):
+                        errors.append(f"concept '{cid}': bkt_priors.{key} must be a number in [0, 1], got {val!r}")
+                    elif not 0.0 <= float(val) <= 1.0:
+                        errors.append(f"concept '{cid}': bkt_priors.{key} = {val} is outside [0, 1]")
 
         parsed_concepts.append({"id": cid, "prereqs": prereqs})
 

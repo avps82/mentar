@@ -45,7 +45,8 @@ stateDiagram-v2
         HELP_RECHECK_AWAIT --> HELP_RECHECK_SCORE: learner_answer
         HELP_RECHECK_AWAIT --> HELP_ELABORATE: elaborate_request (R12.5)
         HELP_ELABORATE --> HELP_RECHECK_PRESENT: rendered
-        HELP_RECHECK_SCORE --> HELP_RECHECK_BKT_UPDATE: scored
+        HELP_RECHECK_SCORE --> HELP_RECHECK_BKT_UPDATE: scored (correct, or first attempt on the item)
+        HELP_RECHECK_SCORE --> HELP_RETRY_DECISION: scored_wrong_after_first_observation
         HELP_RECHECK_BKT_UPDATE --> HELP_RETRY_DECISION: enter
         HELP_RETRY_DECISION --> HELP_MODALITY_SELECT: retry_under_cap
         HELP_RETRY_DECISION --> LINK_BACK: retry_cap_hit
@@ -106,7 +107,7 @@ Both pre-empts are encoded as **transitions on every non-terminal state** in §3
 | H2 | `HELP_RECHECK_PRESENT` | no | Render a transfer-test (new-surface) re-check question. |
 | H3 | `HELP_RECHECK_AWAIT` | **yes** | Block on learner input. **Skip attempts MUST be rejected** (T4.3) — non-scoreable input does not advance. |
 | H4 | `HELP_RECHECK_SCORE` | no | Verifier runs. |
-| H5 | `HELP_RECHECK_BKT_UPDATE` | no | BKT update via `engine/bkt.py` `bkt_update(hinted=1)` — applies the hinted-win discount (elevated-guess class, SPEC §13.2(4); W3.3 mechanism). |
+| H5 | `HELP_RECHECK_BKT_UPDATE` | no | BKT update via `engine/bkt.py` `bkt_update(hinted=1)` — applies the hinted-win discount (elevated-guess class, SPEC §13.2(4); W3.3 mechanism). Reached for a hinted **correct**, or for the item's **first** scored attempt; a later hinted wrong skips it (W3.3 §3.3). |
 | H6 | `HELP_RETRY_DECISION` | no | Inspect re-check result and retry counter `n`. n≤2 + failed → retry; n=3 + failed → LINK_BACK; passed → return to BRANCH_DECISION. |
 | H7 | `LINK_BACK` | no | Render grounded reference to source material (not a new generation); go to BRANCH_DECISION. BKT is NOT further penalised. Note: `sticking_point` flag and parent-alert row are **design placeholders — not implemented** in `_do_link_back` (renders text + transitions only). |
 | P0 | `PROBE_PRESENT` | no | Render proactive transfer probe (per W5.3 rule + W2.4 frequency cap). |
@@ -172,7 +173,8 @@ reach, since T3.7 checks per-handler, not per-`hinted`-value.
 | `HELP_RECHECK_AWAIT` | `elaborate_request` ("more"/"explain more", web 💡 button) | `HELP_ELABORATE` | R12.5: only while an explanation is live; capped at ELABORATE_CAP=2 per Help chain (beyond the cap: gentle nudge, no transition). |
 | `HELP_RECHECK_AWAIT` | `learner_help_press` (or A21: don't-know / clarifying question) | `HELP_MODALITY_SELECT` | Another Help round instead of scoring it as an answer; `help_by_node` set (A5). |
 | `HELP_RECHECK_AWAIT` | `stop_request` | `SESSION_END_BY_LEARNER` | Learner ended explicitly. |
-| `HELP_RECHECK_SCORE` | `scored` | `HELP_RECHECK_BKT_UPDATE` | — |
+| `HELP_RECHECK_SCORE` | `scored` (correct, or the item's FIRST scored attempt) | `HELP_RECHECK_BKT_UPDATE` | — |
+| `HELP_RECHECK_SCORE` | `scored` wrong, item already observed | `HELP_RETRY_DECISION` | W3.3 §3.3 (2026-09-02): logged `hinted=1`, **not** a BKT observation — a further wrong on the SAME item is not independent evidence (four correlated wrongs took 0.70 → 0.0003). `ctx.item_observed` gates it; reset at `PRESENT`. |
 | `HELP_RECHECK_SCORE` | `safe_reject` (< A9's streak cap) | `HELP_RECHECK_AWAIT` | E2.4 (2026-08-10): unreadable re-check answer re-asks the SAME question, unscored — previously scored flatly wrong against mastery/retry-count. |
 | `HELP_RECHECK_SCORE` | `safe_reject_streak_cap` | `HELP_MODALITY_SELECT` | E2.4: same A9 escape hatch as `SCORE` — fresh Help chain, `help_by_node` NOT set (system-routed). |
 | `HELP_RECHECK_BKT_UPDATE` | `enter` (recheck passed) | `BRANCH_DECISION` | BKT update with hinted-win discount applied (T4.5); exits the Help loop. |

@@ -29,7 +29,7 @@ HINT_DISCOUNT = 0.5
 # Node-class defaults keyed by verifier.answer_type (design §2). Template
 # `bkt_priors:` overrides these per node.
 _CLASS_DEFAULTS = {
-    "mc4":     {"guess": 0.20, "slip": 0.10, "learns": 0.20, "forgets": 0.0},
+    "mc4":     {"guess": 0.25, "slip": 0.10, "learns": 0.20, "forgets": 0.0},  # 1/4 options; all 580 shipped mc4 nodes say 0.25
     "numeric": {"guess": 0.05, "slip": 0.10, "learns": 0.20, "forgets": 0.0},
 }
 # answer_type -> node class. "expression" (B0, 2026-08-11): guessing a correct

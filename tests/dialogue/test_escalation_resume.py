@@ -35,7 +35,7 @@ class _BareStore:
     def get_skill_state(self, learner_id, node_id):  # noqa: ANN001
         return None
 
-    def update_skill_state(self, learner_id, node_id, p):  # noqa: ANN001
+    def update_skill_state(self, learner_id, node_id, p, **kw):  # noqa: ANN001
         pass
 
     def write_escalation(self, learner_id, trigger_class, trigger_text_verbatim, **kwargs):  # noqa: ANN001

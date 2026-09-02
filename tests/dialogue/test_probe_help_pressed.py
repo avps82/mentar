@@ -68,7 +68,7 @@ class _ColdStartStore:
     def get_skill_state(self, learner_id, node_id):
         return None
 
-    def update_skill_state(self, learner_id, node_id, p):
+    def update_skill_state(self, learner_id, node_id, p, **kw):
         pass
 
     def write_response(self, session_id, skill_id, prompt_ref, answer, scored, hinted, check_result):

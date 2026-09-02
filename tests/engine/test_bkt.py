@@ -15,7 +15,7 @@ from mentar.engine.bkt import P_L0, bkt_update, params_for  # noqa: E402
 
 
 def test_class_priors_resolve():
-    assert params_for("mc4").guess == 0.20
+    assert params_for("mc4").guess == 0.25
     assert params_for("int").guess == 0.05
     assert params_for("fraction").guess == 0.05
     # template override wins

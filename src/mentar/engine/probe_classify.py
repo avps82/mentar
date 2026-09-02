@@ -24,8 +24,8 @@ from __future__ import annotations
 
 from enum import Enum
 
-# Mastery threshold consumer (kept in sync with engine.fringe.DEFAULT_MASTERY_THRESHOLD).
-DEFAULT_MASTERY_THRESHOLD = 0.85  # PHASE0 W5.3 pilot default
+# One threshold, one home (engine.fringe); this was a "kept in sync" duplicate.
+from mentar.engine.fringe import DEFAULT_MASTERY_THRESHOLD  # re-exported for callers
 
 
 class ProbeClass(str, Enum):

@@ -82,7 +82,9 @@ flowchart TD
   HE --> HRP["HELP_RECHECK_PRESENT: re-try the SAME question"]
   HRP --> HRA{"HELP_RECHECK_AWAIT"}
   HRA -- "? / help" --> HM
-  HRA -- "answer" --> HSC["HELP_RECHECK_SCORE"] --> HBK["BKT_UPDATE (hinted)"] --> HRD{"HELP_RETRY_DECISION"}
+  HRA -- "answer" --> HSC["HELP_RECHECK_SCORE"]
+  HSC -- "correct, or first attempt on this item" --> HBK["BKT_UPDATE (hinted)"] --> HRD{"HELP_RETRY_DECISION"}
+  HSC -- "wrong, item already observed (W3.3 §3.3: logged, not observed)" --> HRD
   HRD -- "correct" --> BR
   HRD -- "wrong, retries left" --> HM
   HRD -- "wrong, cap reached" --> LB["LINK_BACK: encourage, move on"] --> BR

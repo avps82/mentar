@@ -305,3 +305,35 @@ schema_version: "0.1"
     assert result.ok is False
     all_errors = " ".join(result.errors)
     assert "empty" in all_errors.lower() or "missing" in all_errors.lower()
+
+
+# ---------------------------------------------------------------------------
+# W3.3 §6 B2 (2026-09-02) — bkt_priors values are range-checked, not just present
+# ---------------------------------------------------------------------------
+
+def test_bkt_prior_out_of_range_is_an_error_naming_the_key(tmp_path):
+    """`guess: 25` used to pass validation, produce a posterior outside [0,1],
+    fail the schema CHECK on persist and leave corrupt in-memory mastery."""
+    concept = _write_minimal_concept("a", "A", []).replace("guess: 0.2", "guess: 25")
+    result = validate(str(_write_template(tmp_path, concept)))
+    assert not result.ok
+    assert any("bkt_priors.guess" in e and "outside [0, 1]" in e for e in result.errors), result.errors
+
+
+def test_bkt_prior_unknown_key_is_an_error(tmp_path):
+    concept = _write_minimal_concept("a", "A", []).replace("forgets: 0", "forgets: 0\n      guesss: 0.1")
+    result = validate(str(_write_template(tmp_path, concept)))
+    assert not result.ok
+    assert any("bkt_priors.guesss" in e for e in result.errors), result.errors
+
+
+def test_bkt_prior_non_number_is_an_error(tmp_path):
+    concept = _write_minimal_concept("a", "A", []).replace("slip: 0.1", "slip: high")
+    result = validate(str(_write_template(tmp_path, concept)))
+    assert not result.ok
+    assert any("bkt_priors.slip" in e for e in result.errors), result.errors
+
+
+def test_bkt_priors_in_range_still_pass(tmp_path):
+    concept = _write_minimal_concept("a", "A", [])
+    assert validate(str(_write_template(tmp_path, concept))).ok

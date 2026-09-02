@@ -24,12 +24,13 @@ class _DbStoreAdapter:
     def get_skill_state(self, learner_id: str, node_id: str):
         return self._store.get_skill_state(self._db_id, node_id)
 
-    def update_skill_state(self, learner_id: str, node_id: str, p: float) -> None:
+    def update_skill_state(self, learner_id: str, node_id: str, p: float, *, params=None) -> None:
         self._store.update_skill_state(
             learner_id=self._db_id,
             skill_id=node_id,
             p_mastery=p,
             priors_used=True,  # pilot uses cold-start priors (W3.3: fitted only at N>=100)
+            params=params,     # the node's resolved BktParams; persisted alongside mastery
         )
 
     def write_escalation(

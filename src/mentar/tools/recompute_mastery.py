@@ -16,14 +16,21 @@ the database:
     `timestamp`, which is only second-granular and ties within a turn).
   * The per-skill BKT params come from the CURRICULUM, exactly as the controller
     derives them each turn (`params_for(node.answer_type, node.bkt_priors)`).
-    NOT from skill_state's p_guess/p_slip/p_learns columns: those are never
-    written -- `update_skill_state` omits them from its INSERT, so every row
-    carries the schema defaults (0.2/0.1/0.2, the mc4 class) regardless of the
-    node's real class. Reading them made this replay disagree with the live
-    engine on the very first test, which is how the column bug was found. The
-    consequence is that a template whose answer_type changed since a session
-    would replay under the new class; the alternative -- replaying under params
-    that were never used -- is worse.
+    NOT from skill_state's p_guess/p_slip/p_learns columns. Until 2026-09-02
+    those were never written -- `update_skill_state` omitted them from its
+    INSERT, so every row carried the schema defaults (0.2/0.1/0.2, the mc4
+    class) regardless of the node's real class. Reading them made this replay
+    disagree with the live engine on the very first test, which is how the
+    column bug was found. The store now writes them (W3.3 §6 B1), but any row
+    last updated before that still holds the defaults, so the curriculum stays
+    the one source that is right for every row. The consequence is that a
+    template whose answer_type changed since a session would replay under the
+    new class; the alternative -- replaying under params that were never used
+    -- is worse.
+  * One item can log several attempts (unaided, then hinted re-checks). Since
+    2026-09-02 only the FIRST attempt and a hinted CORRECT are BKT observations;
+    a hinted WRONG on an already-observed item is not (W3.3 §3.3). The replay
+    applies the same rule via prompt_ref adjacency -- see _replay_one.
   * `probe_event` identifies which responses were PROBES. Probes never feed
     bkt_update (only FSMState.BKT_UPDATE and HELP_RECHECK_BKT_UPDATE call it);
     a non-clean probe instead DEMOTES mastery to PROBE_DEMOTE_MASTERY. Both
@@ -108,14 +115,26 @@ def _replay_one(
         demote_after[retry_id if retry_id is not None else first_id] = klass
 
     p, seen = P_L0, 0
-    for rid, scored, hinted in conn.execute(
-        "SELECT id, scored, hinted FROM response_log "
+    prev_ref: str | None = None
+    for rid, scored, hinted, prompt_ref in conn.execute(
+        "SELECT id, scored, hinted, prompt_ref FROM response_log "
         "WHERE learner_id = ? AND skill_id = ? ORDER BY id",
         (learner_id, skill_id),
     ):
         if rid not in probe_response_ids:
-            p = bkt_update(p, correct=bool(scored), hinted=bool(hinted), params=params)
-            seen += 1
+            # W3.3 §3.3: a hinted WRONG on the item that produced the previous
+            # observation is logged but not observed (controller: item_observed
+            # gate in _do_help_recheck_score). prompt_ref is "item:<id>", unique
+            # per draw and identical across an item's attempts, so adjacency
+            # identifies the item. Limitation: the LLM-transfer fallback logs
+            # "pattern:<name>", identical across consecutive items of one node,
+            # where this rule would also skip a hinted wrong that opened the NEXT
+            # item; no shipped node takes that path (every node is item-backed).
+            correlated_wrong = bool(hinted) and not scored and prompt_ref == prev_ref
+            if not correlated_wrong:
+                p = bkt_update(p, correct=bool(scored), hinted=bool(hinted), params=params)
+                seen += 1
+            prev_ref = prompt_ref
         klass = demote_after.get(rid)
         if klass is not None and klass != "clean_pass":
             # _do_probe_classify: the probe revealed mastery was OVERESTIMATED.

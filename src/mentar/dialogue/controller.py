@@ -540,6 +540,11 @@ class _SessionCtx:
     # not seen before -- the lead-in must not say "again" then (maintainer nit,
     # 2026-08-19: right card, wrong sentence).
     working_shown_item_id: str | None = None
+    # W3.3 §3.3 (2026-09-02): has THIS item produced a BKT observation yet? The
+    # first scored attempt always does (hinted or not); a later hinted-WRONG
+    # re-check on the same item is logged but not observed -- it is not
+    # independent evidence, and four correlated wrongs took 0.70 -> 0.0003.
+    item_observed: bool = False
     # A5: per-node, CHILD-INITIATED help only (never the auto-help branch in
     # _do_bkt_update) — the false-confidence probe signal must not be polluted by
     # a previous node's help use or by the system's own auto-help scaffolding.
@@ -1246,6 +1251,7 @@ class SessionController:
         ctx.elaborate_method_card = None  # explain-mode: stale card must not linger either
         ctx.elaborate_card_diagram_len = 0
         ctx.working_shown = False         # new question -- the working may be offered again
+        ctx.item_observed = False         # W3.3 §3.3: fresh item, first attempt will be observed
         ctx.working_shown_item_id = None
         node = self._curriculum[ctx.current_node_id]
         item = self._sample_item(ctx.current_node_id)
@@ -1498,6 +1504,7 @@ class SessionController:
         )
         p_new = bkt_update(p_prior, correct=correct or False, hinted=hinted, params=bkt_params)
         ctx.mastery[ctx.current_node_id] = p_new
+        ctx.item_observed = True
         # R11: refresh the in-session staleness clock — a just-reviewed node must not
         # keep being re-picked as "stale" every REVIEW_EVERY_N items.
         ctx.mastery_updated_at[ctx.current_node_id] = (
@@ -1505,7 +1512,7 @@ class SessionController:
         )
         try:
             self._store.update_skill_state(
-                self._learner_id, ctx.current_node_id, p_new
+                self._learner_id, ctx.current_node_id, p_new, params=bkt_params
             )
         except Exception:
             logger.warning("bkt_update: db persist failed", exc_info=True)
@@ -1851,7 +1858,16 @@ class SessionController:
                 "write_help_event", self._session_id, ctx.current_node_id,
                 ctx.help_modalities_used[-1], rid,
             )
-        ctx.state = FSMState.HELP_RECHECK_BKT_UPDATE
+        if not ctx.help_scored_correct and ctx.item_observed:
+            # W3.3 §3.3: a hinted WRONG on an item that already produced an
+            # observation is logged (hinted=1, above) but is NOT a second BKT
+            # observation -- the child is on the same problem, one hint further
+            # in, so it is not independent evidence. A hinted CORRECT always
+            # updates (the resolution), and so does the first attempt on an item
+            # even when hinted (Help pressed before answering).
+            ctx.state = FSMState.HELP_RETRY_DECISION
+        else:
+            ctx.state = FSMState.HELP_RECHECK_BKT_UPDATE
         return ("", True)
 
     def _do_help_retry_decision(self) -> tuple[str, bool]:
@@ -2035,8 +2051,12 @@ class SessionController:
         self._log_probe_event(ctx.current_node_id, probe_class)
         demoted = min(ctx.mastery.get(ctx.current_node_id, P_L0), PROBE_DEMOTE_MASTERY)
         ctx.mastery[ctx.current_node_id] = demoted
+        node = self._curriculum[ctx.current_node_id]
+        bkt_params = params_for(node.get("answer_type", "numeric"), node.get("bkt_priors"))
         try:
-            self._store.update_skill_state(self._learner_id, ctx.current_node_id, demoted)
+            self._store.update_skill_state(
+                self._learner_id, ctx.current_node_id, demoted, params=bkt_params
+            )
         except Exception:
             logger.warning("probe demote: db persist failed", exc_info=True)
         ctx.state = FSMState.NODE_SELECT

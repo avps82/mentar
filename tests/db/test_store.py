@@ -64,3 +64,29 @@ def test_v4_to_v5_migration_relaxes_severity_and_keeps_every_row(tmp_path):
     assert rows[0]["trigger_text_verbatim"] == "verbatim text"
     assert rows[0]["severity"] == "critical"
     assert rows[1]["severity"] == "concern"
+
+
+def test_update_skill_state_persists_the_params_it_was_given(tmp_path):
+    """W3.3 §6 B1 (2026-09-02). The method's docstring said the four BKT
+    parameter columns were "set once at cold-start"; nothing ever wrote them,
+    so every row carried the schema defaults (mc4: 0.2/0.1/0.2/0) whatever
+    the node's class. Now: params given -> written; params omitted -> the
+    columns are left exactly as they were."""
+    from mentar.db.store import LearnerStore
+    from mentar.engine.bkt import params_for
+
+    store = LearnerStore(tmp_path / "t.db")
+    lid = store.create_learner("kid", "Year 4", "AU", "parent_mediated")
+    numeric = params_for("int")                       # guess 0.05 -- not the 0.2 default
+    store.update_skill_state(lid, "au4_place_value", 0.42, priors_used=True, params=numeric)
+    row = store.get_skill_state(lid, "au4_place_value")
+    assert (row["p_guess"], row["p_slip"], row["p_learns"], row["p_forgets"]) == (
+        numeric.guess, numeric.slip, numeric.learns, numeric.forgets,
+    )
+    assert row["p_mastery"] == 0.42
+
+    # a legacy caller that knows only the mastery must not clobber the params
+    store.update_skill_state(lid, "au4_place_value", 0.5, priors_used=True)
+    row = store.get_skill_state(lid, "au4_place_value")
+    assert row["p_mastery"] == 0.5
+    assert row["p_guess"] == numeric.guess, "params=None must leave the columns untouched"
