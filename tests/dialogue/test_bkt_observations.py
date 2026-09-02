@@ -23,7 +23,7 @@ import pytest
 REPO = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "src"))
 
-from mentar.dialogue.controller import SessionController  # noqa: E402
+from mentar.dialogue.controller import FSMState, SessionController  # noqa: E402
 from mentar.engine.bkt import P_L0, bkt_update, params_for  # noqa: E402
 
 PROMPTS = REPO / "prompts"
@@ -114,3 +114,21 @@ def test_the_flag_resets_on_a_new_item():
     if ctrl.current_node_id:            # a second item was presented
         ctrl.step(WRONG)
         assert len(store.calls) == n + 1, "the first wrong on a NEW item must be observed"
+
+
+def test_help_on_a_probe_makes_the_first_probe_attempt_the_observation():
+    """A probe item is a NEW item. Two cold-corrects fire the probe; the child
+    asks for help on it; the first re-check on the PROBE item is that item's
+    first scored attempt and must be observed -- the flag from the previous
+    item must not carry over (gap found in the 2026-09-02 review)."""
+    ctrl, store = _make()
+    ctrl.step(None)
+    ctrl.step(RIGHT)                    # item 1: observed (1)
+    ctrl.step(RIGHT)                    # item 2: observed (2) -> mastery >= 0.85 -> probe fires
+    assert len(store.calls) == 2
+    assert ctrl._ctx.state is FSMState.PROBE_AWAIT_ANSWER, "precondition: the probe fired"
+    ctrl.step("?")                      # help on the probe -> Help loop on the probe item
+    ctrl.step(WRONG)                    # first attempt on the probe item: OBSERVED
+    assert len(store.calls) == 3, "the probe item's first attempt must be observed"
+    ctrl.step(WRONG)                    # correlated: not observed
+    assert len(store.calls) == 3

@@ -1943,6 +1943,11 @@ class SessionController:
 
     def _do_probe_present(self) -> tuple[str, bool]:
         ctx = self._ctx
+        # W3.3 §3.3: a probe item is a NEW item. If the child asks for help on it,
+        # the Help loop's first re-check is the first scored attempt on this item
+        # and must be observed; without this reset the flag left by the previous
+        # item would skip it.
+        ctx.item_observed = False
         item = self._sample_item(ctx.current_node_id)
         if item is not None:
             ctx.current_item = item

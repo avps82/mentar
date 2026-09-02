@@ -139,3 +139,26 @@ def test_the_store_persists_the_params_the_engine_actually_used():
     assert any(g != pytest.approx(0.2) for _, g, *_ in rows), (
         "every row still holds the schema-default guess -- the params were not written"
     )
+
+
+def test_replay_adjacency_does_not_cross_a_session_boundary(tmp_path):
+    """The item bank's no-repeat is per session, so the same bank item can be
+    the last item of one session and the first of the next. The controller's
+    item_observed flag resets at every PRESENT, so that second session's first
+    hinted wrong IS an observation -- the replay must agree, or two sessions
+    that happen to share an item id would replay one observation short."""
+    from mentar.db.store import LearnerStore
+    from mentar.engine.bkt import P_L0, bkt_update, params_for
+    from mentar.tools.recompute_mastery import _replay_one
+
+    store = LearnerStore(tmp_path / "t.db")
+    lid = store.create_learner("kid", "Year 4", "AU", "parent_mediated")
+    store.create_session(lid, "s1")
+    store.create_session(lid, "s2")
+    store.write_response(lid, "s1", "unit_fractions", "item:X", "2/3", 0, 0, None)  # s1: cold wrong
+    store.write_response(lid, "s2", "unit_fractions", "item:X", "2/3", 0, 1, None)  # s2: first attempt, hinted wrong
+    store.write_response(lid, "s2", "unit_fractions", "item:X", "2/3", 0, 1, None)  # s2: correlated, skipped
+    params = params_for("fraction")
+    p, seen = _replay_one(store._conn, lid, "unit_fractions", params)
+    assert seen == 2, "the new session's first attempt must count even on the same item id"
+    assert p == pytest.approx(bkt_update(bkt_update(P_L0, False, False, params), False, True, params))

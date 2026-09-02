@@ -137,7 +137,7 @@ the parent control plane (`/parent/ack`) transitions out of it.
 
 ```mermaid
 flowchart TD
-  P(["Parent opens /parent"]) --> V["Reads durable DB: mastery % per skill, session score (X correct of Y), per-answer correct/wrong/help, session log, escalations"]
+  P(["Parent opens /parent"]) --> V["Reads durable DB: mastery band per skill (never a %, W3.3 §6 G1), session score (X correct of Y), per-answer correct/wrong/help, session log, escalations"]
   V --> E{"Escalation pending?"}
   E -- "yes" --> ACK["Handoff message + Resume / End"]
   ACK -- "resume" --> RES["parent_acknowledge('resume') -> next question"]

@@ -115,9 +115,9 @@ def _replay_one(
         demote_after[retry_id if retry_id is not None else first_id] = klass
 
     p, seen = P_L0, 0
-    prev_ref: str | None = None
-    for rid, scored, hinted, prompt_ref in conn.execute(
-        "SELECT id, scored, hinted, prompt_ref FROM response_log "
+    prev_ref: tuple[str, str] | None = None
+    for rid, scored, hinted, prompt_ref, session_id in conn.execute(
+        "SELECT id, scored, hinted, prompt_ref, session_id FROM response_log "
         "WHERE learner_id = ? AND skill_id = ? ORDER BY id",
         (learner_id, skill_id),
     ):
@@ -126,15 +126,20 @@ def _replay_one(
             # observation is logged but not observed (controller: item_observed
             # gate in _do_help_recheck_score). prompt_ref is "item:<id>", unique
             # per draw and identical across an item's attempts, so adjacency
-            # identifies the item. Limitation: the LLM-transfer fallback logs
-            # "pattern:<name>", identical across consecutive items of one node,
-            # where this rule would also skip a hinted wrong that opened the NEXT
-            # item; no shipped node takes that path (every node is item-backed).
-            correlated_wrong = bool(hinted) and not scored and prompt_ref == prev_ref
+            # identifies the item -- WITHIN a session: the item bank's no-repeat
+            # is per session, so the same bank item can close one session and
+            # open the next, and the controller's flag resets at every PRESENT.
+            # Limitation: the LLM-transfer fallback logs "pattern:<name>",
+            # identical across consecutive items of one node, where this rule
+            # would also skip a hinted wrong that opened the NEXT item; no
+            # shipped node takes that path (every node is item-backed).
+            correlated_wrong = (
+                bool(hinted) and not scored and prev_ref == (session_id, prompt_ref)
+            )
             if not correlated_wrong:
                 p = bkt_update(p, correct=bool(scored), hinted=bool(hinted), params=params)
                 seen += 1
-            prev_ref = prompt_ref
+            prev_ref = (session_id, prompt_ref)
         klass = demote_after.get(rid)
         if klass is not None and klass != "clean_pass":
             # _do_probe_classify: the probe revealed mastery was OVERESTIMATED.
