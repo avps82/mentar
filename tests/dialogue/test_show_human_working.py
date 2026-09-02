@@ -79,7 +79,7 @@ class _FakeStore:
     def get_skill_state(self, learner_id, node_id):
         return None
 
-    def update_skill_state(self, learner_id, node_id, p):
+    def update_skill_state(self, learner_id, node_id, p, **kw):
         pass
 
 

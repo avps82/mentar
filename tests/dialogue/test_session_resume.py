@@ -54,7 +54,7 @@ class _FakeStore:
         v = self._mastery.get(node_id)
         return {"p_mastery": v} if v is not None else None
 
-    def update_skill_state(self, learner_id, node_id, p):
+    def update_skill_state(self, learner_id, node_id, p, **kw):
         self._mastery[node_id] = p
 
     def update_session_checkpoint(self, session_id, checkpoint_json):

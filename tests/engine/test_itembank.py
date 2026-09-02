@@ -39,7 +39,7 @@ class _MemStore:
     def get_skill_state(self, learner_id, node_id):
         return {"p_mastery": self.skills[node_id]} if node_id in self.skills else None
 
-    def update_skill_state(self, learner_id, node_id, p):
+    def update_skill_state(self, learner_id, node_id, p, **kw):
         self.skills[node_id] = p
 
 

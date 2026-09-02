@@ -59,7 +59,7 @@ class _FakeStore:
         v = self._mastery.get(node_id)
         return {"p_mastery": v} if v is not None else None
 
-    def update_skill_state(self, learner_id: str, node_id: str, p: float):
+    def update_skill_state(self, learner_id: str, node_id: str, p: float, **kw):
         self._mastery[node_id] = p
 
 

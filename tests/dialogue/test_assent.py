@@ -30,7 +30,7 @@ class _Store:
     def get_skill_state(self, learner_id, node_id):  # noqa: ANN001
         return None
 
-    def update_skill_state(self, learner_id, node_id, p):  # noqa: ANN001
+    def update_skill_state(self, learner_id, node_id, p, **kw):  # noqa: ANN001
         pass
 
 
