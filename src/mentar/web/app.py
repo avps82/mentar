@@ -49,6 +49,7 @@ from mentar.engine.curriculum import (
     load_template_meta,
     load_template_subject,
 )
+from mentar.engine.fringe import DEFAULT_MASTERY_THRESHOLD, is_mastered
 from mentar.engine.item_sources import build_registry
 from mentar.engine.itembank import load_item_bank
 from mentar.engine.itemgen import CompositeItemSource, ItemGenerator
@@ -1168,15 +1169,16 @@ def topics():
         return redirect(url_for("choose"))
     learner_uuid = session.get("learner_uuid", "")
     store, db_id = _store_and_id(learner_uuid)
-    pct = {}
+    mastery = {}
     if store and db_id is not None:
-        pct = {r["skill_id"]: int(r["p_mastery"] * 100) for r in store.all_skill_states(db_id)}
+        mastery = {r["skill_id"]: r["p_mastery"] for r in store.all_skill_states(db_id)}
     # Group by strand (the sub-topic split the maintainer asked for,
     # 2026-08-20), preserving first-appearance order. Templates without
     # strands (pilot/practice) yield one anonymous group = the old flat list.
     groups: dict[str | None, list[dict]] = {}
     for nid, node in _SUBJECT_CURRICULA[subject].items():
-        row = {"id": nid, "label": _display_name(nid), "pct": pct.get(nid)}
+        row = {"id": nid, "label": _display_name(nid),
+               "band": mastery_band(mastery[nid]) if nid in mastery else None}
         groups.setdefault(node.get("strand"), []).append(row)
     return render_template(
         "topics.html", subject=subject, s=SUBJECTS[subject],
@@ -1805,7 +1807,8 @@ def _compute_graph_layout(curriculum: dict, node_pct: dict[str, int]) -> dict:
             y = row_top[lvl] + _GRAPH_NODE_R + 4
             pos[node_id] = (x, y)
             pct = node_pct.get(node_id)
-            status = "not_started" if pct is None else ("mastered" if pct >= 85 else "learning")
+            status = "not_started" if pct is None else ("mastered" if is_mastered(pct / 100) else "learning")
+            band = mastery_band(pct / 100)["label"] if pct is not None else "not started yet"
             label = curriculum[node_id].get("label", node_id)
             lines = wrapped[node_id]
             nodes.append({
@@ -1813,7 +1816,7 @@ def _compute_graph_layout(curriculum: dict, node_pct: dict[str, int]) -> dict:
                 "label": label,
                 "label_lines": lines,
                 "x": round(x, 1), "y": round(y, 1),
-                "pct": pct or 0, "status": status,
+                "pct": pct or 0, "status": status, "band": band,
             })
             # Deepest ink under this node: last label baseline + descender.
             bottom = max(bottom, y + label_dy + (len(lines) - 1) * _GRAPH_LINE_H + 5)
@@ -1897,6 +1900,7 @@ def progress():
     skills = [dict(r) for r in skill_states if r["skill_id"] in curriculum]
     for s in skills:
         s["display_name"] = _display_name(s["skill_id"])
+        s["band"] = mastery_band(s["p_mastery"])
     node_pct = {s["skill_id"]: int(s["p_mastery"] * 100) for s in skills}
     graph = _compute_graph_layout(curriculum, node_pct) if curriculum else None
 
@@ -1930,6 +1934,7 @@ def parent():
         skill_states = [dict(r) for r in store.all_skill_states(db_id)]
         for s in skill_states:
             s["display_name"] = _display_name(s["skill_id"])
+            s["band"] = mastery_band(s["p_mastery"])
         responses = store.session_responses(db_id, session_id)
         help_events = store.session_help_events(db_id, session_id)
         for r in responses:
@@ -2169,6 +2174,36 @@ def _render_turn_fragment(learner_uuid: str, ctrl: SessionController) -> str:
     return render_template("_turn.html", **_turn_context(learner_uuid, ctrl))
 
 
+# W3.3 §6 G1 (2026-09-02): p_mastery is a BKT estimate whose parameters have
+# never been fitted to learner data, so its absolute value is not calibrated
+# and a single wrong answer swings it 0.84 -> 0.36 with the shipped priors. It
+# must never reach a child or a parent as a precise percentage. Every surface
+# renders a BAND from this one helper; the bar keeps the continuous width
+# (direction is honest), the numeral is gone. The top band starts exactly at
+# the graduation threshold so "Got it" and "left the fringe" are the same
+# event, and 0.60 is PROBE_DEMOTE_MASTERY, so a demoted node reads "Almost
+# there" rather than dropping two bands.
+_MASTERY_BANDS = (
+    (DEFAULT_MASTERY_THRESHOLD, "got_it",    "Got it",         "⭐⭐⭐⭐⭐", "Got it! Amazing work!"),
+    (0.60,                      "almost",    "Almost there",   "⭐⭐⭐⭐",  "Almost there — keep going!"),
+    (0.40,                      "getting",   "Getting there",  "⭐⭐⭐",   "Getting there — good progress!"),
+    (0.20,                      "starting",  "Just starting",  "⭐⭐",    "Just starting — you can do it!"),
+    (0.0,                       "beginning", "Just beginning", "⭐",     "Just beginning — every expert started here!"),
+)
+
+
+def mastery_band(p: float) -> dict:
+    """Map a BKT p_mastery to the band every UI surface shows instead of a
+    percentage: {"pct", "key", "label", "stars", "cheer"}. `pct` is kept ONLY
+    for the bar width; templates must not print it."""
+    p = max(0.0, min(1.0, float(p or 0.0)))
+    for floor, key, label, stars, cheer in _MASTERY_BANDS:
+        if p >= floor:
+            return {"pct": int(p * 100), "key": key, "label": label, "stars": stars, "cheer": cheer}
+    return {"pct": 0, "key": "beginning", "label": "Just beginning", "stars": "⭐",
+            "cheer": "Just beginning — every expert started here!"}  # unreachable: floor 0.0 catches all
+
+
 def _current_node_mastery(learner_uuid: str, ctrl: SessionController) -> dict | None:
     """U-34: a small per-skill mastery cue during the lesson (current node
     only). None before the first PRESENT or when there's nothing scored yet."""
@@ -2177,15 +2212,13 @@ def _current_node_mastery(learner_uuid: str, ctrl: SessionController) -> dict | 
         return None
     display_name = _display_name(node_id)
     store, db_id = _store_and_id(learner_uuid)
-    if store is None or db_id is None:
-        return {"skill_id": node_id, "display_name": display_name, "pct": 0}
-    for row in store.all_skill_states(db_id):
-        if row["skill_id"] == node_id:
-            return {
-                "skill_id": node_id, "display_name": display_name,
-                "pct": int(row["p_mastery"] * 100),
-            }
-    return {"skill_id": node_id, "display_name": display_name, "pct": 0}
+    p = 0.0
+    if store is not None and db_id is not None:
+        for row in store.all_skill_states(db_id):
+            if row["skill_id"] == node_id:
+                p = row["p_mastery"]
+                break
+    return {"skill_id": node_id, "display_name": display_name, **mastery_band(p)}
 
 
 def _subjects_progress(learner_uuid: str) -> dict[str, dict]:
@@ -2197,7 +2230,7 @@ def _subjects_progress(learner_uuid: str) -> dict[str, dict]:
     if store is None or db_id is None:
         return {}
     mastered_ids = {
-        r["skill_id"] for r in store.all_skill_states(db_id) if r["p_mastery"] >= 0.85
+        r["skill_id"] for r in store.all_skill_states(db_id) if is_mastered(r["p_mastery"])
     }
     out = {}
     for key, curriculum in _SUBJECT_CURRICULA.items():

@@ -15,7 +15,7 @@
     <input type="hidden" name="topic" value="{{ t.id }}">
     <button class="topic-row" type="submit">
       <span class="topic-label">{{ t.label }}</span>
-      {% if t.pct is not none %}<span class="topic-pct">{{ t.pct }}%</span>
+      {% if t.band %}<span class="topic-pct">{{ t.band.label }}</span>
       {% else %}<span class="topic-pct topic-new">new</span>{% endif %}
     </button>
   </form>

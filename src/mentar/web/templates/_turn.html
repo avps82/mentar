@@ -13,7 +13,7 @@
 <div class="hint turn-mastery">
   {{ current_mastery.display_name }}
   <span class="bar-wrap"><span class="bar-fill" style="width:{{ current_mastery.pct }}%;"></span></span>
-  {{ current_mastery.pct }}%
+  {{ current_mastery.label }}
   {% if session_progress %}<span class="session-progress">· Question {{ session_progress.n }} of {{ session_progress.total }}</span>{% endif %}
 </div>
 {% endif %}

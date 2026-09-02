@@ -68,17 +68,19 @@
   <h2 style="margin-top:0;font-size:1.1rem">Mastery progress</h2>
   <div class="table-scroll">
   <table>
-    <tr><th>Skill</th><th>Mastery</th><th>%</th></tr>
+    <tr><th>Skill</th><th>Progress</th><th>Where they are</th></tr>
     {% for s in skill_states %}
-    {% set pct = (s.p_mastery * 100) | int %}
     <tr>
       <td>{{ s.display_name }}</td>
-      <td><span class="bar-wrap"><span class="bar-fill" style="width:{{ pct }}%;"></span></span></td>
-      <td>{{ pct }}%</td>
+      <td><span class="bar-wrap"><span class="bar-fill" style="width:{{ s.band.pct }}%;"></span></span></td>
+      <td>{{ s.band.label }}</td>
     </tr>
     {% endfor %}
   </table>
   </div>
+  {# W3.3 §6 G1: the estimate is uncalibrated -- a band, never a percentage, and the
+     legend says what the top band means without claiming more than the engine does. #}
+  <p class="hint"><strong>Got it</strong> means the tutor is confident your child can do this without help. The other bands are the tutor's running estimate, not a test score.</p>
 </div>
 {% endif %}
 

@@ -88,6 +88,10 @@ safety logic, DB, or new product features (see §6).
   intents. The typed forms keep working.
 - **U-34** Per-skill progress cue visible during the lesson (e.g. small mastery bar for the
   current skill) — makes the mastery model tangible mid-lesson (U-1 "substantial").
+  **Band, never a percentage (2026-09-02):** the bar keeps its width but the numeral is
+  replaced by one of five band labels from `web/app.py::mastery_band` — the estimate's
+  parameters are unfitted (W3.3 §6 G1) and one slip swings it 84% → 36%, which a child
+  should not be shown as a score. Same rule on /parent, /progress and /topics.
 - **U-35** The first-turn assent + transparency lines ("you can stop anytime…", "I'm Mentar,
   a computer learning helper — not a person") get deliberate visual treatment, not lost in
   message flow — they are a feature, not boilerplate.
@@ -105,7 +109,8 @@ safety logic, DB, or new product features (see §6).
 
 ### Parent dashboard
 - **U-50** Restructure into scannable sections in this priority order: safety alerts (if
-  any) → session summary → mastery per skill → answers → full transcript (collapsed by
+  any) → session summary → mastery per skill (**as bands with a one-line legend, never a
+  percentage — 2026-09-02, W3.3 §6 G1**) → answers → full transcript (collapsed by
   default). A parent glancing for 10 seconds sees "is my child OK, what did they do, what
   did they learn".
 - **U-51** All existing safety behaviours preserved exactly: escalation alert with verbatim

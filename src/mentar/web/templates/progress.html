@@ -31,7 +31,7 @@
     {% endfor %}
     {% for n in graph.nodes %}
     <g>
-      <title>{{ n.label }} — {{ n.status | replace("_", " ") }} ({{ n.pct }}%)</title>
+      <title>{{ n.label }} — {{ n.band }}</title>
       <circle cx="{{ n.x }}" cy="{{ n.y }}" r="{{ graph.node_r }}" class="graph-node node-{{ n.status }}" />
       <text x="{{ n.x }}" y="{{ n.y + graph.label_dy }}" text-anchor="middle" class="graph-node-label">{% for line in n.label_lines %}<tspan x="{{ n.x }}" {% if not loop.first %}dy="{{ graph.line_h }}"{% endif %}>{{ line }}</tspan>{% endfor %}</text>
     </g>
@@ -47,23 +47,8 @@
 {% if skills %}
 <h2 style="font-size:1.15rem;margin-top:24px">How you are doing with each topic:</h2>
 {% for s in skills %}
-{% set pct = (s.p_mastery * 100) | int %}
-{% if pct >= 80 %}
-  {% set stars = "⭐⭐⭐⭐⭐" %}
-  {% set label = "Got it! Amazing work!" %}
-{% elif pct >= 60 %}
-  {% set stars = "⭐⭐⭐⭐" %}
-  {% set label = "Almost there — keep going!" %}
-{% elif pct >= 40 %}
-  {% set stars = "⭐⭐⭐" %}
-  {% set label = "Getting there — good progress!" %}
-{% elif pct >= 20 %}
-  {% set stars = "⭐⭐" %}
-  {% set label = "Just starting — you can do it!" %}
-{% else %}
-  {% set stars = "⭐" %}
-  {% set label = "Just beginning — every expert started here!" %}
-{% endif %}
+{% set stars = s.band.stars %}
+{% set label = s.band.cheer %}
 <div class="skill-card">
   <div class="skill-name">{{ s.display_name }}</div>
   <div class="stars">{{ stars }}</div>

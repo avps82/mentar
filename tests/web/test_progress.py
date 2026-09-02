@@ -290,8 +290,13 @@ def test_parent_mastery_table_appears_after_answer():
     assert "Mastery progress" in body
     # Session summary line must be present.
     assert "Session summary" in body
-    # At least one skill_id row inside the table (check for % sign from pct column).
-    assert "%" in body
+    # W3.3 §6 G1 (2026-09-02): the table shows a BAND, never a percentage -- the
+    # estimate is uncalibrated. Mutation: print the numeral again and this fails.
+    table = body.split("Mastery progress", 1)[1].split("</table>", 1)[0]
+    assert "%</td>" not in table, "a raw percentage reached the parent page"
+    assert any(b in table for b in ("Got it", "Almost there", "Getting there",
+                                    "Just starting", "Just beginning")), table
+    assert "not a test score" in body, "the legend must say what the bands are"
 
 
 def test_r6_2_display_name_unified_across_all_four_surfaces():
@@ -432,3 +437,18 @@ def test_graph_layout_bottom_row_within_viewbox_for_all_templates():
                 f"exceeds viewBox height {graph['height']}"
             )
             assert node["y"] - graph["node_r"] >= 0, f"{subject_key}: {node['id']} clipped at top"
+
+
+def test_mastery_band_boundaries_follow_the_engine_threshold():
+    """The top band starts exactly where the engine graduates a node (0.85),
+    not at the old template's 80 -- a child at 0.82 was told "Got it!" while
+    the engine kept drilling. 0.60 is PROBE_DEMOTE_MASTERY."""
+    app_mod, _ = _client()
+    band = app_mod.mastery_band
+    assert band(0.85)["key"] == "got_it" and band(0.849)["key"] == "almost"
+    assert band(0.60)["key"] == "almost" and band(0.599)["key"] == "getting"
+    assert band(0.40)["key"] == "getting" and band(0.20)["key"] == "starting"
+    assert band(0.0)["key"] == "beginning" and band(None)["key"] == "beginning"
+    assert band(1.0)["pct"] == 100 and band(1.7)["pct"] == 100  # clamped
+    for p in (0.0, 0.33, 0.85):
+        assert "%" not in band(p)["label"] and "%" not in band(p)["cheer"]

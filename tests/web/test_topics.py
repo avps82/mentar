@@ -107,8 +107,8 @@ def test_disclosure_freezes_a_pinned_session_and_a_pin_cannot_thaw_it():
 
 
 def test_topics_page_shows_mastery_where_it_exists():
-    """After real answered items, the practised node's row shows a percentage
-    instead of 'new'."""
+    """After real answered items, the practised node's row shows a mastery band
+    (never a percentage -- W3.3 §6 G1) instead of 'new'."""
     app_mod, c = _client()
     c.post("/choose", data={"subject": "fractions"})
     c.get("/learn")
@@ -118,8 +118,9 @@ def test_topics_page_shows_mastery_where_it_exists():
     body = c.get("/topics?subject=fractions").get_data(as_text=True)
     nodes = _pilot_nodes(app_mod)
     assert body.count("topic-new") < len(nodes), (
-        "no topic row picked up a mastery percentage after real answers"
+        "no topic row picked up a mastery band after real answers"
     )
+    assert "%</span>" not in body, "a raw percentage reached the topic picker"
 
 
 def test_unknown_subject_redirects_to_the_picker():
