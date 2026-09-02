@@ -479,6 +479,22 @@ class LearnerStore:
         ).fetchall()
         return [dict(r) for r in rows]
 
+    def has_clean_probe(self, learner_id: int, skill_id: str) -> bool:
+        """Has a transfer probe ever confirmed this skill (class = clean_pass)?
+
+        W3.3 §6 G7 (2026-09-02): a skill can sit at p_mastery >= threshold with
+        no probe on record -- the session cap fired before probe_due, or the
+        child said "stop" on the probe itself. The controller asks this at the
+        first NODE_SELECT of a session so such a node is checked before it is
+        treated as mastered.
+        """
+        row = self._conn.execute(
+            "SELECT 1 FROM probe_event WHERE learner_id = ? AND skill_id = ? "
+            "AND class = 'clean_pass' LIMIT 1;",
+            (learner_id, skill_id),
+        ).fetchone()
+        return row is not None
+
     # ── Escalation log ───────────────────────────────────────────────────────
 
     def write_escalation(

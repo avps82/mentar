@@ -86,6 +86,9 @@ class _DbStoreAdapter:
             self._db_id, session_id, skill_id, modality, response_log_id,
         )
 
+    def has_clean_probe(self, node_id: str) -> bool:
+        return self._store.has_clean_probe(self._db_id, node_id)
+
     def write_probe_event(
         self, session_id: str, skill_id: str, response_log_id: int,
         retry_response_log_id: int | None, class_: str,

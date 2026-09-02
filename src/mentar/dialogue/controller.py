@@ -545,6 +545,8 @@ class _SessionCtx:
     # re-check on the same item is logged but not observed -- it is not
     # independent evidence, and four correlated wrongs took 0.70 -> 0.0003.
     item_observed: bool = False
+    # W3.3 §6 G7: one deferred graduation probe per session, at the first NODE_SELECT.
+    deferred_probe_done: bool = False
     # A5: per-node, CHILD-INITIATED help only (never the auto-help branch in
     # _do_bkt_update) — the false-confidence probe signal must not be polluted by
     # a previous node's help use or by the system's own auto-help scaffolding.
@@ -1212,6 +1214,28 @@ class SessionController:
             ctx.current_node_id = self._pinned_node
             ctx.state = FSMState.PATTERN_SELECT
             return ("", True)
+        # W3.3 §6 G7 (2026-09-02): graduation is two-factor -- BKT proposes at the
+        # threshold, a transfer probe disposes -- but two routes left a node at
+        # >= threshold with NO probe on record: _do_branch_decision checks the
+        # session cap before probe_due, and a child may say "stop" on the probe
+        # itself. Such a node then left the fringe unconfirmed for 14 days. So the
+        # first NODE_SELECT of a session probes ONE such node before anything else
+        # (one per session: a backlog drains across sessions rather than opening a
+        # lesson with a run of check questions). A store without has_clean_probe
+        # (test fakes) answers None, never False, so nothing is deferred there.
+        if not ctx.deferred_probe_done:
+            ctx.deferred_probe_done = True
+            for nid in sorted(ctx.mastery):
+                if (nid in self._curriculum and is_mastered(ctx.mastery[nid])
+                        and self._safe_store("has_clean_probe", nid) is False):
+                    ctx.current_node_id = nid
+                    ctx.items_since_probe = 0
+                    ctx.probe_variant = 0
+                    ctx.probe_first_correct = None
+                    ctx.probe_response_log_id = None
+                    ctx.probe_retry_response_log_id = None
+                    ctx.state = FSMState.PROBE_PRESENT
+                    return ("", True)
         graph = {nid: n.get("prerequisites", []) for nid, n in self._curriculum.items()}
         # R11 micro-learning: interleave among ready concepts + inject spaced review of
         # mastered-but-stale nodes (makes the FORGETTING_SUSPECT probe path reachable).

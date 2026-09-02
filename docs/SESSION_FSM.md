@@ -25,6 +25,7 @@ stateDiagram-v2
     SESSION_START --> NODE_SELECT: enter (no/invalid checkpoint)
     SESSION_START --> PATTERN_SELECT: pending_resume_valid_node (R-RES)
     SESSION_START --> ESCALATION_FREEZE: pending_resume_frozen (R-RES)
+    NODE_SELECT --> PROBE_PRESENT: unprobed_mastered_node (first NODE_SELECT of the session)
     NODE_SELECT --> PATTERN_SELECT: fringe_nonempty
     NODE_SELECT --> SESSION_END_COMPLETE: fringe_empty_or_completion_met
     PATTERN_SELECT --> PRESENT: enter
@@ -94,7 +95,7 @@ Both pre-empts are encoded as **transitions on every non-terminal state** in §3
 | ID | Name | Persisted? | Purpose |
 |----|------|------------|---------|
 | S0 | `SESSION_START` | no | Load learner profile, BKT priors, template; resume any pending state from prior close. |
-| S1 | `NODE_SELECT` | no | Compute KST fringe from current mastery state; pick next concept node OR detect completion. |
+| S1 | `NODE_SELECT` | no | First entry of a session: probe one mastered-but-never-confirmed node if any (G7). Then compute KST fringe from current mastery state; pick next concept node OR detect completion. |
 | S2 | `PATTERN_SELECT` | no | Choose interaction pattern (SPEC §12) from parent's mix + adaptive toggle. |
 | S3 | `PRESENT` | no | Render the question via the prompt template (W6.2 registry). |
 | S4 | `AWAIT_ANSWER` | **yes** | Block on learner input. |
@@ -148,6 +149,7 @@ reach, since T3.7 checks per-handler, not per-`hinted`-value.
 | `SESSION_START` | `enter` (no pending resume) | `NODE_SELECT` | Load profile, BKT priors, template. |
 | `SESSION_START` | `pending_resume_valid_node` | `PATTERN_SELECT` | **R-RES (2026-07-19, BUILT — see §4 note below).** A server-process restart interrupted a session; the checkpointed `current_node_id` is still present and unmastered in this curriculum. Seeds `current_node_id`/`items_completed`/`items_since_probe` from the checkpoint and re-enters the SAME node — but a FRESH item/question, not the literal one on screen (scope decision: same topic, not exact mid-question replay). |
 | `SESSION_START` | `pending_resume_frozen` | `ESCALATION_FREEZE` | **R-RES.** The interrupted session was frozen when the process stopped — resumes frozen, UNCONDITIONALLY, regardless of curriculum/node validity (SAFETY §3.x: only the parent control plane may ever lift a freeze). No handoff message is re-sent; `/frozen` renders its fixed message independent of `step()`'s output either way. |
+| `NODE_SELECT` | `unprobed_mastered_node` (first NODE_SELECT of the session; at most one per session) | `PROBE_PRESENT` | W3.3 §6 G7 (2026-09-02): a node at ≥ threshold with no `clean_pass` in `probe_event` (session cap fired before `probe_due`, or the child stopped on the probe) is probed before anything else. Pinned sessions skip this (they re-serve their node, so `BRANCH_DECISION` re-fires the probe itself). |
 | `NODE_SELECT` | `fringe_nonempty` | `PATTERN_SELECT` | Chosen node id recorded in transition log. **R11 (2026-07-18):** selection policy is `engine/fringe.select_next` — interleaves among fringe nodes (prefers a node ≠ the one just practised) and every `REVIEW_EVERY_N`-th completed item injects spaced review of a mastered-but-stale node (makes the `forgetting_suspect` probe path reachable). Was: first sorted fringe node until mastery. |
 | `NODE_SELECT` | `fringe_empty_or_completion_met` | `SESSION_END_COMPLETE` | Completion criteria evaluated per parent config. R11: fires when `select_next` returns None (fringe empty AND no stale-mastered review candidates). |
 | `PATTERN_SELECT` | `enter` | `PRESENT` | Chosen pattern id recorded. |

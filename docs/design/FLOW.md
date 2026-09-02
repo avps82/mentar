@@ -60,6 +60,7 @@ keyed by concept id, which is distinct across subjects, so there is no cross-sub
 ```mermaid
 flowchart TD
   SS(["SESSION_START"]) --> NS["NODE_SELECT: pick next unmastered concept"]
+  NS -- "a node sits at ≥0.85 with no clean_pass probe on record (G7, once per session)" --> PP["PROBE_PRESENT"]
   NS -- "all mastered" --> DONE(["SESSION_END_COMPLETE"])
   NS --> PS["PATTERN_SELECT"] --> PR["PRESENT a question"]
   PR --> AW{"AWAIT_ANSWER"}
