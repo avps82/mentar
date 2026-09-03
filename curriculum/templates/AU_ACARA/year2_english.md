@@ -16,7 +16,7 @@ year_level: "Year 2"
 subject: english
 curriculum_standard: "ACARA v9 (AC9E2A Language)"
 schema_version: "0.1"
-label: "English — Year 2 🇦🇺"                        # R3.1: web picker catalog fields
+label: "English — Year 2"                        # R3.1: web picker catalog fields
 icon: "📖"
 description: "Word classes, synonyms, plurals and rhyming words (Australian Year 2)."
 item_source: au_english_year2

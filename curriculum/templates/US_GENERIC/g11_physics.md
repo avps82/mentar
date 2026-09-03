@@ -25,7 +25,7 @@ year_level: "Grade 11"
 subject: physics
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
-label: "Physics — Grade 11 🇺🇸"
+label: "Physics — Grade 11"
 icon: "⚛️"
 description: "Scalars and vectors, energy and Newton's laws, then circuits, the electromagnetic spectrum and conservation — senior physics at roughly Grade 11 level."
 item_source: us_g11_physics

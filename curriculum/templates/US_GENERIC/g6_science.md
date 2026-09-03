@@ -20,7 +20,7 @@ year_level: "Grade 6"
 subject: science
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
-label: "Science — Grade 6 🇺🇸 (general)"
+label: "Science — Grade 6 (general)"
 icon: "🔬"
 description: "Vertebrates and invertebrates, circuits, and reversible changes — general science at roughly Grade 6 level."
 item_source: us_g6_science

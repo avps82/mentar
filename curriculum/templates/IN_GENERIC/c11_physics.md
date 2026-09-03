@@ -21,7 +21,7 @@ year_level: "Class 11"
 subject: physics
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
-label: "Physics — Class 11 🇮🇳"
+label: "Physics — Class 11"
 icon: "⚛️"
 description: "Scalars and vectors, forms of energy, and Newton's laws — senior physics at roughly Class 11 level."
 item_source: in_c11_physics

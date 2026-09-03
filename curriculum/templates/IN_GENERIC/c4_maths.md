@@ -19,7 +19,7 @@ year_level: "Class 4"
 subject: mathematics
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
-label: "Maths — Class 4 🇮🇳 (general)"
+label: "Maths — Class 4 (general)"
 icon: "🔢"
 description: "Place value, times tables, division facts and more — general maths at roughly Class 4 level."
 item_source: in_c4_maths

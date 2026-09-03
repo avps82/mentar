@@ -15,7 +15,7 @@ year_level: pilot
 subject: mathematics
 curriculum_standard: null
 schema_version: "0.1"
-label: "Maths practice ➗"                            # R3.1: web picker catalog fields
+label: "Maths practice"                            # R3.1: web picker catalog fields
 icon: "➗"
 description: "Times tables, skip counting, and doubles/halves -- quick drills that never get old."
 item_source: maths_practice

@@ -21,7 +21,7 @@ year_level: "Year 12"
 subject: biology
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
-label: "Biology — Year 12 🇦🇺"
+label: "Biology — Year 12"
 icon: "🧬"
 description: "Genotype and phenotype, homeostasis, and trophic levels — senior biology at roughly Year 12 level."
 item_source: au12_biology

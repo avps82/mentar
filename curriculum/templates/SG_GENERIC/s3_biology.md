@@ -21,7 +21,7 @@ year_level: "Secondary 3"
 subject: biology
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
-label: "Biology — Secondary 3 🇸🇬"
+label: "Biology — Secondary 3"
 icon: "🧬"
 description: "Transport across membranes, enzymes, and photosynthesis and respiration — senior biology at roughly Secondary 3 level."
 item_source: sg_s3_biology

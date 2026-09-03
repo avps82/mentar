@@ -20,7 +20,7 @@ year_level: "Grade 2"
 subject: science
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
-label: "Science — Grade 2 🇺🇸 (general)"
+label: "Science — Grade 2 (general)"
 icon: "🔬"
 description: "Sound and vibration, Earth in the solar system, and changing a material's shape — general science at roughly Grade 2 level."
 item_source: us_g2_science

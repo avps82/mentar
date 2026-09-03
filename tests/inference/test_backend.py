@@ -657,3 +657,77 @@ def test_revoking_consent_stops_an_ALREADY_BUILT_cloud_call(monkeypatch=None):
             assert "acknowledgment" in str(exc)
     finally:
         C.has_cloud_consent = orig
+
+
+# ── write_inference_config MERGES (2026-09-03) ───────────────────────────────
+# It used to be a plain overwrite of whatever the caller passed, and every caller
+# passes exactly {backend, <one block>}. So each pass through /setup, the Settings
+# backend switch, or `mentar setup` silently deleted grounding: and generation:.
+# Both failures are invisible: retrieval just returns "" and max_tokens quietly
+# doubles to the code default. Six call sites, one function.
+
+def _seeded_config(tmp_dir):
+    p = pathlib.Path(tmp_dir) / "inference.yaml"
+    p.write_text(
+        'backend: vllm\n'
+        'vllm: {base_url: "http://old/v1", model: old, api_key: "${MENTAR_VLLM_API_KEY}"}\n'
+        'generation: {temperature: 0.3, max_tokens: 512, timeout: 120}\n'
+        'grounding:\n'
+        '  zim_dir: /mnt/zim\n'
+        '  sources: {khanacademy: {project: khanacademy, lang: en, selection: all}}\n',
+        encoding="utf-8",
+    )
+    return p
+
+
+def test_changing_the_model_keeps_grounding_and_generation(monkeypatch=None):
+    """The reported failure: change the model in the web form, lose ZIM grounding
+    and the configured token budget, with nothing said anywhere."""
+    import tempfile
+    p = _seeded_config(tempfile.mkdtemp())
+    B.write_inference_config(
+        {"backend": "ollama",
+         "ollama": {"base_url": "http://localhost:11434/v1", "model": "gemma4-12b-q4"}}, p)
+    text = p.read_text(encoding="utf-8")
+    assert "khanacademy" in text, "grounding block was destroyed by a model change"
+    assert "max_tokens: 512" in text, "generation block was destroyed by a model change"
+    assert "gemma4-12b-q4" in text and text.lstrip().startswith("backend: ollama")
+
+
+def test_the_previous_backends_block_is_replaced_not_merged(monkeypatch=None):
+    """Setup asks a family to pick ONE backend, so leaving the old one's settings
+    behind would be the surprising half of 'merge'."""
+    import tempfile
+    p = _seeded_config(tempfile.mkdtemp())
+    B.write_inference_config({"backend": "ollama", "ollama": {"model": "m"}}, p)
+    assert "vllm" not in p.read_text(encoding="utf-8")
+
+
+def test_merging_never_writes_an_expanded_secret_into_the_config(monkeypatch=None):
+    """The merge must read the file RAW. load_inference_config expands ${VAR}, so
+    reusing it here would bake the real key into a file whose entire convention is
+    that secrets stay in .env as references."""
+    import tempfile
+    os.environ["MENTAR_VLLM_API_KEY"] = "sk-must-never-be-written-to-disk"
+    p = _seeded_config(tempfile.mkdtemp())
+    # keep a non-backend block that references the var, to be sure the RAW path is used
+    p.write_text(p.read_text(encoding="utf-8") + 'custom: {token: "${MENTAR_VLLM_API_KEY}"}\n',
+                 encoding="utf-8")
+    B.write_inference_config({"backend": "ollama", "ollama": {"model": "m"}}, p)
+    text = p.read_text(encoding="utf-8")
+    assert "sk-must-never-be-written-to-disk" not in text, "the merge expanded a secret"
+    assert "${MENTAR_VLLM_API_KEY}" in text, "the reference itself was lost"
+
+
+def test_writing_a_fresh_or_unreadable_config_still_works(monkeypatch=None):
+    """No file yet is the first-run case; an unparseable one must not block a
+    parent from re-running setup to fix it."""
+    import tempfile
+    fresh = pathlib.Path(tempfile.mkdtemp()) / "inference.yaml"
+    B.write_inference_config({"backend": "vllm", "vllm": {"model": "m"}}, fresh)
+    assert fresh.read_text(encoding="utf-8").lstrip().startswith("backend: vllm")
+
+    broken = pathlib.Path(tempfile.mkdtemp()) / "inference.yaml"
+    broken.write_text("this: [is, not: valid: yaml\n", encoding="utf-8")
+    B.write_inference_config({"backend": "vllm", "vllm": {"model": "m"}}, broken)
+    assert "model: m" in broken.read_text(encoding="utf-8")

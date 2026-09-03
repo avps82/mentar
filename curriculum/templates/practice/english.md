@@ -17,7 +17,7 @@ year_level: pilot
 subject: english
 curriculum_standard: null
 schema_version: "0.1"
-label: "English practice 📖"                         # R3.1: web picker catalog fields
+label: "English practice"                         # R3.1: web picker catalog fields
 icon: "📖"
 description: "Synonyms, rhymes, odd-one-out, and plurals -- quick vocabulary drills."
 item_source: english_practice

@@ -45,7 +45,8 @@ _COUNT_ONE = re.compile(r"\b1\s+([A-Za-z][a-z]+)\b")
 
 def _all_generators():
     os.environ["MENTAR_DB_PATH"] = os.path.join(tempfile.mkdtemp(), "agree.db")
-    os.environ.pop("MENTAR_PACK_STATE", None)
+    # isolation: the root conftest already points MENTAR_PACK_STATE at a
+    # scratch path. Popping it did the OPPOSITE -- see conftest.py.
     import mentar.web.app as app_mod
     app_mod = importlib.reload(app_mod)
     state = pathlib.Path(tempfile.mkdtemp()) / "pack_state.json"

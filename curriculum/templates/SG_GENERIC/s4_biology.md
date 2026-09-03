@@ -21,7 +21,7 @@ year_level: "Secondary 4"
 subject: biology
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
-label: "Biology — Secondary 4 🇸🇬"
+label: "Biology — Secondary 4"
 icon: "🧬"
 description: "Genotype and phenotype, homeostasis, and trophic levels — senior biology at roughly Secondary 4 level."
 item_source: sg_s4_biology

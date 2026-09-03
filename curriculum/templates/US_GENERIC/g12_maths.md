@@ -23,7 +23,7 @@ year_level: "Grade 12"
 subject: mathematics
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
-label: "Maths — Grade 12 🇺🇸 (general)"
+label: "Maths — Grade 12 (general)"
 icon: "🔢"
 description: "Algebra applied to modelled scenarios: revenue, combined quadratics and compound areas — general senior maths at roughly Grade 12 level."
 item_source: us_g12_maths

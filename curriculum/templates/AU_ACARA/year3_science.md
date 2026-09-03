@@ -20,7 +20,7 @@ year_level: "Year 3"
 subject: science
 curriculum_standard: "ACARA v9 (AC9S3 Science Understanding)"
 schema_version: "0.1"
-label: "Science — Year 3 🇦🇺"                          # R3.1: web picker catalog fields
+label: "Science — Year 3"                          # R3.1: web picker catalog fields
 icon: "🔬"
 description: "Life cycles, heat sources, and habitats (Australian Year 3 Science)."
 item_source: au_science_year3

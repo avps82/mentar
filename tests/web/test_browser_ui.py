@@ -58,7 +58,8 @@ class _Server:
         from werkzeug.serving import make_server
 
         os.environ["MENTAR_DB_PATH"] = os.path.join(tempfile.mkdtemp(), "browser.db")
-        os.environ.pop("MENTAR_PACK_STATE", None)
+        # isolation: the root conftest already points MENTAR_PACK_STATE at a
+        # scratch path. Popping it did the OPPOSITE -- see conftest.py.
         import mentar.web.app as app_mod
         app_mod = importlib.reload(app_mod)
         # Country tabs need country packs, and the default is General-only.

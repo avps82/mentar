@@ -26,7 +26,8 @@ def _client(all_packs_on: bool = True):
     country master switches). Pass all_packs_on=False for the shipped default.
     """
     os.environ["MENTAR_DB_PATH"] = os.path.join(tempfile.mkdtemp(), "test_progress.db")
-    os.environ.pop("MENTAR_PACK_STATE", None)  # isolation: don't inherit a toggle test's state file
+    # isolation: the root conftest already points MENTAR_PACK_STATE at a
+    # scratch path. Popping it did the OPPOSITE -- see conftest.py.
     import importlib
 
     import mentar.web.app as app_mod

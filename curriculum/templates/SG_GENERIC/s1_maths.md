@@ -19,7 +19,7 @@ year_level: "Secondary 1"
 subject: mathematics
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
-label: "Maths — Secondary 1 🇸🇬 (general)"
+label: "Maths — Secondary 1 (general)"
 icon: "🔢"
 description: "Adding and subtracting integers, order of operations with negatives, adding fractions (different denominators) and more — general maths at roughly Secondary 1 level."
 item_source: sg_s1_maths

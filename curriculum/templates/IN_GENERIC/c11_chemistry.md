@@ -21,7 +21,7 @@ year_level: "Class 11"
 subject: chemistry
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
-label: "Chemistry — Class 11 🇮🇳"
+label: "Chemistry — Class 11"
 icon: "🧪"
 description: "Bonding types, groups of the periodic table, and the mole — senior chemistry at roughly Class 11 level."
 item_source: in_c11_chemistry

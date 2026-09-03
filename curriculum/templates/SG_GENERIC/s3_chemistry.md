@@ -21,7 +21,7 @@ year_level: "Secondary 3"
 subject: chemistry
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
-label: "Chemistry — Secondary 3 🇸🇬"
+label: "Chemistry — Secondary 3"
 icon: "🧪"
 description: "Bonding types, groups of the periodic table, and the mole — senior chemistry at roughly Secondary 3 level."
 item_source: sg_s3_chemistry

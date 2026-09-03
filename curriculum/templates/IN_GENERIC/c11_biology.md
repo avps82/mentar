@@ -21,7 +21,7 @@ year_level: "Class 11"
 subject: biology
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
-label: "Biology — Class 11 🇮🇳"
+label: "Biology — Class 11"
 icon: "🧬"
 description: "Transport across membranes, enzymes, and photosynthesis and respiration — senior biology at roughly Class 11 level."
 item_source: in_c11_biology

@@ -23,7 +23,7 @@ year_level: "Secondary 3"
 subject: mathematics
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
-label: "Maths — Secondary 3 🇸🇬 (general)"
+label: "Maths — Secondary 3 (general)"
 icon: "🔢"
 description: "Expanding brackets, index laws, surds and linear equations — general senior maths at roughly Secondary 3 level."
 item_source: sg_s3_maths

@@ -15,7 +15,7 @@ year_level: "Year 4"
 subject: mathematics
 curriculum_standard: "ACARA v9 (AC9M4 Number)"
 schema_version: "0.1"
-label: "Maths — Year 4 🇦🇺"                          # R3.1: web picker catalog fields
+label: "Maths — Year 4"                          # R3.1: web picker catalog fields
 icon: "🔢"
 description: "Bigger numbers, times tables to 10×10, division and equivalent fractions (Australian Year 4)."
 item_source: au_year4

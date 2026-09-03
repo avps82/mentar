@@ -335,6 +335,14 @@ def country_name(code: str | None) -> str:
     return COUNTRY_NAMES.get(code, code)
 
 
+# Available to every template, so a page that shows a country never has to be
+# handed the map separately (2026-09-03: the first-run picker asked a parent to
+# choose "AU" because it printed the raw key, while Settings — reached later and
+# optionally — spelled out "Australia" from this same map. The maintainer had
+# already reported exactly that wording on the Settings page in August).
+app.jinja_env.globals["country_name"] = country_name
+
+
 def _subject_groups() -> list[tuple[str, list[str]]]:
     """R3.1: Year > Subject grouping for the picker/progress switcher (R3.2) —
     computed from the scan, not hand-maintained. Real years sort ascending;
@@ -649,6 +657,23 @@ def _keep_grown_up_pages_on_this_computer():
     return render_template("not_here.html"), 403
 
 
+@app.errorhandler(404)
+def _page_not_found(_err):
+    """A mistyped address is a child's dead end, so it gets the app's own shell
+    and a way back rather than Werkzeug's bare "The requested URL was not found
+    on the server. If you entered the URL manually please check your spelling."
+    (2026-09-03: nothing was registered, so that default is what shipped.)
+
+    Never let the handler itself 500: an error page that errors is worse than
+    the plain one it replaces.
+    """
+    try:
+        return render_template("not_found.html"), 404
+    except Exception:  # noqa: BLE001 — fall back to plain text, never a 500
+        app.logger.warning("404 template failed to render", exc_info=True)
+        return ("There's nothing at that address.", 404)
+
+
 # Per-learner controller instances and turn logs.
 _controllers: dict[str, SessionController] = {}
 _turn_logs: dict[str, list[dict]] = {}      # learner_id -> [{role, text}]
@@ -861,7 +886,7 @@ def setup_curriculum():
     if not picked:
         return render_template("setup_curriculum.html", choices=choices,
                                result={"ok": False,
-                                       "error": f"No packs found for {country} {year}."})
+                                       "error": f"No packs found for {country_name(country)} {year}."})
     # ADD to what is on; never silently switch off the pilot/practice packs a
     # family may already be mid-session in.
     for key in picked:

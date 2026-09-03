@@ -23,7 +23,7 @@ year_level: "Grade 9"
 subject: english
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
-label: "English — Grade 9 🇺🇸 (general)"
+label: "English — Grade 9 (general)"
 icon: "📖"
 description: "Modality, nominalisation, rhetorical devices and sentence types — general senior english at roughly Grade 9 level."
 item_source: us_g9_english

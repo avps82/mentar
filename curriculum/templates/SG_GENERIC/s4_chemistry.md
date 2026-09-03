@@ -21,7 +21,7 @@ year_level: "Secondary 4"
 subject: chemistry
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
-label: "Chemistry — Secondary 4 🇸🇬"
+label: "Chemistry — Secondary 4"
 icon: "🧪"
 description: "Acids and bases, oxidation and reduction, and reaction rates — senior chemistry at roughly Secondary 4 level."
 item_source: sg_s4_chemistry

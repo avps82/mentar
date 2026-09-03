@@ -20,7 +20,7 @@ year_level: "Year 12"
 subject: mathematics
 curriculum_standard: null
 schema_version: "0.1"
-label: "General Maths — Year 12 🇦🇺"
+label: "General Maths — Year 12"
 icon: "📐"
 description: "Sequences, matrices, trigonometry, networks and statistics."
 item_source: au12_general

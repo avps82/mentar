@@ -20,7 +20,7 @@ year_level: "Year 9"
 subject: science
 curriculum_standard: "ACARA v9 (AC9S9U, provisional)"
 schema_version: "0.1"
-label: "Science — Year 9 🇦🇺"
+label: "Science — Year 9"
 icon: "🔬"
 description: "Inside the atom, wave types, and the landforms plate boundaries make (Australian Year 9)."
 item_source: au_science_year9

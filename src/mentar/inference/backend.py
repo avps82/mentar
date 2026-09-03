@@ -99,16 +99,56 @@ def _default_config_path() -> Path:
     return config_path()
 
 
+# The top-level keys a setup write OWNS: the selector and every backend block.
+# Anything else in an existing file was put there by the user and is none of
+# setup's business — see write_inference_config. _CLOUD_BACKENDS is defined
+# further down, so it is unioned in at call time rather than here.
+_LOCAL_BACKEND_KEYS = frozenset({"llamacpp", "vllm", "ollama", "gemini"})
+
+
 def write_inference_config(cfg: dict, path: str | Path | None = None) -> Path:
     """Write an inference config (the inverse of load_inference_config).
 
     Used by `mentar setup` to materialise the chosen backend/model. Does NOT expand
     ${VAR} — values are written verbatim. Returns the path written.
+
+    MERGES rather than overwrites (2026-09-03). This used to be a plain write of
+    whatever the caller passed, and callers pass exactly {backend, <one block>} --
+    so every pass through /setup, the Settings backend switch, or `mentar setup`
+    silently deleted the rest of the file. Two blocks that really live there:
+
+      * ``grounding:`` -- without its ``sources:`` map resolve_grounding returns
+        "" even with zim_dir set, so ZIM grounding just stopped working, quietly.
+      * ``generation:`` -- max_tokens fell back to DEFAULT_MAX_TOKENS (1200) from
+        a configured 512, so explanations more than doubled in length.
+
+    Neither failure says anything in a log. Measured by changing the model in the
+    web form and watching both blocks disappear.
+
+    Backend blocks are still replaced, not merged: setup asks the family to pick
+    ONE, so leaving the previous backend's settings behind would be the surprise.
     """
     import yaml
     out = Path(path) if path else _default_config_path()
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(yaml.safe_dump(cfg, sort_keys=False, default_flow_style=False), encoding="utf-8")
+
+    merged = dict(cfg)
+    if out.exists():
+        # RAW read, deliberately NOT load_inference_config: that expands ${VAR},
+        # and writing the result back would bake a real API key into a file whose
+        # whole convention is that secrets stay in .env as references.
+        try:
+            existing = yaml.safe_load(out.read_text(encoding="utf-8")) or {}
+        except Exception:  # noqa: BLE001 — an unreadable config must not block setup
+            existing = {}
+        if isinstance(existing, dict):
+            owned = _LOCAL_BACKEND_KEYS | _CLOUD_BACKENDS | {"backend"}
+            for key, value in existing.items():
+                if key in owned:
+                    continue
+                merged.setdefault(key, value)
+
+    out.write_text(yaml.safe_dump(merged, sort_keys=False, default_flow_style=False), encoding="utf-8")
     return out
 
 

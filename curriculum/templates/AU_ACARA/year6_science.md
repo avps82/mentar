@@ -20,7 +20,7 @@ year_level: "Year 6"
 subject: science
 curriculum_standard: "ACARA v9 (AC9S6 Science Understanding)"
 schema_version: "0.1"
-label: "Science — Year 6 🇦🇺"                          # R3.1: web picker catalog fields
+label: "Science — Year 6"                          # R3.1: web picker catalog fields
 icon: "🔬"
 description: "Vertebrates and invertebrates, electrical conductors and insulators, and reversible/irreversible changes (Australian Year 6 Science)."
 item_source: au_science_year6

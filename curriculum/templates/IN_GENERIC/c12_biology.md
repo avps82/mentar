@@ -21,7 +21,7 @@ year_level: "Class 12"
 subject: biology
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
-label: "Biology — Class 12 🇮🇳"
+label: "Biology — Class 12"
 icon: "🧬"
 description: "Genotype and phenotype, homeostasis, and trophic levels — senior biology at roughly Class 12 level."
 item_source: in_c12_biology

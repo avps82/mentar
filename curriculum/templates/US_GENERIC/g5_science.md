@@ -20,7 +20,7 @@ year_level: "Grade 5"
 subject: science
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
-label: "Science — Grade 5 🇺🇸 (general)"
+label: "Science — Grade 5 (general)"
 icon: "🔬"
 description: "Adaptations, dissolving, and transparent or opaque materials — general science at roughly Grade 5 level."
 item_source: us_g5_science

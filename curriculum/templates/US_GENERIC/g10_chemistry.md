@@ -25,7 +25,7 @@ year_level: "Grade 10"
 subject: chemistry
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
-label: "Chemistry — Grade 10 🇺🇸"
+label: "Chemistry — Grade 10"
 icon: "🧪"
 description: "Bonding, the periodic table and the mole, then acids and bases, redox and reaction rates — senior chemistry at roughly Grade 10 level."
 item_source: us_g10_chemistry

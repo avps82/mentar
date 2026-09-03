@@ -21,7 +21,7 @@ year_level: "Class 12"
 subject: chemistry
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
-label: "Chemistry — Class 12 🇮🇳"
+label: "Chemistry — Class 12"
 icon: "🧪"
 description: "Acids and bases, oxidation and reduction, and reaction rates — senior chemistry at roughly Class 12 level."
 item_source: in_c12_chemistry

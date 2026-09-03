@@ -14,7 +14,7 @@ year_level: "Year 11"
 subject: english
 curriculum_standard: null
 schema_version: "0.1"
-label: "Essential English — Year 11 🇦🇺"
+label: "Essential English — Year 11"
 icon: "🛠️"
 description: "Practical English: workplace texts, media and clear communication."
 item_source: au11_essential_english

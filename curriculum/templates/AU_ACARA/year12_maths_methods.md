@@ -18,7 +18,7 @@ year_level: "Year 12"
 subject: mathematics
 curriculum_standard: null
 schema_version: "0.1"
-label: "Maths Methods — Year 12 🇦🇺"
+label: "Maths Methods — Year 12"
 icon: "📈"
 description: "Functions, trigonometric functions, calculus and probability — the mainstream senior course."
 item_source: au12_methods

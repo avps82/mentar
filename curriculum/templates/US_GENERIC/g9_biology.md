@@ -25,7 +25,7 @@ year_level: "Grade 9"
 subject: biology
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
-label: "Biology — Grade 9 🇺🇸"
+label: "Biology — Grade 9"
 icon: "🧬"
 description: "Transport across membranes, enzymes, photosynthesis and respiration, genotype and phenotype, homeostasis and trophic levels — senior biology at roughly Grade 9 level."
 item_source: us_g9_biology

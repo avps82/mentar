@@ -20,7 +20,7 @@ year_level: "Primary 2"
 subject: english
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
-label: "English — Primary 2 🇸🇬 (general)"
+label: "English — Primary 2 (general)"
 icon: "📖"
 description: "Word classes, synonyms, plurals and rhyming words — general English at roughly Primary 2 level."
 item_source: sg_p2_english

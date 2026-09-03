@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import pathlib
+import re
 import sys
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -27,476 +28,476 @@ _TPL = REPO_ROOT / "curriculum" / "templates"
 # proven by its absence below.
 _EXPECTED = {
     "curriculum/templates/_pilot/fractions.md": {
-        "key": "fractions", "label": "Fractions 🍕", "item_source": "pilot_fractions",
+        "key": "fractions", "label": "Fractions", "item_source": "pilot_fractions",
     },
     "curriculum/templates/_pilot/arithmetic.md": {
-        "key": "arithmetic", "label": "Maths: + − × 🔢", "item_source": "arithmetic",
+        "key": "arithmetic", "label": "Maths: + − ×", "item_source": "arithmetic",
     },
     "curriculum/templates/_pilot/science.md": {
-        "key": "science", "label": "Science 🔬", "item_source": "science",
+        "key": "science", "label": "Science", "item_source": "science",
     },
     "curriculum/templates/AU_ACARA/year3_maths.md": {
-        "key": "au_acara_year3_maths", "label": "Maths — Year 3 🇦🇺", "item_source": "au_year3",
+        "key": "au_acara_year3_maths", "label": "Maths — Year 3", "item_source": "au_year3",
     },
     "curriculum/templates/AU_ACARA/year4_maths.md": {
-        "key": "au_acara_year4_maths", "label": "Maths — Year 4 🇦🇺", "item_source": "au_year4",
+        "key": "au_acara_year4_maths", "label": "Maths — Year 4", "item_source": "au_year4",
     },
     "curriculum/templates/AU_ACARA/year2_maths.md": {
-        "key": "au_acara_year2_maths", "label": "Maths — Year 2 🇦🇺", "item_source": "au_year2",
+        "key": "au_acara_year2_maths", "label": "Maths — Year 2", "item_source": "au_year2",
     },
     "curriculum/templates/AU_ACARA/year2_science.md": {
-        "key": "au_acara_year2_science", "label": "Science — Year 2 🇦🇺", "item_source": "au_science_year2",
+        "key": "au_acara_year2_science", "label": "Science — Year 2", "item_source": "au_science_year2",
     },
     "curriculum/templates/AU_ACARA/year3_science.md": {
-        "key": "au_acara_year3_science", "label": "Science — Year 3 🇦🇺", "item_source": "au_science_year3",
+        "key": "au_acara_year3_science", "label": "Science — Year 3", "item_source": "au_science_year3",
     },
     "curriculum/templates/AU_ACARA/year4_science.md": {
-        "key": "au_acara_year4_science", "label": "Science — Year 4 🇦🇺", "item_source": "au_science_year4",
+        "key": "au_acara_year4_science", "label": "Science — Year 4", "item_source": "au_science_year4",
     },
     "curriculum/templates/AU_ACARA/year5_science.md": {
-        "key": "au_acara_year5_science", "label": "Science — Year 5 🇦🇺", "item_source": "au_science_year5",
+        "key": "au_acara_year5_science", "label": "Science — Year 5", "item_source": "au_science_year5",
     },
     "curriculum/templates/AU_ACARA/year6_science.md": {
-        "key": "au_acara_year6_science", "label": "Science — Year 6 🇦🇺", "item_source": "au_science_year6",
+        "key": "au_acara_year6_science", "label": "Science — Year 6", "item_source": "au_science_year6",
     },
     "curriculum/templates/AU_ACARA/year7_science.md": {
-        "key": "au_acara_year7_science", "label": "Science — Year 7 🇦🇺", "item_source": "au_science_year7",
+        "key": "au_acara_year7_science", "label": "Science — Year 7", "item_source": "au_science_year7",
     },
     "curriculum/templates/AU_ACARA/year8_science.md": {
-        "key": "au_acara_year8_science", "label": "Science — Year 8 🇦🇺", "item_source": "au_science_year8",
+        "key": "au_acara_year8_science", "label": "Science — Year 8", "item_source": "au_science_year8",
     },
     "curriculum/templates/AU_ACARA/year5_maths.md": {
-        "key": "au_acara_year5_maths", "label": "Maths — Year 5 🇦🇺", "item_source": "au_year5",
+        "key": "au_acara_year5_maths", "label": "Maths — Year 5", "item_source": "au_year5",
     },
     "curriculum/templates/AU_ACARA/year6_maths.md": {
-        "key": "au_acara_year6_maths", "label": "Maths — Year 6 🇦🇺", "item_source": "au_year6",
+        "key": "au_acara_year6_maths", "label": "Maths — Year 6", "item_source": "au_year6",
     },
     "curriculum/templates/AU_ACARA/year7_maths.md": {
-        "key": "au_acara_year7_maths", "label": "Maths — Year 7 🇦🇺", "item_source": "au_year7",
+        "key": "au_acara_year7_maths", "label": "Maths — Year 7", "item_source": "au_year7",
     },
     "curriculum/templates/AU_ACARA/year8_maths.md": {
-        "key": "au_acara_year8_maths", "label": "Maths — Year 8 🇦🇺", "item_source": "au_year8",
+        "key": "au_acara_year8_maths", "label": "Maths — Year 8", "item_source": "au_year8",
     },
     "curriculum/templates/AU_ACARA/year9_maths.md": {
-        "key": "au_acara_year9_maths", "label": "Maths — Year 9 🇦🇺", "item_source": "au_year9",
+        "key": "au_acara_year9_maths", "label": "Maths — Year 9", "item_source": "au_year9",
     },
     "curriculum/templates/AU_ACARA/year10_maths.md": {
-        "key": "au_acara_year10_maths", "label": "Maths — Year 10 🇦🇺", "item_source": "au_year10",
+        "key": "au_acara_year10_maths", "label": "Maths — Year 10", "item_source": "au_year10",
     },
     "curriculum/templates/AU_ACARA/year11_maths_essential.md": {
-        "key": "au_acara_year11_maths_essential", "label": "Essential Maths — Year 11 🇦🇺", "item_source": "au11_essential",
+        "key": "au_acara_year11_maths_essential", "label": "Essential Maths — Year 11", "item_source": "au11_essential",
     },
     "curriculum/templates/AU_ACARA/year11_maths_general.md": {
-        "key": "au_acara_year11_maths_general", "label": "General Maths — Year 11 🇦🇺", "item_source": "au11_general",
+        "key": "au_acara_year11_maths_general", "label": "General Maths — Year 11", "item_source": "au11_general",
     },
     "curriculum/templates/AU_ACARA/year12_maths_essential.md": {
-        "key": "au_acara_year12_maths_essential", "label": "Essential Maths — Year 12 🇦🇺", "item_source": "au12_essential",
+        "key": "au_acara_year12_maths_essential", "label": "Essential Maths — Year 12", "item_source": "au12_essential",
     },
     "curriculum/templates/AU_ACARA/year12_maths_general.md": {
-        "key": "au_acara_year12_maths_general", "label": "General Maths — Year 12 🇦🇺", "item_source": "au12_general",
+        "key": "au_acara_year12_maths_general", "label": "General Maths — Year 12", "item_source": "au12_general",
     },
     "curriculum/templates/AU_ACARA/year11_maths_methods.md": {
-        "key": "au_acara_year11_maths_methods", "label": "Maths Methods — Year 11 🇦🇺", "item_source": "au11_methods",
+        "key": "au_acara_year11_maths_methods", "label": "Maths Methods — Year 11", "item_source": "au11_methods",
     },
     "curriculum/templates/AU_ACARA/year11_maths_specialist.md": {
-        "key": "au_acara_year11_maths_specialist", "label": "Specialist Maths — Year 11 🇦🇺", "item_source": "au11_specialist",
+        "key": "au_acara_year11_maths_specialist", "label": "Specialist Maths — Year 11", "item_source": "au11_specialist",
     },
     "curriculum/templates/AU_ACARA/year12_maths_methods.md": {
-        "key": "au_acara_year12_maths_methods", "label": "Maths Methods — Year 12 🇦🇺", "item_source": "au12_methods",
+        "key": "au_acara_year12_maths_methods", "label": "Maths Methods — Year 12", "item_source": "au12_methods",
     },
     "curriculum/templates/AU_ACARA/year12_maths_specialist.md": {
-        "key": "au_acara_year12_maths_specialist", "label": "Specialist Maths — Year 12 🇦🇺", "item_source": "au12_specialist",
+        "key": "au_acara_year12_maths_specialist", "label": "Specialist Maths — Year 12", "item_source": "au12_specialist",
     },
     "curriculum/templates/AU_ACARA/year7_english.md": {
-        "key": "au_acara_year7_english", "label": "English — Year 7 🇦🇺", "item_source": "au_english_year7",
+        "key": "au_acara_year7_english", "label": "English — Year 7", "item_source": "au_english_year7",
     },
     "curriculum/templates/AU_ACARA/year8_english.md": {
-        "key": "au_acara_year8_english", "label": "English — Year 8 🇦🇺", "item_source": "au_english_year8",
+        "key": "au_acara_year8_english", "label": "English — Year 8", "item_source": "au_english_year8",
     },
     "curriculum/templates/AU_ACARA/year2_english.md": {
-        "key": "au_acara_year2_english", "label": "English — Year 2 🇦🇺", "item_source": "au_english_year2",
+        "key": "au_acara_year2_english", "label": "English — Year 2", "item_source": "au_english_year2",
     },
     "curriculum/templates/AU_ACARA/year3_english.md": {
-        "key": "au_acara_year3_english", "label": "English — Year 3 🇦🇺", "item_source": "au_english_year3",
+        "key": "au_acara_year3_english", "label": "English — Year 3", "item_source": "au_english_year3",
     },
     "curriculum/templates/AU_ACARA/year4_english.md": {
-        "key": "au_acara_year4_english", "label": "English — Year 4 🇦🇺", "item_source": "au_english_year4",
+        "key": "au_acara_year4_english", "label": "English — Year 4", "item_source": "au_english_year4",
     },
     "curriculum/templates/AU_ACARA/year5_english.md": {
-        "key": "au_acara_year5_english", "label": "English — Year 5 🇦🇺", "item_source": "au_english_year5",
+        "key": "au_acara_year5_english", "label": "English — Year 5", "item_source": "au_english_year5",
     },
     "curriculum/templates/AU_ACARA/year6_english.md": {
-        "key": "au_acara_year6_english", "label": "English — Year 6 🇦🇺", "item_source": "au_english_year6",
+        "key": "au_acara_year6_english", "label": "English — Year 6", "item_source": "au_english_year6",
     },
     "curriculum/templates/practice/maths.md": {
-        "key": "practice_maths", "label": "Maths practice ➗", "item_source": "maths_practice",
+        "key": "practice_maths", "label": "Maths practice", "item_source": "maths_practice",
     },
     "curriculum/templates/practice/english.md": {
-        "key": "practice_english", "label": "English practice 📖", "item_source": "english_practice",
+        "key": "practice_english", "label": "English practice", "item_source": "english_practice",
     },
     "curriculum/templates/IN_GENERIC/class3_maths.md": {
-        "key": "in_generic_class3_maths", "label": "Maths — Class 3 🇮🇳 (general)",
+        "key": "in_generic_class3_maths", "label": "Maths — Class 3 (general)",
         "item_source": "in_generic_maths",
     },
     "curriculum/templates/SG_GENERIC/p2_maths.md": {
-        "key": "sg_generic_p2_maths", "label": "Maths — Primary 2 🇸🇬 (general)", "item_source": "sg_p2_maths",
+        "key": "sg_generic_p2_maths", "label": "Maths — Primary 2 (general)", "item_source": "sg_p2_maths",
     },
     "curriculum/templates/SG_GENERIC/p3_maths.md": {
-        "key": "sg_generic_p3_maths", "label": "Maths — Primary 3 🇸🇬 (general)", "item_source": "sg_p3_maths",
+        "key": "sg_generic_p3_maths", "label": "Maths — Primary 3 (general)", "item_source": "sg_p3_maths",
     },
     "curriculum/templates/SG_GENERIC/p4_maths.md": {
-        "key": "sg_generic_p4_maths", "label": "Maths — Primary 4 🇸🇬 (general)", "item_source": "sg_p4_maths",
+        "key": "sg_generic_p4_maths", "label": "Maths — Primary 4 (general)", "item_source": "sg_p4_maths",
     },
     "curriculum/templates/SG_GENERIC/p5_maths.md": {
-        "key": "sg_generic_p5_maths", "label": "Maths — Primary 5 🇸🇬 (general)", "item_source": "sg_p5_maths",
+        "key": "sg_generic_p5_maths", "label": "Maths — Primary 5 (general)", "item_source": "sg_p5_maths",
     },
     "curriculum/templates/SG_GENERIC/p6_maths.md": {
-        "key": "sg_generic_p6_maths", "label": "Maths — Primary 6 🇸🇬 (general)", "item_source": "sg_p6_maths",
+        "key": "sg_generic_p6_maths", "label": "Maths — Primary 6 (general)", "item_source": "sg_p6_maths",
     },
     "curriculum/templates/SG_GENERIC/s1_maths.md": {
-        "key": "sg_generic_s1_maths", "label": "Maths — Secondary 1 🇸🇬 (general)", "item_source": "sg_s1_maths",
+        "key": "sg_generic_s1_maths", "label": "Maths — Secondary 1 (general)", "item_source": "sg_s1_maths",
     },
     "curriculum/templates/SG_GENERIC/s2_maths.md": {
-        "key": "sg_generic_s2_maths", "label": "Maths — Secondary 2 🇸🇬 (general)", "item_source": "sg_s2_maths",
+        "key": "sg_generic_s2_maths", "label": "Maths — Secondary 2 (general)", "item_source": "sg_s2_maths",
     },
     "curriculum/templates/US_GENERIC/g2_maths.md": {
-        "key": "us_generic_g2_maths", "label": "Maths — Grade 2 🇺🇸 (general)", "item_source": "us_g2_maths",
+        "key": "us_generic_g2_maths", "label": "Maths — Grade 2 (general)", "item_source": "us_g2_maths",
     },
     "curriculum/templates/US_GENERIC/g3_maths.md": {
-        "key": "us_generic_g3_maths", "label": "Maths — Grade 3 🇺🇸 (general)", "item_source": "us_g3_maths",
+        "key": "us_generic_g3_maths", "label": "Maths — Grade 3 (general)", "item_source": "us_g3_maths",
     },
     "curriculum/templates/US_GENERIC/g4_maths.md": {
-        "key": "us_generic_g4_maths", "label": "Maths — Grade 4 🇺🇸 (general)", "item_source": "us_g4_maths",
+        "key": "us_generic_g4_maths", "label": "Maths — Grade 4 (general)", "item_source": "us_g4_maths",
     },
     "curriculum/templates/US_GENERIC/g5_maths.md": {
-        "key": "us_generic_g5_maths", "label": "Maths — Grade 5 🇺🇸 (general)", "item_source": "us_g5_maths",
+        "key": "us_generic_g5_maths", "label": "Maths — Grade 5 (general)", "item_source": "us_g5_maths",
     },
     "curriculum/templates/US_GENERIC/g6_maths.md": {
-        "key": "us_generic_g6_maths", "label": "Maths — Grade 6 🇺🇸 (general)", "item_source": "us_g6_maths",
+        "key": "us_generic_g6_maths", "label": "Maths — Grade 6 (general)", "item_source": "us_g6_maths",
     },
     "curriculum/templates/US_GENERIC/g7_maths.md": {
-        "key": "us_generic_g7_maths", "label": "Maths — Grade 7 🇺🇸 (general)", "item_source": "us_g7_maths",
+        "key": "us_generic_g7_maths", "label": "Maths — Grade 7 (general)", "item_source": "us_g7_maths",
     },
     "curriculum/templates/US_GENERIC/g8_maths.md": {
-        "key": "us_generic_g8_maths", "label": "Maths — Grade 8 🇺🇸 (general)", "item_source": "us_g8_maths",
+        "key": "us_generic_g8_maths", "label": "Maths — Grade 8 (general)", "item_source": "us_g8_maths",
     },
     "curriculum/templates/IN_GENERIC/c2_maths.md": {
-        "key": "in_generic_c2_maths", "label": "Maths — Class 2 🇮🇳 (general)", "item_source": "in_c2_maths",
+        "key": "in_generic_c2_maths", "label": "Maths — Class 2 (general)", "item_source": "in_c2_maths",
     },
     "curriculum/templates/IN_GENERIC/c4_maths.md": {
-        "key": "in_generic_c4_maths", "label": "Maths — Class 4 🇮🇳 (general)", "item_source": "in_c4_maths",
+        "key": "in_generic_c4_maths", "label": "Maths — Class 4 (general)", "item_source": "in_c4_maths",
     },
     "curriculum/templates/IN_GENERIC/c5_maths.md": {
-        "key": "in_generic_c5_maths", "label": "Maths — Class 5 🇮🇳 (general)", "item_source": "in_c5_maths",
+        "key": "in_generic_c5_maths", "label": "Maths — Class 5 (general)", "item_source": "in_c5_maths",
     },
     "curriculum/templates/IN_GENERIC/c6_maths.md": {
-        "key": "in_generic_c6_maths", "label": "Maths — Class 6 🇮🇳 (general)", "item_source": "in_c6_maths",
+        "key": "in_generic_c6_maths", "label": "Maths — Class 6 (general)", "item_source": "in_c6_maths",
     },
     "curriculum/templates/IN_GENERIC/c7_maths.md": {
-        "key": "in_generic_c7_maths", "label": "Maths — Class 7 🇮🇳 (general)", "item_source": "in_c7_maths",
+        "key": "in_generic_c7_maths", "label": "Maths — Class 7 (general)", "item_source": "in_c7_maths",
     },
     "curriculum/templates/IN_GENERIC/c8_maths.md": {
-        "key": "in_generic_c8_maths", "label": "Maths — Class 8 🇮🇳 (general)", "item_source": "in_c8_maths",
+        "key": "in_generic_c8_maths", "label": "Maths — Class 8 (general)", "item_source": "in_c8_maths",
     },
     "curriculum/templates/SG_GENERIC/p2_english.md": {
-        "key": "sg_generic_p2_english", "label": "English — Primary 2 🇸🇬 (general)", "item_source": "sg_p2_english",
+        "key": "sg_generic_p2_english", "label": "English — Primary 2 (general)", "item_source": "sg_p2_english",
     },
     "curriculum/templates/SG_GENERIC/p3_english.md": {
-        "key": "sg_generic_p3_english", "label": "English — Primary 3 🇸🇬 (general)", "item_source": "sg_p3_english",
+        "key": "sg_generic_p3_english", "label": "English — Primary 3 (general)", "item_source": "sg_p3_english",
     },
     "curriculum/templates/SG_GENERIC/p4_english.md": {
-        "key": "sg_generic_p4_english", "label": "English — Primary 4 🇸🇬 (general)", "item_source": "sg_p4_english",
+        "key": "sg_generic_p4_english", "label": "English — Primary 4 (general)", "item_source": "sg_p4_english",
     },
     "curriculum/templates/SG_GENERIC/p5_english.md": {
-        "key": "sg_generic_p5_english", "label": "English — Primary 5 🇸🇬 (general)", "item_source": "sg_p5_english",
+        "key": "sg_generic_p5_english", "label": "English — Primary 5 (general)", "item_source": "sg_p5_english",
     },
     "curriculum/templates/SG_GENERIC/p6_english.md": {
-        "key": "sg_generic_p6_english", "label": "English — Primary 6 🇸🇬 (general)", "item_source": "sg_p6_english",
+        "key": "sg_generic_p6_english", "label": "English — Primary 6 (general)", "item_source": "sg_p6_english",
     },
     "curriculum/templates/SG_GENERIC/s1_english.md": {
-        "key": "sg_generic_s1_english", "label": "English — Secondary 1 🇸🇬 (general)", "item_source": "sg_s1_english",
+        "key": "sg_generic_s1_english", "label": "English — Secondary 1 (general)", "item_source": "sg_s1_english",
     },
     "curriculum/templates/SG_GENERIC/s2_english.md": {
-        "key": "sg_generic_s2_english", "label": "English — Secondary 2 🇸🇬 (general)", "item_source": "sg_s2_english",
+        "key": "sg_generic_s2_english", "label": "English — Secondary 2 (general)", "item_source": "sg_s2_english",
     },
     "curriculum/templates/US_GENERIC/g2_english.md": {
-        "key": "us_generic_g2_english", "label": "English — Grade 2 🇺🇸 (general)", "item_source": "us_g2_english",
+        "key": "us_generic_g2_english", "label": "English — Grade 2 (general)", "item_source": "us_g2_english",
     },
     "curriculum/templates/US_GENERIC/g3_english.md": {
-        "key": "us_generic_g3_english", "label": "English — Grade 3 🇺🇸 (general)", "item_source": "us_g3_english",
+        "key": "us_generic_g3_english", "label": "English — Grade 3 (general)", "item_source": "us_g3_english",
     },
     "curriculum/templates/US_GENERIC/g4_english.md": {
-        "key": "us_generic_g4_english", "label": "English — Grade 4 🇺🇸 (general)", "item_source": "us_g4_english",
+        "key": "us_generic_g4_english", "label": "English — Grade 4 (general)", "item_source": "us_g4_english",
     },
     "curriculum/templates/US_GENERIC/g5_english.md": {
-        "key": "us_generic_g5_english", "label": "English — Grade 5 🇺🇸 (general)", "item_source": "us_g5_english",
+        "key": "us_generic_g5_english", "label": "English — Grade 5 (general)", "item_source": "us_g5_english",
     },
     "curriculum/templates/US_GENERIC/g6_english.md": {
-        "key": "us_generic_g6_english", "label": "English — Grade 6 🇺🇸 (general)", "item_source": "us_g6_english",
+        "key": "us_generic_g6_english", "label": "English — Grade 6 (general)", "item_source": "us_g6_english",
     },
     "curriculum/templates/US_GENERIC/g7_english.md": {
-        "key": "us_generic_g7_english", "label": "English — Grade 7 🇺🇸 (general)", "item_source": "us_g7_english",
+        "key": "us_generic_g7_english", "label": "English — Grade 7 (general)", "item_source": "us_g7_english",
     },
     "curriculum/templates/US_GENERIC/g8_english.md": {
-        "key": "us_generic_g8_english", "label": "English — Grade 8 🇺🇸 (general)", "item_source": "us_g8_english",
+        "key": "us_generic_g8_english", "label": "English — Grade 8 (general)", "item_source": "us_g8_english",
     },
     "curriculum/templates/IN_GENERIC/c2_english.md": {
-        "key": "in_generic_c2_english", "label": "English — Class 2 🇮🇳 (general)", "item_source": "in_c2_english",
+        "key": "in_generic_c2_english", "label": "English — Class 2 (general)", "item_source": "in_c2_english",
     },
     "curriculum/templates/IN_GENERIC/c3_english.md": {
-        "key": "in_generic_c3_english", "label": "English — Class 3 🇮🇳 (general)", "item_source": "in_c3_english",
+        "key": "in_generic_c3_english", "label": "English — Class 3 (general)", "item_source": "in_c3_english",
     },
     "curriculum/templates/IN_GENERIC/c4_english.md": {
-        "key": "in_generic_c4_english", "label": "English — Class 4 🇮🇳 (general)", "item_source": "in_c4_english",
+        "key": "in_generic_c4_english", "label": "English — Class 4 (general)", "item_source": "in_c4_english",
     },
     "curriculum/templates/IN_GENERIC/c5_english.md": {
-        "key": "in_generic_c5_english", "label": "English — Class 5 🇮🇳 (general)", "item_source": "in_c5_english",
+        "key": "in_generic_c5_english", "label": "English — Class 5 (general)", "item_source": "in_c5_english",
     },
     "curriculum/templates/IN_GENERIC/c6_english.md": {
-        "key": "in_generic_c6_english", "label": "English — Class 6 🇮🇳 (general)", "item_source": "in_c6_english",
+        "key": "in_generic_c6_english", "label": "English — Class 6 (general)", "item_source": "in_c6_english",
     },
     "curriculum/templates/IN_GENERIC/c7_english.md": {
-        "key": "in_generic_c7_english", "label": "English — Class 7 🇮🇳 (general)", "item_source": "in_c7_english",
+        "key": "in_generic_c7_english", "label": "English — Class 7 (general)", "item_source": "in_c7_english",
     },
     "curriculum/templates/IN_GENERIC/c8_english.md": {
-        "key": "in_generic_c8_english", "label": "English — Class 8 🇮🇳 (general)", "item_source": "in_c8_english",
+        "key": "in_generic_c8_english", "label": "English — Class 8 (general)", "item_source": "in_c8_english",
     },
     "curriculum/templates/IN_GENERIC/c2_science.md": {
-        "key": "in_generic_c2_science", "label": "Science — Class 2 🇮🇳 (general)", "item_source": "in_c2_science",
+        "key": "in_generic_c2_science", "label": "Science — Class 2 (general)", "item_source": "in_c2_science",
     },
     "curriculum/templates/IN_GENERIC/c3_science.md": {
-        "key": "in_generic_c3_science", "label": "Science — Class 3 🇮🇳 (general)", "item_source": "in_c3_science",
+        "key": "in_generic_c3_science", "label": "Science — Class 3 (general)", "item_source": "in_c3_science",
     },
     "curriculum/templates/IN_GENERIC/c4_science.md": {
-        "key": "in_generic_c4_science", "label": "Science — Class 4 🇮🇳 (general)", "item_source": "in_c4_science",
+        "key": "in_generic_c4_science", "label": "Science — Class 4 (general)", "item_source": "in_c4_science",
     },
     "curriculum/templates/IN_GENERIC/c5_science.md": {
-        "key": "in_generic_c5_science", "label": "Science — Class 5 🇮🇳 (general)", "item_source": "in_c5_science",
+        "key": "in_generic_c5_science", "label": "Science — Class 5 (general)", "item_source": "in_c5_science",
     },
     "curriculum/templates/IN_GENERIC/c6_science.md": {
-        "key": "in_generic_c6_science", "label": "Science — Class 6 🇮🇳 (general)", "item_source": "in_c6_science",
+        "key": "in_generic_c6_science", "label": "Science — Class 6 (general)", "item_source": "in_c6_science",
     },
     "curriculum/templates/IN_GENERIC/c7_science.md": {
-        "key": "in_generic_c7_science", "label": "Science — Class 7 🇮🇳 (general)", "item_source": "in_c7_science",
+        "key": "in_generic_c7_science", "label": "Science — Class 7 (general)", "item_source": "in_c7_science",
     },
     "curriculum/templates/IN_GENERIC/c8_science.md": {
-        "key": "in_generic_c8_science", "label": "Science — Class 8 🇮🇳 (general)", "item_source": "in_c8_science",
+        "key": "in_generic_c8_science", "label": "Science — Class 8 (general)", "item_source": "in_c8_science",
     },
     "curriculum/templates/SG_GENERIC/p2_science.md": {
-        "key": "sg_generic_p2_science", "label": "Science — Primary 2 🇸🇬 (general)", "item_source": "sg_p2_science",
+        "key": "sg_generic_p2_science", "label": "Science — Primary 2 (general)", "item_source": "sg_p2_science",
     },
     "curriculum/templates/SG_GENERIC/p3_science.md": {
-        "key": "sg_generic_p3_science", "label": "Science — Primary 3 🇸🇬 (general)", "item_source": "sg_p3_science",
+        "key": "sg_generic_p3_science", "label": "Science — Primary 3 (general)", "item_source": "sg_p3_science",
     },
     "curriculum/templates/SG_GENERIC/p4_science.md": {
-        "key": "sg_generic_p4_science", "label": "Science — Primary 4 🇸🇬 (general)", "item_source": "sg_p4_science",
+        "key": "sg_generic_p4_science", "label": "Science — Primary 4 (general)", "item_source": "sg_p4_science",
     },
     "curriculum/templates/SG_GENERIC/p5_science.md": {
-        "key": "sg_generic_p5_science", "label": "Science — Primary 5 🇸🇬 (general)", "item_source": "sg_p5_science",
+        "key": "sg_generic_p5_science", "label": "Science — Primary 5 (general)", "item_source": "sg_p5_science",
     },
     "curriculum/templates/SG_GENERIC/p6_science.md": {
-        "key": "sg_generic_p6_science", "label": "Science — Primary 6 🇸🇬 (general)", "item_source": "sg_p6_science",
+        "key": "sg_generic_p6_science", "label": "Science — Primary 6 (general)", "item_source": "sg_p6_science",
     },
     "curriculum/templates/SG_GENERIC/s1_science.md": {
-        "key": "sg_generic_s1_science", "label": "Science — Secondary 1 🇸🇬 (general)", "item_source": "sg_s1_science",
+        "key": "sg_generic_s1_science", "label": "Science — Secondary 1 (general)", "item_source": "sg_s1_science",
     },
     "curriculum/templates/SG_GENERIC/s2_science.md": {
-        "key": "sg_generic_s2_science", "label": "Science — Secondary 2 🇸🇬 (general)", "item_source": "sg_s2_science",
+        "key": "sg_generic_s2_science", "label": "Science — Secondary 2 (general)", "item_source": "sg_s2_science",
     },
     "curriculum/templates/US_GENERIC/g2_science.md": {
-        "key": "us_generic_g2_science", "label": "Science — Grade 2 🇺🇸 (general)", "item_source": "us_g2_science",
+        "key": "us_generic_g2_science", "label": "Science — Grade 2 (general)", "item_source": "us_g2_science",
     },
     "curriculum/templates/US_GENERIC/g3_science.md": {
-        "key": "us_generic_g3_science", "label": "Science — Grade 3 🇺🇸 (general)", "item_source": "us_g3_science",
+        "key": "us_generic_g3_science", "label": "Science — Grade 3 (general)", "item_source": "us_g3_science",
     },
     "curriculum/templates/US_GENERIC/g4_science.md": {
-        "key": "us_generic_g4_science", "label": "Science — Grade 4 🇺🇸 (general)", "item_source": "us_g4_science",
+        "key": "us_generic_g4_science", "label": "Science — Grade 4 (general)", "item_source": "us_g4_science",
     },
     "curriculum/templates/US_GENERIC/g5_science.md": {
-        "key": "us_generic_g5_science", "label": "Science — Grade 5 🇺🇸 (general)", "item_source": "us_g5_science",
+        "key": "us_generic_g5_science", "label": "Science — Grade 5 (general)", "item_source": "us_g5_science",
     },
     "curriculum/templates/US_GENERIC/g6_science.md": {
-        "key": "us_generic_g6_science", "label": "Science — Grade 6 🇺🇸 (general)", "item_source": "us_g6_science",
+        "key": "us_generic_g6_science", "label": "Science — Grade 6 (general)", "item_source": "us_g6_science",
     },
     "curriculum/templates/US_GENERIC/g7_science.md": {
-        "key": "us_generic_g7_science", "label": "Science — Grade 7 🇺🇸 (general)", "item_source": "us_g7_science",
+        "key": "us_generic_g7_science", "label": "Science — Grade 7 (general)", "item_source": "us_g7_science",
     },
     "curriculum/templates/US_GENERIC/g8_science.md": {
-        "key": "us_generic_g8_science", "label": "Science — Grade 8 🇺🇸 (general)", "item_source": "us_g8_science",
+        "key": "us_generic_g8_science", "label": "Science — Grade 8 (general)", "item_source": "us_g8_science",
     },
     "curriculum/templates/AU_ACARA/year9_english.md": {
-        "key": "au_acara_year9_english", "label": "English — Year 9 🇦🇺", "item_source": "au_english_year9",
+        "key": "au_acara_year9_english", "label": "English — Year 9", "item_source": "au_english_year9",
     },
     "curriculum/templates/AU_ACARA/year10_english.md": {
-        "key": "au_acara_year10_english", "label": "English — Year 10 🇦🇺", "item_source": "au_english_year10",
+        "key": "au_acara_year10_english", "label": "English — Year 10", "item_source": "au_english_year10",
     },
     "curriculum/templates/AU_ACARA/year9_science.md": {
-        "key": "au_acara_year9_science", "label": "Science — Year 9 🇦🇺", "item_source": "au_science_year9",
+        "key": "au_acara_year9_science", "label": "Science — Year 9", "item_source": "au_science_year9",
     },
     "curriculum/templates/AU_ACARA/year10_science.md": {
-        "key": "au_acara_year10_science", "label": "Science — Year 10 🇦🇺", "item_source": "au_science_year10",
+        "key": "au_acara_year10_science", "label": "Science — Year 10", "item_source": "au_science_year10",
     },
     "curriculum/templates/AU_ACARA/year11_biology.md": {
-        "key": "au_acara_year11_biology", "label": "Biology — Year 11 🇦🇺", "item_source": "au11_biology",
+        "key": "au_acara_year11_biology", "label": "Biology — Year 11", "item_source": "au11_biology",
     },
     "curriculum/templates/AU_ACARA/year11_english_essential.md": {
-        "key": "au_acara_year11_english_essential", "label": "Essential English — Year 11 🇦🇺", "item_source": "au11_essential_english",
+        "key": "au_acara_year11_english_essential", "label": "Essential English — Year 11", "item_source": "au11_essential_english",
     },
     "curriculum/templates/AU_ACARA/year11_english_main.md": {
-        "key": "au_acara_year11_english_main", "label": "English — Year 11 🇦🇺", "item_source": "au11_mainstream_english",
+        "key": "au_acara_year11_english_main", "label": "English — Year 11", "item_source": "au11_mainstream_english",
     },
     "curriculum/templates/AU_ACARA/year11_literature.md": {
-        "key": "au_acara_year11_literature", "label": "Literature — Year 11 🇦🇺", "item_source": "au11_literature",
+        "key": "au_acara_year11_literature", "label": "Literature — Year 11", "item_source": "au11_literature",
     },
     "curriculum/templates/AU_ACARA/year12_english_essential.md": {
-        "key": "au_acara_year12_english_essential", "label": "Essential English — Year 12 🇦🇺", "item_source": "au12_essential_english",
+        "key": "au_acara_year12_english_essential", "label": "Essential English — Year 12", "item_source": "au12_essential_english",
     },
     "curriculum/templates/AU_ACARA/year12_english_main.md": {
-        "key": "au_acara_year12_english_main", "label": "English — Year 12 🇦🇺", "item_source": "au12_mainstream_english",
+        "key": "au_acara_year12_english_main", "label": "English — Year 12", "item_source": "au12_mainstream_english",
     },
     "curriculum/templates/AU_ACARA/year12_literature.md": {
-        "key": "au_acara_year12_literature", "label": "Literature — Year 12 🇦🇺", "item_source": "au12_literature",
+        "key": "au_acara_year12_literature", "label": "Literature — Year 12", "item_source": "au12_literature",
     },
     "curriculum/templates/AU_ACARA/year1_maths.md": {
-        "key": "au_acara_year1_maths", "label": "Maths — Year 1 🇦🇺", "item_source": "au1_maths",
+        "key": "au_acara_year1_maths", "label": "Maths — Year 1", "item_source": "au1_maths",
     },
     "curriculum/templates/AU_ACARA/year1_english.md": {
-        "key": "au_acara_year1_english", "label": "English — Year 1 🇦🇺", "item_source": "au1_english",
+        "key": "au_acara_year1_english", "label": "English — Year 1", "item_source": "au1_english",
     },
     "curriculum/templates/AU_ACARA/year1_science.md": {
-        "key": "au_acara_year1_science", "label": "Science — Year 1 🇦🇺", "item_source": "au1_science",
+        "key": "au_acara_year1_science", "label": "Science — Year 1", "item_source": "au1_science",
     },
     "curriculum/templates/AU_ACARA/year11_earth_env.md": {
-        "key": "au_acara_year11_earth_env", "label": "Earth & Env Science — Year 11 🇦🇺", "item_source": "au11_earth_env",
+        "key": "au_acara_year11_earth_env", "label": "Earth & Env Science — Year 11", "item_source": "au11_earth_env",
     },
     "curriculum/templates/AU_ACARA/year12_earth_env.md": {
-        "key": "au_acara_year12_earth_env", "label": "Earth & Env Science — Year 12 🇦🇺", "item_source": "au12_earth_env",
+        "key": "au_acara_year12_earth_env", "label": "Earth & Env Science — Year 12", "item_source": "au12_earth_env",
     },
     "curriculum/templates/AU_ACARA/year11_chemistry.md": {
-        "key": "au_acara_year11_chemistry", "label": "Chemistry — Year 11 🇦🇺", "item_source": "au11_chemistry",
+        "key": "au_acara_year11_chemistry", "label": "Chemistry — Year 11", "item_source": "au11_chemistry",
     },
     "curriculum/templates/AU_ACARA/year11_physics.md": {
-        "key": "au_acara_year11_physics", "label": "Physics — Year 11 🇦🇺", "item_source": "au11_physics",
+        "key": "au_acara_year11_physics", "label": "Physics — Year 11", "item_source": "au11_physics",
     },
     "curriculum/templates/AU_ACARA/year12_biology.md": {
-        "key": "au_acara_year12_biology", "label": "Biology — Year 12 🇦🇺", "item_source": "au12_biology",
+        "key": "au_acara_year12_biology", "label": "Biology — Year 12", "item_source": "au12_biology",
     },
     "curriculum/templates/AU_ACARA/year12_chemistry.md": {
-        "key": "au_acara_year12_chemistry", "label": "Chemistry — Year 12 🇦🇺", "item_source": "au12_chemistry",
+        "key": "au_acara_year12_chemistry", "label": "Chemistry — Year 12", "item_source": "au12_chemistry",
     },
     "curriculum/templates/AU_ACARA/year12_physics.md": {
-        "key": "au_acara_year12_physics", "label": "Physics — Year 12 🇦🇺", "item_source": "au12_physics",
+        "key": "au_acara_year12_physics", "label": "Physics — Year 12", "item_source": "au12_physics",
     },
     "curriculum/templates/IN_GENERIC/c11_biology.md": {
-        "key": "in_generic_c11_biology", "label": "Biology — Class 11 🇮🇳", "item_source": "in_c11_biology",
+        "key": "in_generic_c11_biology", "label": "Biology — Class 11", "item_source": "in_c11_biology",
     },
     "curriculum/templates/IN_GENERIC/c11_chemistry.md": {
-        "key": "in_generic_c11_chemistry", "label": "Chemistry — Class 11 🇮🇳", "item_source": "in_c11_chemistry",
+        "key": "in_generic_c11_chemistry", "label": "Chemistry — Class 11", "item_source": "in_c11_chemistry",
     },
     "curriculum/templates/IN_GENERIC/c11_physics.md": {
-        "key": "in_generic_c11_physics", "label": "Physics — Class 11 🇮🇳", "item_source": "in_c11_physics",
+        "key": "in_generic_c11_physics", "label": "Physics — Class 11", "item_source": "in_c11_physics",
     },
     "curriculum/templates/IN_GENERIC/c12_biology.md": {
-        "key": "in_generic_c12_biology", "label": "Biology — Class 12 🇮🇳", "item_source": "in_c12_biology",
+        "key": "in_generic_c12_biology", "label": "Biology — Class 12", "item_source": "in_c12_biology",
     },
     "curriculum/templates/IN_GENERIC/c12_chemistry.md": {
-        "key": "in_generic_c12_chemistry", "label": "Chemistry — Class 12 🇮🇳", "item_source": "in_c12_chemistry",
+        "key": "in_generic_c12_chemistry", "label": "Chemistry — Class 12", "item_source": "in_c12_chemistry",
     },
     "curriculum/templates/IN_GENERIC/c12_physics.md": {
-        "key": "in_generic_c12_physics", "label": "Physics — Class 12 🇮🇳", "item_source": "in_c12_physics",
+        "key": "in_generic_c12_physics", "label": "Physics — Class 12", "item_source": "in_c12_physics",
     },
     "curriculum/templates/SG_GENERIC/s3_biology.md": {
-        "key": "sg_generic_s3_biology", "label": "Biology — Secondary 3 🇸🇬", "item_source": "sg_s3_biology",
+        "key": "sg_generic_s3_biology", "label": "Biology — Secondary 3", "item_source": "sg_s3_biology",
     },
     "curriculum/templates/SG_GENERIC/s3_chemistry.md": {
-        "key": "sg_generic_s3_chemistry", "label": "Chemistry — Secondary 3 🇸🇬", "item_source": "sg_s3_chemistry",
+        "key": "sg_generic_s3_chemistry", "label": "Chemistry — Secondary 3", "item_source": "sg_s3_chemistry",
     },
     "curriculum/templates/SG_GENERIC/s3_physics.md": {
-        "key": "sg_generic_s3_physics", "label": "Physics — Secondary 3 🇸🇬", "item_source": "sg_s3_physics",
+        "key": "sg_generic_s3_physics", "label": "Physics — Secondary 3", "item_source": "sg_s3_physics",
     },
     "curriculum/templates/SG_GENERIC/s4_biology.md": {
-        "key": "sg_generic_s4_biology", "label": "Biology — Secondary 4 🇸🇬", "item_source": "sg_s4_biology",
+        "key": "sg_generic_s4_biology", "label": "Biology — Secondary 4", "item_source": "sg_s4_biology",
     },
     "curriculum/templates/SG_GENERIC/s4_chemistry.md": {
-        "key": "sg_generic_s4_chemistry", "label": "Chemistry — Secondary 4 🇸🇬", "item_source": "sg_s4_chemistry",
+        "key": "sg_generic_s4_chemistry", "label": "Chemistry — Secondary 4", "item_source": "sg_s4_chemistry",
     },
     "curriculum/templates/SG_GENERIC/s4_physics.md": {
-        "key": "sg_generic_s4_physics", "label": "Physics — Secondary 4 🇸🇬", "item_source": "sg_s4_physics",
+        "key": "sg_generic_s4_physics", "label": "Physics — Secondary 4", "item_source": "sg_s4_physics",
     },
     "curriculum/templates/US_GENERIC/g10_chemistry.md": {
-        "key": "us_generic_g10_chemistry", "label": "Chemistry — Grade 10 🇺🇸", "item_source": "us_g10_chemistry",
+        "key": "us_generic_g10_chemistry", "label": "Chemistry — Grade 10", "item_source": "us_g10_chemistry",
     },
     "curriculum/templates/US_GENERIC/g11_physics.md": {
-        "key": "us_generic_g11_physics", "label": "Physics — Grade 11 🇺🇸", "item_source": "us_g11_physics",
+        "key": "us_generic_g11_physics", "label": "Physics — Grade 11", "item_source": "us_g11_physics",
     },
     "curriculum/templates/US_GENERIC/g9_biology.md": {
-        "key": "us_generic_g9_biology", "label": "Biology — Grade 9 🇺🇸", "item_source": "us_g9_biology",
+        "key": "us_generic_g9_biology", "label": "Biology — Grade 9", "item_source": "us_g9_biology",
     },
     "curriculum/templates/IN_GENERIC/c10_english.md": {
-        "key": "in_generic_c10_english", "label": "English — Class 10 🇮🇳 (general)", "item_source": "in_c10_english",
+        "key": "in_generic_c10_english", "label": "English — Class 10 (general)", "item_source": "in_c10_english",
     },
     "curriculum/templates/IN_GENERIC/c10_maths.md": {
-        "key": "in_generic_c10_maths", "label": "Maths — Class 10 🇮🇳 (general)", "item_source": "in_c10_maths",
+        "key": "in_generic_c10_maths", "label": "Maths — Class 10 (general)", "item_source": "in_c10_maths",
     },
     "curriculum/templates/IN_GENERIC/c11_english.md": {
-        "key": "in_generic_c11_english", "label": "English — Class 11 🇮🇳 (general)", "item_source": "in_c11_english",
+        "key": "in_generic_c11_english", "label": "English — Class 11 (general)", "item_source": "in_c11_english",
     },
     "curriculum/templates/IN_GENERIC/c11_maths.md": {
-        "key": "in_generic_c11_maths", "label": "Maths — Class 11 🇮🇳 (general)", "item_source": "in_c11_maths",
+        "key": "in_generic_c11_maths", "label": "Maths — Class 11 (general)", "item_source": "in_c11_maths",
     },
     "curriculum/templates/IN_GENERIC/c12_english.md": {
-        "key": "in_generic_c12_english", "label": "English — Class 12 🇮🇳 (general)", "item_source": "in_c12_english",
+        "key": "in_generic_c12_english", "label": "English — Class 12 (general)", "item_source": "in_c12_english",
     },
     "curriculum/templates/IN_GENERIC/c12_maths.md": {
-        "key": "in_generic_c12_maths", "label": "Maths — Class 12 🇮🇳 (general)", "item_source": "in_c12_maths",
+        "key": "in_generic_c12_maths", "label": "Maths — Class 12 (general)", "item_source": "in_c12_maths",
     },
     "curriculum/templates/IN_GENERIC/c9_english.md": {
-        "key": "in_generic_c9_english", "label": "English — Class 9 🇮🇳 (general)", "item_source": "in_c9_english",
+        "key": "in_generic_c9_english", "label": "English — Class 9 (general)", "item_source": "in_c9_english",
     },
     "curriculum/templates/IN_GENERIC/c9_maths.md": {
-        "key": "in_generic_c9_maths", "label": "Maths — Class 9 🇮🇳 (general)", "item_source": "in_c9_maths",
+        "key": "in_generic_c9_maths", "label": "Maths — Class 9 (general)", "item_source": "in_c9_maths",
     },
     "curriculum/templates/SG_GENERIC/s3_english.md": {
-        "key": "sg_generic_s3_english", "label": "English — Secondary 3 🇸🇬 (general)", "item_source": "sg_s3_english",
+        "key": "sg_generic_s3_english", "label": "English — Secondary 3 (general)", "item_source": "sg_s3_english",
     },
     "curriculum/templates/SG_GENERIC/s3_maths.md": {
-        "key": "sg_generic_s3_maths", "label": "Maths — Secondary 3 🇸🇬 (general)", "item_source": "sg_s3_maths",
+        "key": "sg_generic_s3_maths", "label": "Maths — Secondary 3 (general)", "item_source": "sg_s3_maths",
     },
     "curriculum/templates/SG_GENERIC/s4_english.md": {
-        "key": "sg_generic_s4_english", "label": "English — Secondary 4 🇸🇬 (general)", "item_source": "sg_s4_english",
+        "key": "sg_generic_s4_english", "label": "English — Secondary 4 (general)", "item_source": "sg_s4_english",
     },
     "curriculum/templates/SG_GENERIC/s4_maths.md": {
-        "key": "sg_generic_s4_maths", "label": "Maths — Secondary 4 🇸🇬 (general)", "item_source": "sg_s4_maths",
+        "key": "sg_generic_s4_maths", "label": "Maths — Secondary 4 (general)", "item_source": "sg_s4_maths",
     },
     "curriculum/templates/US_GENERIC/g10_english.md": {
-        "key": "us_generic_g10_english", "label": "English — Grade 10 🇺🇸 (general)", "item_source": "us_g10_english",
+        "key": "us_generic_g10_english", "label": "English — Grade 10 (general)", "item_source": "us_g10_english",
     },
     "curriculum/templates/US_GENERIC/g10_maths.md": {
-        "key": "us_generic_g10_maths", "label": "Maths — Grade 10 🇺🇸 (general)", "item_source": "us_g10_maths",
+        "key": "us_generic_g10_maths", "label": "Maths — Grade 10 (general)", "item_source": "us_g10_maths",
     },
     "curriculum/templates/US_GENERIC/g11_english.md": {
-        "key": "us_generic_g11_english", "label": "English — Grade 11 🇺🇸 (general)", "item_source": "us_g11_english",
+        "key": "us_generic_g11_english", "label": "English — Grade 11 (general)", "item_source": "us_g11_english",
     },
     "curriculum/templates/US_GENERIC/g11_maths.md": {
-        "key": "us_generic_g11_maths", "label": "Maths — Grade 11 🇺🇸 (general)", "item_source": "us_g11_maths",
+        "key": "us_generic_g11_maths", "label": "Maths — Grade 11 (general)", "item_source": "us_g11_maths",
     },
     "curriculum/templates/US_GENERIC/g12_english.md": {
-        "key": "us_generic_g12_english", "label": "English — Grade 12 🇺🇸 (general)", "item_source": "us_g12_english",
+        "key": "us_generic_g12_english", "label": "English — Grade 12 (general)", "item_source": "us_g12_english",
     },
     "curriculum/templates/US_GENERIC/g12_maths.md": {
-        "key": "us_generic_g12_maths", "label": "Maths — Grade 12 🇺🇸 (general)", "item_source": "us_g12_maths",
+        "key": "us_generic_g12_maths", "label": "Maths — Grade 12 (general)", "item_source": "us_g12_maths",
     },
     "curriculum/templates/US_GENERIC/g9_english.md": {
-        "key": "us_generic_g9_english", "label": "English — Grade 9 🇺🇸 (general)", "item_source": "us_g9_english",
+        "key": "us_generic_g9_english", "label": "English — Grade 9 (general)", "item_source": "us_g9_english",
     },
     "curriculum/templates/US_GENERIC/g9_maths.md": {
-        "key": "us_generic_g9_maths", "label": "Maths — Grade 9 🇺🇸 (general)", "item_source": "us_g9_maths",
+        "key": "us_generic_g9_maths", "label": "Maths — Grade 9 (general)", "item_source": "us_g9_maths",
     },
     "curriculum/templates/IN_GENERIC/c10_science.md": {
-        "key": "in_generic_c10_science", "label": "Science — Class 10 🇮🇳 (general)", "item_source": "in_c10_science",
+        "key": "in_generic_c10_science", "label": "Science — Class 10 (general)", "item_source": "in_c10_science",
     },
     "curriculum/templates/IN_GENERIC/c9_science.md": {
-        "key": "in_generic_c9_science", "label": "Science — Class 9 🇮🇳 (general)", "item_source": "in_c9_science",
+        "key": "in_generic_c9_science", "label": "Science — Class 9 (general)", "item_source": "in_c9_science",
     },
 }
 
@@ -602,3 +603,48 @@ if __name__ == "__main__":
         fn()
         print(f"  ✓ {fn.__name__}")
     print(f"\n{len(fns)}/{len(fns)} template-catalog tests passed.")
+
+
+def test_no_label_carries_an_emoji_flag_or_repeats_its_own_icon():
+    """Two label defects, one check, because both are invisible to whoever writes
+    the template and only show up on someone else's screen.
+
+    FLAGS: a label like "Maths — Year 5 🇦🇺" is a pair of regional-indicator
+    codepoints. Segoe UI Emoji ships no flag glyphs, so EVERY browser on Windows
+    draws the two letters instead and the card reads "Maths — Year 5 AU". macOS
+    shows a flag from identical markup. The maintainer reported exactly this on
+    the Settings page in August, which was fixed there with inline SVG; 152
+    labels still carried the emoji form until 2026-09-03. The country is already
+    stated in the group heading ("Year 5 (Australia)", app.py::_subject_groups),
+    so the per-card flag was redundant even where it did render.
+
+    REPEATED ICON: five pilot/practice templates put the emoji in BOTH `icon:`
+    and the end of `label:`, and the picker renders "{{ icon }} {{ label }}" —
+    so the progress pills read "🍕 Fractions 🍕".
+    """
+    flag = re.compile(r"[\U0001F1E6-\U0001F1FF]{2}")
+    emoji = re.compile(r"[\U0001F300-\U0001FAFF☀-➿]")
+    offenders = []
+    for path in sorted(_TPL.glob("**/*.md")):
+        if path.name in ("index.md", "log.md"):
+            continue
+        meta = load_template_meta(path)
+        label = meta.get("label") or ""
+        if flag.search(label) or emoji.search(label):
+            offenders.append((str(path.relative_to(REPO_ROOT)), label))
+    assert not offenders, (
+        "labels must be plain text — the icon field carries the glyph:\n"
+        + "\n".join(f"  {p}: {label!r}" for p, label in offenders)
+    )
+
+
+def test_every_template_still_has_an_icon_to_show():
+    """The counterpart to the check above: stripping glyphs out of labels must not
+    leave a card with nothing to show. The icon field is where the glyph lives."""
+    missing = [
+        str(p.relative_to(REPO_ROOT))
+        for p in sorted(_TPL.glob("**/*.md"))
+        if p.name not in ("index.md", "log.md")
+        and not (load_template_meta(p).get("icon") or "").strip()
+    ]
+    assert not missing, f"templates with a label but no icon: {missing}"

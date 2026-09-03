@@ -21,7 +21,7 @@ year_level: "Secondary 3"
 subject: physics
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
-label: "Physics — Secondary 3 🇸🇬"
+label: "Physics — Secondary 3"
 icon: "⚛️"
 description: "Scalars and vectors, forms of energy, and Newton's laws — senior physics at roughly Secondary 3 level."
 item_source: sg_s3_physics

@@ -93,7 +93,8 @@ def _truth() -> dict[str, int]:
     import importlib
 
     os.environ["MENTAR_DB_PATH"] = os.path.join(tempfile.mkdtemp(), "docclaims.db")
-    os.environ.pop("MENTAR_PACK_STATE", None)
+    # isolation: the root conftest already points MENTAR_PACK_STATE at a
+    # scratch path. Popping it did the OPPOSITE -- see conftest.py.
     import mentar.web.app as app_mod
     app_mod = importlib.reload(app_mod)
     state = pathlib.Path(tempfile.mkdtemp()) / "pack_state.json"

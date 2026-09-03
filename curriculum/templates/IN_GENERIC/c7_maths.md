@@ -19,7 +19,7 @@ year_level: "Class 7"
 subject: mathematics
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
-label: "Maths — Class 7 🇮🇳 (general)"
+label: "Maths — Class 7 (general)"
 icon: "🔢"
 description: "Adding and subtracting integers, order of operations with negatives, adding fractions (different denominators) and more — general maths at roughly Class 7 level."
 item_source: in_c7_maths

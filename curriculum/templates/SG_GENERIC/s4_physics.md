@@ -21,7 +21,7 @@ year_level: "Secondary 4"
 subject: physics
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
-label: "Physics — Secondary 4 🇸🇬"
+label: "Physics — Secondary 4"
 icon: "⚛️"
 description: "Series and parallel circuits, the electromagnetic spectrum, and conservation in collisions — senior physics at roughly Secondary 4 level."
 item_source: sg_s4_physics

@@ -20,7 +20,7 @@ year_level: "Grade 6"
 subject: english
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
-label: "English — Grade 6 🇺🇸 (general)"
+label: "English — Grade 6 (general)"
 icon: "📖"
 description: "Similes and metaphors, nuanced synonyms/antonyms, conjunctions and prepositions — general English at roughly Grade 6 level."
 item_source: us_g6_english

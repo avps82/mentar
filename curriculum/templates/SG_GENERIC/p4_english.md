@@ -20,7 +20,7 @@ year_level: "Primary 4"
 subject: english
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
-label: "English — Primary 4 🇸🇬 (general)"
+label: "English — Primary 4 (general)"
 icon: "📖"
 description: "Suffixes, contractions, proper nouns and similes — general English at roughly Primary 4 level."
 item_source: sg_p4_english

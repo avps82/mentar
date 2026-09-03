@@ -20,7 +20,7 @@ year_level: "Year 4"
 subject: science
 curriculum_standard: "ACARA v9 (AC9S4 Science Understanding)"
 schema_version: "0.1"
-label: "Science — Year 4 🇦🇺"                          # R3.1: web picker catalog fields
+label: "Science — Year 4"                          # R3.1: web picker catalog fields
 icon: "🔬"
 description: "Food chain roles, magnetic materials, and changes of state (Australian Year 4 Science)."
 item_source: au_science_year4

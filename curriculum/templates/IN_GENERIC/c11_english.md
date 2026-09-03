@@ -23,7 +23,7 @@ year_level: "Class 11"
 subject: english
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
-label: "English — Class 11 🇮🇳 (general)"
+label: "English — Class 11 (general)"
 icon: "📖"
 description: "Naming techniques in a quotation, argument structure and register — general senior english at roughly Class 11 level."
 item_source: in_c11_english

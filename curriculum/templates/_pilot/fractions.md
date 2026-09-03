@@ -12,7 +12,7 @@ year_level: pilot                                   # roughly Year 3-4 / Grade 3
 subject: mathematics
 curriculum_standard: null
 schema_version: "0.1"
-label: "Fractions 🍕"                                # R3.1: web picker catalog fields
+label: "Fractions"                                # R3.1: web picker catalog fields
 icon: "🍕"
 description: "Slices, halves, and sharing things fairly."
 item_source: pilot_fractions

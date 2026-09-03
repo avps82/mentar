@@ -23,7 +23,7 @@ year_level: "Grade 11"
 subject: mathematics
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
-label: "Maths — Grade 11 🇺🇸 (general)"
+label: "Maths — Grade 11 (general)"
 icon: "🔢"
 description: "Binomial products, quadratic expressions and combining terms — general senior maths at roughly Grade 11 level."
 item_source: us_g11_maths

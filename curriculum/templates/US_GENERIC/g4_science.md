@@ -20,7 +20,7 @@ year_level: "Grade 4"
 subject: science
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
-label: "Science — Grade 4 🇺🇸 (general)"
+label: "Science — Grade 4 (general)"
 icon: "🔬"
 description: "Producers and consumers, magnetic materials, and changes of state — general science at roughly Grade 4 level."
 item_source: us_g4_science

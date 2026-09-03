@@ -14,7 +14,7 @@ year_level: "Year 12"
 subject: english
 curriculum_standard: null
 schema_version: "0.1"
-label: "Literature — Year 12 🇦🇺"
+label: "Literature — Year 12"
 icon: "📜"
 description: "Close study of literary texts: periods, poetry, theory and interpretation."
 item_source: au12_literature

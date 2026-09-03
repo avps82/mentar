@@ -20,7 +20,7 @@ year_level: "Grade 2"
 subject: english
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
-label: "English — Grade 2 🇺🇸 (general)"
+label: "English — Grade 2 (general)"
 icon: "📖"
 description: "Word classes, synonyms, plurals and rhyming words — general English at roughly Grade 2 level."
 item_source: us_g2_english

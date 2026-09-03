@@ -1,0 +1,19 @@
+{# 404. Separate from not_here.html on purpose: that one refuses a grown-up page
+   to a device on the home network and its copy says so, which would be wrong and
+   slightly alarming for someone who just mistyped an address (2026-09-03: there
+   was no handler at all, so a wrong URL returned Werkzeug's bare default page —
+   no header, no styling, no way back). #}
+{% extends "_base.html" %}
+{% block title %}Mentar — page not found{% endblock %}
+{% block content %}
+<div class="calm-card">
+  <p><b>There's nothing at that address.</b></p>
+  <p>The page may have been renamed, or the address may have a typo in it.
+     Nothing is broken and no progress has been lost.</p>
+  <p class="hint">
+    <a href="/">Back to learning</a> &nbsp;·&nbsp;
+    <a href="/progress">My progress</a> &nbsp;·&nbsp;
+    <a href="/settings">⚙️ Settings</a>
+  </p>
+</div>
+{% endblock %}

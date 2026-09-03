@@ -20,7 +20,7 @@ year_level: "Primary 6"
 subject: science
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
-label: "Science — Primary 6 🇸🇬 (general)"
+label: "Science — Primary 6 (general)"
 icon: "🔬"
 description: "Vertebrates and invertebrates, circuits, and reversible changes — general science at roughly Primary 6 level."
 item_source: sg_p6_science

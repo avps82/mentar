@@ -23,7 +23,7 @@ year_level: "Grade 10"
 subject: mathematics
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
-label: "Maths — Grade 10 🇺🇸 (general)"
+label: "Maths — Grade 10 (general)"
 icon: "🔢"
 description: "Squared expressions, combined perimeters and distributive-law algebra — general senior maths at roughly Grade 10 level."
 item_source: us_g10_maths

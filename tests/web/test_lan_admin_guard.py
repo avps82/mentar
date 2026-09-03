@@ -32,7 +32,8 @@ def _app():
     import importlib
 
     os.environ["MENTAR_DB_PATH"] = os.path.join(tempfile.mkdtemp(), "lan.db")
-    os.environ.pop("MENTAR_PACK_STATE", None)
+    # isolation: the root conftest already points MENTAR_PACK_STATE at a
+    # scratch path. Popping it did the OPPOSITE -- see conftest.py.
     import mentar.web.app as app_mod
     app_mod = importlib.reload(app_mod)
     app_mod._llm_call_cached = lambda messages: "stub"

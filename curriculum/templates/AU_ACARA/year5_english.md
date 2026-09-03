@@ -16,7 +16,7 @@ year_level: "Year 5"
 subject: english
 curriculum_standard: "ACARA v9 (AC9E5A Language)"
 schema_version: "0.1"
-label: "English — Year 5 🇦🇺"                        # R3.1: web picker catalog fields
+label: "English — Year 5"                        # R3.1: web picker catalog fields
 icon: "📖"
 description: "Richer synonyms and antonyms, adverbs/pronouns and compound words (Australian Year 5)."
 item_source: au_english_year5

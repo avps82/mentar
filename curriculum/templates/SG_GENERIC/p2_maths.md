@@ -19,7 +19,7 @@ year_level: "Primary 2"
 subject: mathematics
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
-label: "Maths — Primary 2 🇸🇬 (general)"
+label: "Maths — Primary 2 (general)"
 icon: "🔢"
 description: "Place value, adding numbers, subtracting numbers and more — general maths at roughly Primary 2 level."
 item_source: sg_p2_maths

@@ -19,7 +19,7 @@ year_level: "Grade 3"
 subject: mathematics
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
-label: "Maths — Grade 3 🇺🇸 (general)"
+label: "Maths — Grade 3 (general)"
 icon: "🔢"
 description: "Place value, adding numbers, subtracting numbers and more — general maths at roughly Grade 3 level."
 item_source: us_g3_maths

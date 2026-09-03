@@ -21,7 +21,7 @@ year_level: "Class 12"
 subject: physics
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
-label: "Physics — Class 12 🇮🇳"
+label: "Physics — Class 12"
 icon: "⚛️"
 description: "Series and parallel circuits, the electromagnetic spectrum, and conservation in collisions — senior physics at roughly Class 12 level."
 item_source: in_c12_physics

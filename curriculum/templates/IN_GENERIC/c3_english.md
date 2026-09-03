@@ -26,7 +26,7 @@ year_level: "Class 3"
 subject: english
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
-label: "English — Class 3 🇮🇳 (general)"
+label: "English — Class 3 (general)"
 icon: "📖"
 description: "Antonyms, prefixes, homophones and comparative adjectives — general English at roughly Class 3 level."
 item_source: in_c3_english

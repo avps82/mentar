@@ -16,7 +16,7 @@ year_level: "Year 12"
 subject: english
 curriculum_standard: null
 schema_version: "0.1"
-label: "English — Year 12 🇦🇺"
+label: "English — Year 12"
 icon: "📝"
 description: "The mainstream senior course: analysis, argument, contexts and craft."
 item_source: au12_mainstream_english

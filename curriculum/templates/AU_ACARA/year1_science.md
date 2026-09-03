@@ -13,7 +13,7 @@ year_level: "Year 1"
 subject: science
 curriculum_standard: "AC v9 (CC BY 4.0) — year level only; codes not cited"
 schema_version: "0.1"
-label: "Science — Year 1 🇦🇺"
+label: "Science — Year 1"
 icon: "🔬"
 description: "Living things, materials, the sky, pushes and pulls."
 item_source: au1_science

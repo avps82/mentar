@@ -23,7 +23,7 @@ year_level: "Class 12"
 subject: mathematics
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
-label: "Maths — Class 12 🇮🇳 (general)"
+label: "Maths — Class 12 (general)"
 icon: "🔢"
 description: "Algebra applied to modelled scenarios: revenue, combined quadratics and compound areas — general senior maths at roughly Class 12 level."
 item_source: in_c12_maths

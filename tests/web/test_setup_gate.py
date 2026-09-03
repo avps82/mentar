@@ -12,6 +12,7 @@ import os
 import pathlib
 import sys
 import tempfile
+import time
 from unittest.mock import MagicMock, patch
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -23,7 +24,11 @@ def _client():
     patches app_mod._INFERENCE_CONFIG_PATH to its own scratch location so
     nothing ever touches the real repo's config/inference.yaml."""
     os.environ["MENTAR_DB_PATH"] = os.path.join(tempfile.mkdtemp(), "test_setup_gate.db")
-    os.environ.pop("MENTAR_PACK_STATE", None)  # isolation: don't inherit a toggle test's state file
+    # Isolation: a scratch path that does not exist, so the app falls back to
+    # the shipped starter set. This line used to POP the variable, which resolved
+    # the DEFAULT path -- the developer's real curriculum/pack_state.json. See the
+    # note in the root conftest.py for what that cost.
+    os.environ["MENTAR_PACK_STATE"] = os.path.join(tempfile.mkdtemp(), "pack_state.json")
     import importlib
 
     import mentar.web.app as app_mod
@@ -598,3 +603,73 @@ def test_re_running_setup_with_packs_already_chosen_skips_the_picker():
         assert r.headers["Location"].endswith("/"), r.headers["Location"]
     finally:
         app_mod._ENABLED_PACKS.discard("au_acara_year9_maths")
+
+
+def test_the_first_run_picker_names_countries_it_does_not_print_codes():
+    """The curriculum question is the SECOND screen anyone sees, and its dropdown
+    printed the raw pack key -- so a parent was asked to choose "AU". Settings,
+    reached later and optionally, already spelled out "Australia" from the same
+    map, and the maintainer had reported exactly that wording there in August
+    ("country has AU Australia??? Why AU?"). The <option> VALUE stays the key,
+    because the server matches packs on it; only the text a human reads changes.
+    """
+    _, c = _client()
+    html = c.get("/setup/curriculum").get_data(as_text=True)
+    assert '<option value="AU">Australia</option>' in html, html[:600]
+    for code, name in (("IN", "India"), ("SG", "Singapore"), ("US", "United States")):
+        assert f'<option value="{code}">{name}</option>' in html, code
+    assert ">AU<" not in html and ">SG<" not in html, "a bare country code is still shown"
+
+
+def _client_past_the_setup_gate():
+    """A client for testing what happens AFTER setup, not the gate itself.
+
+    This module's _client() deliberately leaves the setup gate live, because
+    that is what most of it tests. But the gate is a before_request on EVERY
+    path, so with no reachable backend an unknown URL is a 302 to /setup, not a
+    404 -- and whether the backend is reachable depends on the machine's real
+    config/inference.yaml. That made the 404 tests pass alone and fail in the
+    full suite (caught by the release gate, 2026-09-03). Pin the gate open so
+    these two test the 404 handler rather than the weather.
+    """
+    app_mod, c = _client()
+    app_mod._SETUP_GATE_BYPASS = True
+    return app_mod, c
+
+
+def test_a_mistyped_address_gets_mentars_own_page_not_werkzeugs():
+    """There was no 404 handler at all, so a wrong URL returned the framework
+    default -- "The requested URL was not found on the server. If you entered the
+    URL manually please check your spelling." -- with no header, no styling and no
+    way back. A child who fat-fingers an address should not meet that.
+    """
+    _, c = _client_past_the_setup_gate()
+    r = c.get("/no-such-page-here")
+    assert r.status_code == 404
+    body = r.get_data(as_text=True)
+    assert "requested URL was not found" not in body, "still the Werkzeug default"
+    assert "nothing at that address" in body.lower()
+    assert 'href="/"' in body, "a dead end must offer a way back"
+
+
+def test_the_404_page_is_not_the_home_network_refusal_page():
+    """not_here.html says the page is being withheld from another DEVICE on the
+    home network. Reusing it for a typo would tell someone their own computer had
+    refused them something -- alarming, and untrue."""
+    _, c = _client_past_the_setup_gate()
+    body = c.get("/no-such-page-here").get_data(as_text=True)
+    assert "stays on the computer running Mentar" not in body
+
+
+def test_an_unknown_url_still_goes_to_setup_while_nothing_is_configured():
+    """The other half, so the bypass above is not hiding a regression: until a
+    model answers, EVERY path belongs to the setup gate -- including one that
+    would otherwise 404. A family with nothing configured has exactly one thing
+    to do, and a 404 would send them looking for a page instead."""
+    app_mod, c = _client()
+    app_mod._SETUP_GATE_BYPASS = False
+    app_mod._SETUP_GATE_CACHE["ok"] = False
+    app_mod._SETUP_GATE_CACHE["checked_at"] = time.monotonic()
+    r = c.get("/no-such-page-here")
+    assert r.status_code == 302
+    assert r.headers["Location"].endswith("/setup"), r.headers["Location"]

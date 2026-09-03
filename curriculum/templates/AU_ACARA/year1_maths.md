@@ -13,7 +13,7 @@ year_level: "Year 1"
 subject: mathematics
 curriculum_standard: "AC v9 (CC BY 4.0) — year level only; codes not cited"
 schema_version: "0.1"
-label: "Maths — Year 1 🇦🇺"
+label: "Maths — Year 1"
 icon: "🔢"
 description: "First steps: counting, adding, shapes and patterns."
 item_source: au1_maths

@@ -19,7 +19,7 @@ year_level: "Class 5"
 subject: mathematics
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
-label: "Maths — Class 5 🇮🇳 (general)"
+label: "Maths — Class 5 (general)"
 icon: "🔢"
 description: "Decimal place value, adding and subtracting decimals, multiplying a fraction by a whole number and more — general maths at roughly Class 5 level."
 item_source: in_c5_maths

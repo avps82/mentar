@@ -15,8 +15,11 @@
   <form method="POST" action="/setup/curriculum">
     <label>Country<br>
       <select name="country" id="country-select">
+        {# value stays the pack's country KEY (the server matches on it); the
+           parent reads the NAME. Printing the key was asking someone to choose
+           "AU" on the second screen they ever see. #}
         {% for country in choices %}
-        <option value="{{ country }}">{{ country }}</option>
+        <option value="{{ country }}">{{ country_name(country) }}</option>
         {% endfor %}
       </select>
     </label><br><br>

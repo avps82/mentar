@@ -15,7 +15,7 @@ year_level: "Year 12"
 subject: earth_environmental
 curriculum_standard: null
 schema_version: "0.1"
-label: "Earth & Env Science — Year 12 🇦🇺"
+label: "Earth & Env Science — Year 12"
 icon: "🌏"
 description: "Earth's systems: rocks, atmosphere, climate, hazards and sustainability."
 item_source: au12_earth_env

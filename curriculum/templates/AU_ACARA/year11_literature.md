@@ -14,7 +14,7 @@ year_level: "Year 11"
 subject: english
 curriculum_standard: null
 schema_version: "0.1"
-label: "Literature — Year 11 🇦🇺"
+label: "Literature — Year 11"
 icon: "📜"
 description: "Close study of literary texts: periods, poetry, theory and interpretation."
 item_source: au11_literature

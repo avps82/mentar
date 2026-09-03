@@ -18,7 +18,7 @@ year_level: "Year 2"
 subject: science
 curriculum_standard: "ACARA v9 (AC9S2 Science Understanding)"
 schema_version: "0.1"
-label: "Science — Year 2 🇦🇺"                          # R3.1: web picker catalog fields
+label: "Science — Year 2"                          # R3.1: web picker catalog fields
 icon: "🔬"
 description: "How sound is made, the solar system, and how
    materials change shape (Australian Year 2 Science)."

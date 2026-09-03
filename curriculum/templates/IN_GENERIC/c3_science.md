@@ -20,7 +20,7 @@ year_level: "Class 3"
 subject: science
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
-label: "Science — Class 3 🇮🇳 (general)"
+label: "Science — Class 3 (general)"
 icon: "🔬"
 description: "Life cycles, sources of heat, and where living things live — general science at roughly Class 3 level."
 item_source: in_c3_science

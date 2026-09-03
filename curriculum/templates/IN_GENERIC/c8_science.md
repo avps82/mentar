@@ -20,7 +20,7 @@ year_level: "Class 8"
 subject: science
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
-label: "Science — Class 8 🇮🇳 (general)"
+label: "Science — Class 8 (general)"
 icon: "🔬"
 description: "Plant and animal cells, renewable energy, and elements and compounds — general science at roughly Class 8 level."
 item_source: in_c8_science

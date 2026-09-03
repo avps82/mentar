@@ -20,7 +20,7 @@ year_level: "Secondary 2"
 subject: english
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
-label: "English — Secondary 2 🇸🇬 (general)"
+label: "English — Secondary 2 (general)"
 icon: "📖"
 description: "Connotation, clauses, adverbial phrases and onomatopoeia — general English at roughly Secondary 2 level."
 item_source: sg_s2_english

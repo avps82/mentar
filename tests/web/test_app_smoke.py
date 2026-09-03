@@ -25,7 +25,8 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 def _client():
     # DB path is read at import time, so set it before importing the app.
     os.environ["MENTAR_DB_PATH"] = os.path.join(tempfile.mkdtemp(), "web_smoke.db")
-    os.environ.pop("MENTAR_PACK_STATE", None)  # isolation: don't inherit a toggle test's state file
+    # isolation: the root conftest already points MENTAR_PACK_STATE at a
+    # scratch path. Popping it did the OPPOSITE -- see conftest.py.
     import importlib
 
     import mentar.web.app as app_mod

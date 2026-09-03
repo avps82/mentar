@@ -16,7 +16,7 @@ year_level: "Year 8"
 subject: mathematics
 curriculum_standard: "ACARA v9 (AC9M8 Number, Algebra)"
 schema_version: "0.1"
-label: "Maths — Year 8 🇦🇺"                          # R3.1: web picker catalog fields
+label: "Maths — Year 8"                          # R3.1: web picker catalog fields
 icon: "🔢"
 description: "Two-step equations, squares, negative-number multiplication, percentage change and dividing decimals (Australian Year 8)."
 item_source: au_year8

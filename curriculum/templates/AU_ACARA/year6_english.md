@@ -16,7 +16,7 @@ year_level: "Year 6"
 subject: english
 curriculum_standard: "ACARA v9 (AC9E6A Language)"
 schema_version: "0.1"
-label: "English — Year 6 🇦🇺"                        # R3.1: web picker catalog fields
+label: "English — Year 6"                        # R3.1: web picker catalog fields
 icon: "📖"
 description: "Similes and metaphors, nuanced synonyms/antonyms, conjunctions and prepositions (Australian Year 6)."
 item_source: au_english_year6

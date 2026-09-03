@@ -16,7 +16,7 @@ year_level: "Year 11"
 subject: mathematics
 curriculum_standard: null
 schema_version: "0.1"
-label: "Specialist Maths — Year 11 🇦🇺"
+label: "Specialist Maths — Year 11"
 icon: "🧭"
 description: "Combinatorics, vectors, complex numbers, proof and mechanics — the advanced senior course."
 item_source: au11_specialist

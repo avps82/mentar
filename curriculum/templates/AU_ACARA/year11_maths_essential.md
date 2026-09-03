@@ -20,7 +20,7 @@ year_level: "Year 11"
 subject: mathematics
 curriculum_standard: null
 schema_version: "0.1"
-label: "Essential Maths — Year 11 🇦🇺"
+label: "Essential Maths — Year 11"
 icon: "🧮"
 description: "Everyday money, measurement and data — the practical senior course."
 item_source: au11_essential

@@ -23,7 +23,7 @@ year_level: "Class 10"
 subject: english
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
-label: "English — Class 10 🇮🇳 (general)"
+label: "English — Class 10 (general)"
 icon: "📖"
 description: "Tone, irony and satire, evaluative language and cohesion — general senior english at roughly Class 10 level."
 item_source: in_c10_english

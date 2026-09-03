@@ -20,7 +20,7 @@ year_level: "Year 5"
 subject: science
 curriculum_standard: "ACARA v9 (AC9S5 Science Understanding)"
 schema_version: "0.1"
-label: "Science — Year 5 🇦🇺"                          # R3.1: web picker catalog fields
+label: "Science — Year 5"                          # R3.1: web picker catalog fields
 icon: "🔬"
 description: "Animal adaptations, dissolving in water, and transparent vs. opaque materials (Australian Year 5 Science)."
 item_source: au_science_year5

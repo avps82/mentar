@@ -23,7 +23,7 @@ year_level: "Grade 9"
 subject: mathematics
 curriculum_standard: null                            # none claimed — see comment above
 schema_version: "0.1"
-label: "Maths — Grade 9 🇺🇸 (general)"
+label: "Maths — Grade 9 (general)"
 icon: "🔢"
 description: "Expanding brackets, index laws, surds and linear equations — general senior maths at roughly Grade 9 level."
 item_source: us_g9_maths
