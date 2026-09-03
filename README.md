@@ -33,9 +33,10 @@ from the deterministic verifier, the working from the engine. Only the prose is 
 Regenerate them yourself with `python3 scripts/record_demo.py` (see the script's header).
 
 > **First run starts small.** Only the pilot and practice packs are on out of the box, so a
-> fresh install opens on simple arithmetic — not the Year 12 algebra above. Turn on your
-> child's country and year in **⚙️ Settings → Curriculum packs** (157 are shipped, nothing to
-> download). A setup step that asks this up front is planned — see `docs/PHASE0_STATUS.md`.
+> fresh install would open on simple arithmetic — not the Year 12 algebra above. Setup now
+> asks for your child's country and year up front and turns those packs on (157 are shipped,
+> nothing to download) — see [Setting it up](#setting-it-up) below. You can change the answer
+> at any time in **⚙️ Settings → Curriculum packs**.
 
 A Year 10 two-stage probability question — the child taps **Show me how**, and after the
 model's spoken-style explanation, a deterministic worked-example card lays out the branch
@@ -52,6 +53,30 @@ curriculum's prerequisite graph:
 | Simple end of the range | Wrong answer → gentle retry | Progress map |
 |---|---|---|
 | ![Year 2 counting money](docs/img/02_simple_question_year2.jpg) | ![Gentle retry](docs/img/05_gentle_retry_after_wrong_answer.jpg) | ![Mastery map](docs/img/07_progress_mastery_map.jpg) |
+
+---
+
+## Setting it up
+
+Two questions, then a lesson. Mentar will not let a child start until a model actually
+answers, so the first screen is the one that connects it — and the second asks which year
+your child is in, so the tutor opens on the right material instead of the starter packs.
+
+![First run: Mentar redirects to setup, connects to a local model, asks which year the child is in, and opens on that year's subjects](https://github.com/avps82/mentar/releases/download/v0.1.0-preview/setup_first_run.gif)
+
+1. **Point Mentar at a model.** Anything you open before this redirects here. Option A is a
+   model already running on the machine (Ollama, `llama serve`); Option B is one served
+   elsewhere on your network; Option C is a cloud account, behind a written warning and a
+   parent consent step.
+2. **Press Save & Connect.** It probes the backend there and then — no restart — and tells
+   you what went wrong if it can't reach it, rather than failing later mid-lesson.
+3. **Say which year your child is in.** Picking Australia + Year 5 turns on that year's
+   English, Maths and Science. Skippable, re-runnable, and changeable afterwards in Settings.
+4. **Start.** The subject cards are the child's home screen from then on.
+
+Recorded against the real app; only the model's prose would differ on your machine. Full
+instructions, including installing a model from scratch and the tablet setup, are in
+**[docs/RUNNING.md](docs/RUNNING.md)**.
 
 ---
 
